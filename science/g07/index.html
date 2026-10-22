@@ -31,6 +31,9 @@ main{max-width:1100px;margin:0 auto;padding:20px 16px;display:grid;grid-template
 .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:auto;padding-top:12px}
 a.btn{display:inline-block;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600;min-height:44px}
 a.primary{background:var(--accent);color:#fff}
+a.ghost{border:1px solid var(--line);color:var(--navy);background:#fff}
+.card .row a.btn{flex:1 1 40%;text-align:center;padding:10px 8px}
+.card .row a.btn.primary{flex-basis:100%}
 a.card-link{text-decoration:none;color:inherit}
 a.card-link:hover .card,a.card-link:focus .card{border-color:var(--accent);box-shadow:0 2px 10px rgba(31,58,95,.12)}
 a.card-link .card{height:100%}
@@ -56,12 +59,29 @@ footer{max-width:1100px;margin:0 auto;padding:4px 16px 28px;color:var(--muted);f
     <p class="muted">Health, diet, digestive, respiratory and circulatory systems, immunity</p>
     <span class="soon">Simulations, worksheets and quizzes coming soon</span>
   </div>
-  <h2 class="block subj" style="--sc:#6A1B9A">Chemistry</h2>
+  <h2 class="block subj" id="chemistry" style="--sc:#6A1B9A">Chemistry</h2>
   <div class="card" style="--sc:#6A1B9A">
     <span class="tag">Unit 1 · Chemistry</span>
     <h2>Chemistry&#x27;s Secrets Unlocked</h2>
     <p class="muted">Elements, compounds and mixtures, chemical change, acids and alkalis</p>
-    <span class="soon">Simulations, worksheets and quizzes coming soon</span>
+  </div>
+  <div class="card" style="--sc:#6A1B9A">
+    <span class="tag">Simulation · Unit 1</span>
+    <h2>Salt naming</h2>
+    <p>Acid + alkali → salt + water: watch the acid and the alkali swap partners, name the salt, then try 7 new acids in a quiz.</p>
+    <div class="row">
+      <a class="btn primary" href="01-salt-naming/">▶ Open the simulation</a>
+      <a class="btn ghost" href="01-salt-naming/worksheet.docx" download data-goatcounter-click="download/science/g07/01-salt-naming/worksheet.docx">Worksheet (Word)</a>
+      <a class="btn ghost" href="01-salt-naming/worksheet.pdf" data-goatcounter-click="download/science/g07/01-salt-naming/worksheet.pdf">Worksheet (PDF)</a>
+    </div>
+  </div>
+  <div class="card" style="--sc:#6A1B9A">
+    <span class="tag">Study guide · Unit 1</span>
+    <h2>Criterion A revision</h2>
+    <p>Revise the whole unit before the Criterion A test: atoms, elements, compounds and mixtures, acids and alkalis, the pH scale, neutralisation and naming salts.</p>
+    <div class="row">
+      <a class="btn primary" href="02-criterion-a-study-guide/study-guide.pdf" data-goatcounter-click="download/science/g07/02-criterion-a-study-guide/study-guide.pdf">Study guide (PDF)</a>
+    </div>
   </div>
   <h2 class="block subj" style="--sc:#2055A3">Physics</h2>
   <div class="card" style="--sc:#2055A3">

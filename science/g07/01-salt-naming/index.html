@@ -1,0 +1,972 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Salt Naming Simulation</title>
+<!--
+  IB MYP 2 Sciences · Grade 7 · Chemistry Unit 1 Chemistry's Secrets Unlocked · Neutralisation and salts
+  Salt naming: acid + alkali → salt + water. Goes with the unit slides 73, 97–99 and 104 (naming salts)
+  and Workbook Activity 9 (making sodium chloride).
+  Self-contained: no internet, no external libraries or fonts. Open in any modern browser.
+
+  File sections (same order as the simulation template):
+    1 STYLE     layout, colours (the four piece colours carry the whole lesson)
+    2 MARKUP    header · colour key · tabs (Explore + Tasks · Quiz) · help overlay
+    3 CONFIG    alkalis, acids, naming rules
+    4 CHEMISTRY pure functions (salt formula, equations; no drawing)
+    5 EXPLORE   pickers, reaction stage, "swap partners" animation
+    6 QUIZ      7 new acids, drag or tap words into the salt name
+    7 TASKS     data-driven task list (do / predict / word)
+    8 UI        tabs, help, storage, start
+-->
+<style>
+/* ============================ 1 STYLE ============================ */
+:root{
+  --navy:#1F3A5F; --accent:#E65100; --ink:#263238; --muted:#606A72;
+  --bg:#F2F5F9; --card:#FFFFFF; --line:#DDE6F0; --sunk:#EEF2F7; --soft-blue:#E3F2FD;
+  --h:#C62828; --x:#6A1B9A; --m:#1565C0; --oh:#2E7D32;   /* hydrogen, acid part, metal, hydroxide */
+  --star:#F9A825; --ok:#2E7D32; --bad:#C62828; --focus:#1565C0;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.45 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;min-height:100dvh}
+h2,h3{margin:0}
+p{margin:0}
+sub{font-size:.68em;line-height:0}
+button{font:inherit;color:inherit}
+button:focus-visible,.tile:focus-visible,input:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+/* header (as in every simulation) */
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);
+  display:flex;align-items:center;gap:16px;padding:8px 16px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header h1{font-size:1.25rem;margin:0;font-weight:600}
+header .sub{font-size:.85rem;opacity:.85}
+.sub a.home{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55);white-space:nowrap}
+.sub a.home:hover{border-bottom-color:#fff}
+header .grow{flex:1}
+.credit{text-align:right;font-size:.74rem;line-height:1.3;opacity:.92;white-space:nowrap}
+.credit a{color:#fff;text-decoration:underline}
+.btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;
+  min-height:44px;padding:6px 14px;cursor:pointer;touch-action:manipulation}
+.btn:hover{border-color:var(--navy)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.small{min-height:36px;padding:4px 10px;font-size:.9rem}
+header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5);white-space:nowrap}
+
+/* colour key */
+.keybar{display:flex;flex-wrap:wrap;align-items:center;gap:4px 18px;padding:6px 16px;background:#fff;
+  border-bottom:1px solid var(--line);font-size:.86rem}
+.keybar div{display:flex;align-items:center;gap:7px}
+.sw{width:16px;height:16px;border-radius:4px;flex:none}
+.keybar .sum{margin-left:auto;font-weight:700;color:var(--navy)}
+
+/* tabs + panels */
+main{flex:1;display:flex;flex-direction:column;gap:10px;padding:10px 16px 16px;min-height:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.tabs{display:flex;gap:4px;padding:6px 6px 0;background:#F7F9FC;border-bottom:1px solid var(--line)}
+.tabs.top{background:transparent;padding:0}
+.tab{font:inherit;border:1px solid transparent;border-bottom:none;background:transparent;padding:8px 14px;
+  min-height:44px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--muted);font-weight:600;white-space:nowrap}
+.tab[aria-selected="true"]{background:#fff;border-color:var(--line);color:var(--navy);margin-bottom:-1px}
+.panel{display:flex;flex-direction:column;gap:12px;min-height:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0;display:flex;flex-direction:column}
+.card > h2{font-size:.95rem;padding:6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line);color:var(--navy);font-weight:600}
+.cb{padding:10px 12px;display:grid;gap:10px;align-content:start;min-height:0}
+.label{font-size:.75rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.hint{font-size:.85rem;color:var(--muted)}
+
+/* explore: chemicals | reaction | naming help + tasks */
+.lab{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:760px){ .lab{grid-template-columns:minmax(230px,280px) minmax(0,1fr)} .side{grid-column:1/-1} }
+@media (min-width:1100px){ .lab{grid-template-columns:minmax(230px,270px) minmax(0,1fr) minmax(330px,400px)} .side{grid-column:auto} }
+
+/* pickers */
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:.9rem;border:1px solid var(--line);background:#fff;border-radius:99px;padding:5px 12px;
+  min-height:40px;cursor:pointer;display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;text-align:left;line-height:1.2}
+.chip small{color:var(--muted);font-size:.78rem}
+.chip em{font-style:normal;font-size:.72rem;color:var(--muted);flex-basis:100%}
+.chip.acid[aria-pressed="true"]{background:var(--x);border-color:var(--x);color:#fff}
+.chip.base[aria-pressed="true"]{background:var(--m);border-color:var(--m);color:#fff}
+.chip[aria-pressed="true"] small,.chip[aria-pressed="true"] em{color:#F3E8FF}
+.chip.set[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.chip.set[aria-pressed="true"] .hint{color:#DDE6F0}
+.chip.set{font-size:.86rem;padding:4px 10px;min-height:44px;border-radius:10px;flex-direction:column;align-items:flex-start;justify-content:center;gap:0}
+.chip.set .hint{font-size:.76rem}
+@media (min-width:760px){
+  .pick .chips{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pick #baseChips{grid-template-columns:minmax(0,1fr)}
+  .pick .chip{border-radius:10px;justify-content:space-between}
+}
+
+/* reaction stage */
+.stage{background:var(--sunk);border-radius:12px;padding:12px 10px;container-type:inline-size}
+.stage-inner{display:grid;gap:10px;justify-items:center;width:100%}
+.half{display:grid;gap:6px;justify-items:center;width:100%;min-width:0}
+.row{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:10px 14px;width:100%}
+.row-label{font-size:.75rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.op{font-size:1.8rem;font-weight:700;color:var(--muted);align-self:center;padding-bottom:26px}
+.big-arrow{font-size:1.6rem;color:var(--muted);line-height:1;display:flex;align-items:center;gap:10px}
+.big-arrow small{font-size:.8rem}
+.ar-right{display:none}
+.block{display:grid;gap:5px;justify-items:center;min-width:120px}
+.pieces{display:flex;gap:4px;padding:6px;border-radius:12px;min-height:76px;min-width:120px;
+  border:2px solid transparent;background:#fff;justify-content:center;align-items:center}
+.pieces.empty{border:2px dashed #B0BEC5;background:transparent}
+.pieces.empty::after{content:"?";font-size:1.8rem;color:#B0BEC5;font-weight:700}
+.cap{text-align:center;font-size:.9rem;line-height:1.3}
+.cap strong{display:block;font-size:1rem}
+.cap span{color:var(--muted)}
+.piece{min-width:60px;padding:7px 9px 5px;border-radius:9px;color:#fff;display:grid;justify-items:center;will-change:transform}
+.piece .sym{font-weight:700;font-size:1.5rem;line-height:1.1;white-space:nowrap}
+.piece .nm{font-size:.72rem;font-weight:600;white-space:nowrap;opacity:.95}
+.p-h{background:var(--h)} .p-x{background:var(--x)} .p-m{background:var(--m)} .p-oh{background:var(--oh)}
+@container (min-width:470px){
+  .stage-inner{grid-template-columns:1fr auto 1fr;align-items:center}
+  .stage-inner .row{flex-direction:column;align-items:center;flex-wrap:nowrap;gap:4px}
+  .stage-inner .op{padding-bottom:0;line-height:1}
+  .ar-down{display:none}
+  .ar-right{display:grid;justify-items:center;font-size:2.4rem}
+  .ar-right small{font-size:.75rem;text-align:center;line-height:1.2}
+}
+@container (min-width:880px){
+  .stage-inner .row{flex-direction:row;align-items:flex-start;gap:10px 12px}
+  .stage-inner .op{padding-bottom:26px}
+  .stage-inner .piece{min-width:76px;padding:10px 12px 7px}
+  .stage-inner .piece .sym{font-size:2rem}
+  .stage-inner .piece .nm{font-size:.8rem}
+  .stage-inner .pieces{min-height:100px;min-width:150px}
+}
+.controls{display:flex;flex-wrap:wrap;gap:10px;justify-content:center}
+.controls .btn{min-width:130px}
+.eq{display:grid;gap:4px}
+.eq-words{font-size:clamp(1.02rem,2.4vw,1.2rem);font-weight:500;line-height:1.55}
+.eq-form{color:var(--muted)}
+.t-h{color:var(--h);font-weight:600} .t-x{color:var(--x);font-weight:600}
+.t-m{color:var(--m);font-weight:600} .t-oh{color:var(--oh);font-weight:600}
+.q{display:inline-block;min-width:2.4em;text-align:center;border-bottom:2px dashed #B0BEC5;color:var(--muted)}
+
+/* naming help */
+.spanel{display:none;padding:10px 12px;gap:10px;align-content:start;min-height:0}
+.spanel.on{display:grid}
+.spanel h3{font-size:1rem;color:var(--navy)}
+ol.steps{margin:0;padding-left:1.4em;display:grid;gap:6px}
+ol.steps li.dim{color:#9AA4AD}
+.rules{display:grid;gap:6px}
+.rule{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;padding:8px 10px;border-radius:10px;
+  border:1px solid var(--line);font-size:.93rem}
+.rule.on{border:2px solid var(--x);background:#F5EEFA}
+.rule .arr{color:var(--muted)}
+.rule .ex{grid-column:1/-1;font-size:.84rem;color:var(--muted)}
+.rule b{color:var(--x)}
+
+/* tasks */
+#taskSets{display:grid;gap:6px;grid-template-columns:repeat(3,minmax(0,1fr))}
+#taskList{display:flex;flex-direction:column;gap:8px}
+.step{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff}
+.step .qq{margin:0 0 6px}
+.step .n{display:inline-block;min-width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;
+  text-align:center;line-height:26px;font-size:.85rem;font-weight:700;margin-right:6px}
+.step.done .n{background:var(--ok)}
+.tag{font-size:.75rem;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.opt{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;
+  margin:4px 0;cursor:pointer;min-height:40px}
+.opt input{width:20px;height:20px;flex:none}
+.opt.good{border-color:var(--ok);background:#E8F5E9}
+.opt.bad{border-color:var(--bad);background:#FFEBEE}
+.fb{margin-top:6px;padding:6px 10px;border-radius:8px;font-size:.92rem}
+.fb.ok{background:#E8F5E9;border-left:4px solid var(--ok)}
+.fb.no{background:#FFEBEE;border-left:4px solid var(--bad)}
+.fb.info{background:var(--soft-blue);border-left:4px solid #1565C0}
+.wrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.word{font:inherit;flex:1 1 170px;min-width:0;min-height:40px;padding:4px 8px;border:1px solid #B0BEC5;border-radius:8px}
+.switch{display:flex;align-items:center;gap:8px;min-height:40px;cursor:pointer}
+.switch input{width:22px;height:22px;accent-color:var(--accent)}
+
+/* quiz */
+.qhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.qhead h2{font-size:1.2rem;color:var(--navy)}
+.dots{display:flex;gap:6px;flex-wrap:wrap}
+.dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:.8rem;font-weight:600;color:var(--muted)}
+.dot.now{border-color:var(--navy);color:var(--navy)}
+.dot.done{background:var(--star);border-color:var(--star);color:#3E2A00}
+.quiz-grid{display:grid;gap:14px;min-width:0}
+.q-stage{display:grid;gap:8px;justify-items:center}
+.q-work{display:grid;gap:12px;min-width:0;align-content:start}
+@media (min-width:900px){
+  .quiz-grid{grid-template-columns:minmax(220px,300px) 1fr;align-items:start}
+  .q-stage .row{flex-direction:column;align-items:center;gap:4px}
+  .q-stage .op{padding-bottom:0}
+}
+.qeq{font-size:clamp(1.02rem,2.6vw,1.2rem);display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;justify-content:center}
+.slot{min-width:128px;min-height:52px;border-radius:10px;border:3px dashed var(--muted);background:#fff;
+  cursor:pointer;padding:6px 12px;font-weight:600;display:inline-grid;place-items:center;line-height:1.15}
+.slot small{display:block;font-size:.7rem;color:var(--muted);font-weight:500}
+.slot.hot{border-color:var(--focus);background:var(--soft-blue)}
+.slot.ok-m{border:3px solid var(--m);background:var(--m);color:#fff;cursor:default}
+.slot.ok-x{border:3px solid var(--x);background:var(--x);color:#fff;cursor:default}
+.slot.shake{animation:shake .4s;border-color:var(--bad)}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.bank{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:12px;border-radius:12px;background:var(--sunk);min-height:70px}
+.tile{border:1px solid #B0BEC5;background:#fff;border-radius:10px;padding:10px 16px;min-height:44px;
+  font-weight:600;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;box-shadow:0 2px 0 var(--line)}
+.tile.sel{border-color:var(--focus);box-shadow:0 0 0 3px #BBDEFB}
+.tile.lifting{opacity:.3}
+.drag-ghost{position:fixed;z-index:50;pointer-events:none;transform:translate(-50%,-60%) rotate(-3deg);box-shadow:0 10px 24px rgba(0,0,0,.25)}
+.feedback{min-height:3em;border-radius:10px;padding:10px 12px;background:var(--sunk)}
+.feedback.bad{background:#FFEBEE;border-left:4px solid var(--bad)}
+.feedback.good{background:#E8F5E9;border-left:4px solid var(--ok)}
+.stars{color:var(--star);font-size:1.3rem;letter-spacing:2px}
+.stars .off{color:var(--line)}
+.review{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.review li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;padding:8px 12px;border:1px solid var(--line);border-radius:10px}
+.score{font-size:2.8rem;font-weight:700;line-height:1;color:var(--navy)}
+.mini{display:flex;gap:4px;flex-wrap:wrap}
+.mini .piece{min-width:48px;padding:5px 8px 4px}
+.mini .piece .sym{font-size:1.15rem}
+footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
+
+/* help overlay */
+#help{position:fixed;inset:0;background:rgba(31,58,95,.55);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:14px;max-width:720px;width:100%;max-height:90vh;overflow:auto;padding:18px 22px}
+#help h3{margin:.2em 0 .4em;color:var(--navy)}
+#help li{margin:.25em 0}
+
+/* laptops: the explore panel fills the screen height and each column scrolls on its own */
+@media (min-width:1100px) and (min-height:640px){
+  body{height:100dvh}
+  main{overflow:hidden}
+  .panel{flex:1}
+  #explore .lab{flex:1;min-height:0;grid-template-rows:minmax(0,1fr)}
+  #explore .card{min-height:0}
+  #explore .cb,#explore .spanel{overflow:auto}
+  #explore .stagecard .cb{flex:1;align-content:safe center}
+  #quiz{overflow:auto}
+  footer{display:none}
+}
+/* shorter laptop screens: alkalis in two columns too, so every chemical is in view */
+@media (min-width:1100px) and (min-height:640px) and (max-height:899px){
+  .pick .cb{gap:6px}
+  .pick #baseChips{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pick .chip{min-height:36px;padding:3px 10px;font-size:.86rem}
+}
+
+/* tablets in portrait and phones */
+@media (max-width:1099px){ header .sub{font-size:0;opacity:1;line-height:1.2} header .sub a.home{font-size:.75rem} }
+@media (max-width:759px){
+  header{flex-wrap:wrap;row-gap:4px}
+  header h1{font-size:1.05rem}
+  .credit{order:3;flex-basis:100%;text-align:left;font-size:.7rem}
+  .credit br{display:none} .credit a{margin-left:6px}
+  .keybar{font-size:.78rem;gap:2px 12px}
+  .keybar .sum{margin-left:0}
+  .tabs{overflow-x:auto;scrollbar-width:none}
+  #help .box{max-height:85dvh;padding:14px 16px}
+}
+@media (max-width:420px){
+  .piece{min-width:52px;padding:6px 8px 5px}
+  .piece .sym{font-size:1.3rem}
+  .pieces,.block{min-width:104px}
+  .slot{min-width:112px}
+  .tile{padding:9px 13px}
+}
+.rotate-tip{display:none;padding:6px 10px;border-radius:8px;background:var(--soft-blue);font-size:.86rem}
+@media (max-width:599px) and (orientation:portrait){ .rotate-tip{display:block} }
+/* phones held sideways: short screens */
+@media (orientation:landscape) and (max-height:520px){
+  header{padding-top:4px;padding-bottom:4px}
+  header h1{font-size:1rem}
+  .keybar{font-size:.76rem;padding:3px 16px}
+  main{padding-top:6px;gap:8px}
+  .lab{grid-template-columns:minmax(200px,250px) minmax(0,1fr)}
+  .side{grid-column:1/-1}
+  .piece .sym{font-size:1.25rem}
+  .piece{padding:5px 8px 4px;min-width:50px}
+  .pieces{min-height:62px}
+  .chip{min-height:36px;font-size:.85rem}
+  .quiz-grid{grid-template-columns:minmax(200px,250px) 1fr;align-items:start}
+  .q-stage .row{flex-direction:column;align-items:center;gap:4px}
+  .q-stage .op{padding-bottom:0}
+}
+@media (prefers-reduced-motion:reduce){ .slot.shake{animation:none} }
+</style>
+</head>
+<body>
+<!-- ============================ 2 MARKUP ============================ -->
+<header>
+  <div>
+    <h1>Salt naming — acid + alkali → salt + water</h1>
+    <div class="sub"><a class="home" href="https://school.taneski.com/science/g07/#chemistry" title="Back to Grade 7 science">← All Grade 7 science</a> · IB MYP 2 · Unit 1 Chemistry's Secrets Unlocked · Neutralisation</div>
+  </div>
+  <div class="grow"></div>
+  <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
+  <div class="credit">Biljana Taneska · Science teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
+</header>
+
+<div class="keybar" aria-label="Colour key">
+  <div><span class="sw p-h"></span>H: hydrogen (from the acid)</div>
+  <div><span class="sw p-x"></span>acid part (gives the 2nd name)</div>
+  <div><span class="sw p-m"></span>metal (from the alkali, gives the 1st name)</div>
+  <div><span class="sw p-oh"></span>OH: hydroxide (from the alkali)</div>
+  <div class="sum">acid + alkali → salt + water</div>
+</div>
+
+<main>
+  <p class="rotate-tip">Tip: turn your phone sideways to see the reaction side by side.</p>
+  <div class="tabs top" role="tablist">
+    <button class="tab" role="tab" id="tab-explore" aria-selected="true" aria-controls="explore">1 · Explore and tasks</button>
+    <button class="tab" role="tab" id="tab-quiz" aria-selected="false" aria-controls="quiz">2 · Quiz: 7 new acids</button>
+  </div>
+
+  <!-- EXPLORE -->
+  <section class="panel" id="explore" role="tabpanel" aria-labelledby="tab-explore">
+    <div class="lab">
+      <div class="card pick">
+        <h2>1 · Choose the chemicals</h2>
+        <div class="cb">
+          <div class="label">Acids from our lessons</div>
+          <div class="chips" id="acidChips"></div>
+          <div class="label">Challenge acids</div>
+          <div class="chips" id="acidChips2"></div>
+          <div class="label">Alkalis</div>
+          <div class="chips" id="baseChips"></div>
+        </div>
+      </div>
+
+      <div class="card stagecard">
+        <h2>2 · Predict the salt, then press React!</h2>
+        <div class="cb">
+          <div class="stage" id="stage">
+            <div class="stage-inner">
+              <div class="half">
+                <div class="row-label">Before: reactants</div>
+                <div class="row">
+                  <div class="block"><div class="pieces" id="acidPieces"></div><div class="cap" id="acidCap"></div></div>
+                  <div class="op">+</div>
+                  <div class="block"><div class="pieces" id="basePieces"></div><div class="cap" id="baseCap"></div></div>
+                </div>
+              </div>
+              <div class="big-arrow" aria-hidden="true">
+                <span class="ar-down">↓ <small>swap partners</small> ↓</span>
+                <span class="ar-right">→<small>swap<br>partners</small></span>
+              </div>
+              <div class="half">
+                <div class="row-label">After: products</div>
+                <div class="row">
+                  <div class="block"><div class="pieces empty" id="saltPieces"></div><div class="cap" id="saltCap"></div></div>
+                  <div class="op">+</div>
+                  <div class="block"><div class="pieces empty" id="waterPieces"></div><div class="cap" id="waterCap"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="controls">
+            <button class="btn primary" id="reactBtn">React!</button>
+            <button class="btn" id="resetBtn" disabled>↺ Put it back</button>
+          </div>
+          <div class="eq" aria-live="polite">
+            <div class="label">Word equation</div>
+            <div class="eq-words" id="eqWords"></div>
+            <div class="eq-form" id="eqForm"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card side">
+        <div class="tabs" role="tablist">
+          <button class="tab" role="tab" data-side="rules" aria-selected="true">How to name the salt</button>
+          <button class="tab" role="tab" data-side="tasks" aria-selected="false">Tasks</button>
+        </div>
+        <div class="spanel on" id="sp-rules">
+          <h3>Step by step</h3>
+          <ol class="steps" id="steps"></ol>
+          <h3>Acid name → salt ending</h3>
+          <div class="rules" id="rules"></div>
+        </div>
+        <div class="spanel" id="sp-tasks">
+          <div id="taskSets"></div>
+          <div id="taskList"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="panel" id="quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden>
+    <div class="card" id="quizCard">
+      <div class="cb">
+        <div class="qhead">
+          <h2 id="qTitle">Question 1 of 7</h2>
+          <div class="dots" id="dots"></div>
+        </div>
+        <p id="quizLede">Drag the right words into the two boxes to name the salt. You can also tap a word, then tap a box.</p>
+        <div class="quiz-grid">
+          <div class="stage q-stage">
+            <div class="row-label">Reactants</div>
+            <div class="row" id="qBlocks"></div>
+          </div>
+          <div class="q-work">
+            <div class="qeq" id="qeq"></div>
+            <div class="bank" id="bank" aria-label="Word tiles"></div>
+            <div class="feedback" id="feedback" aria-live="polite">Which word comes from the alkali? Which comes from the acid?</div>
+            <div class="controls"><button class="btn primary" id="nextBtn" hidden>Next acid →</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="endCard" hidden>
+      <h2>Your result</h2>
+      <div class="cb">
+        <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:end">
+          <div><div class="score" id="endScore"></div><div class="hint">right first time</div></div>
+          <div><div class="score" style="color:var(--star)" id="endStars"></div><div class="hint">stars out of 21</div></div>
+        </div>
+        <p id="endMsg"></p>
+        <ul class="review" id="review"></ul>
+        <div class="controls"><button class="btn primary" id="againBtn">Play again</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="box">
+    <h3 id="helpTitle">How to use this simulation</h3>
+    <ol>
+      <li><b>Choose an acid and an alkali</b> on the left. The acids from our lessons come first; the challenge acids are extra.</li>
+      <li><b>Predict</b> the name of the salt. Then press <b>React!</b> and watch the four pieces <b>swap partners</b>.
+        <b>↺ Put it back</b> undoes the reaction.</li>
+      <li>Under the reaction you see the <b>word equation</b> and, for interest, the equation with <b>formulas</b>
+        (in Grade 7 you need the word equation).</li>
+      <li><b>How to name the salt</b> (right) explains every step. The rule box lights up the rule for your acid.</li>
+      <li><b>Tasks</b> (right): three sets — Pre-lab, During the lab and Homework. <b>⚙ Set it up for me</b> picks the
+        chemicals. Write your explanations on your worksheet.</li>
+      <li><b>Quiz</b>: drag a word into each box (or tap a word, then tap a box). Right first time = 3 stars.</li>
+    </ol>
+    <h3>The chemistry</h3>
+    <ul>
+      <li><b>Neutralisation:</b> acid + alkali → salt + water.</li>
+      <li>The <span class="t-h">H</span> from the acid and the <span class="t-oh">OH</span> from the alkali join to make
+        <b>water</b>, H<sub>2</sub>O.</li>
+      <li>The salt's <b>1st name</b> is the <span class="t-m">metal</span> from the alkali. Its <b>2nd name</b> comes from the
+        <span class="t-x">acid</span>: hydro…ic acid → …ide · …ic acid → …ate · …ous acid → …ite.</li>
+      <li>An <b>alkali</b> is a base that dissolves in water. Magnesium hydroxide hardly dissolves, so it is a <b>base</b>,
+        not an alkali — but it neutralises acids in the same way.</li>
+    </ul>
+    <p class="hint">The pieces are a model: they show which parts of the acid and the alkali end up in the salt and in the water.
+      They are not drawn to scale.</p>
+    <p style="text-align:right"><button class="btn primary" id="helpClose">Close</button></p>
+  </div>
+</div>
+
+<footer>Remember: acid + alkali → salt + water. The salt's first name is always the metal, and the second name comes from the acid.</footer>
+
+<script>
+(() => {
+  /* ============================ 3 CONFIG ============================ */
+  const BASES = [
+    { sym: "Na", name: "sodium",    f: "NaOH",    v: 1 },
+    { sym: "K",  name: "potassium", f: "KOH",     v: 1 },
+    { sym: "Li", name: "lithium",   f: "LiOH",    v: 1 },
+    { sym: "Ca", name: "calcium",   f: "Ca(OH)2", v: 2 },
+    { sym: "Mg", name: "magnesium", f: "Mg(OH)2", v: 2, note: "base: hardly dissolves" },
+  ];
+  // rule: hydro = hydro…ic → …ide, ic = …ic → …ate, ous = …ous → …ite. lesson = taught in Unit 1 (slides 73, 97–104)
+  const ACIDS = [
+    { stem: "hydrochloric", f: "HCl",     x: "Cl",     q: 1, end: "chloride",  rule: "hydro", lesson: 1 },
+    { stem: "sulfuric",     f: "H2SO4",   x: "SO4",    q: 2, end: "sulfate",   rule: "ic",  poly: 1, lesson: 1 },
+    { stem: "nitric",       f: "HNO3",    x: "NO3",    q: 1, end: "nitrate",   rule: "ic",  poly: 1, lesson: 1 },
+    { stem: "phosphoric",   f: "H3PO4",   x: "PO4",    q: 3, end: "phosphate", rule: "ic",  poly: 1 },
+    { stem: "carbonic",     f: "H2CO3",   x: "CO3",    q: 2, end: "carbonate", rule: "ic",  poly: 1 },
+    { stem: "ethanoic",     f: "CH3COOH", x: "CH3COO", q: 1, end: "ethanoate", rule: "ic",  poly: 1, hLast: 1 },
+    { stem: "sulfurous",    f: "H2SO3",   x: "SO3",    q: 2, end: "sulfite",   rule: "ous", poly: 1 },
+    { stem: "hydrobromic",  f: "HBr",     x: "Br",     q: 1, end: "bromide",   rule: "hydro" },
+    // quiz acids
+    { stem: "hydroiodic",    f: "HI",      x: "I",      q: 1, end: "iodide",     rule: "hydro", wrong: ["iodate", "iodite"] },
+    { stem: "hydrofluoric",  f: "HF",      x: "F",      q: 1, end: "fluoride",   rule: "hydro", wrong: ["fluorate", "fluorite"] },
+    { stem: "nitrous",       f: "HNO2",    x: "NO2",    q: 1, end: "nitrite",    rule: "ous", poly: 1, wrong: ["nitrate", "nitride"] },
+    { stem: "chloric",       f: "HClO3",   x: "ClO3",   q: 1, end: "chlorate",   rule: "ic",  poly: 1, wrong: ["chloride", "chlorite"] },
+    { stem: "methanoic",     f: "HCOOH",   x: "HCOO",   q: 1, end: "methanoate", rule: "ic",  poly: 1, hLast: 1, wrong: ["methanide", "methanite"] },
+    { stem: "citric",        f: "C6H8O7",  x: "C6H5O7", q: 3, end: "citrate",    rule: "ic",  poly: 1, wrong: ["citride", "citrite"] },
+    { stem: "hydrosulfuric", f: "H2S",     x: "S",      q: 2, end: "sulfide",    rule: "hydro", wrong: ["sulfate", "sulfite"] },
+  ];
+  const EXPLORE = ACIDS.slice(0, 8), QUIZ = ACIDS.slice(8);
+  const RULES = {
+    hydro: { from: "hydro<b>…ic</b> acid", to: "<b>…ide</b>", ex: "hydrochloric → chloride, hydrobromic → bromide" },
+    ic:    { from: "<b>…ic</b> acid",      to: "<b>…ate</b>", ex: "sulfuric → sulfate, nitric → nitrate, ethanoic → ethanoate" },
+    ous:   { from: "<b>…ous</b> acid",     to: "<b>…ite</b>", ex: "sulfurous → sulfite" },
+  };
+  const RULE_HINT = {
+    hydro: "Acids that start with hydro- and end in -ic give salts ending in -ide.",
+    ic: "Acids ending in -ic (without hydro- at the start) give salts ending in -ate.",
+    ous: "Acids ending in -ous give salts ending in -ite.",
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const sub = (s) => s.replace(/(\d+)/g, "<sub>$1</sub>");
+  const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const acidBy = (stem) => ACIDS.find((a) => a.stem === stem);
+  const baseBy = (sym) => BASES.find((b) => b.sym === sym);
+
+  /* ============================ 4 CHEMISTRY ============================ */
+  // salt formula and balanced equation: L = lowest common multiple of the acid's H count and the metal's charge
+  function chem(acid, base) {
+    const L = (acid.q * base.v) / gcd(acid.q, base.v);
+    const nm = L / base.v, na = L / acid.q;
+    let salt;
+    if (acid.hLast && nm === 1 && na === 1) salt = acid.x + base.sym;
+    else salt = base.sym + (nm > 1 ? nm : "") + (na > 1 ? (acid.poly ? "(" + acid.x + ")" : acid.x) + na : acid.x);
+    const c = (n) => (n > 1 ? n + " " : "");
+    const formula = `${c(na)}${sub(acid.f)} + ${c(nm)}${sub(base.f)} → ${sub(salt)} + ${c(L)}H<sub>2</sub>O`;
+    return { salt, formula, name: `${base.name} ${acid.end}`, na, nm, L };
+  }
+  window.SALT = { ACIDS, BASES, chem };   // read by the tests and the worked solutions
+
+  function piece(cls, sym, nm) {
+    const d = document.createElement("div");
+    d.className = "piece " + cls;
+    d.innerHTML = `<span class="sym">${sub(sym)}</span><span class="nm">${nm}</span>`;
+    return d;
+  }
+
+  /* ============================ 5 EXPLORE ============================ */
+  let acid = EXPLORE[0], base = BASES[0], reacted = false, P = {};
+
+  function chip(cls, html, pressed, onClick) {
+    const b = document.createElement("button");
+    b.className = "chip " + cls; b.innerHTML = html; b.setAttribute("aria-pressed", pressed);
+    b.addEventListener("click", onClick);
+    return b;
+  }
+  function renderChips() {
+    const ac = (a) => chip("acid", `${a.stem} <small>${sub(a.f)}</small>`, a === acid, () => { acid = a; renderChips(); build(); });
+    $("acidChips").replaceChildren(...EXPLORE.filter((a) => a.lesson).map(ac));
+    $("acidChips2").replaceChildren(...EXPLORE.filter((a) => !a.lesson).map(ac));
+    $("baseChips").replaceChildren(...BASES.map((b) =>
+      chip("base", `${b.name} hydroxide <small>${sub(b.f)}</small>${b.note ? `<em>${b.note}</em>` : ""}`, b === base,
+        () => { base = b; renderChips(); build(); })));
+  }
+
+  function build() {
+    reacted = false;
+    P = {
+      h: piece("p-h", "H", "hydrogen"),
+      x: piece("p-x", acid.x, acid.stem),
+      m: piece("p-m", base.sym, base.name),
+      oh: piece("p-oh", "OH", "hydroxide"),
+    };
+    $("acidPieces").className = "pieces"; $("basePieces").className = "pieces";
+    $("acidPieces").replaceChildren(...(acid.hLast ? [P.x, P.h] : [P.h, P.x]));
+    $("basePieces").replaceChildren(P.m, P.oh);
+    $("saltPieces").replaceChildren(); $("waterPieces").replaceChildren();
+    $("saltPieces").className = "pieces empty"; $("waterPieces").className = "pieces empty";
+    $("acidCap").innerHTML = `<strong class="t-x">${acid.stem} acid</strong><span>${sub(acid.f)}</span>`;
+    $("baseCap").innerHTML = `<strong><span class="t-m">${base.name}</span> <span class="t-oh">hydroxide</span></strong><span>${sub(base.f)}</span>`;
+    $("saltCap").innerHTML = `<strong>salt</strong><span>?</span>`;
+    $("waterCap").innerHTML = `<strong>water</strong><span>?</span>`;
+    $("reactBtn").disabled = false; $("resetBtn").disabled = true;
+    renderText();
+  }
+
+  function renderText() {
+    const r = chem(acid, base);
+    const left = `<span class="t-x">${acid.stem} acid</span> + <span class="t-m">${base.name}</span> <span class="t-oh">hydroxide</span> → `;
+    $("eqWords").innerHTML = reacted
+      ? left + `<span class="t-m">${base.name}</span> <span class="t-x">${acid.end}</span> + water`
+      : left + `<span class="q">?</span> <span class="q">?</span> + <span class="q">?</span>`;
+    $("eqForm").innerHTML = reacted ? "With formulas: " + r.formula : "Predict the salt's name, then press React!";
+    const steps = [
+      `Split the acid: <span class="t-h">H</span> + the <span class="t-x">acid part</span> (${sub(acid.x)}).`,
+      `Split the alkali: the <span class="t-m">metal</span> (${base.name}) + <span class="t-oh">OH</span>.`,
+      `<span class="t-h">H</span> + <span class="t-oh">OH</span> join to make <b>water</b>, H<sub>2</sub>O.`,
+      `1st name = the metal: <span class="t-m">${base.name}</span>.`,
+      `2nd name from the acid: <span class="t-x">${acid.stem}</span> → <span class="t-x">${acid.end}</span>.`,
+      `Salt = <span class="t-m">${base.name}</span> <span class="t-x">${acid.end}</span> (${sub(r.salt)}).`,
+    ];
+    $("steps").innerHTML = steps.map((s, i) => `<li class="${!reacted && i >= 2 ? "dim" : ""}">${s}</li>`).join("");
+    $("rules").innerHTML = Object.entries(RULES).map(([k, r2]) =>
+      `<div class="rule ${k === acid.rule ? "on" : ""}"><span>${r2.from}</span><span class="arr">→</span><span>salt ending ${r2.to}</span>` +
+      `<span class="ex">${k === acid.rule ? `Your acid: <b>${acid.stem}</b> → <b>${acid.end}</b>` : r2.ex}</span></div>`).join("");
+  }
+
+  function flip(els, mutate) {
+    const first = new Map(els.map((e) => [e, e.getBoundingClientRect()]));
+    mutate();
+    if (reduceMotion) return;
+    els.forEach((e, i) => {
+      const a = first.get(e), b = e.getBoundingClientRect();
+      e.animate(
+        [{ transform: `translate(${a.left - b.left}px, ${a.top - b.top}px)` }, { transform: "none" }],
+        { duration: 850, delay: i * 180, easing: "cubic-bezier(.55,0,.2,1)", fill: "backwards" });
+    });
+  }
+
+  function react() {
+    if (reacted) return;
+    reacted = true;
+    flip([P.h, P.oh, P.m, P.x], () => {
+      $("waterPieces").replaceChildren(P.h, P.oh);
+      $("saltPieces").replaceChildren(P.m, P.x);
+      P.x.querySelector(".nm").textContent = acid.end;
+      $("acidPieces").className = "pieces empty"; $("basePieces").className = "pieces empty";
+      $("saltPieces").className = "pieces"; $("waterPieces").className = "pieces";
+      const r = chem(acid, base);
+      $("saltCap").innerHTML = `<strong><span class="t-m">${base.name}</span> <span class="t-x">${acid.end}</span></strong><span>${sub(r.salt)}</span>`;
+      $("waterCap").innerHTML = `<strong>water</strong><span>H<sub>2</sub>O</span>`;
+    });
+    $("reactBtn").disabled = true; $("resetBtn").disabled = false;
+    renderText();
+  }
+  $("reactBtn").addEventListener("click", react);
+  $("resetBtn").addEventListener("click", () => {
+    const els = [P.m, P.x, P.h, P.oh];
+    flip(els, () => {
+      $("acidPieces").replaceChildren(...(acid.hLast ? [P.x, P.h] : [P.h, P.x]));
+      $("basePieces").replaceChildren(P.m, P.oh);
+      P.x.querySelector(".nm").textContent = acid.stem;
+      $("acidPieces").className = "pieces"; $("basePieces").className = "pieces";
+      $("saltPieces").className = "pieces empty"; $("waterPieces").className = "pieces empty";
+      $("saltCap").innerHTML = `<strong>salt</strong><span>?</span>`;
+      $("waterCap").innerHTML = `<strong>water</strong><span>?</span>`;
+    });
+    reacted = false;
+    $("reactBtn").disabled = false; $("resetBtn").disabled = true;
+    renderText();
+  });
+
+  /* ============================ 6 QUIZ ============================ */
+  const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const FIRST_BASES = ["K", "Ca", "Na", "Mg", "Li", "Na", "K"];
+  let rounds = [], qi = 0, mistakes = 0, filled = [false, false], selected = null, firstGame = true;
+
+  function newGame() {
+    rounds = QUIZ.map((a, i) => ({
+      acid: a,
+      base: firstGame ? baseBy(FIRST_BASES[i]) : BASES[Math.floor(Math.random() * BASES.length)],
+      stars: 0,
+    }));
+    if (!firstGame) rounds = shuffle(rounds);
+    firstGame = false; qi = 0;
+    $("endCard").hidden = true; $("quizCard").hidden = false;
+    loadQ();
+  }
+
+  function stars(n) { return "★".repeat(n) + `<span class="off">${"★".repeat(3 - n)}</span>`; }
+
+  function loadQ() {
+    const { acid: a, base: b } = rounds[qi];
+    mistakes = 0; filled = [false, false]; selected = null;
+    $("qTitle").textContent = `Question ${qi + 1} of ${rounds.length}`;
+    $("dots").innerHTML = rounds.map((r, i) =>
+      `<span class="dot ${i < qi ? "done" : i === qi ? "now" : ""}" title="${i < qi ? r.stars + " stars" : ""}">${i < qi ? r.stars : i + 1}</span>`).join("");
+    const acidPieces = a.hLast ? [piece("p-x", a.x, a.stem), piece("p-h", "H", "hydrogen")] : [piece("p-h", "H", "hydrogen"), piece("p-x", a.x, a.stem)];
+    const blk = (pcs, cap) => { const d = document.createElement("div"); d.className = "block"; const p = document.createElement("div"); p.className = "pieces"; p.append(...pcs); d.append(p); d.insertAdjacentHTML("beforeend", `<div class="cap">${cap}</div>`); return d; };
+    const plus = document.createElement("div"); plus.className = "op"; plus.textContent = "+";
+    $("qBlocks").replaceChildren(
+      blk(acidPieces, `<strong class="t-x">${a.stem} acid</strong><span>${sub(a.f)}</span>`), plus,
+      blk([piece("p-m", b.sym, b.name), piece("p-oh", "OH", "hydroxide")], `<strong><span class="t-m">${b.name}</span> <span class="t-oh">hydroxide</span></strong><span>${sub(b.f)}</span>`));
+    $("qeq").innerHTML =
+      `<span><span class="t-x">${a.stem} acid</span> + <span class="t-m">${b.name}</span> <span class="t-oh">hydroxide</span></span><span>→</span>` +
+      `<button class="slot" data-slot="0" aria-label="first word of the salt"><span>1st word<small>drop here</small></span></button>` +
+      `<button class="slot" data-slot="1" aria-label="second word of the salt"><span>2nd word<small>drop here</small></span></button>` +
+      `<span>+ water</span>`;
+    $("qeq").querySelectorAll(".slot").forEach((s) => s.addEventListener("click", () => { if (selected) place(selected, +s.dataset.slot); }));
+    const others = shuffle(BASES.filter((x) => x !== b)).slice(0, 2).map((x) => x.name);
+    const words = shuffle([b.name, ...others, "hydrogen", "hydroxide", a.end, ...a.wrong]);
+    $("bank").replaceChildren(...words.map(makeTile));
+    $("feedback").className = "feedback";
+    $("feedback").textContent = "Which word comes from the alkali? Which comes from the acid?";
+    $("nextBtn").hidden = true;
+  }
+
+  function makeTile(word) {
+    const t = document.createElement("button");
+    t.className = "tile"; t.textContent = word; t.dataset.word = word;
+    let suppressClick = false;
+    t.addEventListener("click", () => {
+      if (suppressClick) { suppressClick = false; return; }
+      if (selected === t) { t.classList.remove("sel"); selected = null; return; }
+      document.querySelectorAll(".tile.sel").forEach((x) => x.classList.remove("sel"));
+      t.classList.add("sel"); selected = t;
+    });
+    t.addEventListener("pointerdown", (e) => {
+      if (e.button > 0) return;
+      const sx = e.clientX, sy = e.clientY;
+      let ghost = null, hot = null;
+      t.setPointerCapture(e.pointerId);
+      const slotAt = (x, y) => { const el = document.elementFromPoint(x, y); return el && el.closest(".slot:not(.ok-m):not(.ok-x)"); };
+      const move = (ev) => {
+        if (!ghost && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 6) {
+          ghost = t.cloneNode(true); ghost.classList.add("drag-ghost"); ghost.classList.remove("sel");
+          document.body.appendChild(ghost); t.classList.add("lifting");
+        }
+        if (!ghost) return;
+        ghost.style.left = ev.clientX + "px"; ghost.style.top = ev.clientY + "px";
+        const s = slotAt(ev.clientX, ev.clientY);
+        if (s !== hot) { hot && hot.classList.remove("hot"); hot = s; hot && hot.classList.add("hot"); }
+      };
+      const up = (ev) => {
+        t.removeEventListener("pointermove", move); t.removeEventListener("pointerup", up); t.removeEventListener("pointercancel", up);
+        if (!ghost) return;
+        suppressClick = true; setTimeout(() => (suppressClick = false), 0);
+        ghost.remove(); t.classList.remove("lifting"); hot && hot.classList.remove("hot");
+        const s = ev.type === "pointerup" && slotAt(ev.clientX, ev.clientY);
+        if (s) place(t, +s.dataset.slot);
+      };
+      t.addEventListener("pointermove", move); t.addEventListener("pointerup", up); t.addEventListener("pointercancel", up);
+    });
+    return t;
+  }
+
+  function hintFor(word, slot, a, b) {
+    const metals = BASES.map((x) => x.name);
+    if (word === "hydrogen") return "Hydrogen comes from the acid, but it does not stay in the salt. It joins OH to make water.";
+    if (word === "hydroxide") return "Hydroxide (OH) comes from the alkali, but it does not stay in the salt. It joins H to make water.";
+    if (slot === 0 && !metals.includes(word)) return "The 1st word of a salt is always the metal, and it comes from the alkali.";
+    if (slot === 1 && metals.includes(word)) return "The 2nd word comes from the acid, not from the alkali.";
+    if (slot === 0) return `Look at the alkali: ${b.name} hydroxide. Which metal is in it?`;
+    return `Look at the acid name: ${a.stem}. ${RULE_HINT[a.rule]}`;
+  }
+
+  function place(tile, slot) {
+    const { acid: a, base: b } = rounds[qi];
+    const word = tile.dataset.word;
+    const el = $("qeq").querySelector(`[data-slot="${slot}"]`);
+    if (filled[slot]) return;
+    tile.classList.remove("sel"); selected = null;
+    const right = slot === 0 ? word === b.name : word === a.end;
+    const fb = $("feedback");
+    if (!right) {
+      mistakes++;
+      el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake");
+      fb.className = "feedback bad"; fb.textContent = "Not quite. " + hintFor(word, slot, a, b);
+      return;
+    }
+    filled[slot] = true;
+    el.className = "slot " + (slot === 0 ? "ok-m" : "ok-x");
+    el.innerHTML = word; el.setAttribute("aria-disabled", "true");
+    tile.remove();
+    if (!(filled[0] && filled[1])) {
+      fb.className = "feedback good";
+      fb.textContent = slot === 0 ? `Yes! ${word} is the metal from the alkali. Now the 2nd word.` : `Yes! ${a.stem} acid gives ${word}. Now the 1st word.`;
+      return;
+    }
+    const r = chem(a, b);
+    const s = mistakes === 0 ? 3 : mistakes === 1 ? 2 : 1;
+    rounds[qi].stars = s; rounds[qi].mistakes = mistakes;
+    fb.className = "feedback good";
+    fb.innerHTML = `<div class="stars">${stars(s)}</div><b><span class="t-m">${b.name}</span> <span class="t-x">${a.end}</span></b>, ${sub(r.salt)}<br><span class="hint">${r.formula}</span>` +
+      `<div class="mini" style="margin-top:8px">${piece("p-m", b.sym, b.name).outerHTML}${piece("p-x", a.x, a.end).outerHTML}<span class="op" style="padding:0 6px;font-size:1.3rem">+</span>${piece("p-h", "H", "hydrogen").outerHTML}${piece("p-oh", "OH", "hydroxide").outerHTML}</div>`;
+    $("bank").replaceChildren();
+    const btn = $("nextBtn");
+    btn.hidden = false; btn.textContent = qi === rounds.length - 1 ? "See my result →" : "Next acid →";
+    btn.focus();
+  }
+
+  $("nextBtn").addEventListener("click", () => {
+    if (qi < rounds.length - 1) { qi++; loadQ(); } else finish();
+  });
+  $("againBtn").addEventListener("click", newGame);
+
+  function finish() {
+    const total = rounds.reduce((n, r) => n + r.stars, 0);
+    const firstTime = rounds.filter((r) => r.stars === 3).length;
+    $("endScore").textContent = `${firstTime}/7`;
+    $("endStars").textContent = total;
+    $("endMsg").textContent = firstTime === 7 ? "Perfect! You can name any salt from an acid and an alkali."
+      : firstTime >= 5 ? "Great work. Check the ones with fewer stars and look at the acid ending rule again."
+      : "Go back to Explore and watch which parts swap, then try again.";
+    $("review").innerHTML = rounds.map((r) => {
+      const c = chem(r.acid, r.base);
+      return `<li><span>${r.acid.stem} acid + ${r.base.name} hydroxide → <b><span class="t-m">${r.base.name}</span> <span class="t-x">${r.acid.end}</span></b> (${sub(c.salt)})</span><span class="stars">${stars(r.stars)}</span></li>`;
+    }).join("");
+    $("quizCard").hidden = true; $("endCard").hidden = false;
+  }
+
+  /* ============================ 7 TASKS ============================ */
+  // Step types: "do" (instruction + Done tick), "predict" (lock in a choice, test it, then check),
+  // "word" (a typed name, checked against the accepted answers; hint; model answer after 2 tries).
+  // "setup" = {acid, base} picks the chemicals in Explore for the student.
+  const TASKS = [
+   {id:"pre", title:"1 · Pre-lab", time:"predict · 15 min", steps:[
+    {type:"predict", setup:{acid:"hydrochloric", base:"Na"},
+     text:"Hydrochloric acid and sodium hydroxide are set up. Don't press React! yet. What will the reaction make?",
+     opts:["a salt and hydrogen gas", "a salt and water", "only water", "nothing — they just mix"], correct:1,
+     why:"Acid + alkali → salt + water. This reaction is called <b>neutralisation</b>. (Hydrogen gas is made when an acid reacts with a metal, not with an alkali.)"},
+    {type:"do", setup:{acid:"hydrochloric", base:"Na"},
+     text:"Press <b>React!</b> and watch the four pieces. On your worksheet, write which two pieces make water and which two make the salt."},
+    {type:"predict", text:"Where does the <b>1st name</b> of the salt come from?",
+     opts:["the acid", "the water", "the metal in the alkali", "the hydrogen"], correct:2,
+     why:"The <span class='t-m'>metal</span> (blue) leaves the alkali and joins the acid part. It gives the 1st name: <b>sodium</b> chloride."},
+    {type:"predict", text:"What happens to the <span class='t-h'>H</span> from the acid and the <span class='t-oh'>OH</span> from the alkali?",
+     opts:["They make the salt", "They escape as a gas", "They stay in the acid", "They join to make water, H₂O"], correct:3,
+     why:"H + OH → H<sub>2</sub>O. That is why every acid + alkali reaction makes water."},
+    {type:"word", setup:{acid:"hydrochloric", base:"K"},
+     text:"Name the salt: hydrochloric acid + potassium hydroxide → ______ + water. Type it, then press React! to check.",
+     accept:["potassium chloride"], answer:"potassium chloride",
+     hint:"1st word = the metal in the alkali. 2nd word: hydrochloric → chloride."},
+    {type:"word", setup:{acid:"sulfuric", base:"Na"},
+     text:"Name the salt: sulfuric acid + sodium hydroxide → ______ + water.",
+     accept:["sodium sulfate"], answer:"sodium sulfate",
+     hint:"Acids ending in -ic give salts ending in -ate: sulfuric → sulfate."},
+   ]},
+   {id:"lab", title:"2 · During the lab", time:"compare · 10 min", steps:[
+    {type:"do", setup:{acid:"hydrochloric", base:"Na"},
+     text:"In Activity 9 you add hydrochloric acid to sodium hydroxide drop by drop. The same two chemicals are set up here. Press <b>React!</b>"},
+    {type:"word", text:"Name the salt you are making in the lab.",
+     accept:["sodium chloride", "table salt", "salt sodium chloride"], answer:"sodium chloride (table salt)",
+     hint:"Look at the salt box after React!: metal from the alkali + chloride from hydrochloric acid."},
+    {type:"word", text:"What is the other product, apart from the salt?",
+     accept:["water", "h2o"], answer:"water (H₂O)", hint:"H + OH → ?"},
+    {type:"predict", text:"Universal indicator is in your flask. What colour is it when the solution is exactly neutral (pH 7)?",
+     opts:["red", "yellow", "green", "purple"], correct:2,
+     why:"Neutral = pH 7 = <b>green</b>. When the acid and the alkali are added in the right amounts, only salt and water are left."},
+    {type:"predict", text:"You heat the neutral solution in an evaporating dish. White crystals are left. What are they?",
+     opts:["dried acid", "sodium chloride (salt) crystals", "sodium hydroxide", "universal indicator"], correct:1,
+     why:"The water evaporates (turns into a gas) and the salt, sodium chloride, is left behind as crystals."},
+    {type:"word", setup:{acid:"hydrochloric", base:"K"},
+     text:"Another group used potassium hydroxide instead of sodium hydroxide. Which salt did they make?",
+     accept:["potassium chloride"], answer:"potassium chloride",
+     hint:"Only the metal changes. The acid is still hydrochloric acid → chloride."},
+   ]},
+   {id:"hw", title:"3 · Homework", time:"analyse · 20 min", steps:[
+    {type:"word", setup:{acid:"nitric", base:"Ca"},
+     text:"nitric acid + calcium hydroxide → ______ + water",
+     accept:["calcium nitrate"], answer:"calcium nitrate", hint:"nitric ends in -ic → -ate."},
+    {type:"word", setup:{acid:"phosphoric", base:"Na"},
+     text:"Challenge acid: phosphoric acid + sodium hydroxide → ______ + water",
+     accept:["sodium phosphate"], answer:"sodium phosphate", hint:"phosphoric ends in -ic → -ate."},
+    {type:"word", setup:{acid:"ethanoic", base:"K"},
+     text:"Ethanoic acid is the acid in vinegar. ethanoic acid + potassium hydroxide → ______ + water",
+     accept:["potassium ethanoate", "potassium acetate"], answer:"potassium ethanoate",
+     hint:"ethanoic ends in -ic → -ate."},
+    {type:"predict", setup:{acid:"sulfurous", base:"Na"},
+     text:"Sulfurous acid ends in <b>-ous</b>. Which ending will its salts have? Lock in, then press React!",
+     opts:["-ate (sulfate)", "-ide (sulfide)", "-ite (sulfite)"], correct:2,
+     why:"…ous acid → …ite salt: sulfurous → <b>sulfite</b>, so the salt is sodium sulfite. (Sulfate comes from sulfuric acid.)"},
+    {type:"word", setup:{acid:"hydrobromic", base:"Mg"},
+     text:"hydrobromic acid + magnesium hydroxide → ______ + water",
+     accept:["magnesium bromide"], answer:"magnesium bromide",
+     hint:"hydro…ic acids give -ide salts: hydrobromic → bromide."},
+    {type:"word", text:"Work backwards: a fertiliser bag says <b>potassium nitrate</b>. Which <b>acid</b> could make it?",
+     accept:["nitric acid", "nitric"], answer:"nitric acid", hint:"-ate comes from an -ic acid: nitrate ← nitric."},
+    {type:"word", setup:{acid:"nitric", base:"K"},
+     text:"…and which <b>alkali</b>? Then check: the sim is set up with your answer to the last question.",
+     accept:["potassium hydroxide", "koh"], answer:"potassium hydroxide",
+     hint:"The 1st name of the salt is the metal from the alkali."},
+   ]},
+  ];
+  let taskState = {}, curSet = "pre";
+  const norm = (s) => String(s).toLowerCase().replace(/sulph/g, "sulf").replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+  const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+
+  function renderTaskSets() {
+    $("taskSets").innerHTML = TASKS.map((s) =>
+      `<button class="chip set" data-set="${s.id}" aria-pressed="${s.id === curSet}">${s.title} <span class="hint">${s.time}</span></button>`).join("");
+  }
+  function renderTasks() {
+    const ts = TASKS.find((s) => s.id === curSet), box = $("taskList"); box.innerHTML = "";
+    ts.steps.forEach((st, i) => {
+      const key = `${ts.id}.${i}`, S = taskState[key] || (taskState[key] = {});
+      const d = document.createElement("div"); d.className = "step" + (S.done ? " done" : "");
+      let html = `<p class="qq"><span class="n">${i + 1}</span>${st.type === "predict" ? '<span class="tag">Predict · </span>' : ""}${st.text}</p>`;
+      if (st.setup) html += `<p><button class="btn small" data-setup="${key}">⚙ Set it up for me</button></p>`;
+      if (st.type === "do") {
+        html += `<label class="switch"><input type="checkbox" data-done="${key}" ${S.done ? "checked" : ""}> Done</label>`;
+      } else if (st.type === "predict") {
+        st.opts.forEach((o, j) => {
+          const cls = S.checked ? (j === st.correct ? " good" : j === S.choice ? " bad" : "") : "";
+          html += `<label class="opt${cls}"><input type="radio" name="r${key}" value="${j}" data-choice="${key}" ${S.choice === j ? "checked" : ""} ${S.locked ? "disabled" : ""}> ${o}</label>`;
+        });
+        if (!S.locked) html += `<button class="btn small primary" data-lock="${key}" ${S.choice === undefined ? "disabled" : ""}>🔒 Lock in my prediction</button>`;
+        else if (!S.checked) html += `<div class="fb info">Prediction locked. Now test it in the simulation, then press Check.</div><button class="btn small navy" data-check="${key}">Check</button>`;
+        else html += `<div class="fb ${S.choice === st.correct ? "ok" : "no"}">${S.choice === st.correct ? "✔ Your prediction was right. " : "✘ Not what happens. "}${st.why}</div>`;
+      } else if (st.type === "word") {
+        html += `<div class="wrow"><input class="word" data-word="${key}" value="${esc(S.value ?? "")}" aria-label="your answer" autocomplete="off" spellcheck="false">
+                 <button class="btn small navy" data-chkword="${key}">Check</button>
+                 ${st.hint ? `<button class="btn small" data-hint="${key}">💡 Hint</button>` : ""}</div>`;
+        if (S.showHint && st.hint) html += `<div class="fb info">${st.hint}</div>`;
+        if (S.status === "ok") html += `<div class="fb ok">✔ Correct: ${st.answer}.</div>`;
+        else if (S.status) html += `<div class="fb no">✘ ${S.status === "empty" ? "Type your answer first." : "Not yet."} ${S.tries >= 2 ? `Answer: <b>${st.answer}</b>.` : "Try again or use the hint."}</div>`;
+      }
+      d.innerHTML = html; box.appendChild(d);
+    });
+  }
+  function applySetup(su) {
+    acid = acidBy(su.acid); base = baseBy(su.base);
+    renderChips(); build();
+  }
+  function taskClick(e) {
+    const t = e.target.closest("[data-setup],[data-lock],[data-check],[data-chkword],[data-hint],[data-set]"); if (!t) return;
+    if (t.dataset.set) { curSet = t.dataset.set; renderTaskSets(); renderTasks(); save(); return; }
+    const key = t.dataset.setup || t.dataset.lock || t.dataset.check || t.dataset.chkword || t.dataset.hint;
+    const [sid, idx] = key.split("."), st = TASKS.find((s) => s.id === sid).steps[+idx], S = taskState[key];
+    if (t.dataset.setup) applySetup(st.setup);
+    if (t.dataset.lock) S.locked = true;
+    if (t.dataset.check) { S.checked = true; S.done = true; }
+    if (t.dataset.hint) S.showHint = true;
+    if (t.dataset.chkword) checkWord(key, st, S);
+    save(); renderTasks();
+  }
+  function checkWord(key, st, S) {
+    const v = norm(document.querySelector(`[data-word="${key}"]`).value);
+    S.value = document.querySelector(`[data-word="${key}"]`).value;
+    if (!v) { S.status = "empty"; return; }
+    S.tries = (S.tries || 0) + 1;
+    if (st.accept.map(norm).includes(v)) { S.status = "ok"; S.done = true; } else S.status = "no";
+  }
+  function taskChange(e) {
+    const t = e.target;
+    if (t.dataset.choice) { taskState[t.dataset.choice].choice = +t.value; renderTasks(); save(); }
+    if (t.dataset.done) { taskState[t.dataset.done].done = t.checked; renderTasks(); save(); }
+  }
+  $("taskSets").addEventListener("click", taskClick);
+  $("taskList").addEventListener("click", taskClick);
+  $("taskList").addEventListener("change", taskChange);
+  $("taskList").addEventListener("input", (e) => { const k = e.target.dataset.word; if (k) { taskState[k].value = e.target.value; save(); } });
+  $("taskList").addEventListener("keydown", (e) => {
+    const k = e.target.dataset.word; if (!k || e.key !== "Enter") return;
+    const [sid, idx] = k.split("."); checkWord(k, TASKS.find((s) => s.id === sid).steps[+idx], taskState[k]); save(); renderTasks();
+    const inp = document.querySelector(`[data-word="${k}"]`); inp && inp.focus();
+  });
+
+  /* ============================ 8 UI ============================ */
+  const STORE = "g7-salt-naming";
+  function save() { try { localStorage.setItem(STORE, JSON.stringify({ taskState, curSet })); } catch (e) {} }
+  function load() { try { const d = JSON.parse(localStorage.getItem(STORE) || "{}"); taskState = d.taskState || {}; curSet = d.curSet || "pre"; } catch (e) {} }
+
+  function showTab(which) {
+    const quiz = which === "quiz";
+    $("tab-explore").setAttribute("aria-selected", !quiz);
+    $("tab-quiz").setAttribute("aria-selected", quiz);
+    $("explore").hidden = quiz; $("quiz").hidden = !quiz;
+  }
+  $("tab-explore").addEventListener("click", () => showTab("explore"));
+  $("tab-quiz").addEventListener("click", () => showTab("quiz"));
+  document.querySelectorAll("[data-side]").forEach((t) => t.addEventListener("click", () => {
+    document.querySelectorAll("[data-side]").forEach((x) => x.setAttribute("aria-selected", x === t));
+    $("sp-rules").classList.toggle("on", t.dataset.side === "rules");
+    $("sp-tasks").classList.toggle("on", t.dataset.side === "tasks");
+  }));
+
+  $("helpBtn").addEventListener("click", () => $("help").classList.add("on"));
+  $("helpClose").addEventListener("click", () => $("help").classList.remove("on"));
+  $("help").addEventListener("click", (e) => { if (e.target.id === "help") $("help").classList.remove("on"); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("help").classList.remove("on"); });
+
+  load(); renderChips(); build(); newGame(); renderTaskSets(); renderTasks();
+})();
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
