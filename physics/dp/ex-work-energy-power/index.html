@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Exercises – Work, energy and power</title>
+<style>
+:root{--navy:#1F3A5F;--accent:#E65100;--ink:#263238;--muted:#606A72;--bg:#F2F5F9;--line:#DDE6F0;
+  --ok:#2E7D32;--okbg:#E8F5E9;--bad:#C62828;--badbg:#FFEBEE;--blue:#1565C0;--bluebg:#E3F2FD;--a:#2055A3}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif}
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+header h1{margin:0;font-size:1.4rem} header p{margin:2px 0 0;opacity:.85;font-size:.95rem}
+.hl{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+a.home{color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.5);border-radius:8px;padding:8px 12px;font-weight:600;min-height:40px;display:inline-flex;align-items:center}
+a.home:hover{background:rgba(255,255,255,.12)}
+.credit{text-align:right;font-size:.85rem;line-height:1.35;opacity:.92} .credit a{color:#fff}
+main{max-width:1100px;margin:0 auto;padding:16px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 20px}
+.intro h2{margin:0 0 6px;color:var(--navy)} .intro p{margin:6px 0} .intro a{color:var(--navy);font-weight:600}
+.intro ul{margin:4px 0 8px;padding-left:20px;columns:2} @media (max-width:600px){.intro ul{columns:1}}
+.levels{display:flex;gap:10px;margin:14px 0 8px;flex-wrap:wrap}
+.lvbtn{flex:1;min-width:200px;text-align:left;border:2px solid var(--line);background:#fff;border-radius:12px;padding:10px 14px;cursor:pointer;font:inherit;color:var(--ink);min-height:56px}
+.lvbtn b{display:block;color:var(--navy);font-size:1.05rem} .lvbtn small{color:var(--muted)}
+.lvbtn[aria-selected=true]{border-color:var(--a);background:#EAF1FB;box-shadow:inset 0 -4px 0 var(--a)}
+.lvbar{position:sticky;top:0;z-index:5;background:var(--bg);padding:8px 0;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.lvbar #lvdesc{flex:1 1 100%;color:var(--ink);font-size:.95rem}
+.pbar{flex:1;min-width:120px;height:10px;background:#DDE6F0;border-radius:6px;overflow:hidden} .pbar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+#score{font-weight:700;color:var(--navy);white-space:nowrap} #best{color:var(--muted);font-size:.9rem;white-space:nowrap}
+.btn{border:0;border-radius:8px;padding:10px 16px;font:inherit;font-weight:700;min-height:44px;cursor:pointer}
+.btn.sm{padding:7px 12px;min-height:40px;font-size:.95rem}
+.primary{background:var(--accent);color:#fff} .primary:disabled{background:#BFC7CF;cursor:default}
+.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)} .ghost:hover{border-color:var(--navy)}
+.link{background:none;color:var(--blue);text-decoration:underline;padding-left:4px}
+.ex{margin:14px 0}
+.exhead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+.exhead h3{margin:0;color:var(--navy);font-size:1.12rem;flex:1;min-width:160px}
+.num{background:var(--a);color:#fff;border-radius:6px;padding:2px 8px;font-weight:700;font-size:.9rem}
+.tag{font-size:.75rem;font-weight:700;color:var(--a);text-transform:uppercase;letter-spacing:.03em}
+.mkb{font-size:.8rem;color:var(--muted);border:1px solid var(--line);border-radius:12px;padding:1px 8px}
+.body{display:grid;gap:12px} @media (min-width:900px){.body.hasfig{grid-template-columns:minmax(0,1fr) minmax(0,440px)}}
+.stem{margin:0 0 4px;font-size:1.04rem}
+svg.fig{max-width:100%;height:auto;display:block;margin:4px auto;background:#fff}
+table.dt{border-collapse:collapse;margin:8px 0;font-size:.95rem} table.dt th,table.dt td{border:1px solid #B0BEC5;padding:4px 10px;text-align:center} table.dt th{background:var(--bluebg);text-align:left}
+.given{background:#F5F7FA;border-left:5px solid #90A4AE;border-radius:6px;padding:8px 12px;margin:8px 0;font-size:.95rem}
+ol.parts{list-style:none;margin:6px 0 0;padding:0}
+.part{border-top:1px solid var(--line);padding:10px 0}
+.part.done .pq::after{content:" ✔";color:var(--ok);font-weight:700}
+.pq{margin-bottom:6px} .pm{color:var(--muted);font-size:.9rem;white-space:nowrap}
+.ans{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ans input{font:inherit;font-size:1.05rem;width:150px;padding:8px 10px;border:2px solid var(--line);border-radius:8px;min-height:44px}
+.ans input:focus{border-color:var(--navy);outline:none} .ans input:disabled{background:#F5F7FA}
+.unit{min-width:44px;font-weight:600;color:var(--navy)}
+.sr{position:absolute;left:-9999px}
+.hintbox{margin-top:8px;background:#FFF8E1;border-left:5px solid #F9A825;border-radius:6px;padding:8px 12px}
+.fbk{margin-top:8px;border-radius:8px;padding:0} .fbk:empty{display:none}
+.fbk.ok{background:var(--okbg);color:var(--ok);padding:8px 12px;font-weight:600} .fbk.no{background:var(--badbg);color:var(--bad);padding:8px 12px}
+.sol{margin-top:10px;border:1px solid #C5D5EA;border-radius:10px;overflow:hidden}
+.st{display:grid;grid-template-columns:118px 1fr;gap:10px;padding:8px 12px;border-top:1px solid #E3EAF3} .st:first-child{border-top:0}
+.st>b{color:var(--navy);font-size:.9rem} .st .sfig{grid-column:1/-1} .st .sfig svg{margin:2px 0;max-width:min(100%,560px)} .s5{background:#EEF6EE} .s2{background:#F6F9FD}
+@media (max-width:600px){.st{grid-template-columns:1fr;gap:2px}}
+.wl{padding:1px 0} .mk{color:var(--ok);font-weight:700;white-space:nowrap;margin-left:4px}
+.foot{color:var(--muted);font-size:.9rem;text-align:center;margin:20px 0}
+[hidden]{display:none!important}
+@media (max-width:759px){.lvbar{position:static}}
+@media (max-width:600px){.credit{text-align:left}header h1{font-size:1.2rem}.card{padding:12px 14px}.lvbtn{min-width:100%}}
+/* ==== PHONE CSS START: compact header on phones (10 Oct 2026); wider screens unchanged ==== */
+@media (max-width:759px){
+  header{padding:10px 14px;gap:8px}
+  header h1{font-size:1.15rem}
+  header p{font-size:.85rem}
+  .hl{gap:8px;width:100%}
+  a.home,.qbtn{min-height:40px;padding:6px 10px;font-size:.88rem}
+  .credit{flex-basis:100%;text-align:left;font-size:.75rem}
+  .credit br{display:none} .credit a{margin-left:6px}
+}
+/* ==== PHONE CSS END ==== */
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Exercises: Work, energy and power</h1>
+    <p>IBDP Physics SL · Grade 11 · A.3 Work, energy and power · 24 calculation exercises in three IB levels</p>
+  </div>
+  <div class="hl"><a class="home" href="https://school.taneski.com/physics/dp/">← All topics</a><div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div></div>
+</header>
+<main>
+  <section class="card intro">
+    <h2>Practise the calculations: Work, energy and power</h2>
+    <p>Exam-style practice on work, kinetic, gravitational and elastic energy, energy conservation, power, efficiency and Sankey diagrams. Work on paper first, then type your final answer (the unit is already shown) and press <b>Check</b>.
+      Answers within 2 % count, and so do answers rounded to 2 significant figures. You get two tries; then a <b>worked solution</b> appears in the IB 5-part layout
+      (Given → Physics → Equation → Working → Answer, with ✔ [1] mark points). <b>↻ New numbers</b> gives you the same exercise again with different data.
+      Use g = 9.81 m s⁻². Your best score stays on this device only.</p>
+    <p>Practise with the simulations first: </p><ul><li><a href="https://school.taneski.com/physics/dp/19-work-done/" target="_blank" rel="noopener">Work done</a></li><li><a href="https://school.taneski.com/physics/dp/20-energy-conservation/" target="_blank" rel="noopener">Energy conservation</a></li><li><a href="https://school.taneski.com/physics/dp/21-power/" target="_blank" rel="noopener">Power</a></li><li><a href="https://school.taneski.com/physics/dp/22-efficiency-energy-density/" target="_blank" rel="noopener">Efficiency and energy density</a></li></ul>
+    <p><a href="exercises.pdf" data-goatcounter-click="download/ex-work-energy-power/exercises.pdf">Printable version (PDF)</a> — the same exercises to do on paper.</p>
+  </section>
+  <nav class="levels" role="tablist" aria-label="Levels">
+    <button class="lvbtn" role="tab" data-l="1"><b>Level 1 · Paper 1 style</b><small></small></button>
+    <button class="lvbtn" role="tab" data-l="2"><b>Level 2 · Multi-step</b><small></small></button>
+    <button class="lvbtn" role="tab" data-l="3"><b>Level 3 · Paper 2 structured</b><small></small></button>
+  </nav>
+  <div class="lvbar"><span id="lvdesc"></span><span id="score"></span><div class="pbar"><i id="bar"></i></div><span id="best"></span>
+    <button class="btn ghost sm" id="reset" title="Clear the answers on this level">↺ Start this level again</button></div>
+  <div id="list"></div>
+  <p class="foot">Original IB-style exercises written for this course (many adapted from our problem sets with new numbers).</p>
+</main>
+<script>
+const DATA = {"slug": "ex-work-energy-power", "title": "Work, energy and power", "ex": [{"level": 1, "title": "Lifting a box", "tag": "A.3 · Work and energy", "stem": "A {m} kg box is lifted vertically through {h} m at constant speed. Calculate the work done on the box by the lifting force.", "parts": [{"label": "", "q": "Work done", "unit": "J", "ans": "m*g*h", "marks": 2, "hint": "Constant speed: lifting force = mg. W = F s.", "phys": "At constant speed the lifting force equals the weight; force and displacement are in the same direction.", "eq": "W = F s = mgh", "work": ["F = {m} × 9.81 = {m*g} N [M]", "W = {m*g} × {h}"], "answer": "W = {m*g*h} J [M]", "kind": "num", "sfig": ""}], "vars": {"m": [3.0, 1.0, 8.0, 0.5, 2], "h": [1.7, 0.8, 2.0, 0.1, 2]}, "calc": {}, "given": "m = {m} kg, h = {h} m, constant speed.", "fig": "", "require": null, "fixed": false}, {"level": 1, "title": "Pulling at an angle", "tag": "A.3 · Work and energy", "stem": "A force of {F} N acting at {th}° above the horizontal pulls a box {s} m along a level floor. Calculate the work done by the force.", "parts": [{"label": "", "q": "Work done by the force", "unit": "J", "ans": "F*s*cos(th)", "marks": 2, "hint": "Only the component along the displacement does work: W = Fs cos θ.", "phys": "θ is the angle between the force and the displacement.", "eq": "W = F s cos θ", "work": ["W = {F} × {s} × cos {th}° [M]"], "answer": "W = {F*s*cos(th)} J [M]", "kind": "num", "sfig": ""}], "vars": {"F": [40.0, 20, 60, 5, 2], "th": [50.0, 20, 60, 5, 2], "s": [14.0, 5, 20, 1, 2]}, "calc": {}, "given": "F = {F} N, θ = {th}°, s = {s} m.", "fig": "", "require": null, "fixed": false}, {"level": 1, "title": "Runner's kinetic energy", "tag": "A.3 · Work and energy", "stem": "Calculate the kinetic energy of a {m} kg runner moving at {v} m s⁻¹.", "parts": [{"label": "", "q": "Kinetic energy", "unit": "J", "ans": "0.5*m*v**2", "marks": 1, "hint": "E_k = ½mv².", "phys": "", "eq": "E_k = ½ m v²", "work": ["E_k = ½ × {m} × {v}²"], "answer": "E_k = {0.5*m*v**2} J [M]", "kind": "num", "sfig": ""}], "vars": {"m": [72.0, 50, 90, 1, 2], "v": [10.0, 5.0, 10.0, 0.5, 2]}, "calc": {}, "given": "m = {m} kg, v = {v} m s⁻¹.", "fig": "", "require": null, "fixed": false}, {"level": 1, "title": "Speed from kinetic energy", "tag": "A.3 · Work and energy", "stem": "A {m} kg football has {Ek} J of kinetic energy. Calculate its speed.", "parts": [{"label": "", "q": "Speed", "unit": "m s⁻¹", "ans": "sqrt(2*Ek/m)", "marks": 2, "hint": "Rearrange E_k = ½mv² for v.", "phys": "", "eq": "v = √(2E_k / m)", "work": ["v = √(2 × {Ek} / {m}) [M]"], "answer": "v = {sqrt(2*Ek/m)} m s⁻¹ [M]", "kind": "num", "sfig": ""}], "vars": {"m": [0.43, 0.4, 0.45, 0.01, 2], "Ek": [60.0, 20, 80, 5, 2]}, "calc": {}, "given": "m = {m} kg, E_k = {Ek} J.", "fig": "", "require": null, "fixed": false}, {"level": 1, "title": "Stretched spring", "tag": "A.3 · Work and energy", "stem": "A spring with spring constant {k} N m⁻¹ is stretched by {x} cm. Calculate the elastic potential energy stored.", "parts": [{"label": "", "q": "Elastic potential energy", "unit": "J", "ans": "0.5*k*(x/100)**2", "marks": 2, "hint": "E_p = ½kΔx² with Δx in metres.", "phys": "Convert cm to m before squaring.", "eq": "E_p = ½ k Δx²", "work": ["Δx = {x/100:2} m [M]", "E_p = ½ × {k} × {x/100:2}²"], "answer": "E_p = {0.5*k*(x/100)**2} J [M]", "kind": "num", "sfig": ""}], "vars": {"k": [100.0, 40, 200, 10, 2], "x": [6.0, 2.0, 10.0, 0.5, 2]}, "calc": {}, "given": "k = {k} N m⁻¹, Δx = {x} cm.", "fig": "", "require": null, "fixed": false}, {"level": 1, "title": "Winch", "tag": "A.3 · Power and efficiency", "stem": "A winch lifts a {m} kg load through {h} m at constant speed in {t} s. Calculate the useful power output of the winch.", "parts": [{"label": "", "q": "Useful power", "unit": "W", "ans": "m*g*h/t", "marks": 2, "hint": "Work done = mgh; P = W / t.", "phys": "Useful energy = gain in GPE.", "eq": "P = mgh / t", "work": ["W = {m} × 9.81 × {h} = {m*g*h} J [M]", "P = {m*g*h} / {t}"], "answer": "P = {m*g*h/t} W [M]", "kind": "num", "sfig": ""}], "vars": {"m": [22.0, 10, 40, 1, 2], "h": [4.0, 2.0, 6.0, 0.5, 2], "t": [5.0, 2.0, 8.0, 0.5, 2]}, "calc": {}, "given": "m = {m} kg, h = {h} m, t = {t} s.", "fig": "", "require": null, "fixed": false}, {"level": 1, "title": "Motor efficiency", "tag": "A.3 · Power and efficiency", "stem": "An electric motor takes in {Pin} W and delivers {Pu} W of useful mechanical power. Calculate its efficiency.", "parts": [{"label": "", "q": "Efficiency (as a percentage)", "unit": "%", "ans": "Pu/Pin*100", "marks": 1, "hint": "η = useful output / total input.", "phys": "Efficiency compares useful output with input.", "eq": "η = P_useful / P_input", "work": ["η = {Pu} / {Pin} = {Pu/Pin}"], "answer": "η = {Pu/Pin*100} % [M]", "kind": "num", "sfig": "SANKEY|Pin|Pu|useful (kinetic)|wasted (thermal, sound)|W"}], "vars": {"Pin": [220.0, 100, 400, 10, 2], "Pu": [170.0, 50, 300, 10, 2]}, "calc": {}, "given": "P_in = {Pin} W, P_useful = {Pu} W.", "fig": "", "require": "min(0.9*Pin - Pu, Pu - 0.3*Pin) > 0", "fixed": false}, {"level": 1, "title": "Hair dryer", "tag": "A.3 · Power and efficiency", "stem": "A {P} kW hair dryer is used for {t} minutes.", "parts": [{"label": "(a)", "q": "Calculate the energy used in kWh.", "unit": "kWh", "ans": "P*t/60", "marks": 1, "hint": "E = P t with P in kW and t in hours.", "phys": "", "eq": "E = P t", "work": ["E = {P} kW × {t/60:3} h"], "answer": "E = {P*t/60} kWh [M]", "kind": "num", "sfig": ""}, {"label": "(b)", "q": "Calculate the energy used in joules.", "unit": "J", "ans": "P*1000*t*60", "marks": 1, "hint": "1 kWh = 3.6 × 10⁶ J, or use W and s.", "phys": "", "eq": "E = P t (SI units)", "work": ["E = {P*1000:3} W × {t*60:3} s"], "answer": "E = {P*1000*t*60} J [M]", "kind": "num", "sfig": ""}], "vars": {"P": [2.0, 1.2, 2.4, 0.1, 2], "t": [12.0, 5, 20, 1, 2]}, "calc": {}, "given": "P = {P} kW, t = {t} min.", "fig": "", "require": null, "fixed": false}, {"level": 2, "title": "Swinging pendulum", "tag": "A.3 · Energy conservation", "stem": "A pendulum of length {L} m is pulled aside until the string makes {th}° with the vertical, and is released from rest. Air resistance is negligible.", "parts": [{"label": "(a)", "q": "Calculate the height through which the bob falls to its lowest point.", "unit": "m", "ans": "L*(1 - cos(th))", "marks": 2, "hint": "Height = L − L cos θ.", "phys": "The bob starts L cos θ below the pivot and ends L below it.", "eq": "h = L(1 − cos θ)", "work": ["h = {L} × (1 − cos {th}°) [M]"], "answer": "h = {L*(1 - cos(th))} m [M]", "kind": "num", "sfig": ""}, {"label": "(b)", "q": "Calculate the maximum speed of the bob.", "unit": "m s⁻¹", "ans": "sqrt(2*g*L*(1 - cos(th)))", "marks": 2, "hint": "GPE lost = KE gained (mass cancels).", "phys": "Energy is conserved: the tension does no work (it is perpendicular to the motion).", "eq": "mgh = ½mv²  →  v = √(2gh)", "work": ["½mv² = mgh [M]", "v = √(2 × 9.81 × {L*(1 - cos(th))})"], "answer": "v = {sqrt(2*g*L*(1 - cos(th)))} m s⁻¹ [M]", "kind": "num", "sfig": ""}], "vars": {"L": [1.2, 0.5, 2.0, 0.1, 2], "th": [35.0, 15, 60, 5, 2]}, "calc": {}, "given": "L = {L} m, θ = {th}°, u = 0.", "fig": "", "require": null, "fixed": false}, {"level": 2, "title": "Braking distance from work done", "tag": "A.3 · Work and energy", "stem": "A {m} kg car travelling at {u} m s⁻¹ brakes with a constant braking force of {F} kN until it stops. Use the work–energy principle to calculate the braking distance.", "parts": [{"label": "", "q": "Braking distance", "unit": "m", "ans": "0.5*m*u**2/(F*1000)", "marks": 3, "hint": "All the kinetic energy is removed by the work done by the brakes: F s = ½mu².", "phys": "Work–energy principle: work done by the braking force = change in kinetic energy.", "eq": "F s = ½ m u²", "work": ["E_k = ½ × {m} × {u}² = {0.5*m*u**2} J [M]", "{F*1000:3} × s = {0.5*m*u**2} [M]"], "answer": "s = {0.5*m*u**2/(F*1000)} m [M]", "kind": "num", "sfig": ""}], "vars": {"m": [1700.0, 1000, 2000, 100, 2], "u": [32.0, 20, 35, 1, 2], "F": [7.0, 4.0, 9.0, 0.5, 2]}, "calc": {}, "given": "m = {m} kg, u = {u} m s⁻¹, F = {F} kN, v = 0.", "fig": "", "require": null, "fixed": false}, {"level": 2, "title": "Pushing against friction", "tag": "A.3 · Work and energy", "stem": "A {m} kg box at rest is pushed {s} m across a floor by a horizontal force of {F} N. The friction force is {f} N.", "parts": [{"label": "(a)", "q": "Calculate the net work done on the box.", "unit": "J", "ans": "(F - f)*s", "marks": 2, "hint": "Net work = (F − F_f) × s.", "phys": "Work by the push is positive, work by friction is negative.", "eq": "W_net = (F − F_f) s", "work": ["W_push = {F*s} J ;  W_friction = −{f*s} J [M]"], "answer": "W_net = {(F - f)*s} J [M]", "kind": "num", "sfig": ""}, {"label": "(b)", "q": "Calculate the final speed of the box.", "unit": "m s⁻¹", "ans": "sqrt(2*(F - f)*s/m)", "marks": 1, "hint": "W_net = ½mv².", "phys": "Work–energy principle.", "eq": "W_net = ΔE_k", "work": ["½ × {m} × v² = {(F - f)*s}"], "answer": "v = {sqrt(2*(F - f)*s/m)} m s⁻¹ [M]", "kind": "num", "sfig": ""}], "vars": {"m": [3.0, 1.0, 5.0, 0.5, 2], "s": [4.0, 2.0, 6.0, 0.5, 2], "F": [22.0, 12, 30, 1, 2], "f": [9.0, 3.0, 10.0, 0.5, 2]}, "calc": {}, "given": "m = {m} kg, u = 0, s = {s} m, F = {F} N, F_f = {f} N.", "fig": "", "require": "F > f + 3", "fixed": false}, {"level": 2, "title": "Cart hits a spring", "tag": "A.3 · Energy conservation", "stem": "A {m} kg cart moving at {v} m s⁻¹ on a smooth track runs into a spring of spring constant {k} N m⁻¹.", "parts": [{"label": "(a)", "q": "Calculate the maximum compression of the spring.", "unit": "m", "ans": "v*sqrt(m/k)", "marks": 3, "hint": "All the kinetic energy becomes elastic potential energy: ½mv² = ½kx².", "phys": "Smooth track: mechanical energy is conserved. At maximum compression the cart is momentarily at rest.", "eq": "½ m v² = ½ k x²", "work": ["E_k = ½ × {m} × {v}² = {0.5*m*v**2} J [M]", "½ × {k} × x² = {0.5*m*v**2} [M]"], "answer": "x = {v*sqrt(m/k)} m [M]", "kind": "num", "sfig": ""}, {"label": "(b)", "q": "Calculate the maximum force exerted by the spring on the cart.", "unit": "N", "ans": "k*v*sqrt(m/k)", "marks": 1, "hint": "F = kx at maximum compression.", "phys": "Hooke's law.", "eq": "F = k x", "work": ["F = {k} × {v*sqrt(m/k)}"], "answer": "F = {k*v*sqrt(m/k)} N [M]", "kind": "num", "sfig": ""}], "vars": {"m": [0.6, 0.25, 1.0, 0.05, 2], "v": [2.2, 1.0, 3.0, 0.1, 2], "k": [240.0, 100, 400, 20, 2]}, "calc": {}, "given": "m = {m} kg, v = {v} m s⁻¹, k = {k} N m⁻¹.", "fig": "", "require": null, "fixed": false}, {"level": 2, "title": "Block down a rough slope", "tag": "A.3 · Work and energy", "stem": "A {m} kg block slides {s} m from rest down a slope inclined at {th}°. The coefficient of dynamic friction is {mu}.", "parts": [{"label": "(a)", "q": "Calculate the work done by gravity.", "unit": "J", "ans": "m*g*s*sin(th)", "marks": 1, "hint": "W = mgh with h = s sin θ.", "phys": "Only the vertical drop matters for gravity.", "eq": "W_g = mg s sin θ", "work": ["W_g = {m} × 9.81 × {s} × sin {th}°"], "answer": "W_g = {m*g*s*sin(th)} J [M]", "kind": "num", "sfig": ""}, {"label": "(b)", "q": "Calculate the work done against friction.", "unit": "J", "ans": "mu*m*g*cos(th)*s", "marks": 2, "hint": "F_f = μ mg cos θ; W = F_f s.", "phys": "F_N = mg cos θ on a slope.", "eq": "W_f = μ_d mg cos θ × s", "work": ["F_f = {mu} × {m} × 9.81 × cos {th}° = {mu*m*g*cos(th)} N [M]", "W_f = {mu*m*g*cos(th)} × {s}"], "answer": "W_f = {mu*m*g*cos(th)*s} J [M]", "kind": "num", "sfig": ""}, {"label": "(c)", "q": "Calculate the speed of the block after {s} m.", "unit": "m s⁻¹", "ans": "sqrt(2*(m*g*s*sin(th) - mu*m*g*cos(th)*s)/m)", "marks": 2, "hint": "E_k gained = W_g − W_f.", "phys": "Work–energy principle with both forces.", "eq": "½mv² = W_g − W_f", "work": ["E_k = {m*g*s*sin(th)} − {mu*m*g*cos(th)*s} = {m*g*s*sin(th) - mu*m*g*cos(th)*s} J [M]"], "answer": "v = {sqrt(2*(m*g*s*sin(th) - mu*m*g*cos(th)*s)/m)} m s⁻¹ [M]", "kind": "num", "sfig": ""}], "vars": {"m": [6.0, 2.0, 8.0, 0.5, 2], "s": [4.0, 2.0, 5.0, 0.5, 2], "th": [32.0, 25, 40, 1, 2], "mu": [0.22, 0.1, 0.3, 0.01, 2]}, "calc": {}, "given": "m = {m} kg, s = {s} m, θ = {th}°, μ_d = {mu}, u = 0.", "fig": "<svg class=\"fig\" viewBox=\"0 0 360 200\" width=\"360\" height=\"200\" font-family=\"Segoe UI,Calibri,Helvetica,Arial,sans-serif\" font-size=\"13\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\"><polygon points=\"30,170 246.5,170 246.5,45.0\" fill=\"#ECEFF1\" stroke=\"#90A4AE\" stroke-width=\"1.5\"/><line x1=\"10\" y1=\"170\" x2=\"350\" y2=\"170\" stroke=\"#90A4AE\" stroke-width=\"2\"/><path d=\"M70,170 A40,40 0 0,0 64.6,150.0\" fill=\"none\" stroke=\"#263238\"/><text x=\"76.0\" y=\"162.0\" fill=\"#263238\" text-anchor=\"start\" font-weight=\"400\" font-size=\"13\">{th}°</text><g transform=\"translate(149.1,101.3) rotate(-30)\"><rect x=\"-23.0\" y=\"-30\" width=\"46\" height=\"30\" rx=\"3\" fill=\"#FFE0B2\" stroke=\"#8D6E63\" stroke-width=\"1.5\"/><text x=\"0\" y=\"-10.0\" text-anchor=\"middle\" font-weight=\"600\" transform=\"rotate(30 0 -15.0)\">{m} kg</text></g></svg>", "require": "tan(th) > mu + 0.15", "fixed": false}, {"level": 2, "title": "Trolleys stick together", "tag": "A.3 · Energy conservation", "stem": "A {m1} kg trolley moving at {u} m s⁻¹ collides with a {m2} kg trolley at rest. They stick together.", "parts": [{"label": "(a)", "q": "Calculate the common velocity after the collision.", "unit": "m s⁻¹", "ans": "m1*u/(m1 + m2)", "marks": 1, "hint": "Momentum is conserved.", "phys": "", "eq": "m₁u = (m₁ + m₂)v", "work": ["{m1} × {u} = ({m1} + {m2}) v"], "answer": "v = {m1*u/(m1 + m2)} m s⁻¹ [M]", "kind": "num", "sfig": ""}, {"label": "(b)", "q": "Calculate the kinetic energy lost in the collision.", "unit": "J", "ans": "0.5*m1*u**2 - 0.5*(m1 + m2)*(m1*u/(m1 + m2))**2", "marks": 2, "hint": "E_k before − E_k after.", "phys": "Kinetic energy is NOT conserved in an inelastic collision; momentum is.", "eq": "ΔE_k = ½m₁u² − ½(m₁ + m₂)v²", "work": ["before: ½ × {m1} × {u}² = {0.5*m1*u**2} J ; after: ½ × {m1 + m2:3} × {m1*u/(m1 + m2)}² = {0.5*(m1 + m2)*(m1*u/(m1 + m2))**2} J [M]"], "answer": "lost = {0.5*m1*u**2 - 0.5*(m1 + m2)*(m1*u/(m1 + m2))**2} J [M]", "kind": "num", "sfig": ""}, {"label": "(c)", "q": "Calculate the percentage of the kinetic energy lost.", "unit": "%", "ans": "m2/(m1 + m2)*100", "marks": 1, "hint": "lost / before × 100.", "phys": "", "eq": "% = ΔE_k / E_k,before × 100", "work": ["= {0.5*m1*u**2 - 0.5*(m1 + m2)*(m1*u/(m1 + m2))**2} / {0.5*m1*u**2} × 100"], "answer": "{m2/(m1 + m2)*100} % [M] (transferred to thermal energy and sound)", "kind": "num", "sfig": ""}], "vars": {"m1": [3.0, 1.0, 3.0, 0.5, 2], "u": [4.0, 1.0, 4.0, 0.5, 2], "m2": [2.0, 0.5, 2.0, 0.5, 2]}, "calc": {}, "given": "m₁ = {m1} kg, u = {u} m s⁻¹, m₂ = {m2} kg at rest.", "fig": "", "require": null, "fixed": false}, {"level": 2, "title": "Water pump", "tag": "A.3 · Power and efficiency", "stem": "A pump raises {Q} litres of water per minute through a height of {h} m. The pump is {eta} % efficient. (1 litre of water has a mass of 1 kg.)", "parts": [{"label": "(a)", "q": "Calculate the useful power output of the pump.", "unit": "W", "ans": "Q/60*g*h", "marks": 2, "hint": "Mass per second = Q/60 kg s⁻¹; useful power = (m/t) g h.", "phys": "The useful energy is the GPE gained by the water each second.", "eq": "P = (m/t) g h", "work": ["m/t = {Q} / 60 = {Q/60} kg s⁻¹ [M]", "P = {Q/60} × 9.81 × {h}"], "answer": "P_useful = {Q/60*g*h} W [M]", "kind": "num", "sfig": ""}, {"label": "(b)", "q": "Calculate the input power of the pump.", "unit": "W", "ans": "Q/60*g*h/(eta/100)", "marks": 2, "hint": "P_in = P_useful / η.", "phys": "Efficiency as a decimal.", "eq": "η = P_useful / P_in", "work": ["P_in = {Q/60*g*h} / {eta/100:2} [M]"], "answer": "P_in = {Q/60*g*h/(eta/100)} W [M]", "kind": "num", "sfig": "SANKEY|Q/60*g*h/(eta/100)|Q/60*g*h|useful (GPE of water)|wasted (thermal, sound)|W"}], "vars": {"Q": [340.0, 120, 480, 20, 2], "h": [14.0, 5, 20, 1, 2], "eta": [80.0, 50, 85, 5, 2]}, "calc": {}, "given": "{Q} L min⁻¹ = {Q/60} kg s⁻¹, h = {h} m, η = {eta} %.", "fig": "", "require": null, "fixed": false}, {"level": 2, "title": "Cyclist's power", "tag": "A.3 · Power and efficiency", "stem": "A cyclist rides at a constant {v} m s⁻¹ against total resistive forces of {F} N.", "parts": [{"label": "(a)", "q": "Calculate the useful power output of the cyclist.", "unit": "W", "ans": "F*v", "marks": 1, "hint": "Constant speed: driving force = resistive force; P = Fv.", "phys": "At constant velocity the forward force balances the resistance.", "eq": "P = F v", "work": ["P = {F} × {v}"], "answer": "P = {F*v} W [M]", "kind": "num", "sfig": ""}, {"label": "(b)", "q": "Calculate the useful energy transferred in {tm} minutes, in kJ.", "unit": "kJ", "ans": "F*v*tm*60/1000", "marks": 1, "hint": "E = P t with t in s.", "phys": "", "eq": "E = P t", "work": ["E = {F*v} × {tm*60:3} = {F*v*tm*60} J"], "answer": "E = {F*v*tm*60/1000} kJ [M]", "kind": "num", "sfig": ""}, {"label": "(c)", "q": "The cyclist's muscles are 25 % efficient. Calculate the food energy used in this time, in kJ.", "unit": "kJ", "ans": "F*v*tm*60/1000/0.25", "marks": 2, "hint": "Input = useful / η.", "phys": "Only a quarter of the chemical energy becomes useful work; the rest is thermal energy.", "eq": "E_in = E_useful / η", "work": ["E_in = {F*v*tm*60/1000} / 0.25 [M]"], "answer": "E_in = {F*v*tm*60/1000/0.25} kJ [M]", "kind": "num", "sfig": "SANKEY|F*v*tm*60/1000/0.25|F*v*tm*60/1000|useful work|thermal energy|kJ"}], "vars": {"v": [9.0, 5.0, 12.0, 0.5, 2], "F": [27.0, 15, 40, 1, 2], "tm": [40.0, 15, 60, 5, 2]}, "calc": {}, "given": "v = {v} m s⁻¹, F = {F} N, t = {tm} min, η = 25 %.", "fig": "", "require": null, "fixed": false}, {"level": 3, "title": "Roller coaster with friction", "tag": "A.3 · Energy conservation", "stem": "A 650 kg roller-coaster car starts from rest at the top of a drop 45 m above the bottom. The track along the drop is 150 m long. The car reaches the bottom at 28 m s⁻¹.", "parts": [{"label": "(a)", "q": "Calculate the gravitational potential energy lost by the car.", "unit": "J", "ans": "650*g*45", "marks": 1, "hint": "ΔE_p = mgΔh.", "phys": "", "eq": "ΔE_p = m g Δh", "work": ["ΔE_p = 650 × 9.81 × 45"], "answer": "ΔE_p = {650*g*45} J [M]", "kind": "num", "sfig": ""}, {"label": "(b)", "q": "Calculate the kinetic energy of the car at the bottom.", "unit": "J", "ans": "0.5*650*28**2", "marks": 1, "hint": "½mv².", "phys": "", "eq": "E_k = ½ m v²", "work": ["E_k = ½ × 650 × 28²"], "answer": "E_k = {0.5*650*28**2} J [M]", "kind": "num", "sfig": ""}, {"label": "(c)", "q": "Calculate the average resistive force on the car along the track.", "unit": "N", "ans": "(650*g*45 - 0.5*650*28**2)/150", "marks": 3, "hint": "Energy lost to friction and air = ΔE_p − E_k; that equals F × distance along the track.", "phys": "Work done against resistance = mechanical energy lost (distance along the track, not the height).", "eq": "F × d = ΔE_p − E_k", "work": ["energy lost = {650*g*45} − {0.5*650*28**2} = {650*g*45 - 0.5*650*28**2} J [M]", "F × 150 = {650*g*45 - 0.5*650*28**2} [M]"], "answer": "F = {(650*g*45 - 0.5*650*28**2)/150} N [M]", "kind": "num", "sfig": ""}, {"label": "(d)", "q": "Calculate the efficiency of the transfer from gravitational potential energy to kinetic energy.", "unit": "%", "ans": "0.5*650*28**2/(650*g*45)*100", "marks": 2, "hint": "Useful output = E_k; input = ΔE_p.", "phys": "Draw the Sankey diagram to check the arrows add up.", "eq": "η = E_k / ΔE_p", "work": ["η = {0.5*650*28**2} / {650*g*45} [M]"], "answer": "η = {0.5*650*28**2/(650*g*45)*100} % [M]", "kind": "num", "sfig": "SANKEY|650*g*45/1000|0.5*650*28**2/1000|kinetic energy|thermal (friction, air)|kJ"}, {"label": "(e)", "q": "Calculate the speed the car would have at the bottom without any resistance.", "unit": "m s⁻¹", "ans": "sqrt(2*g*45)", "marks": 1, "hint": "mgh = ½mv².", "phys": "", "eq": "v = √(2gh)", "work": ["v = √(2 × 9.81 × 45)"], "answer": "v = {sqrt(2*g*45)} m s⁻¹ [M]", "kind": "num", "sfig": ""}], "vars": {}, "calc": {}, "given": "m = 650 kg, Δh = 45 m, d = 150 m, u = 0, v = 28 m s⁻¹.", "fig": "", "require": null, "fixed": true}, {"level": 3, "title": "Catapult", "tag": "A.3 · Energy conservation", "stem": "A catapult has a spring constant of 500 N m⁻¹. It is stretched by 0.18 m and fires a 40 g stone vertically upwards.", "parts": [{"label": "(a)", "q": "Calculate the elastic potential energy stored in the catapult.", "unit": "J", "ans": "0.5*500*0.18**2", "marks": 1, "hint": "½kx².", "phys": "", "eq": "E_p = ½ k x²", "work": ["E_p = ½ × 500 × 0.18²"], "answer": "E_p = {0.5*500*0.18**2} J [M]", "kind": "num", "sfig": ""}, {"label": "(b)", "q": "Calculate the launch speed of the stone (assume all the elastic energy becomes kinetic energy).", "unit": "m s⁻¹", "ans": "sqrt(2*0.5*500*0.18**2/0.040)", "marks": 2, "hint": "½mv² = E_p, mass in kg.", "phys": "Energy conservation; 40 g = 0.040 kg.", "eq": "½ m v² = ½ k x²", "work": ["½ × 0.040 × v² = {0.5*500*0.18**2} [M]"], "answer": "v = {sqrt(2*0.5*500*0.18**2/0.040)} m s⁻¹ [M]", "kind": "num", "sfig": ""}, {"label": "(c)", "q": "Calculate the maximum height the stone would reach without air resistance.", "unit": "m", "ans": "0.5*500*0.18**2/(0.040*g)", "marks": 2, "hint": "mgh = E_p.", "phys": "At the top all the energy is GPE.", "eq": "m g h = E_p", "work": ["0.040 × 9.81 × h = {0.5*500*0.18**2} [M]"], "answer": "h = {0.5*500*0.18**2/(0.040*g)} m [M]", "kind": "num", "sfig": ""}, {"label": "(d)", "q": "The stone actually rises 16.0 m. Calculate the average air-resistance force on the way up.", "unit": "N", "ans": "(0.5*500*0.18**2 - 0.040*g*16.0)/16.0", "marks": 2, "hint": "Energy lost = E_p − mgh_actual = F_air × 16.0 m.", "phys": "Work done against air resistance = mechanical energy lost.", "eq": "F × h = E_p − mgh", "work": ["energy lost = {0.5*500*0.18**2} − 0.040 × 9.81 × 16.0 = {0.5*500*0.18**2 - 0.040*g*16.0} J [M]"], "answer": "F = {(0.5*500*0.18**2 - 0.040*g*16.0)/16.0} N [M]", "kind": "num", "sfig": "SANKEY|0.5*500*0.18**2|0.040*g*16.0|GPE at the top|thermal (air resistance)|J"}], "vars": {}, "calc": {}, "given": "k = 500 N m⁻¹, x = 0.18 m, m = 0.040 kg.", "fig": "", "require": null, "fixed": true}, {"level": 3, "title": "Small hydroelectric scheme", "tag": "A.3 · Power and efficiency", "stem": "Water flows at 250 kg s⁻¹ from a lake through a turbine 40 m below the lake's surface. The scheme is 85 % efficient.", "parts": [{"label": "(a)", "q": "Calculate the gravitational potential energy lost by the water each second.", "unit": "W", "ans": "250*g*40", "marks": 2, "hint": "Energy per second = (m/t) g h.", "phys": "Power = rate of energy transfer.", "eq": "P = (m/t) g h", "work": ["P = 250 × 9.81 × 40 [M]"], "answer": "P = {250*g*40} W [M]", "kind": "num", "sfig": ""}, {"label": "(b)", "q": "Calculate the electrical power output.", "unit": "kW", "ans": "0.85*250*g*40/1000", "marks": 1, "hint": "× 0.85.", "phys": "", "eq": "P_out = η P_in", "work": ["P_out = 0.85 × {250*g*40}"], "answer": "P_out = {0.85*250*g*40/1000} kW [M]", "kind": "num", "sfig": "SANKEY|250*g*40/1000|0.85*250*g*40/1000|electrical|thermal and sound|kW"}, {"label": "(c)", "q": "Calculate the electrical energy produced in one day, in kWh.", "unit": "kWh", "ans": "0.85*250*g*40/1000*24", "marks": 1, "hint": "E = P t with P in kW and t in h.", "phys": "", "eq": "E = P t", "work": ["E = {0.85*250*g*40/1000} × 24"], "answer": "E = {0.85*250*g*40/1000*24} kWh [M]", "kind": "num", "sfig": ""}, {"label": "(d)", "q": "Calculate the maximum possible speed of the water at the turbine.", "unit": "m s⁻¹", "ans": "sqrt(2*g*40)", "marks": 2, "hint": "All GPE → KE: v = √(2gh).", "phys": "Upper limit: no energy lost in the pipe.", "eq": "½mv² = mgh", "work": ["½v² = 9.81 × 40 [M]"], "answer": "v = {sqrt(2*g*40)} m s⁻¹ [M]", "kind": "num", "sfig": ""}, {"label": "(e)", "q": "Suggest two reasons why the scheme is not 100 % efficient.", "unit": "", "ans": null, "marks": 2, "hint": "", "phys": "", "eq": "", "work": [], "answer": "Friction between the water and the pipe/turbine (thermal energy). [M] Resistance in the generator coils and cables, sound, and the water still has kinetic energy when it leaves. [M]", "kind": "text", "sfig": ""}], "vars": {}, "calc": {}, "given": "m/t = 250 kg s⁻¹, h = 40 m, η = 85 %.", "fig": "", "require": null, "fixed": true}, {"level": 3, "title": "Bouncing ball", "tag": "A.3 · Energy conservation", "stem": "A 57 g tennis ball is dropped from rest from a height of 1.20 m. It rebounds to a height of 0.84 m. Air resistance is negligible.", "parts": [{"label": "(a)", "q": "Calculate the speed of the ball just before it hits the floor.", "unit": "m s⁻¹", "ans": "sqrt(2*g*1.20)", "marks": 1, "hint": "v = √(2gh).", "phys": "", "eq": "½mv² = mgh", "work": ["v = √(2 × 9.81 × 1.20)"], "answer": "v = {sqrt(2*g*1.20)} m s⁻¹ [M]", "kind": "num", "sfig": ""}, {"label": "(b)", "q": "Calculate the speed of the ball just after it leaves the floor.", "unit": "m s⁻¹", "ans": "sqrt(2*g*0.84)", "marks": 1, "hint": "Use the rebound height.", "phys": "", "eq": "v = √(2gh)", "work": ["v = √(2 × 9.81 × 0.84)"], "answer": "v = {sqrt(2*g*0.84)} m s⁻¹ [M]", "kind": "num", "sfig": ""}, {"label": "(c)", "q": "Calculate the energy lost in the bounce.", "unit": "J", "ans": "0.057*g*(1.20 - 0.84)", "marks": 2, "hint": "Lost = mg(h₁ − h₂).", "phys": "Compare the GPE at the two highest points.", "eq": "ΔE = mg(h₁ − h₂)", "work": ["ΔE = 0.057 × 9.81 × (1.20 − 0.84) [M]"], "answer": "ΔE = {0.057*g*(1.20 - 0.84)} J [M]", "kind": "num", "sfig": ""}, {"label": "(d)", "q": "Calculate the efficiency of the bounce.", "unit": "%", "ans": "0.84/1.20*100", "marks": 1, "hint": "h₂/h₁ (the mg cancels).", "phys": "", "eq": "η = mgh₂ / mgh₁", "work": ["η = 0.84 / 1.20"], "answer": "η = 70 % [M]", "kind": "num", "sfig": "SANKEY|0.057*g*1.20|0.057*g*0.84|GPE after the bounce|thermal and sound|J"}, {"label": "(e)", "q": "Assuming the same efficiency each time, calculate the height reached after the third bounce.", "unit": "m", "ans": "1.20*0.70**3", "marks": 2, "hint": "Each bounce multiplies the height by 0.70.", "phys": "Same fraction of energy kept at each bounce.", "eq": "h₃ = h₀ × η³", "work": ["h₃ = 1.20 × 0.70³ [M]"], "answer": "h₃ = {1.20*0.70**3} m [M]", "kind": "num", "sfig": ""}], "vars": {}, "calc": {}, "given": "m = 0.057 kg, h₁ = 1.20 m, h₂ = 0.84 m.", "fig": "", "require": null, "fixed": true}, {"level": 3, "title": "Ballistic pendulum", "tag": "A.3 · Energy conservation", "stem": "A 8 g bullet is fired horizontally into a 1.2 kg wooden block hanging on light strings. The bullet stays in the block, which swings up through a vertical height of 4.0 cm.", "parts": [{"label": "(a)", "q": "Calculate the speed of the block (with the bullet) just after the impact.", "unit": "m s⁻¹", "ans": "sqrt(2*g*0.040)", "marks": 2, "hint": "After the impact energy is conserved: ½v² = gh.", "phys": "During the swing only gravity does work (the string tension is perpendicular to the motion).", "eq": "½ m v² = m g h", "work": ["v = √(2 × 9.81 × 0.040) [M]"], "answer": "v = {sqrt(2*g*0.040)} m s⁻¹ [M]", "kind": "num", "sfig": ""}, {"label": "(b)", "q": "Calculate the speed of the bullet before the impact.", "unit": "m s⁻¹", "ans": "1.208*sqrt(2*g*0.040)/0.008", "marks": 2, "hint": "Momentum is conserved in the impact.", "phys": "The impact is perfectly inelastic — use momentum, not energy.", "eq": "m u = (m + M) v", "work": ["0.008 × u = 1.208 × {sqrt(2*g*0.040)} [M]"], "answer": "u = {1.208*sqrt(2*g*0.040)/0.008} m s⁻¹ [M]", "kind": "num", "sfig": ""}, {"label": "(c)", "q": "Calculate the percentage of the bullet's kinetic energy that is lost in the impact.", "unit": "%", "ans": "(1 - 0.008/1.208)*100", "marks": 3, "hint": "Compare ½mu² with ½(m + M)v².", "phys": "Most of the energy becomes thermal energy and deforms the wood.", "eq": "% lost = (E_before − E_after) / E_before × 100", "work": ["E_before = ½ × 0.008 × {1.208*sqrt(2*g*0.040)/0.008}² = {0.5*0.008*(1.208*sqrt(2*g*0.040)/0.008)**2} J [M]", "E_after = ½ × 1.208 × {sqrt(2*g*0.040)}² = {0.5*1.208*2*g*0.040} J [M]"], "answer": "lost = {(1 - 0.008/1.208)*100} % [M]", "kind": "num", "sfig": ""}, {"label": "(d)", "q": "Explain why energy conservation cannot be used to link the bullet's speed directly to the height of the swing.", "unit": "", "ans": null, "marks": 1, "hint": "", "phys": "", "eq": "", "work": [], "answer": "The impact is inelastic: most of the kinetic energy becomes thermal energy (and sound/deformation), so only momentum is conserved during the impact. [M]", "kind": "text", "sfig": ""}], "vars": {}, "calc": {}, "given": "m = 0.008 kg, M = 1.2 kg, h = 0.040 m.", "fig": "", "require": null, "fixed": true}, {"level": 3, "title": "E-bike range", "tag": "A.3 · Power and efficiency", "stem": "An e-bike travels at a constant 7.0 m s⁻¹ against total resistive forces of 28 N, using only its motor. The battery stores 0.60 kWh and the motor is 85 % efficient.", "parts": [{"label": "(a)", "q": "Calculate the useful power of the motor.", "unit": "W", "ans": "28*7.0", "marks": 1, "hint": "P = Fv.", "phys": "Constant speed: driving force = 28 N.", "eq": "P = F v", "work": ["P = 28 × 7.0"], "answer": "P = {28*7.0} W [M]", "kind": "num", "sfig": ""}, {"label": "(b)", "q": "Calculate the energy stored in the battery in joules.", "unit": "J", "ans": "0.60*3.6e6", "marks": 1, "hint": "1 kWh = 3.6 × 10⁶ J.", "phys": "", "eq": "E = 0.60 × 3.6 × 10⁶", "work": ["E = 0.60 × 3.6 × 10⁶"], "answer": "E = {0.60*3.6e6} J [M]", "kind": "num", "sfig": ""}, {"label": "(c)", "q": "Calculate the time for which the battery can drive the motor.", "unit": "s", "ans": "0.60*3.6e6/(28*7.0/0.85)", "marks": 2, "hint": "Input power = useful / 0.85; t = E / P_in.", "phys": "The battery supplies the input power.", "eq": "t = E / P_in", "work": ["P_in = {28*7.0} / 0.85 = {28*7.0/0.85} W [M]", "t = {0.60*3.6e6} / {28*7.0/0.85}"], "answer": "t = {0.60*3.6e6/(28*7.0/0.85)} s [M]", "kind": "num", "sfig": "SANKEY|28*7.0/0.85|28*7.0|useful (work against resistance)|thermal in the motor|W"}, {"label": "(d)", "q": "Calculate the range of the e-bike in km.", "unit": "km", "ans": "7.0*0.60*3.6e6/(28*7.0/0.85)/1000", "marks": 1, "hint": "distance = v t.", "phys": "", "eq": "d = v t", "work": ["d = 7.0 × {0.60*3.6e6/(28*7.0/0.85)}"], "answer": "d = {7.0*0.60*3.6e6/(28*7.0/0.85)/1000} km [M]", "kind": "num", "sfig": ""}, {"label": "(e)", "q": "Explain why the range is shorter when the rider goes faster.", "unit": "", "ans": null, "marks": 2, "hint": "", "phys": "", "eq": "", "work": [], "answer": "Air resistance increases with speed, so the resistive force (and the useful power F v) increases. [M] The energy needed per metre (= F) is larger, so the battery is used up in a shorter distance. [M]", "kind": "text", "sfig": ""}], "vars": {}, "calc": {}, "given": "v = 7.0 m s⁻¹, F = 28 N, battery 0.60 kWh, η = 85 %.", "fig": "", "require": null, "fixed": true}, {"level": 3, "title": "Car climbing a hill", "tag": "A.3 · Power and efficiency", "stem": "A 1200 kg car climbs a hill inclined at 5.0° at a constant speed of 20 m s⁻¹. The total resistive force on the car is 600 N.", "parts": [{"label": "(a)", "q": "Calculate the driving force needed.", "unit": "N", "ans": "1200*g*sin(5.0) + 600", "marks": 2, "hint": "At constant speed: driving force = mg sin θ + resistance.", "phys": "Along the slope the forces balance (Newton's first law).", "eq": "F = mg sin θ + F_R", "work": ["mg sin θ = 1200 × 9.81 × sin 5.0° = {1200*g*sin(5.0)} N [M]"], "answer": "F = {1200*g*sin(5.0) + 600} N [M]", "kind": "num", "sfig": ""}, {"label": "(b)", "q": "Calculate the useful power output of the engine.", "unit": "kW", "ans": "(1200*g*sin(5.0) + 600)*20/1000", "marks": 1, "hint": "P = Fv.", "phys": "", "eq": "P = F v", "work": ["P = {1200*g*sin(5.0) + 600} × 20"], "answer": "P = {(1200*g*sin(5.0) + 600)*20/1000} kW [M]", "kind": "num", "sfig": ""}, {"label": "(c)", "q": "The engine is 30 % efficient and petrol has an energy density of 46 MJ kg⁻¹. Calculate the mass of petrol used per kilometre of the climb, in grams.", "unit": "g", "ans": "(1200*g*sin(5.0) + 600)*1000/0.30/46e6*1000", "marks": 3, "hint": "Useful energy per km = F × 1000 m; input = useful / 0.30; mass = input / energy density.", "phys": "Energy per kilometre does not depend on the speed (for a fixed force).", "eq": "m = E_in / energy density", "work": ["E_useful = {1200*g*sin(5.0) + 600} × 1000 = {(1200*g*sin(5.0) + 600)*1000} J [M]", "E_in = {(1200*g*sin(5.0) + 600)*1000} / 0.30 = {(1200*g*sin(5.0) + 600)*1000/0.30} J [M]", "m = {(1200*g*sin(5.0) + 600)*1000/0.30} / (46 × 10⁶)"], "answer": "m = {(1200*g*sin(5.0) + 600)*1000/0.30/46e6*1000} g [M]", "kind": "num", "sfig": "SANKEY|(1200*g*sin(5.0) + 600)*1000/0.30/1e6|(1200*g*sin(5.0) + 600)*1000/1e6|useful (GPE + work against resistance)|thermal (engine, exhaust)|MJ"}, {"label": "(d)", "q": "State where the useful energy goes during the climb.", "unit": "", "ans": null, "marks": 1, "hint": "", "phys": "", "eq": "", "work": [], "answer": "Into gravitational potential energy of the car ({1200*g*sin(5.0)*1000:2} J per km) and into thermal energy through the work done against air resistance and friction (600 × 1000 J per km). [M]", "kind": "text", "sfig": ""}], "vars": {}, "calc": {}, "given": "m = 1200 kg, θ = 5.0°, v = 20 m s⁻¹ (constant), F_R = 600 N.", "fig": "", "require": null, "fixed": true}, {"level": 3, "title": "Bungee jump", "tag": "A.3 · Energy conservation", "stem": "A 70 kg bungee jumper steps off a platform. The cord has an unstretched length of 18 m and behaves like a spring with k = 100 N m⁻¹. Air resistance is negligible.", "parts": [{"label": "(a)", "q": "Calculate the speed of the jumper when the cord just becomes tight.", "unit": "m s⁻¹", "ans": "sqrt(2*g*18)", "marks": 1, "hint": "Free fall for 18 m.", "phys": "", "eq": "v = √(2gh)", "work": ["v = √(2 × 9.81 × 18)"], "answer": "v = {sqrt(2*g*18)} m s⁻¹ [M]", "kind": "num", "sfig": ""}, {"label": "(b)", "q": "Calculate the extension of the cord when the jumper finally hangs at rest.", "unit": "m", "ans": "70*g/100", "marks": 1, "hint": "Equilibrium: kx = mg.", "phys": "", "eq": "x = mg / k", "work": ["x = 70 × 9.81 / 100"], "answer": "x = {70*g/100} m [M]", "kind": "num", "sfig": ""}, {"label": "(c)", "q": "Show that the maximum extension of the cord is about 24 m.", "unit": "m", "ans": "(70*g + sqrt((70*g)**2 + 2*100*70*g*18))/100", "marks": 3, "hint": "At the lowest point v = 0: GPE lost over (18 + x) = elastic energy ½kx². Solve the quadratic.", "phys": "Energy conservation between the platform and the lowest point (both at rest).", "eq": "m g (18 + x) = ½ k x²", "work": ["70 × 9.81 × (18 + x) = ½ × 100 × x² [M]", "50x² − {70*g:4}x − {70*g*18:4} = 0 [M]"], "answer": "x = {(70*g + sqrt((70*g)**2 + 2*100*70*g*18))/100} m ≈ 24 m [M]", "kind": "show", "sfig": ""}, {"label": "(d)", "q": "Calculate the maximum force exerted by the cord on the jumper.", "unit": "N", "ans": "100*(70*g + sqrt((70*g)**2 + 2*100*70*g*18))/100", "marks": 1, "hint": "F = kx at maximum extension.", "phys": "", "eq": "F = k x", "work": ["F = 100 × {(70*g + sqrt((70*g)**2 + 2*100*70*g*18))/100}"], "answer": "F = {70*g + sqrt((70*g)**2 + 2*100*70*g*18)} N [M]", "kind": "num", "sfig": ""}, {"label": "(e)", "q": "Calculate the maximum acceleration of the jumper as a multiple of g.", "unit": "", "ans": "(70*g + sqrt((70*g)**2 + 2*100*70*g*18) - 70*g)/70/g", "marks": 2, "hint": "At the lowest point the resultant force is kx − mg, upwards.", "phys": "Newton's second law at the lowest point.", "eq": "a = (kx − mg) / m", "work": ["a = ({70*g + sqrt((70*g)**2 + 2*100*70*g*18)} − {70*g}) / 70 = {sqrt((70*g)**2 + 2*100*70*g*18)/70} m s⁻² [M]"], "answer": "a ≈ {sqrt((70*g)**2 + 2*100*70*g*18)/70/g:2} g (upwards) [M]", "kind": "num", "sfig": ""}], "vars": {}, "calc": {}, "given": "m = 70 kg, L = 18 m, k = 100 N m⁻¹, starts at rest.", "fig": "", "require": null, "fixed": true}]};
+(function(){
+"use strict";
+// ---------------------------------------------------------------- maths shared with the Python bank
+const D2R = Math.PI / 180;
+const NS = {sqrt: Math.sqrt, abs: Math.abs, max: Math.max, min: Math.min, log10: Math.log10,
+  sin: d => Math.sin(d * D2R), cos: d => Math.cos(d * D2R), tan: d => Math.tan(d * D2R),
+  asin: x => Math.asin(x) / D2R, acos: x => Math.acos(x) / D2R, atan: x => Math.atan(x) / D2R, g: 9.81, pi: Math.PI};
+const FN = {};
+function ev(expr, env){
+  const keys = Object.keys(NS).concat(Object.keys(env).filter(k => !(k in NS)));
+  const id = keys.join(",") + "|" + expr;
+  if (!FN[id]) FN[id] = new Function(...keys, '"use strict"; return (' + expr + ');');
+  return FN[id](...keys.map(k => k in env ? env[k] : NS[k]));
+}
+const SUP = {"-": "⁻", "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹"};
+function fmt(x, sf){
+  sf = sf || 3;
+  if (!isFinite(x)) return "?";
+  if (x === 0) return "0";
+  let r = Number(x.toExponential(sf - 1));
+  const e = Math.floor(Math.log10(Math.abs(r)) + 1e-12), neg = r < 0;
+  r = Math.abs(r);
+  let s;
+  if (r >= 1e5 || r < 1e-3) s = (r / Math.pow(10, e)).toFixed(sf - 1) + " × 10" + String(e).replace(/./g, c => SUP[c]);
+  else { const d = sf - 1 - e; s = d > 0 ? r.toFixed(d) : String(Math.round(r)); }
+  return (neg ? "−" : "") + s;
+}
+function envFor(ex, vals){
+  const env = {};
+  Object.keys(ex.vars).forEach(k => env[k] = vals ? vals[k] : ex.vars[k][0]);
+  Object.keys(ex.calc).forEach(k => env[k] = ev(ex.calc[k], env));
+  return env;
+}
+function fill(text, ex, env){
+  return String(text || "").replace(/\{([^{}:]+)(?::(\d))?\}/g, (m, e, sf) => {
+    e = e.trim();
+    if (sf === undefined && ex.vars[e]){ const x = env[e]; sf = ex.vars[e][4]; while (x && sf < 6 && Number(x.toExponential(sf - 1)) !== x) sf++; }
+    return fmt(ev(e, env), +(sf || 3));
+  });
+}
+const SUBRE = /([A-Za-zμηθΔ])_([A-Za-z0-9∥]+(?:,[a-z]+)?)/g, sub = t => t.replace(SUBRE, "$1<sub>$2</sub>");
+const F = (t, ex, env) => sub(fill(t, ex, env));
+const marks = t => t.replace(/\[M(\d?)\]/g, (m, n) => '<span class="mk">✔ [' + (n || 1) + ']</span>');
+
+// ---------------------------------------------------------------- Sankey diagram (to scale: input band 80 px)
+function sankey(spec, ex, env){
+  const [, inE, useE, uLab, wLab, unit] = spec.split("|");
+  const vin = ev(inE, env), vu = ev(useE, env), vw = vin - vu, H = 80;
+  const Hu = Math.max(2, H * vu / vin), Hw = Math.max(2, H - Hu), y0 = 40, x1 = 150, r0 = 18, R = r0 + Hw, Cy = y0 + H + r0;
+  const eff = Math.round(100 * vu / vin);
+  const s = [];
+  s.push('<rect x="20" y="' + y0 + '" width="' + (x1 - 20) + '" height="' + H + '" fill="#90A4AE"/>');
+  s.push('<polygon fill="#43A047" points="' + [[x1, y0], [330, y0], [330, y0 - 8], [356, y0 + Hu / 2], [330, y0 + Hu + 8], [330, y0 + Hu], [x1, y0 + Hu]].map(p => p.join(",")).join(" ") + '"/>');
+  s.push('<path fill="#E53935" d="M' + x1 + ',' + (y0 + Hu) + ' A' + R + ',' + R + ' 0 0 1 ' + (x1 + R) + ',' + Cy + ' L' + (x1 + R) + ',' + (Cy + 26) + ' L' + (x1 + R + 8) + ',' + (Cy + 26) +
+    ' L' + (x1 + (r0 + R) / 2) + ',' + (Cy + 48) + ' L' + (x1 + r0 - 8) + ',' + (Cy + 26) + ' L' + (x1 + r0) + ',' + (Cy + 26) + ' L' + (x1 + r0) + ',' + Cy + ' A' + r0 + ',' + r0 + ' 0 0 0 ' + x1 + ',' + (y0 + H) + ' Z"/>');
+  const T = (x, y, t, a, c, w) => '<text x="' + x + '" y="' + y + '" text-anchor="' + (a || "start") + '" fill="' + (c || "#263238") + '" font-weight="' + (w || 400) + '">' + t + '</text>';
+  s.push(T(20, y0 - 10, "input " + fmt(vin) + " " + unit, "start", "#455A64", 700));
+  s.push(T(362, y0 + Hu / 2 + 4, fmt(vu) + " " + unit, "start", "#2E7D32", 700));
+  s.push(T(362, y0 + Hu / 2 + 20, uLab, "start", "#2E7D32"));
+  s.push(T(x1 + R + 14, Cy + 30, fmt(vw) + " " + unit + " " + wLab, "start", "#C62828", 700));
+  s.push(T(20, Cy + 64, "Sankey diagram to scale: band widths ∝ energy (power). Efficiency = useful / input = " + eff + " %.", "start", "#606A72"));
+  return '<svg class="fig" viewBox="0 0 560 ' + (Cy + 74) + '" width="560" height="' + (Cy + 74) + '" font-family="Segoe UI,Calibri,Helvetica,Arial,sans-serif" font-size="13" role="img" aria-label="Sankey diagram">' + s.join("") + '</svg>';
+}
+
+// ---------------------------------------------------------------- answer checking
+const SUPN = {"⁻": "-", "⁰": "0", "¹": "1", "²": "2", "³": "3", "⁴": "4", "⁵": "5", "⁶": "6", "⁷": "7", "⁸": "8", "⁹": "9"};
+function parseNum(s){
+  s = String(s).trim().replace(/[⁻⁰¹²³⁴⁵⁶⁷⁸⁹]/g, c => SUPN[c]).replace(/\s+/g, "").replace(/[−–]/g, "-");
+  s = s.replace(/^([-+]?[\d.,]+)[×xX*]10\^?([-+]?\d+)$/, "$1e$2");
+  if (/^[-+]?\d+,\d+(e[-+]?\d+)?$/i.test(s)) s = s.replace(",", ".");
+  if (!/^[-+]?(\d+\.?\d*|\.\d+)(e[-+]?\d+)?$/i.test(s)) return NaN;
+  return parseFloat(s);
+}
+function judge(x, a){
+  const X = Math.abs(x), A = Math.abs(a);
+  if (Math.abs(X - A) <= 0.02 * A) return "ok";
+  const r2 = Number(A.toPrecision(2));
+  if (Math.abs(X - r2) <= 0.005 * A) return "ok";
+  const ratio = X / A, k = Math.round(Math.log10(ratio));
+  if (k !== 0 && Math.abs(ratio / Math.pow(10, k) - 1) <= 0.02) return "pow";
+  return "no";
+}
+
+// ---------------------------------------------------------------- state + storage
+const S = DATA.slug, LS = k => "physics-ex-" + S + "-" + k;
+const get = k => { try { return localStorage.getItem(LS(k)); } catch (e) { return null; } };
+const put = (k, v) => { try { localStorage.setItem(LS(k), v); } catch (e) {} };
+const EXS = DATA.ex;
+EXS.forEach((ex, i) => { ex.i = i; ex.vals = null; ex.st = ex.parts.map(() => ({tries: 0, done: false, earned: 0, shown: false})); });
+const levelOf = L => EXS.filter(e => e.level === L);
+const totalMarks = L => levelOf(L).reduce((s, e) => s + e.parts.reduce((t, p) => t + (p.kind === "text" ? 0 : p.marks), 0), 0);
+const earned = L => levelOf(L).reduce((s, e) => s + e.st.reduce((t, x) => t + x.earned, 0), 0);
+let cur = 1;
+const LV = {1: ["Level 1", "Paper 1 style", "One step: choose the equation, substitute with units, give the answer to sensible significant figures."],
+            2: ["Level 2", "Multi-step", "Two or three linked steps — draw a diagram first (FBD, velocity components, energy stages)."],
+            3: ["Level 3", "Paper 2 structured", "Exam-style questions with parts (a), (b), (c)… and marks. Later parts use earlier answers; some ask you to explain."]};
+
+// ---------------------------------------------------------------- rendering
+const $ = id => document.getElementById(id);
+function partHTML(ex, env, p, j){
+  const st = ex.st[j], id = "p" + ex.i + "_" + j;
+  let h = '<li class="part' + (st.done ? " done" : "") + '" id="' + id + '"><div class="pq">' + (p.label ? '<b>' + p.label + '</b> ' : "") + F(p.q, ex, env) +
+    ' <span class="pm">[' + p.marks + ']</span></div>';
+  if (p.kind === "text"){
+    h += '<div class="ans"><button class="btn ghost sm" data-act="model" data-j="' + j + '">Show model answer</button></div>';
+  } else {
+    h += '<div class="ans"><label class="sr" for="in' + id + '">Answer ' + (p.label || "") + '</label><input id="in' + id + '" inputmode="decimal" autocomplete="off" placeholder="your answer"' +
+      (st.done ? " disabled" : "") + '><span class="unit">' + (p.unit || "&nbsp;") + '</span>' +
+      '<button class="btn primary sm" data-act="check" data-j="' + j + '"' + (st.done ? " disabled" : "") + '>Check</button>' +
+      (p.hint ? '<button class="btn ghost sm" data-act="hint" data-j="' + j + '">Hint</button>' : "") +
+      '<button class="btn link sm" data-act="give" data-j="' + j + '"' + (st.tries && !st.done ? "" : " hidden") + '>Show solution</button></div>';
+  }
+  h += '<div class="hintbox" hidden>💡 ' + F(p.hint, ex, env) + '</div><div class="fbk" aria-live="polite"></div>';
+  h += '<div class="sol" hidden>';
+  if (p.kind === "text"){
+    h += '<div class="st s5"><b>Model answer</b><div>' + marks(F(p.answer, ex, env)) + '</div></div>';
+  } else {
+    if (p.phys || p.sfig) h += '<div class="st s2"><b>2 Physics</b><div>' + F(p.phys, ex, env) + '</div>' +
+      (p.sfig ? '<div class="sfig">' + (p.sfig.indexOf("SANKEY|") === 0 ? sankey(p.sfig, ex, env) : fill(p.sfig, ex, env)) + '</div>' : "") + '</div>';
+    if (p.eq) h += '<div class="st s3"><b>3 Equation</b><div>' + F(p.eq, ex, env) + '</div></div>';
+    if (p.work.length) h += '<div class="st s4"><b>4 Working</b><div>' + p.work.map(w => '<div class="wl">' + marks(F(w, ex, env)) + '</div>').join("") + '</div></div>';
+    h += '<div class="st s5"><b>5 Answer</b><div>' + marks(F(p.answer, ex, env)) + '</div></div>';
+  }
+  return h + '</div></li>';
+}
+function exHTML(ex, n){
+  const env = envFor(ex, ex.vals), tot = ex.parts.reduce((s, p) => s + p.marks, 0);
+  let h = '<div class="exhead"><span class="num">' + ex.level + '.' + n + '</span><h3>' + ex.title + '</h3><span class="tag">' + ex.tag + '</span>' +
+    '<span class="mkb">' + tot + ' mark' + (tot > 1 ? "s" : "") + '</span>' +
+    (ex.fixed ? "" : '<button class="btn ghost sm newn" data-act="new" title="Same question, new numbers">↻ New numbers</button>') + '</div>';
+  h += '<div class="body' + (ex.fig ? " hasfig" : "") + '"><div><p class="stem">' + F(ex.stem, ex, env) + '</p></div>' + (ex.fig ? '<div class="figw">' + fill(ex.fig, ex, env) + '</div>' : "") + '</div>';
+  h += '<div class="given" hidden><b>1 Given / Find</b> ' + F(ex.given, ex, env) + '</div>';
+  h += '<ol class="parts">' + ex.parts.map((p, j) => partHTML(ex, env, p, j)).join("") + '</ol>';
+  return h;
+}
+function render(){
+  document.querySelectorAll(".lvbtn").forEach(b => b.setAttribute("aria-selected", String(+b.dataset.l === cur)));
+  const L = LV[cur];
+  $("lvdesc").innerHTML = '<b>' + L[0] + ' · ' + L[1] + '.</b> ' + L[2];
+  $("list").innerHTML = levelOf(cur).map((ex, n) => '<article class="ex card" id="ex' + ex.i + '" data-i="' + ex.i + '">' + exHTML(ex, n + 1) + '</article>').join("");
+  score();
+}
+function rerenderEx(ex){
+  const el = $("ex" + ex.i), n = levelOf(ex.level).indexOf(ex) + 1;
+  el.innerHTML = exHTML(ex, n);
+  ex.st.forEach((st, j) => { if (st.shown) reveal(ex, j, true); });
+}
+function score(){
+  const t = totalMarks(cur), e = earned(cur), best = Math.max(+(get("L" + cur) || 0), e);
+  if (e > +(get("L" + cur) || 0)) put("L" + cur, String(e));
+  $("score").textContent = "Score: " + e + " / " + t + " marks";
+  $("best").textContent = "Best on this device: " + best + " / " + t;
+  $("bar").style.width = (100 * e / t) + "%";
+  [1, 2, 3].forEach(l => { const b = document.querySelector('.lvbtn[data-l="' + l + '"] small'); const bb = Math.max(+(get("L" + l) || 0), earned(l));
+    b.textContent = levelOf(l).length + " exercises · best " + bb + "/" + totalMarks(l); });
+}
+function reveal(ex, j, quiet){
+  const li = $("p" + ex.i + "_" + j), st = ex.st[j];
+  st.shown = true;
+  li.querySelector(".sol").hidden = false;
+  const gv = $("ex" + ex.i).querySelector(".given"); if (gv) gv.hidden = false;
+  const gb = li.querySelector('[data-act="give"]'); if (gb) gb.hidden = true;
+  if (!quiet) li.querySelector(".sol").scrollIntoView({behavior: "smooth", block: "nearest"});
+}
+function act(e){
+  const b = e.target.closest("button[data-act]"); if (!b) return;
+  const art = b.closest("article.ex"), ex = EXS[+art.dataset.i], j = +b.dataset.j, a = b.dataset.act;
+  if (a === "new"){
+    for (let k = 0; k < 200; k++){
+      const v = {};
+      Object.keys(ex.vars).forEach(n => { const [d, lo, hi, step] = ex.vars[n]; const m = Math.round((hi - lo) / step);
+        v[n] = +(lo + step * Math.floor(Math.random() * (m + 1))).toPrecision(10); });
+      const env = envFor(ex, v);
+      if (ex.require && !ev(ex.require, env)) continue;
+      if (ex.parts.some(p => p.ans && !isFinite(ev(p.ans, env)))) continue;
+      ex.vals = v; break;
+    }
+    ex.st.forEach(st => { st.tries = 0; st.done = false; st.shown = false; });
+    rerenderEx(ex); return;
+  }
+  const p = ex.parts[j], st = ex.st[j], li = $("p" + ex.i + "_" + j), fb = li.querySelector(".fbk");
+  if (a === "hint"){ li.querySelector(".hintbox").hidden = false; return; }
+  if (a === "model" || a === "give"){ reveal(ex, j); if (a === "give"){ st.done = true; li.querySelector("input").disabled = true;
+      li.querySelector('[data-act="check"]').disabled = true; fb.className = "fbk no"; fb.innerHTML = "Study the worked solution, then try ↻ New numbers."; } return; }
+  if (a === "check"){
+    const inp = li.querySelector("input"), x = parseNum(inp.value);
+    if (!isFinite(x)){ fb.className = "fbk no"; fb.textContent = "Type a number, e.g. 12.5 or 3.6e6 (the unit is already shown)."; return; }
+    const env = envFor(ex, ex.vals), ans = ev(p.ans, env), r = judge(x, ans);
+    st.tries++;
+    if (r === "ok"){
+      st.done = true; st.earned = Math.max(st.earned, p.marks); li.classList.add("done"); inp.disabled = true; b.disabled = true;
+      fb.className = "fbk ok"; fb.innerHTML = "✔ Correct — " + fmt(ans) + (p.unit ? " " + p.unit : "") + (p.kind === "show" ? " (shown)" : "") + ". Check your method against the worked solution.";
+      reveal(ex, j, true);
+    } else if (st.tries >= 2){
+      st.done = true; inp.disabled = true; b.disabled = true;
+      fb.className = "fbk no"; fb.innerHTML = "✘ Not quite. The answer is <b>" + fmt(ans) + (p.unit ? " " + p.unit : "") + "</b> — follow the worked solution, then try ↻ New numbers.";
+      reveal(ex, j);
+    } else {
+      fb.className = "fbk no";
+      fb.innerHTML = r === "pow" ? "✘ The digits look right, but the power of ten is wrong — check your unit conversions (g ↔ kg, cm ↔ m, kW ↔ W, minutes ↔ s). Try again."
+                               : "✘ Not yet — try again" + (p.hint ? " (press <b>Hint</b> for the first step)" : "") + ". One more try before the solution appears.";
+      li.querySelector('[data-act="give"]').hidden = false;
+    }
+    score();
+  }
+}
+function setLevel(l, push){
+  cur = l; render();
+  if (push) history.replaceState(null, "", "#L" + l);
+}
+document.addEventListener("DOMContentLoaded", () => {
+  $("list").addEventListener("click", act);
+  $("list").addEventListener("keydown", e => { if (e.key === "Enter" && e.target.tagName === "INPUT"){ const b = e.target.parentNode.querySelector('[data-act="check"]'); if (b) b.click(); } });
+  document.querySelectorAll(".lvbtn").forEach(b => b.addEventListener("click", () => setLevel(+b.dataset.l, true)));
+  $("reset").addEventListener("click", () => { levelOf(cur).forEach(ex => { ex.vals = null; ex.st.forEach(st => { st.tries = 0; st.done = false; st.earned = 0; st.shown = false; }); }); render(); });
+  const fromHash = () => { const m = location.hash.match(/^#L([123])$/); if (m) setLevel(+m[1]); };
+  window.addEventListener("hashchange", fromHash);
+  const m = location.hash.match(/^#L([123])$/); setLevel(m ? +m[1] : 1);
+});
+window.__ex = {ev, fmt, envFor, fill, parseNum, judge, EXS};
+})();
+
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>

@@ -1,0 +1,1788 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spring Force</title>
+<!--
+  IBDP Physics SL · Grade 11 · Topic A.2 Types of forces
+  Simulation 05 — Spring force, Hooke's law (pairs with carousel Station 3 and the Forces investigation spring part)
+  Load & unload mode (checkpoint, 6 Oct 2026): loading/unloading curves, hysteresis loop of a rubber band, elastic limit E.
+  Self-contained: no internet, no external libraries. Open in any modern browser.
+  Built from the simulation template (Simulation 01 CSS, helpers and task engine).
+
+  File sections:
+    1 STYLE · 2 MARKUP · 3 CONFIG · 4 PHYSICS · 5 RUN · 6 SCENE · 7 FBD · 8 GRAPHS · 9 DATA · 10 TASKS · 11 UI
+-->
+<style>
+/* ============================ 1 STYLE ============================ */
+:root{
+  --navy:#1F3A5F; --accent:#E65100; --ink:#263238; --muted:#606A72;
+  --bg:#F2F5F9; --card:#FFFFFF; --line:#DDE6F0; --soft:#FFF3E0; --soft-blue:#E3F2FD;
+  --wood:#FFCC80; --wood-edge:#C68A3A;
+  --cW:#2A5D8A; --cN:#2E7D32; --cF:#C62828; --cP:#6A1B9A;   /* weight, normal, friction, pull */
+  --ok:#2E7D32; --bad:#C62828;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);
+  font:16px/1.4 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;min-height:100dvh}
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);
+  display:flex;align-items:center;gap:16px;padding:8px 16px}
+header h1{font-size:1.25rem;margin:0;font-weight:600}
+header .sub{font-size:.85rem;opacity:.85}
+header .grow{flex:1}
+.btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;
+  min-height:44px;padding:6px 14px;cursor:pointer;touch-action:manipulation}
+.btn:hover{border-color:var(--navy)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.small{min-height:36px;padding:4px 10px;font-size:.9rem}
+header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
+
+/* layout: scene + state | FBD (always visible) | tabs; fills the screen height */
+main{flex:1;min-height:500px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1.3fr);
+  grid-template-rows:minmax(0,1fr) auto;gap:12px;padding:12px 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.card h2{font-size:.95rem;margin:0;padding:6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line);
+  color:var(--navy);font-weight:600}
+.left{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0}
+.scenecard{flex:1 1 0;display:flex;flex-direction:column;min-height:0}
+.fbdcol{display:flex;flex-direction:column;min-width:0;min-height:0}
+#sceneWrap{position:relative;flex:1;min-height:150px}
+#scene{width:100%;height:100%;display:block}
+#fbdWrap{flex:1;min-height:220px}
+#fbd{width:100%;height:100%;display:block}
+.readouts{padding:6px 12px;flex:0 1 auto;min-height:0;overflow:auto}  /* natural height; the scene takes the rest */
+.readouts table{width:100%;border-collapse:collapse;font-size:.9rem}
+.readouts td.v{white-space:nowrap;padding-left:6px}
+.readouts td{padding:4px 2px;border-bottom:1px solid #EEF2F6}
+.readouts td.v{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.pill{display:inline-block;white-space:nowrap;padding:3px 10px;border-radius:99px;font-size:.85rem;font-weight:600}
+.pill.rest{background:var(--soft-blue);color:#0D47A1}
+.pill.slide{background:#FFEBEE;color:#B71C1C}
+.pill.ready{background:#ECEFF1;color:var(--muted)}
+
+.right{display:flex;flex-direction:column;min-width:0;min-height:0}
+.cardhead{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:6px 8px 6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line)}
+.cardhead h2{padding:0;border:none;background:none;flex:1}
+.cardhead .btn{min-height:40px;padding:4px 10px}
+.tabs{display:flex;gap:4px;padding:6px 6px 0;background:#F7F9FC;border-bottom:1px solid var(--line)}
+.tab{font:inherit;border:1px solid transparent;border-bottom:none;background:transparent;padding:8px 14px;
+  min-height:44px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--muted);font-weight:600}
+.tab[aria-selected="true"]{background:#fff;border-color:var(--line);color:var(--navy);margin-bottom:-1px}
+.panel{display:none;padding:10px 12px;flex:1;min-height:0;overflow:hidden}
+.panel.on{display:flex;flex-direction:column;gap:8px}
+#graphWrap{position:relative;flex:1;min-height:200px}
+#graph{width:100%;height:100%;display:block;touch-action:none}
+#elasticWrap{position:relative;flex:1;min-height:200px}
+#elastic{width:100%;height:100%;display:block}
+#hystWrap{position:relative;flex:1;min-height:200px}
+#hyst{width:100%;height:100%;display:block}
+.tab{padding:8px 10px;white-space:nowrap}                     /* five tabs (Hysteresis added) fit on one row */
+.hint{font-size:.85rem;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#trials{width:100%;border-collapse:collapse;font-size:.85rem;font-variant-numeric:tabular-nums}
+#trials th,#trials td{border-bottom:1px solid var(--line);padding:4px 4px;text-align:right}
+#trials th{color:var(--navy);font-weight:600;background:#F7F9FC;position:sticky;top:0}
+#trials td:first-child,#trials th:first-child,#trials td:nth-child(2),#trials th:nth-child(2){text-align:left}
+.tableBox{max-height:150px;flex:none;overflow:auto;border:1px solid var(--line);border-radius:8px}
+#anaWrap{flex:1;min-height:180px}
+#ana{width:100%;height:100%;display:block}
+.x{border:none;background:none;color:var(--bad);font-size:1.1rem;cursor:pointer;min-width:32px;min-height:32px}
+
+/* tasks */
+#taskSets{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:inherit;font-size:.9rem;border:1px solid var(--line);background:#fff;border-radius:99px;padding:6px 14px;
+  min-height:40px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.chip[aria-pressed="true"] .hint{color:#DDE6F0}
+#taskList{overflow:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding-right:2px}
+.step{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff}
+.step .q{margin:0 0 6px}
+.step .n{display:inline-block;min-width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;
+  text-align:center;line-height:26px;font-size:.85rem;font-weight:700;margin-right:6px}
+.step.done .n{background:var(--ok)}
+.opt{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;
+  margin:4px 0;cursor:pointer;min-height:40px}
+.opt input{width:20px;height:20px}
+.opt.good{border-color:var(--ok);background:#E8F5E9}
+.opt.bad{border-color:var(--bad);background:#FFEBEE}
+.fb{margin-top:6px;padding:6px 10px;border-radius:8px;font-size:.92rem}
+.fb.ok{background:#E8F5E9;border-left:4px solid var(--ok)}
+.fb.no{background:#FFEBEE;border-left:4px solid var(--bad)}
+.fb.info{background:var(--soft-blue);border-left:4px solid #1565C0}
+.num{font:inherit;width:110px;min-height:40px;padding:4px 8px;border:1px solid #B0BEC5;border-radius:8px}
+.tag{font-size:.75rem;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+
+/* controls */
+#controls{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end;padding:10px 14px}
+.ctl{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ctl label,.ctl .lab{font-size:.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.ctl select{font:inherit;min-height:44px;border:1px solid #B0BEC5;border-radius:8px;padding:4px 8px;background:#fff}
+.mu{font-size:.85rem;color:var(--navy);font-weight:600}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper .btn{width:44px;padding:0;font-size:1.3rem}
+.stepper output{min-width:24px;text-align:center;font-weight:700;font-size:1.1rem}
+input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
+.seg{display:flex;border:1px solid #B0BEC5;border-radius:8px;overflow:hidden}
+.seg button{font:inherit;border:none;background:#fff;min-height:42px;padding:4px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--navy);color:#fff}
+.switch{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer}
+.switch input{width:22px;height:22px;accent-color:var(--accent)}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* help overlay */
+#help{position:fixed;inset:0;background:rgba(31,58,95,.55);display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:14px;max-width:720px;width:100%;max-height:90vh;overflow:auto;padding:18px 22px}
+#help h3{margin:.2em 0 .4em;color:var(--navy)}
+#help li{margin:.25em 0}
+.eq{font-family:"Cambria Math",Cambria,"Times New Roman",serif;font-size:1.05rem}
+
+@media (max-width:1300px){
+  .readouts table{font-size:.85rem}
+  .pill{font-size:.78rem;padding:2px 8px}
+}
+/* tablet landscape: scene + state on the left; FBD above the tabs on the right */
+@media (max-width:1099px){
+  main{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr) auto;min-height:640px}
+  .left{grid-row:1/3}
+  .fbdcol{grid-column:2;grid-row:1}
+  .right{grid-column:2;grid-row:2}
+  #fbdWrap{min-height:200px}
+  #pGraph .hint{display:none}
+  #controls{gap:8px 12px;padding:8px 12px}
+  input[type=range]{width:118px}
+  header .sub{font-size:0;opacity:1;line-height:1.2}header .sub a.home{font-size:.75rem}
+}
+/* phone / narrow portrait: one scrolling column */
+@media (max-width:759px){
+  body{height:auto}
+  main{display:flex;flex-direction:column}
+  #sceneWrap{flex:none;height:260px}
+  .readouts{flex:none}
+  #fbdWrap{flex:none;height:320px}
+  .right{height:640px;flex:none}
+}
+/* Author credit (header, far right) */
+.credit{text-align:right;font-size:.74rem;line-height:1.3;opacity:.92;white-space:nowrap}
+.credit a{color:#fff;text-decoration:underline}
+@media (max-width:759px){header{flex-wrap:wrap;row-gap:4px} header .btn{white-space:nowrap}
+  .credit{order:3;flex-basis:100%;text-align:left;font-size:.7rem}
+  .credit br{display:none} .credit a{margin-left:6px}}
+
+/* Number boxes next to the sliders (same as the circular motion simulation): type a value + Enter */
+.rn{display:flex;align-items:center;gap:6px}
+.rn input[type=range]{width:120px}
+.nb{font:inherit;font-size:.95rem;width:76px;min-height:44px;padding:2px 6px;border:1px solid #B0BEC5;border-radius:8px;
+  text-align:right;font-variant-numeric:tabular-nums;background:#fff}
+.nb.clamped{border-color:var(--accent);background:var(--soft)}
+.nb:disabled{opacity:.45}
+.rn .u{font-size:.85rem;color:var(--muted);white-space:nowrap}
+.dup{display:none}
+@media (max-width:1300px){ .rn input[type=range]{width:100px} .nb{width:70px} }
+@media (max-width:1099px){ .rn input[type=range]{width:84px} .nb{width:64px} }
+.sub a.home{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55);white-space:nowrap}.sub a.home:hover{border-bottom-color:#fff}
+/* ==== SHARED-UI CSS START: ▼ [box] ▲ steppers (10 Oct 2026) — the sliders are hidden, the number box is the control ==== */
+.rn input[type=range]{display:none!important}
+#controls{align-items:flex-start!important}   /* all controls top-aligned, notes below a box hang underneath */
+#controls .ctl sub,#controls .ctl sup{line-height:0}   /* subscripts in a label (m_A) do not push its box down */
+.rn{gap:4px!important}
+.fld{display:inline-flex;align-items:center;border:1px solid #B0BEC5;border-radius:8px;background:#fff;min-height:44px;padding-right:6px;box-sizing:border-box}
+.fld .nb{border:0!important;background:transparent!important;min-height:42px;padding-right:2px;width:66px!important}
+.fld .u{margin-left:3px}
+.fld .nb:focus{outline:none}
+.fld:focus-within{outline:2px solid var(--navy);outline-offset:1px}
+.fld:has(.nb.clamped){border-color:var(--accent);background:var(--soft)}
+.fld:has(.nb:disabled){opacity:.5}
+.fld .bw{display:none;color:#B26A00;font-size:.9rem;margin-left:3px}
+.fld.beyond{border-color:#F0A202;background:#FFF8E1;box-shadow:inset 0 0 0 1px #F0A202}
+.fld.beyond .bw{display:inline}
+.stp{font:inherit;font-size:.78rem;line-height:1;min-width:34px;min-height:44px;padding:0 6px;border:1px solid #B0BEC5;border-radius:8px;background:#F3F6FA;
+  color:var(--navy);cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.stp:hover:not(:disabled){border-color:var(--navy);background:#E6EDF5}
+.stp:active:not(:disabled){background:#D3DEEB}
+.stp:disabled{opacity:.35;cursor:default}
+.stp.rs{min-width:26px;padding:0 2px;border-color:transparent;background:transparent;font-size:1.05rem;color:var(--muted)}
+.stp.rs:hover:not(:disabled){background:#EEF2F6;border-color:transparent}
+@media (max-width:1300px){ .stp{min-width:30px;padding:0 4px} .fld .nb{width:58px!important} }
+/* ==== SHARED-UI CSS END ==== */
+/* ==== NEWTON CSS START (law badge · ΣF = ma table · 3rd-law checkbox) ==== */
+.nbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:3px 10px;border-bottom:1px solid #E3E9F0;flex:none;min-height:30px}
+.nlaw{font-size:.84rem;padding:2px 10px;border-radius:999px;border:1.5px solid #90A4AE;color:#37474F;background:#F5F7FA;line-height:1.5}
+.nlaw.l1{border-color:#2E7D32;color:#1B5E20;background:#E8F5E9}
+.nlaw.l2{border-color:#E65100;color:#BF360C;background:#FFF3E0}
+.nbar{flex-wrap:nowrap}
+.nlaw{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.nbar .switch{font-size:.84rem;margin-left:auto;white-space:nowrap;flex:none}
+@media (pointer:fine){ .nbar .switch{min-height:28px;padding-top:0;padding-bottom:0} }
+.ntab{flex:none;max-height:40%;overflow:auto;padding:2px 8px 4px;border-top:1px solid #E3E9F0;font-size:.8rem}
+.ntab .nh{display:flex;align-items:center;gap:8px;min-height:26px}
+.ntab .nfold{font:inherit;font-weight:700;color:#1F3A5F;background:none;border:none;cursor:pointer;padding:2px 0;min-height:26px}
+.ntab .nk{color:#606A72}.ntab .nk.ok{color:#2E7D32;font-weight:600}
+.ntab table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.ntab th,.ntab td{padding:1px 4px;text-align:right;border-bottom:1px solid #EEF2F6;white-space:nowrap}
+.ntab th{color:#1F3A5F;font-weight:600}
+.ntab td:first-child,.ntab th:first-child,.ntab td.by,.ntab th:nth-child(2){text-align:left}
+.ntab td:first-child{font-weight:600}.ntab td.by{color:#606A72}
+.ntab tr.ns td{font-weight:700;border-top:1.5px solid #263238}
+.ntab tr.nm td{color:#E65100;font-weight:600}
+.ntab tr.nb td{font-weight:700;color:#1F3A5F;background:#F5F7FA}
+.ntab .ncap{color:#606A72;font-size:.74rem;margin-top:2px;white-space:normal}
+@media (max-height:800px) and (min-width:1100px){ .ntab{font-size:.74rem} .ntab .ncap{display:none} .nbar{min-height:26px;padding:1px 10px} .nlaw{font-size:.78rem} }
+@media (max-width:1099px) and (min-width:760px){ .ntab{font-size:.72rem;max-height:45%} .ntab .ncap{display:none}
+  .fbdcol #fbdWrap{min-height:0} }
+/* ==== NEWTON CSS END ==== */
+/* ==== PHONE CSS START: phone layout (10 Oct 2026) — only phones (narrow, or held sideways with a touch screen); laptops and tablets unchanged ==== */
+@media (max-width:759px), (max-height:500px) and (pointer:coarse){
+  html,body{height:auto}
+  main{display:flex!important;flex-direction:column;min-height:0!important;gap:10px;padding:8px 8px 16px}
+  .left{display:contents}                                  /* scene and readouts become separate steps of the column */
+  .scenecard{order:1;flex:none!important;min-height:0}
+  #controls{order:2}
+  .readouts{order:3;flex:none}
+  .fbdcol{order:4;flex:none}
+  .right{order:5;flex:none;height:auto!important}
+  #sceneWrap{flex:none!important;height:min(58vh,340px)!important;min-height:200px}
+  #fbdWrap{flex:none!important;height:300px!important}
+  .scenecard .cardhead{position:sticky;top:0;z-index:2}    /* run buttons stay at hand while the scene is on screen */
+  .cardhead .btn{min-height:40px;padding:4px 10px}
+  .panel{overflow:visible}
+  .panel.on{flex:none}
+  #graphWrap,#elasticWrap,#hystWrap,#ffnWrap{flex:none!important;height:300px!important;min-height:0}
+  #taskList{overflow:visible;flex:none}
+  .tableBox{max-height:220px}
+  canvas{touch-action:pan-y!important}                     /* a finger on a graph or diagram still scrolls the page */
+  canvas.drag{touch-action:none!important}                 /* except where the scene has things to drag (pulleys) */
+  #controls{gap:10px 12px;padding:10px}
+  #controls .ctl{max-width:100%}
+  #controls select{max-width:100%}
+  .tabs{overflow-x:auto;scrollbar-width:none}
+  .tab{white-space:nowrap}
+  #help .box{max-height:85dvh;padding:14px 16px}
+}
+/* ==== PHONE CSS END ==== */
+</style>
+</head>
+<body>
+<!-- ============================ 2 MARKUP ============================ -->
+<header>
+  <div>
+    <h1>Spring force — Hooke's law</h1>
+    <div class="sub"><a class="home" href="https://school.taneski.com/physics/dp/#A2" title="Back to all A.2 simulations">← All simulations</a> · IBDP Physics SL · A.2 Types of forces · g = 9.81 N kg⁻¹</div>
+  </div>
+  <div class="grow"></div>
+  <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
+  <div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
+</header>
+
+<main>
+  <section class="left">
+    <div class="card scenecard">
+      <div class="cardhead">
+        <h2 id="sceneTitle">Experiment</h2>
+        <div class="actions" id="actions"></div>
+      </div>
+<!-- NEWTON BAR --><div class="nbar"><span class="nlaw" id="nlaw"></span><label class="switch" title="Show every force together with its Newton's 3rd-law partner"><input type="checkbox" id="n3"> 3rd-law pairs</label></div><!-- /NEWTON BAR -->
+      <div id="sceneWrap"><canvas id="scene" aria-label="Spring experiment"></canvas></div>
+    </div>
+    <div class="card readouts"><table><tbody id="ro"></tbody></table></div>
+  </section>
+
+  <section class="card fbdcol" aria-label="Free-body diagram">
+    <h2 id="fbdTitle">Free-body diagram</h2>
+    <div id="fbdWrap"><canvas id="fbd" aria-label="Free-body diagram"></canvas></div>
+<!-- NEWTON TABLE --><div class="ntab" id="ntab"></div><!-- /NEWTON TABLE -->
+  </section>
+
+  <section class="card right">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-tab="pGraph">Graph</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="pElastic">Elastic limit</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="pHyst">Hysteresis</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="pData">Data &amp; analysis</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="pTasks">Tasks</button>
+    </div>
+    <div class="panel on" id="pGraph">
+      <div id="graphWrap"><canvas id="graph" aria-label="Force against extension"></canvas></div>
+      <div class="hint" id="graphHint"></div>
+    </div>
+    <div class="panel" id="pElastic">
+      <div id="elasticWrap"><canvas id="elastic" aria-label="Force against extension: elastic limit"></canvas></div>
+      <div class="hint" id="elasticHint"></div>
+    </div>
+    <div class="panel" id="pHyst">
+      <div id="hystWrap"><canvas id="hyst" aria-label="Force against extension: hysteresis loop of a rubber band"></canvas></div>
+      <div class="hint" id="hystHint"></div>
+    </div>
+    <div class="panel" id="pData">
+      <div class="row">
+        <button class="btn small" id="clearBtn">Clear all trials</button>
+        <span style="flex:1"></span>
+        <label class="switch"><input type="checkbox" id="fitChk"> Best fit + steepest/shallowest</label>
+      </div>
+      <div class="tableBox"><table id="trials"><thead><tr><th>#</th><th>Spring</th><th>load</th><th>F / N</th>
+        <th>pointer / cm</th><th>x / cm</th><th></th></tr></thead><tbody></tbody></table></div>
+      <div id="anaWrap"><canvas id="ana" aria-label="Load against extension graph"></canvas></div>
+    </div>
+    <div class="panel" id="pTasks">
+      <div id="taskSets"></div>
+      <div id="taskList"></div>
+    </div>
+  </section>
+
+  <section class="card" id="controls" aria-label="Controls">
+    <div class="ctl">
+      <span class="lab">Mode</span>
+      <div class="seg" id="mode">
+        <button data-mode="hang" aria-pressed="true">Hang masses</button>
+        <button data-mode="push" aria-pressed="false">Push / pull</button>
+        <button data-mode="cycle" aria-pressed="false">Load &amp; unload</button>
+      </div>
+    </div>
+    <div class="ctl">
+      <label for="spr">Spring</label>
+      <select id="spr"></select>
+      <span class="mu" id="kLab"></span>
+    </div>
+    <div class="sc" data-mode="hang cycle">
+      <div class="ctl">
+        <label for="mass">Load m (slotted masses, 50 g each)</label>
+        <input type="range" id="mass" min="0" max="800" step="50" value="0">
+      </div>
+    </div>
+    <div class="sc" data-mode="hang">
+      <div class="ctl">
+        <span class="lab">Mystery bag</span>
+        <label class="switch"><input type="checkbox" id="myst"> hang it instead</label>
+      </div>
+      <div class="ctl">
+        <span class="lab">Reading uncertainty</span>
+        <label class="switch"><input type="checkbox" id="noise"> ±0.1 cm</label>
+      </div>
+    </div>
+    <div class="sc" data-mode="push">
+      <div class="ctl"><label for="disp">Displacement x<span class="dup"> = <span id="dOut"></span> cm</span> (stretch +, squash −)</label>
+        <input type="range" id="disp" min="-15" max="15" step="0.5" class="wide"></div>
+    </div>
+  </section>
+</main>
+
+<div id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="box">
+    <h3 id="helpTitle">How to use this simulation</h3>
+    <ol>
+      <li><b>Hang masses</b>: add 50 g slotted masses with <b>▲</b> and <b>▼</b> (or type any load, up to 100 kg). Read the pointer on the ruler; the
+        extension x is the pointer reading minus the unloaded reading. Press <b>● Record</b> for each load.</li>
+      <li>Set each value with <b>▼</b> and <b>▲</b> (hold to go faster; the <b>↑ ↓</b> keys or the mouse wheel in the box also work, Shift = ×10), or <b>type a value</b> in the box. <b>↺</b> puts it back to its start value. Outside the classroom range the box turns <b>amber ⚠</b>: fine to explore, but the lab can't do this.</li>
+      <li>Move the pointer over any <b>graph</b> (or tap it): a dashed line shows the values where it cuts each curve, or the values of the nearest data point.</li>
+      <li>Tick <b>Mystery bag</b> to hang an object of unknown mass, and <b>±0.1 cm</b> to read the ruler like in the lab.</li>
+      <li>Load a spring beyond its <b>elastic limit</b> and then unload it: it no longer returns to its original length.
+        <b>↺ New spring</b> replaces it.</li>
+      <li><b>Push / pull</b>: hold the block on a frictionless table and stretch or squash the spring.</li>
+      <li><b>Load &amp; unload</b> (checkpoint): add masses one by one, then take them off again. The Graph tab draws the
+        loading curve (orange) and the unloading curve (blue). Try a steel spring below and beyond its elastic limit
+        <b>E</b>, and the <b>rubber band</b>.</li>
+      <li>The <b>Data &amp; analysis</b> tab plots load F against extension x with error bars.</li>
+    </ol>
+    <h3>The physics</h3>
+    <ul>
+      <li class="eq">Hooke's law: F<sub>H</sub> = −kx. The spring force is proportional to the extension and points back towards the natural length.</li>
+      <li class="eq">Hanging at rest: F<sub>H</sub> = W = mg, so k = mg / x = gradient of the F–x graph.</li>
+      <li>Beyond the <b>limit of proportionality</b> the graph curves; beyond the <b>elastic limit</b> the spring is permanently stretched.</li>
+      <li><b>Hysteresis</b>: a rubber band's unloading curve lies below its loading curve. The area under the loading curve is the
+        energy stored; the area under the unloading curve is the energy given back. The <b>area of the loop</b> is the energy
+        turned into heat (internal energy) in the band.</li>
+    </ul>
+    <p class="hint">Model: the investigation spring has k = 25.0 N m⁻¹ (like the Forces investigation); the Station 3 spring
+      29.4 N m⁻¹. Past the limit the spring is modelled as softer and keeps 30 % of the extra stretch; here the limit of
+      proportionality and the elastic limit are taken as the same point E. Rubber band: F = 8x + 250x² (x in m) on loading.</p>
+    <!-- NEWTON HELP --><h3>Newton's laws</h3>
+<p>The badge above the scene says which law applies at this moment: <b>1st law</b> — at rest or moving at a constant velocity, the resultant force is zero (Σ<i>F</i> = 0); <b>2nd law</b> — accelerating, Σ<i>F</i> = <i>ma</i>. The table under the free-body diagram adds up the forces (Σ<i>F</i>) and compares them with <i>m a</i> (▾ folds it). Tick <b>3rd-law pairs</b> to see every force with its partner: the same size and type, in the opposite direction, acting on the <b>other</b> body (the Earth, the floor, the string, the fluid…).</p><!-- /NEWTON HELP -->
+<p style="text-align:right"><button class="btn primary" id="helpClose">Close</button></p>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ==== SHARED-UI START: ▼ [box] ▲ steppers + chart probe (10 Oct 2026, the same block in every simulation) ==== */
+// Steppers: every number box gets ▼ and ▲ (hold to repeat), ↑/↓ keys and the mouse wheel in the box (Shift = ×10) and ↺ (start value).
+// Inside the classroom range (the old slider range) a step is the old slider step (or the next value of its list; log quantities move
+// by one unit in the 2nd significant figure). Beyond it the value may go on up to the physical limits in 1-2-5 steps; the box turns amber.
+const STEPPER = (() => {
+  const all = [], r10 = v => +Number(v).toPrecision(10), fmt = v => String(+Number(v).toPrecision(6));
+  const epsOf = (lo, hi) => 1e-9 * Math.max(1, Math.abs(lo), Math.abs(hi));
+  function s125(v, dir){                                  // next value of …, 0.1, 0.2, 0.5, 1, 2, 5, 10, … beyond v (signed)
+    const a = Math.abs(v); if (a < 1e-15) return null;
+    const s = Math.sign(v), e = Math.floor(Math.log10(a)), c = [];
+    for (let k = e - 1; k <= e + 2; k++) for (const m of [1, 2, 5]) c.push(r10(m * Math.pow(10, k)));
+    if (dir === s) return s * Math.min(...c.filter(x => x > a * (1 + 1e-9)));
+    const d = c.filter(x => x < a * (1 - 1e-9)); return d.length ? s * Math.max(...d) : 0;
+  }
+  function grid(o, v, dir, lo, hi){                       // one step inside the classroom range, snapped to the grid
+    const eps = epsOf(lo, hi);
+    if (o.list){ const L = o.list(); const n = dir > 0 ? L.find(x => x > v + eps) : [...L].reverse().find(x => x < v - eps); return n === undefined ? (dir > 0 ? hi : lo) : n; }
+    const st = o.step ? +o.step() : NaN;
+    if (o.log && lo > 0 && hi / lo > 1e5){ const n = s125(v, dir); return n === null ? lo : n; }   // very wide ranges (satellite mass): 1-2-5
+    if (o.log || !(st > 0)){ if (!(v > 0)) return dir > 0 ? lo : lo;
+      const s = Math.pow(10, Math.floor(Math.log10(dir > 0 ? v : v * (1 - 1e-9))) - 1), k = v / s;
+      return r10((dir > 0 ? Math.floor(k + 1e-6) + 1 : Math.ceil(k - 1e-6) - 1) * s); }
+    const b = o.base ? +o.base() : lo, k = (v - b) / st;
+    return r10(b + (dir > 0 ? Math.floor(k + 1e-6) + 1 : Math.ceil(k - 1e-6) - 1) * st);
+  }
+  function next(o, v, dir){
+    const [lo, hi] = o.room(), eps = epsOf(lo, hi), st = o.step ? +o.step() : NaN;
+    let n;
+    if ((dir > 0 && v >= hi - eps) || (dir < 0 && v <= lo + eps)){            // leaving the classroom range (or already beyond it)
+      n = s125(v, dir); if (n === null) n = v + dir * (st > 0 ? st : (hi - lo) / 100);
+      if (dir > 0 && v < lo - eps && n > lo) n = lo; if (dir < 0 && v > hi + eps && n < hi) n = hi;
+    } else if (v > hi + eps || v < lo - eps){                                   // coming back: 1-2-5 until the range edge
+      n = s125(v, dir); if (n === null) n = dir > 0 ? lo : hi;
+      if (dir < 0 && n <= hi) n = hi; if (dir > 0 && n >= lo) n = lo;
+    } else n = Math.min(hi, Math.max(lo, grid(o, v, dir, lo, hi)));
+    const [mn, mx] = o.hard(); return Math.min(mx, Math.max(mn, r10(n)));
+  }
+  function go(o, dir, times = 1){
+    if (o.nb.disabled) return false;
+    const v0 = +o.get(); if (!isFinite(v0)) return false;
+    let v = v0; for (let i = 0; i < times; i++) v = next(o, v, dir);
+    if (Math.abs(v - v0) <= 1e-12 * Math.max(1, Math.abs(v0))) return false;
+    o.apply(v); if (document.activeElement === o.nb) o.nb.value = fmt(o.get());
+    check(o, true); return true;
+  }
+  function beyond(o){ const v = +o.get(), [lo, hi] = o.room(), eps = epsOf(lo, hi); return v < lo - eps || v > hi + eps; }
+  function check(o, user){                                 // amber box + ⚠ outside the classroom range; a message once on crossing
+    const b = beyond(o), [lo, hi] = o.room(), u = o.unit();
+    if (b && !o.was && user) o.toast(`Beyond the classroom range (${fmt(lo)}–${fmt(hi)}${u ? " " + u : ""}): fine to explore, but the lab can't do this.`);
+    o.was = b; o.fld.classList.toggle("beyond", b);
+    o.warn.title = `Outside the classroom range ${fmt(lo)}–${fmt(hi)}${u ? " " + u : ""}`;
+  }
+  function holdBtn(btn, o, dir){
+    let tm = null, t0 = 0;
+    const stop = () => { clearTimeout(tm); tm = null; };
+    const rep = () => { if (!go(o, dir)) return stop(); tm = setTimeout(rep, performance.now() - t0 > 1400 ? 45 : 110); };
+    btn.addEventListener("pointerdown", e => { if (e.button) return; e.preventDefault(); stop(); go(o, dir, e.shiftKey ? 10 : 1); t0 = performance.now(); tm = setTimeout(rep, 420); });
+    ["pointerup", "pointerleave", "pointercancel", "blur"].forEach(k => btn.addEventListener(k, stop));
+    btn.addEventListener("click", e => { if (e.detail === 0) go(o, dir, e.shiftKey ? 10 : 1); });   // keyboard (Enter/Space)
+    btn.addEventListener("contextmenu", e => e.preventDefault());
+  }
+  const mk = (cls, txt, lab) => { const b = document.createElement("button"); b.type = "button"; b.className = "stp " + cls; b.textContent = txt;
+    b.tabIndex = -1; b.setAttribute("aria-label", lab); return b; };
+  // o: {nb, get, apply(v), room() → classroom [lo, hi], hard() → physical [min, max], step() | list() | log, base(), def() | null, unit(), toast(msg)}
+  function attach(nb, o){
+    o.nb = nb; const u = nb.nextElementSibling && nb.nextElementSibling.classList.contains("u") ? nb.nextElementSibling : null;
+    const fld = document.createElement("span"); fld.className = "fld"; nb.before(fld); fld.appendChild(nb); if (u) fld.appendChild(u);
+    const warn = document.createElement("span"); warn.className = "bw"; warn.textContent = "⚠"; fld.appendChild(warn);
+    const dn = mk("dn", "▼", "decrease"), up = mk("up", "▲", "increase"), rs = mk("rs", "↺", "back to the start value");
+    dn.title = "Decrease · hold to repeat · Shift = ×10"; up.title = "Increase · hold to repeat · Shift = ×10";
+    fld.before(dn); fld.after(up); up.after(rs);
+    if (!o.def) rs.style.visibility = "hidden";
+    Object.assign(o, {fld, warn, dn, up, rs, was:false});
+    holdBtn(dn, o, -1); holdBtn(up, o, 1);
+    rs.addEventListener("click", () => { const d = o.def ? o.def() : null; if (d === null || d === undefined || nb.disabled) return; o.apply(d); check(o, true); });
+    // clicking into the box selects the whole value, so typing replaces it (a 2nd click places the cursor as usual)
+    nb.addEventListener("focus", () => { nb.select(); nb._sel = true; });
+    nb.addEventListener("mouseup", e => { if (nb._sel){ e.preventDefault(); nb._sel = false; } });
+    nb.addEventListener("touchend", e => { if (nb._sel){ nb._sel = false; setTimeout(() => nb.select(), 0); } });
+    nb.addEventListener("blur", () => { nb._sel = false; });
+    nb.addEventListener("keydown", e => { if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return; e.preventDefault();
+      clearTimeout(nb._tm); go(o, e.key === "ArrowUp" ? 1 : -1, e.shiftKey ? 10 : 1); nb.select(); });
+    nb.addEventListener("wheel", e => { if (document.activeElement !== nb || !e.deltaY) return; e.preventDefault();
+      clearTimeout(nb._tm); go(o, e.deltaY < 0 ? 1 : -1, e.shiftKey ? 10 : 1); }, {passive:false});
+    nb._st = o; all.push(o); return o;
+  }
+  function tick(){
+    for (const o of all){
+      if (!o.nb.isConnected) continue;
+      const off = o.nb.disabled, v = +o.get(), [mn, mx] = o.hard(), d = o.def ? o.def() : null;
+      o.dn.disabled = off || !(v > mn + 1e-12 * Math.max(1, Math.abs(mn))); o.up.disabled = off || !(v < mx - 1e-12 * Math.max(1, Math.abs(mx)));
+      o.rs.disabled = off || d === null || d === undefined || Math.abs(v - d) <= 1e-9 * Math.max(1, Math.abs(d));
+      if (o.def && d !== null && d !== undefined) o.rs.title = `Back to the start value (${fmt(d)}${o.unit() ? " " + o.unit() : ""})`;
+      check(o, false);
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+  return {attach, check, fmt, all};
+})();
+
+// Chart probe: move the pointer over any graph (or tap it) → a dashed vertical line, a dot where it cuts each curve and the x and y
+// values (as on the Free fall graphs). It reads what each graph draws after its axes (axes/axesR), so every graph gets it.
+// On graphs with only data points the line snaps to the nearest point; near a point its exact values are shown too.
+const PROBE = (() => {
+  const S = new Map();                                   // canvas → {frames, px, py, on, touch, ov}
+  const st = cv => { let s = S.get(cv); if (!s){ s = {frames:[], on:false}; S.set(cv, s); } return s; };
+  let pause = 0;
+  const P = CanvasRenderingContext2D.prototype, orig = {};
+  const rec = ctx => ctx.__pf && !pause;
+  ["beginPath", "moveTo", "lineTo", "closePath", "arc", "quadraticCurveTo", "bezierCurveTo", "stroke", "fill", "clearRect"].forEach(k => orig[k] = P[k]);
+  P.beginPath = function(){ if (rec(this)) this.__pp = {subs:[], arcs:[], cur:null}; return orig.beginPath.apply(this, arguments); };
+  const pp = ctx => ctx.__pp || (ctx.__pp = {subs:[], arcs:[], cur:null});
+  P.moveTo = function(x, y){ if (rec(this)){ const p = pp(this); p.cur = [[x, y]]; p.subs.push(p.cur); } return orig.moveTo.apply(this, arguments); };
+  P.lineTo = function(x, y){ if (rec(this)){ const p = pp(this); if (!p.cur){ p.cur = [[x, y]]; p.subs.push(p.cur); } else p.cur.push([x, y]); } return orig.lineTo.apply(this, arguments); };
+  P.quadraticCurveTo = function(a, b, x, y){ if (rec(this)){ const p = pp(this); if (p.cur) p.cur.push([x, y]); } return orig.quadraticCurveTo.apply(this, arguments); };
+  P.bezierCurveTo = function(a, b, c, d, x, y){ if (rec(this)){ const p = pp(this); if (p.cur) p.cur.push([x, y]); } return orig.bezierCurveTo.apply(this, arguments); };
+  P.closePath = function(){ if (rec(this)){ const p = pp(this); if (p.cur) p.cur.closed = true; p.cur = null; } return orig.closePath.apply(this, arguments); };
+  P.arc = function(x, y, r){ if (rec(this)) pp(this).arcs.push([x, y, r]); return orig.arc.apply(this, arguments); };
+  function toFrame(ctx, f, pts){                         // path points → the frame's coordinates (if the transform has changed)
+    const m = ctx.getTransform(), g = f.m;
+    if (m.a === g.a && m.b === g.b && m.c === g.c && m.d === g.d && m.e === g.e && m.f === g.f) return pts;
+    const gi = g.inverse(); return pts.map(([x, y]) => { const X = m.a * x + m.c * y + m.e, Y = m.b * x + m.d * y + m.f;
+      return [gi.a * X + gi.c * Y + gi.e, gi.b * X + gi.d * Y + gi.f]; });
+  }
+  function commit(ctx, stroke){
+    const f = ctx.__pf, p = ctx.__pp; if (!f || !p) return;
+    const col = stroke ? ctx.strokeStyle : ctx.fillStyle, c = typeof col === "string" ? col : null;
+    for (const [x, y, r] of p.arcs) if (r <= 9 && r >= 1.5 && c){ const [[X, Y]] = toFrame(ctx, f, [[x, y]]);
+      if (X >= f.box.x - 2 && X <= f.box.x + f.box.w + 2 && Y >= f.box.y - 2 && Y <= f.box.y + f.box.h + 2) f.pts.push({x:X, y:Y, col:c}); }
+    if (stroke && c && ctx.globalAlpha > 0.3) for (const s of p.subs) if (!s.closed && s.length >= 2) f.raw.push({pts:toFrame(ctx, f, s), col:c, dash:ctx.getLineDash().length > 0});
+  }
+  P.stroke = function(){ if (rec(this) && !arguments.length) commit(this, true); return orig.stroke.apply(this, arguments); };
+  P.fill = function(){ if (rec(this) && !(arguments[0] instanceof Path2D)) commit(this, false); return orig.fill.apply(this, arguments); };
+  P.clearRect = function(x, y, w, h){ if (x <= 0 && y <= 0 && w * 1.01 >= this.canvas.clientWidth && h * 1.01 >= this.canvas.clientHeight){ st(this.canvas).frames = []; this.__pf = null; }
+    return orig.clearRect.apply(this, arguments); };
+  // the text helpers, arrows, tangents and shaded areas on a graph are not curves
+  const quiet = fn => function(){ pause++; try { return fn.apply(this, arguments); } finally { pause--; } };
+  function newFrame(ctx, box, x0, x1, y0, y1, xl, yl, noX){
+    const cv = ctx.canvas, s = st(cv), f = {box:{...box}, x0, x1, y0, y1, xl, yl, m:ctx.getTransform(), raw:[], pts:[], skip:!!noX || !(x1 > x0) || !(y1 > y0)};
+    s.frames.push(f); if (s.frames.length > 8) s.frames.shift(); bind(cv); return f;
+  }
+  function wrapAxes(fn, ranged){
+    return function(ctx, box){
+      ctx.__pf = null; const r = fn.apply(this, arguments), a = arguments;
+      ctx.__pf = ranged ? newFrame(ctx, box, a[2], a[3], a[4], a[5], a[6], a[7], a[8]) : newFrame(ctx, box, 0, a[2], 0, a[3], a[4], a[5], false);
+      ctx.__pp = null; return r;
+    };
+  }
+  // ---- labels: "time t / s" → symbol t, unit s
+  function split(parts){
+    if (typeof parts === "string") parts = [[parts, "n"]];
+    if (!Array.isArray(parts)) return {sym:[["x", "i"]], unit:""};
+    const flat = parts.map(p => [String(p[0]), p[1] || "n"]), txt = flat.map(p => p[0]).join(""), k = txt.lastIndexOf(" / ");
+    const left = [], unit = [];
+    let pos = 0;
+    for (const [t, sty] of flat){ const a = pos, b = pos + t.length; pos = b;
+      if (k < 0 || b <= k) left.push([t, sty]); else if (a >= k + 3) unit.push([t, sty]);
+      else { if (k > a) left.push([t.slice(0, k - a), sty]); if (b > k + 3) unit.push([t.slice(Math.max(0, k + 3 - a)), sty]); } }
+    // drop a describing word or two in front of the symbol ("time t", "drop height h"), keep "cos θ", "1 − cos θ"
+    let first = left.findIndex(p => p[1] !== "n" && p[0].trim());
+    if (first > 0){ const pre = left.slice(0, first).map(p => p[0]).join(""); if (!/^([A-Za-z]{4,}\s+)+$/.test(pre)) first = 0; }
+    let sym = first < 0 ? [[left.map(p => p[0]).join("").trim(), "n"]] : left.slice(first).map(p => [p[0], p[1]]);
+    let cut = false; sym = sym.filter(p => { if (cut) return false; const i = p[0].indexOf(" = "); if (i >= 0){ p[0] = p[0].slice(0, i); cut = true; } return true; });
+    if (sym.length) sym[sym.length - 1][0] = sym[sym.length - 1][0].replace(/\s+$/, "");
+    if (sym.length && sym[0][0]) sym[0][0] = sym[0][0].replace(/^\s+/, "");
+    let un = unit.map(p => p[1] === "s" ? toSub(p[0]) : p[0]).join("").replace(/\s*\(.*$/, "").trim(); if (un === "1") un = "";
+    return {sym:sym.filter(p => p[0]), unit:un};
+  }
+  const SUBS = {"0":"₀", "1":"₁", "2":"₂", "3":"₃", "4":"₄", "5":"₅", "6":"₆", "7":"₇", "8":"₈", "9":"₉"};
+  const toSub = t => t.replace(/[0-9]/g, d => SUBS[d]);
+  const SUP = {"0":"⁰", "1":"¹", "2":"²", "3":"³", "4":"⁴", "5":"⁵", "6":"⁶", "7":"⁷", "8":"⁸", "9":"⁹", "-":"⁻"};
+  function num(v, span){                                   // enough decimals for the axis, × 10ⁿ for very big or small values
+    if (!isFinite(v)) return "–";
+    const a = Math.abs(v);
+    if (a >= 1e5 || (a > 0 && a < 1e-3 && span < 1e-2)){ const e = Math.floor(Math.log10(a)), m = v / Math.pow(10, e);
+      return `${m.toFixed(2).replace("-", "−")} × 10${String(e).replace(/[0-9-]/g, c => SUP[c])}`; }
+    const d = Math.max(0, Math.min(6, Math.ceil(-Math.log10(span / 400))));
+    let s = v.toFixed(d); if (/^-0\.?0*$/.test(s)) s = s.slice(1); return s.replace("-", "−");
+  }
+  // ---- curves of a frame: join touching pieces of the same colour, drop vertical lines and short legend strokes
+  function curves(f){
+    if (f.lines && f.nraw === f.raw.length) return f.lines;
+    const L = [];
+    for (const r of f.raw){ const last = L[L.length - 1];
+      if (last && last.col === r.col && Math.hypot(last.pts[last.pts.length - 1][0] - r.pts[0][0], last.pts[last.pts.length - 1][1] - r.pts[0][1]) < 0.6) last.pts = last.pts.concat(r.pts.slice(1));
+      else L.push({pts:r.pts.slice(), col:r.col, dash:r.dash}); }
+    f.lines = L.filter(l => { let lo = Infinity, hi = -Infinity; for (const [x] of l.pts){ lo = Math.min(lo, x); hi = Math.max(hi, x); }
+      const span = hi - lo; return span >= 1.5 && !(l.pts.length <= 3 && span < 0.08 * f.box.w) && hi >= f.box.x - 1 && lo <= f.box.x + f.box.w + 1; });
+    f.nraw = f.raw.length; return f.lines;
+  }
+  function cut(l, x){ const out = [];
+    for (let i = 1; i < l.pts.length; i++){ const [xa, ya] = l.pts[i - 1], [xb, yb] = l.pts[i];
+      if (Math.abs(xb - xa) < 1e-6 || (x - xa) * (x - xb) > 0) continue;
+      const y = ya + (yb - ya) * (x - xa) / (xb - xa); if (!out.some(q => Math.abs(q - y) < 2)) out.push(y); }
+    return out; }
+  // ---- drawing on a transparent canvas laid over the graph
+  function overlay(cv, s){
+    if (!s.ov){ const o = document.createElement("canvas"); o.className = "probeOv"; o.setAttribute("aria-hidden", "true");
+      o.style.cssText = "position:absolute;pointer-events:none;z-index:2"; cv.after(o); s.ov = o;
+      const par = cv.parentNode; if (getComputedStyle(par).position === "static") par.style.position = "relative"; }
+    const o = s.ov; o.style.left = cv.offsetLeft + "px"; o.style.top = cv.offsetTop + "px";
+    o.style.width = cv.offsetWidth + "px"; o.style.height = cv.offsetHeight + "px";
+    if (o.width !== cv.width || o.height !== cv.height){ o.width = cv.width; o.height = cv.height; }
+    return o;
+  }
+  const FONT = (sty, z) => sty === "i" ? `italic 600 ${z}px "Segoe UI",Calibri,Arial,sans-serif` : sty === "s" ? `600 ${Math.round(z * .72)}px "Segoe UI",Calibri,Arial,sans-serif` : `600 ${z}px "Segoe UI",Calibri,Arial,sans-serif`;
+  const runW = (ctx, run, z) => run.reduce((w, [t, sty]) => { ctx.font = FONT(sty, z); return w + ctx.measureText(t).width; }, 0);
+  function runDraw(ctx, run, x, y, col, z){ for (const [t, sty] of run){ ctx.font = FONT(sty, z); ctx.fillStyle = col;
+    ctx.fillText(t, x, sty === "s" ? y + z * .3 : y); x += ctx.measureText(t).width; } return x; }
+  function draw(cv, s){
+    const o = overlay(cv, s), ctx = o.getContext("2d");
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, o.width, o.height);
+    if (!s.on || !cv.offsetParent) return;
+    const dpr = cv.width / Math.max(1, cv.getBoundingClientRect().width), dx = s.px * dpr, dy = s.py * dpr;
+    let f = null, lx = 0, ly = 0;
+    for (const g of s.frames){ if (g.skip) continue; const gi = g.m.inverse(), X = gi.a * dx + gi.c * dy + gi.e, Y = gi.b * dx + gi.d * dy + gi.f;
+      if (X >= g.box.x && X <= g.box.x + g.box.w && Y >= g.box.y - 4 && Y <= g.box.y + g.box.h + 4){ f = g; lx = X; ly = Y; break; } }
+    if (!f) return;
+    const b = f.box, xv = px => f.x0 + (px - b.x) / b.w * (f.x1 - f.x0), yv = py => f.y0 + (b.y + b.h - py) / b.h * (f.y1 - f.y0);
+    const lines = curves(f), pts = f.pts.filter(p => p.x >= b.x - 1 && p.x <= b.x + b.w + 1);
+    let hits = [], near = null, x = lx;
+    for (const l of lines) for (const y of cut(l, x)) if (y >= b.y - 1 && y <= b.y + b.h + 1) hits.push({y, col:l.col, dash:l.dash ? 1 : 0});
+    if (pts.length){ const n = pts.reduce((m, p) => { const d = Math.hypot(p.x - lx, p.y - ly); return d < m.d ? {p, d} : m; }, {p:null, d:Infinity});
+      if (n.d <= 12) near = n.p; }
+    if (!lines.length && pts.length){                    // only data points: snap to the nearest one along x
+      near = pts.reduce((m, p) => Math.abs(p.x - lx) + 1e-3 * Math.abs(p.y - ly) < Math.abs(m.x - lx) + 1e-3 * Math.abs(m.y - ly) ? p : m, pts[0]); x = near.x; }
+    if (!hits.length && !near) return;
+    hits.sort((p, q) => p.y - q.y || p.dash - q.dash);    // curves on top of each other: one row (the solid one)
+    hits = hits.filter((h, i) => !hits.slice(0, i).some(q => Math.abs(q.y - h.y) < 1.5)).slice(0, 6);
+    ctx.setTransform(f.m);
+    ctx.save(); ctx.strokeStyle = "rgba(38,50,56,.55)"; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+    orig.beginPath.call(ctx); orig.moveTo.call(ctx, x, b.y); orig.lineTo.call(ctx, x, b.y + b.h); orig.stroke.call(ctx); ctx.restore();
+    const dot = (X, Y, c, r) => { ctx.save(); ctx.fillStyle = c; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; orig.beginPath.call(ctx); orig.arc.call(ctx, X, Y, r, 0, 7); orig.stroke.call(ctx); orig.fill.call(ctx); ctx.restore(); };
+    for (const h of hits) dot(x, h.y, shade(h.col), 4.5);
+    if (near){ ctx.save(); ctx.strokeStyle = "#263238"; ctx.lineWidth = 2; orig.beginPath.call(ctx); orig.arc.call(ctx, near.x, near.y, 8, 0, 7); orig.stroke.call(ctx); ctx.restore(); }
+    const X = split(f.xl), Y = split(f.yl), xs = f.x1 - f.x0, ys = f.y1 - f.y0, z = 13.5, rows = [];
+    const eq = (sym, v, span, unit) => [...sym, [` = ${num(v, span)}${unit ? (unit === "°" ? "" : " ") + unit : ""}`, "n"]];
+    if (!near || lines.length) rows.push({run:eq(X.sym, xv(x), xs, X.unit), col:"#263238"});
+    if (lines.length) for (const h of hits) rows.push({run:eq(Y.sym, yv(h.y), ys, Y.unit), col:h.col, mark:hits.length > 1});
+    if (near){ rows.push({run:[["point:  ", "n"], ...eq(X.sym, xv(near.x), xs, X.unit)], col:near.col, mark:true});
+      rows.push({run:[["point:  ", "n"], ...eq(Y.sym, yv(near.y), ys, Y.unit)], col:near.col, mark:true, hide:true}); }
+    if (!rows.length) return;
+    ctx.save(); ctx.textBaseline = "middle"; ctx.textAlign = "left";
+    const rh = z + 6, mw = Math.max(...rows.map(r => runW(ctx, r.run, z) + (r.mark ? 14 : 0))), bw = mw + 16, bh = rows.length * rh + 8;
+    const right = x + 10 + bw > b.x + b.w; let bx = right ? x - 10 - bw : x + 10;
+    const cw = o.width / dpr; bx = Math.max(b.x + 2, Math.min(bx, b.x + b.w - bw - 2)); bx = Math.max(2, Math.min(bx, cw - bw - 2));
+    let by = ly - bh / 2;
+    if (near && near.x + 10 > bx && near.x - 10 < bx + bw){ by = near.y + 14; if (by + bh > b.y + b.h - 2) by = near.y - 14 - bh; }   // keep the point visible
+    by = Math.max(b.y + 2, Math.min(by, b.y + b.h - bh - 2));
+    ctx.fillStyle = "rgba(255,255,255,.94)"; ctx.strokeStyle = "rgba(38,50,56,.35)"; ctx.lineWidth = 1;
+    orig.beginPath.call(ctx); ctx.roundRect ? ctx.roundRect(bx, by, bw, bh, 6) : ctx.rect(bx, by, bw, bh); orig.fill.call(ctx); orig.stroke.call(ctx);
+    rows.forEach((r, i) => { const yy = by + 4 + rh * i + rh / 2; let xx = bx + 8;
+      if (r.mark && !r.hide){ ctx.fillStyle = shade(r.col); orig.beginPath.call(ctx); orig.arc.call(ctx, xx + 4, yy, 4, 0, 7); orig.fill.call(ctx); }
+      if (r.mark) xx += 14;
+      let run = r.run; if (r.hide){ ctx.font = FONT("n", z); xx += ctx.measureText(run[0][0]).width; run = run.slice(1); }   // 2nd point row lines up under the 1st
+      runDraw(ctx, run, xx, yy, r.col === "#263238" ? r.col : shade(r.col), z); });
+    ctx.restore();
+  }
+  function shade(c){                                      // pale curve colours (e.g. dashed grey) are darkened for text
+    let r, g, bb; const m = /^#([0-9a-f]{6})$/i.exec(c), q = /^rgba?\(\s*(\d+)[ ,]+(\d+)[ ,]+(\d+)/i.exec(c);
+    if (m){ const n = parseInt(m[1], 16); r = n >> 16; g = (n >> 8) & 255; bb = n & 255; } else if (q){ r = +q[1]; g = +q[2]; bb = +q[3]; } else return c;
+    c = `rgb(${r},${g},${bb})`; const L = 0.299 * r + 0.587 * g + 0.114 * bb;
+    if (L < 150) return c; const k = 150 / L; return `rgb(${Math.round(r * k)},${Math.round(g * k)},${Math.round(bb * k)})`;
+  }
+  function bind(cv){
+    const s = st(cv); if (s.bound) return; s.bound = true;
+    const at = e => { const r = cv.getBoundingClientRect(); s.px = e.clientX - r.left; s.py = e.clientY - r.top; s.on = true; };
+    cv.addEventListener("pointermove", e => { if (e.pointerType === "touch" && !s.touch) return; at(e); });
+    cv.addEventListener("pointerdown", e => { s.touch = e.pointerType === "touch"; at(e); });
+    cv.addEventListener("pointerup", e => { if (e.pointerType === "touch") s.touch = false; });
+    cv.addEventListener("pointercancel", () => { s.touch = false; });   // a finger that scrolls the page lets go of the probe
+    cv.addEventListener("pointerleave", e => { if (e.pointerType !== "touch") s.on = false; });
+    document.addEventListener("pointerdown", e => { if (e.target !== cv) s.on = false; });
+  }
+  function tick(){ for (const [cv, s] of S) if (s.ov || s.on) draw(cv, s); requestAnimationFrame(tick); }
+  requestAnimationFrame(tick);
+  return {wrapAxes, quiet, S};
+})();
+if (typeof axesR === "function") axesR = PROBE.wrapAxes(axesR, true);
+if (typeof axes === "function") axes = PROBE.wrapAxes(axes, false);
+if (typeof drawTangent === "function") drawTangent = PROBE.quiet(drawTangent);
+if (typeof shadeArea === "function") shadeArea = PROBE.quiet(shadeArea);
+if (typeof areaName === "function") areaName = PROBE.quiet(areaName);
+if (typeof toolLabels === "function") toolLabels = PROBE.quiet(toolLabels);
+if (typeof arrow === "function") arrow = PROBE.quiet(arrow);
+if (typeof fArrow === "function") fArrow = PROBE.quiet(fArrow);
+if (typeof label === "function") label = PROBE.quiet(label);
+if (typeof rich === "function") rich = PROBE.quiet(rich);
+if (typeof subLabel === "function") subLabel = PROBE.quiet(subLabel);
+if (typeof note === "function") note = PROBE.quiet(note);
+if (typeof pill === "function") pill = PROBE.quiet(pill);
+/* ==== SHARED-UI END ==== */
+/* ==== NEWTON START — Newton's-law panel (shared by all simulations; source ~/.cache/sharedui-build/newton/) ====
+   The FBD code of each simulation reports what it draws: NF.body(name, m, ax, ay, {v, axes}) and NF.force(label, Fx, Fy, colour, by, kind).
+   Fx, Fy are in N along the body's two axes (default → right, ↑ up); ax, ay the body's acceleration along the same axes.
+   kind: grav · normal · friction · tension · push · pull · spring · drag · buoy · impact · contact (decides the words for the 3rd-law partner).
+   NEWTON then shows: the law badge above the scene (1st law ΣF = 0 / 2nd law ΣF = ma), the ΣF = ma table under the FBD (foldable),
+   and, with "3rd-law pairs" ticked, every force with its partner on the other body (same size, opposite direction). */
+const NF = (() => {
+  let bodies = [], cur = null, msg = "";
+  return {
+    reset(){ bodies = []; cur = null; msg = ""; },
+    body(name, m, ax, ay, o = {}){ cur = {name, m, ax:ax || 0, ay:ay || 0, v:o.v, axes:o.axes || ["→", "↑"], forces:[], law:o.law, pre:o.pre || ""}; bodies.push(cur); return cur; },
+    force(lab, fx, fy, col, by, kind = "contact"){ if (!cur || !isFinite(fx) || !isFinite(fy)) return;
+      if (Math.hypot(fx, fy) < 1e-9) return; cur.forces.push({lab, fx, fy, col, by, kind}); },
+    none(t){ bodies = []; cur = null; msg = t || ""; },
+    get bodies(){ return bodies; }, get msg(){ return msg; },
+  };
+})();
+const NEWTON = (() => {
+  const VERB = {grav:"gravitational pull", normal:"normal force (push)", friction:"friction", tension:"pull (tension)", push:"push", pull:"pull",
+    spring:"spring force", drag:"drag", buoy:"buoyancy (push of the fluid)", impact:"contact force", contact:"contact force"};
+  const fmtN = v => { const a = Math.abs(v); return a >= 1e4 ? `${(v / 1000).toPrecision(3)} kN` : a < 1e-3 && a > 0 ? `${v.toExponential(2)} N` : `${+v.toPrecision(3)} N`; };
+  const z = v => Math.abs(v) < 5e-4 ? "0" : String(+v.toPrecision(3)).replace("-", "−");
+  const dirGlyph = (x, y) => { const a = Math.atan2(y, x) * 180 / Math.PI; return ["→", "↗", "↑", "↖", "←", "↙", "↓", "↘"][((Math.round(a / 45) % 8) + 8) % 8]; };
+  const plain = s => String(s).replace(/<sub>(.*?)<\/sub>/g, "$1").replace(/<[^>]+>/g, "");
+  let fold = false, last = "";
+  try { const v = localStorage.getItem("newton-fold"); fold = v === null ? innerWidth >= 760 && innerWidth < 1100 : v === "1"; } catch (e) {}   // tablets start folded
+  const lawOf = b => b.law || (Math.hypot(b.ax, b.ay) < 1e-6 ? "1st" : "2nd");
+  function badge(){
+    const el = document.getElementById("nlaw"); if (!el) return;
+    const B = NF.bodies; let html, cls;
+    if (!B.length){ html = NF.msg || "No forces to show here"; cls = "none"; }
+    else {
+      const laws = B.map(lawOf), all1 = laws.every(l => l === "1st"), all2 = laws.every(l => l === "2nd");
+      const who = l => B.length > 1 ? ` (${B.filter((b, i) => laws[i] === l).map(b => b.name).join(", ")})` : "";
+      const rest = B.every(b => b.v !== undefined && Math.abs(b.v) < 1e-6);
+      if (all1){ cls = "l1"; html = `<b>1st law</b> · ${rest ? "at rest" : B.some(b => b.v === undefined) ? "at rest or constant velocity" : "constant velocity"} · Σ<i>F</i> = 0`; }
+      else if (all2){ cls = "l2"; html = `<b>2nd law</b> · accelerating · Σ<i>F</i> = <i>ma</i>`; }
+      else { cls = "l2"; html = `<b>2nd law</b>${who("2nd")} · <b>1st law</b>${who("1st")}`; }
+    }
+    if (B.length && B[0].pre) html = B[0].pre + html;
+    if (el.dataset.h !== html + cls){ el.innerHTML = html; el.className = "nlaw " + cls; el.dataset.h = html + cls; }
+  }
+  function table(){
+    const el = document.getElementById("ntab"); if (!el) return;
+    const B = NF.bodies; let html = "";
+    if (!B.length) html = `<div class="nh"><button class="nfold" data-nfold aria-expanded="${!fold}">${fold ? "▸" : "▾"} Σ<i>F</i> = <i>ma</i> check</button><span class="nk">${NF.msg || "no forces here"}</span></div>`;
+    else {
+      const twoD = B.some(b => b.forces.some(f => Math.abs(f.fy) > 1e-9) && b.forces.some(f => Math.abs(f.fx) > 1e-9) || Math.abs(b.ay) > 1e-9 && Math.abs(b.ax) > 1e-9);
+      const sums = B.map(b => [b.forces.reduce((s, f) => s + f.fx, 0), b.forces.reduce((s, f) => s + f.fy, 0)]);
+      const ok = B.every((b, i) => Math.abs(sums[i][0] - b.m * b.ax) <= 0.01 * (1 + Math.abs(b.m * b.ax)) && Math.abs(sums[i][1] - b.m * b.ay) <= 0.01 * (1 + Math.abs(b.m * b.ay)));
+      html += `<div class="nh"><button class="nfold" data-nfold aria-expanded="${!fold}">${fold ? "▸" : "▾"} Σ<i>F</i> = <i>ma</i> check</button><span class="nk ${ok ? "ok" : ""}">${ok ? "✔ Σ<i>F</i> = <i>ma</i> for every body" : ""}</span></div>`;
+      if (!fold){
+        const vert = !twoD && !B.some(bb => bb.forces.some(f => Math.abs(f.fx) > 1e-9));
+        html += `<table><tr><th>force</th><th>by</th><th>${twoD ? B[0].axes[0] : vert ? B[0].axes[1] : B[0].axes[0]} / N</th>${twoD ? `<th>${B[0].axes[1]} / N</th>` : ""}</tr>`;
+        B.forEach((b, i) => {
+          const comp = (f, k) => k ? f.fy : f.fx, one = !twoD && !B.some(bb => bb.forces.some(f => Math.abs(f.fx) > 1e-9)) ? 1 : 0;   // 1-D vertical: show the y value
+          if (B.length > 1) html += `<tr class="nb"><td colspan="${twoD ? 4 : 3}">on ${b.name}${b.m ? ` (${+b.m.toPrecision(3)} kg)` : ""}</td></tr>`;
+          b.forces.forEach(f => { html += `<tr><td style="color:${f.col}">${f.lab}</td><td class="by">${f.by}</td><td>${z(twoD ? f.fx : comp(f, one))}</td>${twoD ? `<td>${z(f.fy)}</td>` : ""}</tr>`; });
+          html += `<tr class="ns"><td>Σ<i>F</i></td><td></td><td>${z(twoD ? sums[i][0] : sums[i][one])}</td>${twoD ? `<td>${z(sums[i][1])}</td>` : ""}</tr>`;
+          html += `<tr class="nm"><td><i>m a</i></td><td class="by">${b.m ? `${+b.m.toPrecision(3)} kg` : ""}</td><td>${z(b.m * (twoD ? b.ax : (one ? b.ay : b.ax)))}</td>${twoD ? `<td>${z(b.m * b.ay)}</td>` : ""}</tr>`;
+        });
+        html += `</table><div class="ncap">3rd law: each force has a partner of the same size and type, in the opposite direction, on the other body — tick <b>3rd-law pairs</b>.</div>`;
+      }
+    }
+    if (html !== last){ el.innerHTML = html; last = html; }
+  }
+  // 3rd-law pairs: drawn over the scene as a card, one row per force (the force on the body · its partner on the other body)
+  function pairs(){
+    const cb = document.getElementById("n3"); if (!cb || !cb.checked) return;
+    const cv = document.getElementById("scene"); if (!cv) return;
+    const ctx = cv.getContext("2d"), r = cv.getBoundingClientRect(), w = r.width, h = r.height;
+    const rows = NF.bodies.flatMap(b => b.forces.map(f => ({b, f}))).slice(0, 8);
+    const txt = rows.map(({b, f}) => { const M = Math.hypot(f.fx, f.fy), by = plain(f.by), nm = plain(b.name);
+      return [`${plain(f.lab)}: ${by} on ${nm} ${fmtN(M)}`, `${nm} on ${by} ${fmtN(M)}`]; });
+    const title = "3rd-law pairs: same size · same type · opposite direction · on different bodies";
+    ctx.save(); ctx.setTransform(window.devicePixelRatio || 1, 0, 0, window.devicePixelRatio || 1, 0, 0);
+    ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.setLineDash([]); ctx.globalAlpha = 1;
+    const pw = Math.min(w - 16, 600); let fs = 12.5;
+    const fits = () => { ctx.font = `${fs}px "Segoe UI",Calibri,Arial,sans-serif`;
+      const c1 = Math.max(0, ...txt.map(t => ctx.measureText(t[0]).width)), c2 = Math.max(0, ...txt.map(t => ctx.measureText(t[1]).width));
+      ctx.font = `700 ${fs}px "Segoe UI",Calibri,Arial,sans-serif`; return Math.max(ctx.measureText(title).width + 20, c1 + c2 + 90) <= pw ? c1 : -1; };
+    let c1 = fits(); while (c1 < 0 && fs > 8.5){ fs -= 0.5; c1 = fits(); } if (c1 < 0) c1 = pw / 2 - 60;
+    const rh = fs + 8, ph = 24 + rh * Math.max(1, rows.length), x0 = 8, y0 = h - ph - 8;
+    ctx.fillStyle = "rgba(255,255,255,.96)"; ctx.strokeStyle = "#1F3A5F"; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x0, y0, pw, ph, 8) : ctx.rect(x0, y0, pw, ph); ctx.fill(); ctx.stroke();
+    ctx.font = `700 ${fs}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = "#1F3A5F"; ctx.fillText(title, x0 + 10, y0 + 12);
+    if (!rows.length){ ctx.font = `${fs}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillText(NF.msg || "No forces in this example.", x0 + 10, y0 + 12 + rh); }
+    const arr = (x, y, ux, uy, L, c, dash) => { ctx.save(); ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineWidth = 2.5; if (dash) ctx.setLineDash([4, 3]);
+      const x1 = x - ux * L / 2, y1 = y + uy * L / 2, x2 = x + ux * L / 2, y2 = y - uy * L / 2;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - ux * 5, y2 + uy * 5); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x2 - ux * 7 - uy * 4, y2 + uy * 7 - ux * 4); ctx.lineTo(x2 - ux * 7 + uy * 4, y2 + uy * 7 + ux * 4); ctx.closePath(); ctx.fill(); ctx.restore(); };
+    const col2 = x0 + 34 + c1 + 22;
+    rows.forEach(({b, f}, i) => {
+      const y = y0 + 12 + rh * (i + 1), M = Math.hypot(f.fx, f.fy), ux = f.fx / M, uy = f.fy / M;
+      ctx.font = `${fs}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = f.col;
+      arr(x0 + 19, y, ux, uy, 15, f.col, false); ctx.fillText(txt[i][0], x0 + 34, y);
+      ctx.fillStyle = "#90A4AE"; ctx.fillText("⇄", col2 - 16, y); ctx.fillStyle = f.col;
+      arr(col2 + 9, y, -ux, -uy, 15, f.col, true); ctx.fillText(txt[i][1], col2 + 24, y);
+    });
+    ctx.restore();
+  }
+  function frame(){ try { badge(); table(); pairs(); } catch (e) { console.error(e); } }
+  function hook(){
+    const o = drawFBD;
+    drawFBD = function(){ NF.reset(); const r = o.apply(this, arguments); frame(); return r; };
+    document.addEventListener("click", e => { const b = e.target.closest("[data-nfold]"); if (!b) return; fold = !fold;
+      try { localStorage.setItem("newton-fold", fold ? "1" : "0"); } catch (er) {} last = ""; table(); });
+  }
+  return {hook, frame, lawOf};
+})();
+/* ==== NEWTON END ==== */
+/* ============================ 3 CONFIG ============================ */
+const G = 9.81;                 // N kg⁻¹ (IB data booklet)
+const MYSTERY = 0.230;          // kg, the mystery bag (Station 3: 150–300 g)
+const SPRINGS = [
+  {id:"inv",   name:"Investigation spring", k:25.0, Flim:6.0, maxG:800},
+  {id:"st3",   name:"Station 3 spring",     k:29.4, Flim:6.5, maxG:800},
+  {id:"soft",  name:"Soft spring",          k:10.0, Flim:3.0, maxG:400},
+  {id:"stiff", name:"Stiff spring",         k:40.0, Flim:9.0, maxG:1000},
+  {id:"band",  name:"Rubber band",          k:null, Flim:null, maxG:500, cycleOnly:true},   // Load & unload mode only
+];
+const SOFT = 0.5;               // past the limit the spring is this many times as stiff
+const KEEP = 0.3;               // fraction of the over-stretch that stays after unloading (permanent set)
+// Load & unload mode: steel as above; rubber band F = ax + bx² (N, x in m) as in the series/parallel simulation,
+// unloading curve F = F_max·v^p, keeps 4 % of its stretch and recovers with time constant tau (s)
+const CYC = {soft:SOFT, keep:KEEP, a:8, b:250, p:2.5, bandKeep:0.04, tau:2.0};
+const COL = {W:"#2A5D8A", N:"#2E7D32", F:"#C62828", P:"#6A1B9A", H:"#00838F", navy:"#1F3A5F", accent:"#E65100",
+             ink:"#263238", muted:"#606A72", grid:"#E3E9F0", wood:"#FFCC80", woodEdge:"#C68A3A", grey:"#90A4AE"};
+const sprById = id => SPRINGS.find(s => s.id === id);
+
+/* ============================ 4 PHYSICS ============================ */
+const f2 = x => (Math.round(x * 100) / 100).toFixed(2);
+const f3 = x => (Math.round(x * 1000) / 1000).toFixed(3);
+// extension (m) of a spring with permanent set "set" under load F (N)
+function extension(sp, F, set){
+  const xl = sp.Flim / sp.k;
+  return F <= sp.Flim ? set + F / sp.k : set + xl + (F - sp.Flim) / (SOFT * sp.k);
+}
+function linFit(pts){ const n = pts.length; if (n < 2) return null;
+  const mx = pts.reduce((a, p) => a + p[0], 0) / n, my = pts.reduce((a, p) => a + p[1], 0) / n;
+  const sxx = pts.reduce((a, p) => a + (p[0] - mx) ** 2, 0); if (!sxx) return null;
+  const k = pts.reduce((a, p) => a + (p[0] - mx) * (p[1] - my), 0) / sxx; return {k, b:my - k * mx}; }
+function originFit(pts){ const sxx = pts.reduce((a, p) => a + p[0] * p[0], 0);
+  return sxx && pts.length >= 2 ? {k:pts.reduce((a, p) => a + p[0] * p[1], 0) / sxx, b:0} : null; }
+// steepest / shallowest lines by the end-point method used in the Forces investigation mark scheme:
+// through the error bars of the first and last points (x ± dx), Δk = ½(k_max − k_min)
+function minMaxK(pts, dx){ if (pts.length < 2) return null;
+  const p = [...pts].sort((a, b) => a[0] - b[0]), A = p[0], B = p[p.length - 1];
+  if (B[0] - A[0] <= 2 * dx) return null;
+  return {kmax:(B[1] - A[1]) / ((B[0] - dx) - (A[0] + dx)), kmin:(B[1] - A[1]) / ((B[0] + dx) - (A[0] - dx)),
+          steep:[[A[0] + dx, A[1]], [B[0] - dx, B[1]]], shallow:[[A[0] - dx, A[1]], [B[0] + dx, B[1]]]}; }
+// ---- Load & unload checkpoint: hysteresis loop and elastic limit (the same model in both spring simulations) ----
+// Steel spring: Hooke's law up to the elastic limit F_lim, softer beyond it. Unloading runs in a straight line from the
+// turning point down to the permanent extension (30 % of the stretch beyond the limit stays). Below the limit the
+// unloading line retraces the loading line: no loop. Rubber band: F = ax + bx² on loading and a lower curve
+// F = F_max·v^p on unloading (hysteresis); it keeps 4 % of its stretch and then slowly recovers.
+// A cycle c = {sB, Fm, xm}: permanent extension at the start, largest load so far and its extension (all SI).
+const isBand = sp => !sp.k;
+function loadX(sp, F, s){                                    // loading branch: extension (m) from the original length
+  if (isBand(sp)) return s + (-CYC.a + Math.sqrt(CYC.a * CYC.a + 4 * CYC.b * F)) / (2 * CYC.b);
+  const xl = sp.Flim / sp.k;
+  return F <= sp.Flim ? s + F / sp.k : s + xl + (F - sp.Flim) / (CYC.soft * sp.k);
+}
+function setAfter(sp, c){                                    // permanent extension left after unloading to zero
+  if (isBand(sp)) return c.sB + CYC.bandKeep * (c.xm - c.sB);
+  return c.sB + (c.Fm > sp.Flim ? CYC.keep * (c.Fm - sp.Flim) / (CYC.soft * sp.k) : 0);
+}
+function unloadX(sp, F, c){                                  // unloading branch, from the turning point down to the set
+  if (F >= c.Fm) return c.xm;
+  const xs = setAfter(sp, c), u = Math.max(0, F) / c.Fm;
+  return xs + (c.xm - xs) * (isBand(sp) ? Math.pow(u, 1 / CYC.p) : u);
+}
+function energyIn(sp, c){                                    // work done on the spring while loading = area under loading curve (J)
+  if (isBand(sp)){ const d = c.xm - c.sB; return CYC.a * d * d / 2 + CYC.b * d * d * d / 3; }
+  if (c.Fm <= sp.Flim) return c.Fm * c.Fm / (2 * sp.k);
+  return sp.Flim * sp.Flim / (2 * sp.k) + (sp.Flim + c.Fm) / 2 * (c.Fm - sp.Flim) / (CYC.soft * sp.k);
+}
+function energyOut(sp, c, F = 0){                            // energy given back while unloading from F_max down to F (J)
+  const xs = setAfter(sp, c), u = Math.max(0, F) / c.Fm;
+  if (isBand(sp)) return c.Fm * (c.xm - xs) / (CYC.p + 1) * (1 - Math.pow(u, (CYC.p + 1) / CYC.p));
+  return (c.Fm + F) / 2 * (c.xm - xs) * (1 - u);
+}
+const C = {};                                                // the cycle being loaded/unloaded now, and the last finished one
+function resetCycle(){ Object.assign(C, {sB:0, Fm:0, xm:0, s:0, xe:0, Flast:null, dir:"load", prev:null, dots:[], prevDots:[]}); }
+resetCycle();
+function cycleLoad(sp, F){                                   // call whenever the load changes
+  if (C.Flast !== null && Math.abs(F - C.Flast) < 1e-9) return;
+  C.dir = C.Flast === null || F > C.Flast ? "load" : "unload"; C.Flast = F;
+  if (F <= 1e-9){                                            // fully unloaded: the cycle is finished
+    if (C.Fm > 0){ C.s = setAfter(sp, C); C.prev = {sB:C.sB, Fm:C.Fm, xm:C.xm}; C.prevDots = C.dots; C.dots = []; C.Fm = 0; C.xm = C.s; }
+    C.xe = C.s; return;
+  }
+  if (C.Fm === 0) C.sB = C.s;                                // a new cycle starts from the present length
+  if (F >= C.Fm - 1e-9){ C.Fm = F; C.xm = loadX(sp, F, C.sB); C.xe = C.xm; }
+  else C.xe = unloadX(sp, F, C);                             // unloading (or reloading back up the same line)
+}
+function cycleTick(sp, dt){                                  // a rubber band slowly recovers its length when unloaded
+  if (isBand(sp) && C.Fm === 0 && C.s > 0){ C.s *= Math.exp(-dt / CYC.tau); if (C.s < 2e-5) C.s = 0; C.xe = C.s; }
+}
+function cycleDot(F){                                        // remember each settled load for the loop graph
+  const list = F <= 1e-9 && C.prev ? C.prevDots : C.dots;    // the zero-load point closes the finished loop
+  if (!list.some(p => Math.abs(p.F - F) < 1e-6 && p.dir === C.dir)) list.push({x:C.xe, F, dir:C.dir});
+}
+const cycView = () => C.Fm > 0 ? C : C.prev;                 // the cycle the readouts talk about
+
+// Load box (13 Oct 2026): any load can be typed (up to 100 kg); the 50 g ▼ ▲ steps cover the classroom range.
+const fmtLoad = g => g >= 1000 ? `${+(g / 1000).toPrecision(4)} kg` : `${+g.toPrecision(4)} g`;
+function hangMasses(ctx, cx, y, g, lx){                     // slotted 50 g masses; a single block for loads above 1 kg
+  if (g <= 0) return;
+  if (g <= 1000){ const n = Math.ceil(g / 50 - 1e-9);
+    for (let i = 0; i < n; i++){ ctx.fillStyle = i % 2 ? "#90A4AE" : "#A7B6BE"; ctx.strokeStyle = "#546E7A"; ctx.lineWidth = 1;
+      ctx.fillRect(cx - 18, y + i * 6, 36, 5.5); ctx.strokeRect(cx - 18, y + i * 6, 36, 5.5); }
+    label(ctx, fmtLoad(g), cx + lx, y + 4 + n * 3, COL.ink, "left", 12); return; }
+  ctx.fillStyle = "#78909C"; ctx.strokeStyle = "#37474F"; ctx.lineWidth = 1.5;
+  ctx.fillRect(cx - 24, y, 48, 36); ctx.strokeRect(cx - 24, y, 48, 36);
+  label(ctx, fmtLoad(g), cx - 30, y + 18, COL.ink, "right", 12);
+}
+// Ruler ticks that stay readable when the drawing zooms out for a large load: pc = pixels per cm
+function rulerSteps(pc){ const L = [10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000, 50000].find(s => s * pc >= 30) || 100000;
+  return {lab:L, minor:L / 5}; }
+const rulerText = (c, lab) => lab >= 100 ? `${c / 100} m` : String(c);
+
+/* ============================ 5 RUN ============================ */
+const set = {mode:"hang", spr:"inv", g:0, myst:false, noise:false, d:0};
+const S = {set:{inv:0, st3:0, soft:0, stiff:0}, worst:{inv:0, st3:0, soft:0, stiff:0},
+           x:0, v:0, offset:0, history:[], trail:[], dir:"load", Fprev:0,
+           peak:{inv:null, st3:null, soft:null, stiff:null}};   // + the largest settled load past E, for the Elastic limit tab   // spring state, the mass's motion, reading error, graph path
+const load = () => set.myst ? MYSTERY : set.g / 1000;
+const scaleF = sp => Math.max(sp.maxG / 1000 * G, load() * G, set.mode === "cycle" ? Math.max(C.Fm, C.prev ? C.prev.Fm : 0) : 0,
+  ...(set.mode === "hang" ? S.history.map(p => p.F) : []));   // force (N) the scene and graphs are scaled for
+const setNow = () => set.mode === "cycle" ? C.s : S.set[set.spr];  // the spring's permanent extension now
+function target(){ if (set.mode === "cycle") return C.xe;
+  const sp = sprById(set.spr), F = load() * G;
+  const xe = extension(sp, F, S.set[set.spr]);
+  const beyond = xe - S.set[set.spr] - sp.Flim / sp.k;            // how far past the limit right now
+  if (beyond > S.worst[set.spr]) S.worst[set.spr] = beyond;
+  return xe; }
+function relax(){                                                   // after unloading, keep half of the worst over-stretch
+  S.set[set.spr] = Math.max(S.set[set.spr], KEEP * S.worst[set.spr]);
+}
+function changeLoad(){
+  if (set.mode === "cycle"){ cycleLoad(sprById(set.spr), load() * G); S.offset = 0; renderActions(); return; }
+  const Fn = load() * G; if (Math.abs(Fn - S.Fprev) > 1e-9){ S.dir = Fn > S.Fprev ? "load" : "unload"; S.Fprev = Fn; }
+  if (Fn <= sprById(set.spr).Flim) relax();
+  target(); S.offset = set.noise ? (Math.random() * 2 - 1) * 0.001 : 0; renderActions();
+}
+function step(dt){                                                  // the mass bounces and settles (damped)
+  if (set.mode === "push") return;
+  // beyond the classroom range the bounce runs at the speed of the largest classroom load (a real 100 kg mass on
+  // this spring would take about a minute to settle)
+  const sp = sprById(set.spr), xe = target(), m = Math.max(Math.min(load(), sp.maxG / 1000), 0.02), kk = sp.k || 30;
+  if (set.mode === "cycle") cycleTick(sp, dt);
+  const acc = -kk * (S.x - xe) / m - 6 * S.v;
+  S.v += acc * dt; S.x += S.v * dt;
+}
+const settled = () => Math.abs(S.x - target()) < 2e-4 && Math.abs(S.v) < 2e-3;
+const reading = () => 30 + 100 * (S.x + S.offset);                 // pointer reading in cm; the unloaded spring reads 30.0 cm
+function forcesNow(){
+  const sp = sprById(set.spr);
+  if (set.mode === "push"){ const x = set.d / 100, FH = -sp.k * x; return {x, FH, Fhand:-FH, W:0.5 * G}; }
+  if (set.mode === "cycle"){ const m = load(), W = m * G;          // load now + a stiffness term while it bounces
+    return {m, W, FH:Math.max(0, W + (sp.k || 30) * (S.x - C.xe)), x:S.x}; }
+  const m = load(), W = m * G, ext = S.x - S.set[set.spr];
+  // spring force from the actual stretch (inverse of the extension law)
+  const xl = sp.Flim / sp.k, FH = ext <= xl ? sp.k * ext : sp.Flim + SOFT * sp.k * (ext - xl);
+  return {m, W, FH:Math.max(0, FH), x:S.x};
+}
+
+/* ============================ 6 SCENE ============================ */
+function fitCanvas(cv){
+  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+  if (cv.width !== w || cv.height !== h){ cv.width = w; cv.height = h; }
+  const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return {ctx, w:r.width, h:r.height};
+}
+function arrow(ctx, x1, y1, x2, y2, color, width = 4, dashed = false){
+  const L = Math.hypot(x2 - x1, y2 - y1); if (L < 2) return;
+  const ux = (x2 - x1) / L, uy = (y2 - y1) / L, hs = Math.min(13, 6 + width * 1.6);
+  ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width; ctx.lineCap = "round";
+  if (dashed) ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - ux * hs * 0.8, y2 - uy * hs * 0.8); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - ux * hs - uy * hs * 0.5, y2 - uy * hs + ux * hs * 0.5);
+  ctx.lineTo(x2 - ux * hs + uy * hs * 0.5, y2 - uy * hs - ux * hs * 0.5); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function label(ctx, txt, x, y, color, align = "center", size = 15, base = "middle"){
+  ctx.save(); ctx.font = `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = color;
+  ctx.textAlign = align; ctx.textBaseline = base;
+  // white halo so labels stay readable over lines
+  ctx.lineWidth = 4; ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.strokeText(txt, x, y); ctx.fillText(txt, x, y);
+  ctx.restore();
+}
+// Labels with a subscript, e.g. sub(ctx,"F","N"," = 2.45 N",…)
+function subLabel(ctx, main, sub, rest, x, y, color, align = "center", size = 15){
+  ctx.save(); const f1 = `italic 600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`,
+    f2 = `600 ${Math.round(size * .72)}px "Segoe UI",Calibri,Arial,sans-serif`, f3 = `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`;
+  ctx.font = f1; const w1 = ctx.measureText(main).width; ctx.font = f2; const w2 = sub ? ctx.measureText(sub).width : 0;
+  ctx.font = f3; const w3 = ctx.measureText(rest).width; const W = w1 + w2 + w3;
+  let x0 = align === "center" ? x - W / 2 : align === "right" ? x - W : x;
+  ctx.textBaseline = "middle"; ctx.lineWidth = 4; ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.fillStyle = color;
+  ctx.font = f1; ctx.strokeText(main, x0, y); ctx.fillText(main, x0, y);
+  if (sub){ ctx.font = f2; ctx.strokeText(sub, x0 + w1, y + size * .3); ctx.fillText(sub, x0 + w1, y + size * .3); }
+  ctx.font = f3; ctx.strokeText(rest, x0 + w1 + w2, y); ctx.fillText(rest, x0 + w1 + w2, y);
+  ctx.restore();
+}
+// Mixed text: parts = [[text, "n" normal | "i" italic | "s" subscript], …], centred on (x, y)
+function rich(ctx, parts, x, y, color, size = 14){
+  const font = st => st === "i" ? `italic 600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`
+    : st === "s" ? `600 ${Math.round(size * .72)}px "Segoe UI",Calibri,Arial,sans-serif` : `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`;
+  ctx.save(); ctx.fillStyle = color; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+  const ws = parts.map(([t, st]) => { ctx.font = font(st); return ctx.measureText(t).width; });
+  let cx = x - ws.reduce((a, b) => a + b, 0) / 2;
+  parts.forEach(([t, st], i) => { ctx.font = font(st); ctx.fillText(t, cx, st === "s" ? y + size * .3 : y); cx += ws[i]; });
+  ctx.restore();
+}
+function bg(ctx, w, h){ const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#FAFCFF"); g.addColorStop(1, "#EEF3F8");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h); }
+function bench(ctx, w, y, h){ ctx.fillStyle = "#E8DCC4"; ctx.fillRect(0, y, w, 8); ctx.fillStyle = "#8D6E63"; ctx.fillRect(0, y + 8, w, 16);
+  ctx.fillStyle = "#6D4C41"; ctx.fillRect(w * 0.06, y + 24, 12, h); ctx.fillRect(w * 0.9, y + 24, 12, h); }
+function woodBox(ctx, x, y, w, h, txt){
+  ctx.fillStyle = COL.wood; ctx.strokeStyle = COL.woodEdge; ctx.lineWidth = 2; ctx.fillRect(x, y, w, h); ctx.strokeRect(x, y, w, h);
+  if (txt) label(ctx, txt, x + w / 2, y + h / 2, "#6D4C41", "center", 13);
+}
+// kitchen / bathroom scale with a digital display; (x, y) = top-left of the platform
+function scale(ctx, x, y, w, h, reading){
+  ctx.fillStyle = "#ECEFF1"; ctx.strokeStyle = "#90A4AE"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, 4) : ctx.rect(x, y, w, h); ctx.fill(); ctx.stroke();
+  const dw = Math.min(70, w * 0.5), dh = Math.max(10, h - 8);
+  ctx.fillStyle = "#263238"; ctx.fillRect(x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+  ctx.fillStyle = "#76FF03"; ctx.font = `600 ${Math.min(13, dh - 2)}px Consolas,"Courier New",monospace`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(reading, x + w / 2, y + h / 2 + 1);
+}
+function hand(ctx, x, y, k){ ctx.fillStyle = "#F1C27D"; ctx.strokeStyle = "#C99A5B"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.ellipse(x, y, 20 * k, 13 * k, 0, 0, 7); ctx.fill(); ctx.stroke(); }
+function coil(ctx, x1, y1, x2, y2, turns, r, col){            // a spring drawn as a zig-zag between two points
+  const L = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / L, uy = (y2 - y1) / L, nx = -uy, ny = ux, lead = Math.min(10, L * 0.1);
+  ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 2.2; ctx.lineJoin = "round"; ctx.beginPath(); ctx.moveTo(x1, y1);
+  ctx.lineTo(x1 + ux * lead, y1 + uy * lead);
+  const n = turns * 2, seg = (L - 2 * lead) / n;
+  for (let i = 1; i <= n; i++){ const s = lead + seg * (i - 0.5), side = i % 2 ? 1 : -1;
+    ctx.lineTo(x1 + ux * s + nx * r * side, y1 + uy * s + ny * r * side); }
+  ctx.lineTo(x2 - ux * lead, y2 - uy * lead); ctx.lineTo(x2, y2); ctx.stroke(); ctx.restore();
+}
+function drawScene(){
+  const {ctx, w, h} = fitCanvas($("scene")); ctx.clearRect(0, 0, w, h); bg(ctx, w, h);
+  (set.mode === "push" ? scenePush : sceneHang)(ctx, w, h);
+}
+function sceneHang(ctx, w, h){
+  const sp = sprById(set.spr), Fmx = scaleF(sp);
+  const xMaxShow = isBand(sp) ? loadX(sp, Fmx, set.mode === "cycle" ? C.s : 0) * 1.1 + 0.02
+    : Math.max(extension(sp, Fmx, KEEP * (extension(sp, Fmx, 0) - sp.Flim / sp.k)), extension(sp, Fmx, setNow())) + 0.02;
+  const top = 34, L0 = 0.20, ppm = (h - top - 70) / (L0 + Math.max(0.5, xMaxShow)), cx = w * 0.36;
+  // clamp stand
+  ctx.fillStyle = "#546E7A"; ctx.fillRect(w * 0.08, top - 8, 8, h - top); ctx.fillRect(w * 0.08, top - 10, cx - w * 0.08 + 10, 8);
+  ctx.fillRect(w * 0.04, h - 10, w * 0.2, 8);
+  const y0 = top, y1 = top + (L0 + S.x) * ppm;
+  if (isBand(sp)){ ctx.save(); ctx.strokeStyle = "#8D6E63"; ctx.lineWidth = 3.5; ctx.beginPath();   // rubber band: a stretched loop
+    ctx.moveTo(cx - 6, y0); ctx.lineTo(cx - 3, y1); ctx.moveTo(cx + 6, y0); ctx.lineTo(cx + 3, y1); ctx.stroke(); ctx.restore(); }
+  else coil(ctx, cx, y0, cx, y1, 14, 9, setNow() > 1e-4 ? "#8D6E63" : "#455A64");
+  // hanger + masses or mystery bag
+  ctx.strokeStyle = "#455A64"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx, y1); ctx.lineTo(cx, y1 + 10); ctx.stroke();
+  if (set.myst){ ctx.fillStyle = "#A1887F"; ctx.beginPath(); ctx.ellipse(cx, y1 + 30, 22, 20, 0, 0, 7); ctx.fill();
+    label(ctx, "?", cx, y1 + 31, "#fff", "center", 18); }
+  else hangMasses(ctx, cx, y1 + 10, set.g, 26);
+  // ruler with pointer
+  const big = ppm < 150, rs = rulerSteps(ppm / 100);                  // zoomed out (large load): coarser ticks, longer ruler
+  const rx = cx + 64, cmTop = big ? Math.max(20, Math.ceil((30 + 100 * ((56 - top) / ppm - L0)) / rs.minor) * rs.minor) : 20, cmBot = big ? Math.floor((30 + 100 * ((h - 14 - top) / ppm - L0)) / rs.minor) * rs.minor
+    : Math.min(150, Math.floor(30 + 100 * ((h - 14 - top) / ppm - L0)));
+  const Y = cm => top + (L0 + (cm - 30) / 100) * ppm;
+  ctx.fillStyle = "#FFF8E1"; ctx.strokeStyle = "#BCAAA4"; ctx.lineWidth = 1;
+  ctx.fillRect(rx, Y(cmTop), 34, Y(cmBot) - Y(cmTop)); ctx.strokeRect(rx, Y(cmTop), 34, Y(cmBot) - Y(cmTop));
+  ctx.strokeStyle = "#5D4037"; ctx.fillStyle = "#5D4037"; ctx.font = `10px "Segoe UI",Arial,sans-serif`; ctx.textAlign = "left"; ctx.textBaseline = "middle";
+  if (big) for (let c = Math.ceil(cmTop / rs.minor) * rs.minor; c <= cmBot; c += rs.minor){ const y = Y(c), lab = c % rs.lab === 0;
+    ctx.beginPath(); ctx.moveTo(rx, y); ctx.lineTo(rx + (lab ? 12 : 6), y); ctx.stroke();
+    if (lab) ctx.fillText(rulerText(c, rs.lab), rx + 15, y); }
+  else { const every = ppm > 600 ? 1 : 2;
+  for (let c = cmTop; c <= cmBot; c++){ const y = Y(c), big = c % 5 === 0;
+    if (c % every === 0 || big){ ctx.beginPath(); ctx.moveTo(rx, y); ctx.lineTo(rx + (big ? 12 : 6), y); ctx.stroke(); }
+    if (c % 10 === 0) ctx.fillText(c, rx + 15, y); } }
+  const ry = Y(reading());
+  arrow(ctx, cx + 8, ry, rx - 1, ry, COL.F, 2);                      // pointer: one horizontal arrow from the hook (as in Springs in series and parallel)
+  label(ctx, `pointer: ${reading().toFixed(1)} cm`, w - 10, 18, COL.F, "right", 16);
+  label(ctx, set.mode === "cycle" ? "original length: 30.0 cm" : `unloaded: ${(30 + 100 * S.set[set.spr]).toFixed(1)} cm`, w - 10, 40, COL.muted, "right", 13);
+  const sp2 = sprById(set.spr), past = !isBand(sp2) && (set.mode === "cycle" ? C.Fm > sp2.Flim + 1e-6 : forcesNow().FH > sp2.Flim + 1e-6);
+  if (set.mode === "cycle" && isBand(sp2)) label(ctx, C.Fm === 0 && C.s > 1e-4 ? "slowly recovering its length…" : "rubber band", 10, 40, "#8D6E63", "left", 13);
+  else if (setNow() > 1e-4) label(ctx, "permanently stretched — ↺ New spring", 10, 40, COL.accent, "left", 12);
+  else if (past) label(ctx, set.mode === "cycle" ? "past the elastic limit E!" : "past the limit of proportionality!", 10, 40, COL.accent, "left", 13);
+  label(ctx, settled() ? "At rest" : "Bouncing…", 10, 18, COL.navy, "left", 15);
+}
+function scenePush(ctx, w, h){
+  const sp = sprById(set.spr), ty = h * 0.62, wallX = w * 0.08, ppm = (w * 0.4) / 0.30, x0 = wallX + 0.30 * ppm;   // natural length 0.30 m
+  ctx.fillStyle = "#8D6E63"; ctx.fillRect(0, ty, w, 16); ctx.fillStyle = "#ECEFF1"; ctx.fillRect(0, ty - 3, w, 3);
+  ctx.fillStyle = "#78909C"; ctx.fillRect(wallX - 14, ty - 120, 14, 120);
+  const bx = x0 + set.d / 100 * ppm, bs = 56;
+  coil(ctx, wallX, ty - bs / 2, bx, ty - bs / 2, 12, 10, "#455A64");
+  woodBox(ctx, bx, ty - bs, bs, bs, "");
+  hand(ctx, bx + bs + 16, ty - bs / 2, 1);
+  ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = COL.muted; ctx.beginPath(); ctx.moveTo(x0, ty - bs - 30); ctx.lineTo(x0, ty + 8); ctx.stroke(); ctx.restore();
+  label(ctx, "natural length", x0, ty - bs - 40, COL.muted, "center", 12);
+  if (Math.abs(set.d) > 0.1){ arrow(ctx, x0, ty + 34, bx, ty + 34, COL.navy, 2.5); label(ctx, `x = ${set.d > 0 ? "+" : ""}${set.d.toFixed(1)} cm`, (x0 + bx) / 2, ty + 50, COL.navy, "center", 13); }
+  const F = forcesNow();
+  label(ctx, `spring force on the block: ${f2(Math.abs(F.FH))} N ${F.FH < 0 ? "← (towards the wall)" : F.FH > 0 ? "→ (away from the wall)" : ""}`, 10, 18, COL.H, "left", 14);
+  label(ctx, set.d > 0 ? "Stretched: the spring pulls back" : set.d < 0 ? "Squashed: the spring pushes back" : "Natural length: no spring force", 10, 40, COL.navy, "left", 14);
+}
+
+/* ============================ 7 FBD ============================ */
+function drawFBD(){
+  const {ctx, w, h} = fitCanvas($("fbd")); ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  const f = forcesNow(), cx = w * 0.45, cy = h * 0.5;
+  if (set.mode !== "push"){
+    $("fbdTitle").textContent = set.myst ? "Free-body diagram of the mystery bag" : "Free-body diagram of the hanging masses";
+    if (!set.myst && set.g === 0){ label(ctx, "Add masses to see the forces", w / 2, h / 2, COL.muted, "center", 14); return; }
+    const sc = h * 0.36 / Math.max(f.W, f.FH, 0.01), L = v => v * sc;
+/*NF*/    { const m = f.W / G, ay = m ? (f.FH - f.W) / m : 0; NF.body(set.myst ? "the bag" : "the masses", m, 0, Math.abs(ay) < 1e-6 ? 0 : ay, {v:Math.abs(ay) < 1e-6 ? 0 : undefined});
+      NF.force("W", 0, -f.W, COL.W, "the Earth", "grav"); NF.force("F<sub>H</sub>", 0, f.FH, COL.H, "the spring", "spring"); }/*/NF*/
+    ctx.fillStyle = "#90A4AE"; ctx.strokeStyle = "#455A64"; ctx.lineWidth = 2; ctx.fillRect(cx - 14, cy - 14, 28, 28); ctx.strokeRect(cx - 14, cy - 14, 28, 28);
+    arrow(ctx, cx, cy, cx, cy + L(f.W), COL.W, 4); subLabel(ctx, "W", "", ` = mg = ${f3(f.W)} N`, cx + 10, cy + L(f.W) - 4, COL.W, "left");
+    if (f.FH > 1e-3){ arrow(ctx, cx, cy, cx, cy - L(f.FH), COL.H, 4); subLabel(ctx, "F", "H", `${set.mode === "hang" ? " = kx" : ""} = ${f3(f.FH)} N`, cx + 10, cy - L(f.FH) + 8, COL.H, "left"); }
+    const R = f.FH - f.W;
+    if (Math.abs(R) > 0.01){ const rx = w * 0.85; arrow(ctx, rx, cy, rx, cy - Math.sign(R) * Math.max(14, L(Math.abs(R))), COL.grey, 4, true);
+      label(ctx, `ΣF = ${f2(Math.abs(R))} N`, rx, cy + Math.sign(R) * 16, COL.muted, "center", 12); }
+    label(ctx, Math.abs(R) < 0.01 ? (set.mode === "hang" ? "At rest: FH = W, so kx = mg" : "At rest: FH = W") : "Bouncing: FH ≠ W, the mass accelerates", w / 2, 13, COL.navy, "center", 13);
+  } else {
+    $("fbdTitle").textContent = "Free-body diagram of the block (horizontal forces)";
+    const big = Math.max(Math.abs(f.FH), 0.5), sc = Math.min(w * 0.36, h * 0.3) / big, L = v => v * sc;
+/*NF*/    NF.body("the block", 0, 0, 0, {v:0, axes:["→", "↑"]}); NF.force("F<sub>H</sub>", f.FH, 0, COL.H, "the spring", "spring"); NF.force("F<sub>hand</sub>", f.Fhand, 0, COL.P, "the hand", "push");/*/NF*/
+    ctx.fillStyle = COL.wood; ctx.strokeStyle = COL.woodEdge; ctx.lineWidth = 2; ctx.fillRect(cx - 14, cy - 14, 28, 28); ctx.strokeRect(cx - 14, cy - 14, 28, 28);
+    if (Math.abs(f.FH) > 1e-3){
+      arrow(ctx, cx, cy - 6, cx + Math.sign(f.FH) * L(Math.abs(f.FH)), cy - 6, COL.H, 4);
+      const cl = v => Math.min(w - 70, Math.max(70, v));                 // keep labels inside the panel
+      subLabel(ctx, "F", "H", ` = ${f2(Math.abs(f.FH))} N`, cl(cx + Math.sign(f.FH) * L(Math.abs(f.FH)) * 0.6), cy - 28, COL.H, "center");
+      arrow(ctx, cx, cy + 6, cx + Math.sign(f.Fhand) * L(Math.abs(f.Fhand)), cy + 6, COL.P, 4);
+      subLabel(ctx, "F", "hand", ` = ${f2(Math.abs(f.Fhand))} N`, cl(cx + Math.sign(f.Fhand) * L(Math.abs(f.Fhand)) * 0.6), cy + 28, COL.P, "center");
+    } else label(ctx, "x = 0: no spring force, no hand force needed", w / 2, cy + 40, COL.muted, "center", 13);
+    label(ctx, "FH = −kx: the spring force always points back towards the natural length", w / 2, 13, COL.navy, "center", 12);
+    label(ctx, "(W and FN cancel vertically — not shown)", w / 2, h - 12, COL.muted, "center", 11);
+  }
+}
+
+/* ============================ 8 GRAPHS ============================ */
+function niceUp(x){ const p = Math.pow(10, Math.floor(Math.log10(x))), m = x / p;
+  return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p; }
+function niceStep(range, n){ return niceUp(range / n); }
+function niceCeil(x, n = 5){ const st = niceUp(x / n); return Math.ceil(x / st - 1e-9) * st; }  // e.g. 11.4 → 12.5
+// axis numbers: enough decimals for small steps, × 10ⁿ form for very big values (typed values can be far outside the sliders)
+const tickTxt = (v, st, d0) => { if (Math.abs(v) >= 1e6){ const e = Math.floor(Math.log10(Math.abs(v)) + 1e-9);
+    return `${+(v / 10 ** e).toPrecision(3)}×10${[...String(e)].map(c => "⁰¹²³⁴⁵⁶⁷⁸⁹"[c]).join("")}`; }
+  return String(+v.toFixed(Math.min(12, Math.max(d0, Math.ceil(-Math.log10(st)) + 1)))); };
+function axes(ctx, box, xMax, yMax, xLab, yLab){
+  const {x, y, w, h} = box;
+  ctx.save(); ctx.font = `13px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = COL.muted;
+  ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
+  const xs = niceStep(xMax, 8), ys = niceStep(yMax, 6);
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  for (let v = 0; v <= xMax + xs * 1e-6; v += xs){ const X = x + w * v / xMax; ctx.beginPath(); ctx.moveTo(X, y); ctx.lineTo(X, y + h); ctx.stroke(); ctx.fillText(tickTxt(v, xs, 2), X, y + h + 4); }
+  ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  for (let v = 0; v <= yMax + ys * 1e-6; v += ys){ const Y = y + h - h * v / yMax; ctx.beginPath(); ctx.moveTo(x, Y); ctx.lineTo(x + w, Y); ctx.stroke(); ctx.fillText(tickTxt(v, ys, 2), x - 5, Y); }
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + h); ctx.lineTo(x + w, y + h); ctx.stroke();
+  ctx.restore();
+  rich(ctx, xLab, x + w / 2, y + h + 30, COL.ink);
+  ctx.save(); ctx.translate(x - 44, y + h / 2); ctx.rotate(-Math.PI / 2); rich(ctx, yLab, 0, 0, COL.ink); ctx.restore();
+}
+function axesR(ctx, box, x0, x1, y0, y1, xLab, yLab, noX = false){
+  const {x, y, w, h} = box, X = v => x + w * (v - x0) / (x1 - x0), Y = v => y + h - h * (v - y0) / (y1 - y0);
+  ctx.save(); ctx.font = `13px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = COL.muted; ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
+  const xs = niceStep(x1 - x0, 8), ys = niceStep(y1 - y0, 6);
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  if (!noX) for (let v = Math.ceil(x0 / xs - 1e-9) * xs; v <= x1 + xs * 1e-6; v += xs){ ctx.beginPath(); ctx.moveTo(X(v), y); ctx.lineTo(X(v), y + h); ctx.stroke(); ctx.fillText(tickTxt(v, xs, 2), X(v), y + h + 4); }
+  ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  for (let v = Math.ceil(y0 / ys - 1e-9) * ys; v <= y1 + ys * 1e-6; v += ys){ ctx.beginPath(); ctx.moveTo(x, Y(v)); ctx.lineTo(x + w, Y(v)); ctx.stroke(); ctx.fillText(tickTxt(v, ys, 2), x - 5, Y(v)); }
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.5; ctx.beginPath();
+  const zx = x0 <= 0 && x1 >= 0 ? X(0) : x, zy = y0 <= 0 && y1 >= 0 ? Y(0) : y + h;
+  ctx.moveTo(zx, y); ctx.lineTo(zx, y + h); ctx.moveTo(x, zy); ctx.lineTo(x + w, zy); ctx.stroke();
+  ctx.restore();
+  rich(ctx, xLab, x + w / 2, y + h + 30, COL.ink);
+  ctx.save(); ctx.translate(x - 44, y + h / 2); ctx.rotate(-Math.PI / 2); rich(ctx, yLab, 0, 0, COL.ink); ctx.restore();
+  return {X, Y};
+}
+function drawGraph(){
+  const cv = $("graph"); if (!cv.offsetParent) return;
+  const {ctx, w, h} = fitCanvas(cv); ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  const sp = sprById(set.spr), box = {x:62, y:22, w:w - 78, h:h - 74};
+  if (set.mode === "cycle"){
+    drawLoopGraph(ctx, w, h, sp, load() * G, scaleF(sp));
+    $("graphHint").textContent = isBand(sp) ? "Rubber band: area under the loading curve = energy stored; under the unloading curve = energy given back; loop area = energy turned into heat."
+      : "Steel spring: below E the unloading line retraces the loading line (no loop). Past E it comes back along a straight line almost parallel to the Hooke's-law line and stays longer: a permanent extension, so the next loading curve (dashed teal) has moved right — see the red arrow.";
+    return;
+  }
+  if (set.mode === "push"){
+    const g = axesR(ctx, box, -15, 15, -niceCeil(sp.k * 0.15), niceCeil(sp.k * 0.15), [["displacement ", "n"], ["x", "i"], [" / cm", "n"]], [["F", "i"], ["H", "s"], [" / N", "n"]]);
+    ctx.save(); ctx.strokeStyle = COL.H; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(g.X(-15), g.Y(sp.k * 0.15)); ctx.lineTo(g.X(15), g.Y(-sp.k * 0.15)); ctx.stroke(); ctx.restore();
+    const F = forcesNow(); ctx.fillStyle = COL.accent; ctx.beginPath(); ctx.arc(g.X(set.d), g.Y(F.FH), 6, 0, 7); ctx.fill();
+    label(ctx, `gradient = −k = −${sp.k.toFixed(1)} N m⁻¹`, box.x + box.w - 6, box.y + 14, COL.H, "right", 13);
+    $("graphHint").textContent = "FH = −kx: stretch (x > 0) gives a negative (backwards) force, squash (x < 0) a positive one.";
+    return;
+  }
+  // F–x curve from the original length (19 Oct 2026): Hooke's law up to the elastic limit E, softer beyond it. After an
+  // over-stretch the spring keeps a permanent extension, so its whole curve moves right: the original curve stays faded
+  // and an arrow shows the shift. The dot is the spring now (it slides along the curve while the mass bounces); the trail
+  // shows the path, orange while masses go on, blue while they come off.
+  const s = S.set[set.spr], Fh = scaleF(sp), F = forcesNow();
+  const xM = Math.max(10, niceCeil(Math.max(100 * extension(sp, Fh, s), 100 * S.x, ...S.history.map(p => p.x + 100 * (p.s || 0))) * 1.05)), FM = niceCeil(Fh * 1.08);
+  const g = axesR(ctx, box, 0, xM, 0, FM, [["extension from the original length (30.0 cm) ", "n"], ["x", "i"], [" / cm", "n"]], [["load ", "n"], ["F", "i"], [" / N", "n"]]);
+  const tw = s => { ctx.save(); ctx.font = `600 13px "Segoe UI",Calibri,Arial,sans-serif`; const v = ctx.measureText(s).width; ctx.restore(); return v; };
+  const xE = s0 => s0 + sp.Flim / sp.k, xTop = s0 => extension(sp, FM, s0);
+  const seg = (pts, col, wd, dash) => { ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = wd; ctx.lineJoin = "round"; if (dash) ctx.setLineDash(dash);
+    ctx.beginPath(); pts.forEach(([x, f], i) => i ? ctx.lineTo(g.X(100 * x), g.Y(f)) : ctx.moveTo(g.X(100 * x), g.Y(f))); ctx.stroke(); ctx.restore(); };
+  ctx.save(); ctx.beginPath(); ctx.rect(box.x, box.y - 4, box.w + 4, box.h + 8); ctx.clip();
+  if (s > 2e-4) seg([[0, 0], [xE(0), sp.Flim], [xTop(0), FM]], "#B0BEC5", 2, [6, 5]);          // the original curve, faded
+  seg([[s, 0], [xE(s), sp.Flim]], COL.H, 3); seg([[xE(s), sp.Flim], [xTop(s), FM]], COL.F, 3);    // this spring's curve now
+  ctx.save(); ctx.strokeStyle = "rgba(230,81,0,.45)"; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(g.X(0), g.Y(sp.Flim)); ctx.lineTo(g.X(xM), g.Y(sp.Flim)); ctx.stroke(); ctx.restore();
+  for (let i = 1; i < S.trail.length; i++){ const a = S.trail[i - 1], b = S.trail[i];               // the path the spring took
+    ctx.strokeStyle = b[2] === "load" ? "rgba(230,81,0,.75)" : "rgba(21,101,192,.75)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(g.X(a[0]), g.Y(a[1])); ctx.lineTo(g.X(b[0]), g.Y(b[1])); ctx.stroke(); }
+  ctx.restore();
+  // the loads tried so far (settled points)
+  ctx.fillStyle = "rgba(0,131,143,.35)"; for (const p of S.history){ ctx.beginPath(); ctx.arc(g.X(p.x + 100 * (p.s || 0)), g.Y(p.F), 4, 0, 7); ctx.fill(); }
+  // the curve has moved: arrow from the original curve to the new one, red bar = permanent extension
+  if (s > 2e-4){ const Fa = Math.abs(F.FH - sp.Flim / 2) < 0.2 * sp.Flim ? (F.FH < sp.Flim / 2 ? 0.8 : 0.2) * sp.Flim : sp.Flim / 2,   // the arrow keeps away from the dot
+    X1 = g.X(100 * Fa / sp.k), X2 = g.X(100 * (s + Fa / sp.k));
+    if (X2 - X1 > 8) arrow(ctx, X1, g.Y(Fa), X2, g.Y(Fa), COL.F, 2.5);
+    label(ctx, `curve moved right by ${(100 * s).toFixed(1)} cm`, Math.max(X1, X2) + 8, g.Y(Fa), COL.F, "left", 12);
+    ctx.save(); ctx.strokeStyle = COL.F; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(g.X(0), g.Y(0)); ctx.lineTo(g.X(100 * s), g.Y(0)); ctx.stroke(); ctx.restore(); }
+  // elastic limit E on the curve
+  { const X = g.X(100 * xE(s)), Y = g.Y(sp.Flim);
+    ctx.fillStyle = "#fff"; ctx.strokeStyle = COL.F; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X, Y, 6.5, 0, 7); ctx.fill(); ctx.stroke();
+    const eT = `E — elastic limit (${sp.Flim.toFixed(1)} N)`, eL = X - box.x > 175 || X + 12 + tw(eT) > box.x + box.w;   // label on the side with room
+    label(ctx, eT, eL ? X - 12 : X + 12, Y - 14, COL.F, eL ? "right" : "left", 13); }
+  // where the spring is now
+  ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(g.X(100 * S.x), g.Y(F.FH), 6, 0, 7); ctx.fill();
+  const notes = [], past = F.FH > sp.Flim + 1e-6;
+  if (S.trail.length > 1) notes.push([S.dir === "load" ? "loading ↑ (orange)" : "unloading ↓ (blue)", S.dir === "load" ? COL.accent : "#1565C0"]);
+  if (past) notes.push([box.w > 420 ? "past the elastic limit E: Hooke's law no longer holds" : "past E: not Hooke's law", COL.F]);
+  if (s > 2e-4) notes.push([`permanent extension = ${(100 * s).toFixed(1)} cm${box.w > 420 ? " (grey = new spring)" : ""}`, COL.F]);
+  else if (!past) notes.push(["straight line up to E: F = kx", COL.H]);
+  notes.forEach(([t, c], i) => label(ctx, t, box.x + box.w - 6, box.y + box.h - 14 - 18 * (notes.length - 1 - i), c, "right", 13));
+  $("graphHint").textContent = "The curve is straight up to the elastic limit E (Hooke's law), then it bends. Load past E and unload: the spring stays longer, so its whole curve moves right (grey dashed = the curve of a new spring). The dot is the spring now; orange/blue = its path while loading/unloading. Dots = settled loads.";
+}
+// Load & unload checkpoint: loading curve (orange) and unloading curve (blue), the finished loop shaded (its area is the
+// energy turned into heat), the elastic limit E and the permanent extension of a steel spring.
+function drawLoopGraph(ctx, w, h, sp, F, Fmax){
+  const box = {x:62, y:22, w:w - 78, h:h - 74}, live = C.Fm > 0 ? C : null, done = C.prev, s0 = live ? live.sB : C.s;
+  const xM = niceCeil(100 * Math.max(loadX(sp, Fmax, s0), done ? done.xm : 0, 0.05) * 1.05), FM = niceCeil(Fmax * 1.08);
+  const g = axesR(ctx, box, 0, xM, 0, FM, [["extension from the original length ", "n"], ["x", "i"], [" / cm", "n"]], [["load ", "n"], ["F", "i"], [" / N", "n"]]);
+  const P = ([x, f]) => [g.X(100 * x), g.Y(f)];
+  const upPts = (c, top) => Array.from({length:61}, (_, i) => { const f = top * i / 60; return [loadX(sp, f, c.sB), f]; });
+  const downPts = (c, bot) => Array.from({length:61}, (_, i) => { const f = c.Fm - (c.Fm - bot) * i / 60; return [unloadX(sp, f, c), f]; });
+  const line = (pts, col, wd, dash) => { ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = wd; ctx.lineJoin = "round"; if (dash) ctx.setLineDash(dash);
+    ctx.beginPath(); pts.forEach((p, i) => { const [X, Y] = P(p); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }); ctx.stroke(); ctx.restore(); };
+  const fill = (pts, col) => { ctx.save(); ctx.fillStyle = col; ctx.beginPath(); pts.forEach((p, i) => { const [X, Y] = P(p); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }); ctx.closePath(); ctx.fill(); ctx.restore(); };
+  const mid = (pts, col) => { const [X1, Y1] = P(pts[27]), [X2, Y2] = P(pts[33]); if (Math.hypot(X2 - X1, Y2 - Y1) > 6) arrow(ctx, X1, Y1, X2, Y2, col, 2.5); };
+  const dots = (list, alpha) => { for (const d of list){ ctx.fillStyle = d.dir === "load" ? `rgba(230,81,0,${alpha})` : `rgba(21,101,192,${alpha})`;
+    const [X, Y] = P([d.x, d.F]); ctx.beginPath(); ctx.arc(X, Y, 4.5, 0, 7); ctx.fill(); } };
+  // Hooke's-law line through the start of this cycle: the steel curve leaves it at the elastic limit
+  if (!isBand(sp)){ const xe = Math.min(xM / 100, s0 + FM / sp.k); line([[s0, 0], [xe, sp.k * (xe - s0)]], "#90A4AE", 1.4, [6, 5]); }
+  // the last finished loop: shaded orange (grey once a new cycle has started)
+  if (done){
+    const up = upPts(done, done.Fm), down = downPts(done, 0);
+    fill(up.concat(down), live ? "rgba(144,164,174,.16)" : "rgba(230,81,0,.18)");
+    line(up, live ? "#B0BEC5" : COL.accent, live ? 1.5 : 3); line(down, live ? "#B0BEC5" : "#1565C0", live ? 1.5 : 3);
+    if (!live){ mid(up, COL.accent); mid(down, "#1565C0"); dots(C.prevDots, .9); } else dots(C.prevDots, .25);
+    const xs = setAfter(sp, done);
+    if (!live && xs > 2e-4){                                 // permanent extension along the x-axis
+      ctx.save(); ctx.strokeStyle = COL.F; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(g.X(0), g.Y(0)); ctx.lineTo(g.X(100 * xs), g.Y(0)); ctx.stroke(); ctx.restore(); }
+  }
+  // the cycle in progress
+  if (live){
+    const up = upPts(live, live.Fm); line(up, COL.accent, 3); mid(up, COL.accent);
+    if (F < live.Fm - 1e-9){ const down = downPts(live, F); line(down, "#1565C0", 3); mid(down, "#1565C0"); }
+    dots(C.dots, .9);
+  }
+  // the curve moves (19 Oct 2026): after an over-stretch the next loading curve starts from the permanent extension
+  // (dashed teal); during the next cycle the curve of a new spring stays faded grey. Arrow = the shift.
+  if (!isBand(sp)){ const xs = live ? live.sB : done ? setAfter(sp, done) : 0;
+    if (xs > 2e-4){
+      if (live) line(upPts({sB:0}, Fmax), "#B0BEC5", 2, [6, 5]); else line(upPts({sB:xs}, Fmax), COL.H, 2.5, [8, 5]);
+      const Fa = Math.abs(F - sp.Flim / 2) < 0.2 * sp.Flim ? (F < sp.Flim / 2 ? 0.8 : 0.2) * sp.Flim : sp.Flim / 2, [X1, Ya] = P([Fa / sp.k, Fa]), [X2] = P([xs + Fa / sp.k, Fa]);
+      if (X2 - X1 > 8) arrow(ctx, X1, Ya, X2, Ya, COL.F, 2.5);
+      label(ctx, `${live ? "curve moved" : "next loading curve moves"} right by ${(100 * xs).toFixed(1)} cm`, Math.max(X1, X2) + 8, Ya, COL.F, "left", 12); } }
+  // elastic limit E (steel only), drawn on top
+  if (!isBand(sp)){ const [X, Y] = P([s0 + sp.Flim / sp.k, sp.Flim]);
+    ctx.fillStyle = "#fff"; ctx.strokeStyle = COL.F; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X, Y, 6.5, 0, 7); ctx.fill(); ctx.stroke();
+    const eL = X - box.x > 175;                     // no room on the left (zoomed out for a large load): label on the right
+    label(ctx, `E — elastic limit (${sp.Flim.toFixed(1)} N)`, eL ? X - 12 : X + 12, Y - 14, COL.F, eL ? "right" : "left", 13); }
+  // where the load is now
+  const [Xn, Yn] = P([C.xe, F]); ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(Xn, Yn, 6, 0, 7); ctx.fill();
+  // notes in the bottom-right corner (below the curves)
+  const notes = [];
+  if (done && !live){
+    const Ein = energyIn(sp, done), Eout = energyOut(sp, done), xs = setAfter(sp, done);
+    notes.push([`loop area = energy → heat ≈ ${(Ein - Eout).toFixed(3)} J`, Ein - Eout > 1e-3 ? COL.accent : COL.muted]);
+    if (isBand(sp)) notes.push([`unloading curve BELOW loading curve: hysteresis`, "#1565C0"]);
+    else if (xs > 2e-4) notes.push([`permanent extension = ${(100 * xs).toFixed(1)} cm`, COL.F]);
+    else notes.push([`no loop: below E the spring gives all its energy back`, COL.N]);
+  } else if (live){
+    notes.push([F < live.Fm - 1e-9 ? "unloading ↓ (blue)" : "loading ↑ (orange)", F < live.Fm - 1e-9 ? "#1565C0" : COL.accent]);
+    if (!isBand(sp) && live.Fm > sp.Flim + 1e-9) notes.push(["past the elastic limit E!", COL.F]);
+  } else notes.push(["add masses to start loading", COL.muted]);
+  notes.forEach(([t, c], i) => label(ctx, t, box.x + box.w - 6, box.y + box.h - 14 - 18 * (notes.length - 1 - i), c, "right", 13));
+}
+// ---- "Elastic limit" tab (19 Oct 2026, the same code in both spring simulations): a GCSE-textbook style force–extension
+// graph for one steel spring. Straight line through the origin (F = kx) up to the limit of proportionality = elastic
+// limit E, then a curve; elastic region (green) and plastic region (red) shaded; after loading past E the unloading line
+// comes back to the permanent extension. The dot is the spring now. elasticState() (per simulation) supplies
+// {sp, x, F, dot, set, back, peak, note}: x, set (permanent extension now) and back (where unloading from the peak ends) in m
+// from the original length, F in N, peak = {x, F} of the largest load past E (null if E was never passed).
+function drawElastic(){
+  const cv = $("elastic"); if (!cv.offsetParent) return;
+  const {ctx, w, h} = fitCanvas(cv); ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  const es = elasticState(), sp = es.sp, narrow = w < 520;
+  if (isBand(sp)){
+    label(ctx, "A rubber band has no straight part and no single elastic limit:", w / 2, h / 2 - 12, COL.muted, "center", 14);
+    label(ctx, "choose a steel spring, or see the loop on the Graph tab.", w / 2, h / 2 + 12, COL.muted, "center", 14);
+    $("elasticHint").textContent = "Rubber bands do not obey Hooke's law."; return;
+  }
+  const xE = sp.Flim / sp.k, Fpk = es.peak ? es.peak.F : 0;
+  const FM = niceCeil(Math.max(1.4 * sp.Flim, Fpk, es.dot ? es.F : 0) * 1.08);
+  const xM = niceCeil(100 * Math.max(loadX(sp, FM, 0), es.set + loadX(sp, sp.Flim, 0), es.peak ? es.peak.x : 0, es.dot ? es.x : 0) * 1.05);
+  const box = {x:62, y:40, w:w - 78, h:h - 92};
+  const g = axesR(ctx, box, 0, xM, 0, FM, [["extension ", "n"], ["x", "i"], [" / cm", "n"]], [["force ", "n"], ["F", "i"], [" / N", "n"]]);
+  const P = (x, f) => [g.X(100 * x), g.Y(f)], [XE, YE] = P(xE, sp.Flim);
+  // elastic and plastic regions
+  ctx.save(); ctx.fillStyle = "rgba(46,125,50,.08)"; ctx.fillRect(box.x, box.y, XE - box.x, box.h);
+  ctx.fillStyle = "rgba(198,40,40,.07)"; ctx.fillRect(XE, box.y, box.x + box.w - XE, box.h);
+  ctx.strokeStyle = "rgba(198,40,40,.45)"; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(XE, box.y); ctx.lineTo(XE, box.y + box.h); ctx.stroke(); ctx.restore();
+  label(ctx, narrow ? "elastic" : "ELASTIC: goes back to", (box.x + XE) / 2, box.y - 24, COL.N, "center", narrow ? 12 : 12);
+  if (!narrow) label(ctx, "its original length", (box.x + XE) / 2, box.y - 10, COL.N, "center", 12);
+  label(ctx, narrow ? "plastic" : "PLASTIC: permanently", (XE + box.x + box.w) / 2, box.y - 24, COL.F, "center", 12);
+  if (!narrow) label(ctx, "stretched", (XE + box.x + box.w) / 2, box.y - 10, COL.F, "center", 12);
+  const line = (pts, col, wd, dash) => { ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = wd; ctx.lineJoin = ctx.lineCap = "round"; if (dash) ctx.setLineDash(dash);
+    ctx.beginPath(); pts.forEach(([x, f], i) => { const [X, Y] = P(x, f); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }); ctx.stroke(); ctx.restore(); };
+  // a spring that has been over-stretched: its new line (faded) starts from the permanent extension
+  if (es.set > 2e-4) line(Array.from({length:41}, (_, i) => { const f = FM * i / 40; return [loadX(sp, f, es.set), f]; }), "#B0BEC5", 2, [6, 5]);
+  // the straight part (Hooke's law) and the curve
+  line([[0, 0], [xE, sp.Flim]], "#1565C0", 4);
+  line(Array.from({length:41}, (_, i) => { const f = sp.Flim + (FM - sp.Flim) * i / 40; return [loadX(sp, f, 0), f]; }), COL.F, 4);
+  // gradient triangle on the straight part
+  const [Xa, Ya] = P(0.3 * xE, 0.3 * sp.Flim), [Xb, Yb] = P(0.7 * xE, 0.7 * sp.Flim);
+  ctx.save(); ctx.strokeStyle = "#1565C0"; ctx.lineWidth = 1.3; ctx.setLineDash([4, 3]);
+  ctx.beginPath(); ctx.moveTo(Xa, Ya); ctx.lineTo(Xb, Ya); ctx.lineTo(Xb, Yb); ctx.stroke(); ctx.restore();
+  label(ctx, "Δx", (Xa + Xb) / 2, Ya + 11, "#1565C0", "center", 12);
+  label(ctx, "ΔF", Xb + 6, (Ya + Yb) / 2, "#1565C0", "left", 12);
+  const txtL = narrow ? [`straight line: F = kx`, `gradient = k = ${sp.k.toFixed(1)} N m⁻¹`] : [`straight line through the origin: F = kx (Hooke's law)`, `gradient = k = ΔF/Δx = ${sp.k.toFixed(1)} N m⁻¹`];
+  txtL.forEach((t, i) => label(ctx, t, box.x + 8, box.y + 14 + 17 * i, "#1565C0", "left", 12));       // top left: empty above the line
+  // unloading after going past E: back to the permanent extension
+  if (es.peak && es.peak.F > sp.Flim + 1e-9){
+    line([[es.peak.x, es.peak.F], [es.back, 0]], "#6A1B9A", 2.5, [8, 5]);
+    const [X1, Y1] = P(es.peak.x, es.peak.F), [X2, Y2] = P(es.back, 0), mx = (X1 + X2) / 2, my = (Y1 + Y2) / 2;
+    arrow(ctx, mx + (X1 - X2) * 0.06, my + (Y1 - Y2) * 0.06, mx - (X1 - X2) * 0.06, my - (Y1 - Y2) * 0.06, "#6A1B9A", 2.5);
+    if (!narrow) label(ctx, "unloading", mx + 10, my, "#6A1B9A", "left", 12);
+    ctx.save(); ctx.strokeStyle = COL.F; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(g.X(0), g.Y(0)); ctx.lineTo(X2, g.Y(0)); ctx.stroke(); ctx.restore();
+  }
+  // the curve label
+  { const fC = sp.Flim + (FM - sp.Flim) * 0.7, [Xc, Yc] = P(loadX(sp, fC, 0), fC);
+    const cT = narrow ? "curve: not F = kx" : "curve: Hooke's law no longer holds"; ctx.font = `600 12px "Segoe UI",Calibri,Arial,sans-serif`;
+    label(ctx, cT, Math.min(Xc + 8, box.x + box.w - 6 - ctx.measureText(cT).width), Yc + 18, COL.F, "left", 12); }   // below the line
+  // E: limit of proportionality = elastic limit
+  ctx.fillStyle = "#fff"; ctx.strokeStyle = COL.F; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(XE, YE, 7, 0, 7); ctx.fill(); ctx.stroke();
+  const eT = narrow ? [`E: elastic limit (${sp.Flim.toFixed(1)} N)`] : [`E: limit of proportionality`, `= elastic limit (${sp.Flim.toFixed(1)} N)`], lx = XE + 12;
+  ctx.font = `600 13px "Segoe UI",Calibri,Arial,sans-serif`; const ew = Math.max(...eT.map(t => ctx.measureText(t).width));
+  const right = lx + ew < box.x + box.w - 4;
+  eT.forEach((t, i) => label(ctx, t, right ? lx : XE - 12, YE + 16 + 16 * i, COL.F, right ? "left" : "right", 13));
+  // the spring now
+  if (es.dot){ const [Xd, Yd] = P(es.x, es.F); ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(Xd, Yd, 6.5, 0, 7); ctx.fill();
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke(); }
+  const notes = es.note ? [[es.note, COL.muted]] : [];
+  if (es.peak && es.peak.F > sp.Flim + 1e-9) notes.push([`permanent extension = ${(100 * es.back).toFixed(1)} cm (red bar)`, COL.F]);
+  notes.forEach(([t, c], i) => label(ctx, t, box.x + box.w - 6, box.y + box.h - 14 - 17 * (notes.length - 1 - i), c, "right", 12));
+  $("elasticHint").textContent = "Up to E: straight line through the origin (F = kx), elastic. Past E: the line curves, plastic: unloading (purple) ends at a permanent extension. Dot = the spring now.";
+}
+function elasticState(){                                     // Spring force adapter for the Elastic limit tab
+  const sp = sprById(set.spr);
+  if (set.mode === "cycle"){ const c = cycView(), past = c && !isBand(sp) && c.Fm > sp.Flim + 1e-9;
+    return {sp, x:C.xe, F:load() * G, dot:true, set:C.Fm > 0 ? C.sB : C.s, back:past ? setAfter(sp, c) : 0,
+            peak:past ? {x:c.xm, F:c.Fm} : null, note:""}; }
+  if (set.mode === "push") return {sp, dot:false, set:0, back:0, peak:null, note:"Hang masses to move the dot along the line"};
+  const s = S.set[set.spr], pk = S.peak[set.spr];
+  return {sp, x:S.x, F:forcesNow().FH, dot:true, set:s, back:Math.max(s, KEEP * S.worst[set.spr]), peak:pk, note:""};
+}
+// ---- "Hysteresis" tab (19 Oct 2026, the same code in both spring simulations): a textbook force–extension loop for a
+// rubber band. Loading curve (orange) above the unloading curve (blue); area under loading = energy stored, area under
+// unloading (hatched) = energy given back, the loop between them = energy → heat. It fills in live while the rubber band is
+// loaded in Load & unload; otherwise a faded 0 → 500 g → 0 example loop. hystState() (per simulation) supplies {band, live, F}.
+function drawHyst(){
+  const cv = $("hyst"); if (!cv.offsetParent) return;
+  const {ctx, w, h} = fitCanvas(cv); ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  const hs = hystState(), band = hs.band, narrow = w < 520;
+  const c = hs.live ? (C.Fm > 0 ? C : C.prev) : null, done = !!(c && C.Fm === 0);
+  const ref = {sB:0, Fm:0.5 * G, xm:loadX(band, 0.5 * G, 0)}, cy = c || ref;
+  const Fmax = Math.max(0.5 * G, cy.Fm), FM = niceCeil(Fmax * 1.12);
+  const xM = niceCeil(100 * Math.max(loadX(band, Fmax, cy.sB), cy.xm) * 1.08);
+  const box = {x:62, y:22, w:w - 78, h:h - 74};
+  const g = axesR(ctx, box, 0, xM, 0, FM, [["extension ", "n"], ["x", "i"], [" / cm", "n"]], [["force ", "n"], ["F", "i"], [" / N", "n"]]);
+  const P = ([x, f]) => [g.X(100 * x), g.Y(f)];
+  const up = (cc, top) => Array.from({length:61}, (_, i) => { const f = top * i / 60; return [loadX(band, f, cc.sB), f]; });
+  const down = (cc, bot) => Array.from({length:61}, (_, i) => { const f = cc.Fm - (cc.Fm - bot) * i / 60; return [unloadX(band, f, cc), f]; });
+  const path = pts => { ctx.beginPath(); pts.forEach((p, i) => { const [X, Y] = P(p); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }); };
+  const line = (pts, col, wd, dash) => { ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = wd; ctx.lineJoin = "round"; if (dash) ctx.setLineDash(dash); path(pts); ctx.stroke(); ctx.restore(); };
+  const fill = (pts, col) => { ctx.save(); ctx.fillStyle = col; path(pts); ctx.closePath(); ctx.fill(); ctx.restore(); };
+  const hatch = (pts, col) => { ctx.save(); path(pts); ctx.closePath(); ctx.clip(); ctx.strokeStyle = col; ctx.lineWidth = 1.2;
+    ctx.beginPath(); for (let d = -box.h; d < box.w + box.h; d += 8){ ctx.moveTo(box.x + d, box.y + box.h); ctx.lineTo(box.x + d + box.h, box.y); } ctx.stroke(); ctx.restore(); };
+  const mid = (pts, col) => { const [X1, Y1] = P(pts[27]), [X2, Y2] = P(pts[33]); if (Math.hypot(X2 - X1, Y2 - Y1) > 6) arrow(ctx, X1, Y1, X2, Y2, col, 2.5); };
+  const f3s = v => v.toFixed(3);
+  const key = [];
+  if (!c){                                                     // nothing loaded yet: the example loop, faded
+    const U = up(ref, ref.Fm), D = down(ref, 0);
+    fill(U.concat(D), "rgba(144,164,174,.18)"); line(U, "#B0BEC5", 2.5); line(D, "#B0BEC5", 2.5, [7, 5]);
+    mid(U, "#B0BEC5"); mid(D, "#B0BEC5");
+    const Ein = energyIn(band, ref), Eout = energyOut(band, ref);
+    key.push([`example loop: load to 500 g, then unload`, COL.muted, null],
+             [`${narrow ? "stored" : "energy stored"} ${f3s(Ein)} J · ${narrow ? "back" : "given back"} ${f3s(Eout)} J · heat ${f3s(Ein - Eout)} J`, COL.muted, null]);
+    label(ctx, narrow ? "Load & unload → Rubber band" : "Choose Load & unload → Rubber band to make your own loop", box.x + box.w - 6, box.y + box.h - 14, COL.accent, "right", 13);
+  } else {
+    const F = Math.max(0, hs.F), unl = F < c.Fm - 1e-9 || done, bot = done ? 0 : F;
+    const U = up(c, c.Fm), xmP = [c.xm, 0];
+    const D = unl ? down(c, bot) : null;
+    // areas: under loading (outline), under unloading (hatched), the loop (filled)
+    fill(U.concat([xmP]), "rgba(230,81,0,.07)");
+    if (D){ const xb = D[D.length - 1][0]; hatch(D.concat([[xb, 0], xmP]), "rgba(21,101,192,.55)"); }
+    if (done) fill(U.concat(down(c, 0)), "rgba(230,81,0,.28)");
+    line(U.concat([xmP]), "rgba(230,81,0,.55)", 1.2, [4, 4]);
+    line(U, COL.accent, 3.5); mid(U, COL.accent);
+    if (D){ line(D, "#1565C0", 3.5); mid(D, "#1565C0"); }
+    const Ein = energyIn(band, c), Eback = D ? energyOut(band, c, bot) : 0;
+    key.push([`${narrow ? "stored" : "energy stored (area under loading)"} = ${f3s(Ein)} J`, COL.accent, "out"]);
+    if (D) key.push([`${narrow ? "given back" : "energy given back (area under unloading)"} = ${f3s(Eback)} J`, "#1565C0", "hatch"]);
+    if (done) key.push([`${narrow ? "loop → heat" : "loop area = energy → heat"} = ${f3s(Ein - Eback)} J (${(100 * (Ein - Eback) / Ein).toFixed(0)} %)`, COL.F, "fill"]);
+    // the band keeps a little stretch and creeps back
+    if (C.Fm === 0 && C.s > 2e-5){ const X1 = g.X(100 * C.s), Y = g.Y(0) - 12;
+      if (X1 - g.X(0) > 10) arrow(ctx, X1, Y, g.X(0) + 2, Y, "#6A1B9A", 2);
+      label(ctx, narrow ? "creeps back slowly" : "creeps back to its original length (slowly)", X1 + 8, Y - 2, "#6A1B9A", "left", 12); }
+    const [Xd, Yd] = P([C.xe, F]); ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(Xd, Yd, 6.5, 0, 7); ctx.fill();
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.stroke();
+    if (!done) label(ctx, unl ? "unloading ↓ (blue)" : "loading ↑ (orange)", box.x + box.w - 6, box.y + box.h - 14, unl ? "#1565C0" : COL.accent, "right", 13);
+    else key.push([narrow ? "unloading BELOW loading: hysteresis" : "unloading curve BELOW loading curve: hysteresis", COL.F, null]);
+  }
+  // key, top left (the loop hugs the bottom right)
+  key.forEach(([t, col, sw], i) => { const y = box.y + 14 + 19 * i, x0 = box.x + 8;
+    if (sw){ ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 1.5;
+      if (sw === "fill"){ ctx.fillStyle = "rgba(230,81,0,.35)"; ctx.fillRect(x0, y - 6, 14, 12); }
+      if (sw === "hatch"){ ctx.save(); ctx.beginPath(); ctx.rect(x0, y - 6, 14, 12); ctx.clip(); ctx.lineWidth = 1.2; ctx.beginPath();
+        for (let d = -12; d < 14; d += 4){ ctx.moveTo(x0 + d, y + 6); ctx.lineTo(x0 + d + 12, y - 6); } ctx.stroke(); ctx.restore(); }
+      if (sw === "out"){ ctx.setLineDash([3, 2]); ctx.fillStyle = "rgba(230,81,0,.10)"; ctx.fillRect(x0, y - 6, 14, 12); }
+      ctx.strokeRect(x0, y - 6, 14, 12); ctx.restore(); }
+    label(ctx, t, x0 + (sw ? 20 : 0), y, col, "left", 12); });
+  $("hystHint").textContent = "Area under the loading curve = energy stored; under the unloading curve = energy given back; the loop = energy turned into heat (the band gets warm). Large loop = good at absorbing energy (car shock absorbers, trainers' soles); small loop = good at storing and returning it (bouncy ball, catapult band).";
+}
+function hystState(){                                        // Spring force adapter for the Hysteresis tab
+  return {band:SPRINGS.find(isBand), live:set.mode === "cycle" && isBand(sprById(set.spr)), F:load() * G};
+}
+function drawAna(){
+  const cv = $("ana"); if (!cv.offsetParent) return;
+  const {ctx, w, h} = fitCanvas(cv); ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  const tr = trials.filter(t => t.spr === set.spr && t.F !== null), pts = tr.map(t => [t.x / 100, t.F]);   // mystery rows have no known F
+  const xM = niceCeil(Math.max(5, ...tr.map(t => t.x)) * 1.1), FM = niceCeil(Math.max(1, ...pts.map(p => p[1])) * 1.15);
+  const box = {x:62, y:46, w:w - 78, h:h - 96};
+  const g = axesR(ctx, box, 0, xM, 0, FM, [["extension ", "n"], ["x", "i"], [" / cm", "n"]], [["load ", "n"], ["F", "i"], [" / N", "n"]]);
+  label(ctx, `Spring: ${sprById(set.spr).name}`, box.x + 4, 12, COL.navy, "left", 13);
+  if (!pts.length){ label(ctx, "Record loads to plot them here", box.x + box.w / 2, box.y + box.h / 2, COL.muted, "center", 14); return; }
+  for (const t of tr){ const X = g.X(t.x), Y = g.Y(t.F);
+    ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(g.X(t.x - 0.1), Y); ctx.lineTo(g.X(t.x + 0.1), Y);
+    ctx.moveTo(g.X(t.x - 0.1), Y - 4); ctx.lineTo(g.X(t.x - 0.1), Y + 4); ctx.moveTo(g.X(t.x + 0.1), Y - 4); ctx.lineTo(g.X(t.x + 0.1), Y + 4); ctx.stroke();
+    ctx.fillStyle = COL.H; ctx.beginPath(); ctx.arc(X, Y, 4, 0, 7); ctx.fill(); }
+  if ($("fitChk").checked){
+    const fit = originFit(pts), mm = minMaxK(pts, 0.001);
+    if (!fit){ label(ctx, "Need at least 2 loads for a best-fit line", box.x + 4, 30, COL.muted, "left", 13); return; }
+    const line = (k, col, dash) => { const xe = Math.min(xM / 100, FM / k); ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 2; if (dash) ctx.setLineDash([6, 4]);
+      ctx.beginPath(); ctx.moveTo(g.X(0), g.Y(0)); ctx.lineTo(g.X(100 * xe), g.Y(k * xe)); ctx.stroke(); ctx.restore(); };
+    line(fit.k, COL.accent, false);
+    const seg = (pq, col) => { const [[x1, y1], [x2, y2]] = pq, k = (y2 - y1) / (x2 - x1), xa = Math.max(0, x1 - 0.01), xb = x2 + 0.01;
+      ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.setLineDash([6, 4]); ctx.beginPath();
+      ctx.moveTo(g.X(100 * xa), g.Y(y1 + k * (xa - x1))); ctx.lineTo(g.X(100 * xb), g.Y(y1 + k * (xb - x1))); ctx.stroke(); ctx.restore(); };
+    if (mm){ seg(mm.steep, COL.grey); seg(mm.shallow, COL.grey);
+      label(ctx, `best fit k = ${fit.k.toFixed(1)} N m⁻¹ · steepest ${mm.kmax.toFixed(1)} · shallowest ${mm.kmin.toFixed(1)} → Δk = ${((mm.kmax - mm.kmin) / 2).toFixed(1)} N m⁻¹`, box.x + 4, 30, COL.accent, "left", 12); }
+    else label(ctx, `best fit k = ${fit.k.toFixed(1)} N m⁻¹`, box.x + 4, 30, COL.accent, "left", 12);
+  } else label(ctx, "Error bars: ±0.1 cm. F = kx: the gradient is k (convert x to metres!).", box.x + 4, 30, COL.muted, "left", 12);
+}
+
+/* ============================ 9 DATA ============================ */
+let trials = [];
+function recordTrial(){
+  const r = Math.round(reading() * 10) / 10, x = Math.round((r - 30 - 100 * S.set[set.spr]) * 10) / 10;
+  trials.push({spr:set.spr, load:set.myst ? "mystery" : fmtLoad(set.g), F:set.myst ? null : load() * G, ptr:r, x});
+  if (set.myst) trials[trials.length - 1].F = null;
+  save(); renderTrials(); renderActions(true);
+}
+function renderTrials(){
+  $("trials").querySelector("tbody").innerHTML = trials.map((t, i) => `<tr><td>${i + 1}</td><td>${sprById(t.spr).name}</td><td>${t.load}</td>
+    <td>${t.F === null ? "?" : f3(t.F)}</td><td>${t.ptr.toFixed(1)}</td><td>${t.x.toFixed(1)}</td>
+    <td><button class="x" data-del="${i}" aria-label="Delete trial ${i + 1}">×</button></td></tr>`).join("");
+}
+
+/* ============================ 10 TASKS ============================ */
+// Step types: "do" (instruction + done tick), "predict" (lock in a choice, then check), "num" (checked within ±5 %).
+// Checkpoint answers come from the model functions (cycle c = {sB, Fm, xm}).
+const cyc = (sp, F) => ({sB:0, Fm:F, xm:loadX(sp, F, 0)});
+const CYCLE_TASKS = [
+  {type:"do", setup:{mode:"cycle", spr:"inv", g:0}, text:"Load & unload, investigation spring: add 50 g at a time up to 300 g, then take the masses off one by one. Watch the Graph tab."},
+  {type:"predict", text:"Below the elastic limit, how does the unloading line compare with the loading line?",
+   opts:["It lies on top of it: no loop, the spring returns to 30.0 cm", "It lies below it: a loop", "It ends at a longer length"], correct:0,
+   why:"Below E the spring is elastic: it gives back all the energy stored in it, so unloading retraces loading and the loop has zero area."},
+  {type:"num", text:"The elastic limit E of the investigation spring is 6.0 N. What is the smallest load, a whole number of 50 g masses, that takes it past E?",
+   answer:() => 50 * Math.ceil(6.0 / G * 1000 / 50), unit:"g", hint:"m = F/g = 6.0/9.81 kg — then round UP to the next 50 g."},
+  {type:"predict", setup:{mode:"cycle", spr:"inv", g:0}, text:"Now load the spring to 800 g (past E), then unload to 0 g. When all the masses are off, the pointer…",
+   opts:["is back at 30.0 cm", "is below 30.0 cm: the spring is permanently longer", "is above 30.0 cm: the spring is shorter"], correct:1,
+   why:"Past the elastic limit the spring is permanently deformed. It comes back along a straight line almost parallel to the Hooke's-law line and stops with a permanent extension."},
+  {type:"num", text:"Read the permanent extension after loading to 800 g and unloading (in cm).",
+   answer:() => 100 * setAfter(sprById("inv"), cyc(sprById("inv"), 0.8 * G)), unit:"cm", hint:"Unloaded pointer reading − 30.0 cm (or the red bar on the graph)."},
+  {type:"do", setup:{mode:"cycle", spr:"band", g:0}, text:"Rubber band: load it to 500 g in 50 g steps, then unload to 0 g. Watch the loop form on the Graph tab."},
+  {type:"predict", text:"Why does the rubber band's unloading curve lie BELOW its loading curve?",
+   opts:["It gives back less energy than was stored: the difference becomes heat (internal energy) in the band", "The masses get lighter on the way down", "Because F = kx with a smaller k"], correct:0,
+   why:"Area under the loading curve = energy stored; area under the unloading curve = energy given back. The loop area is the energy dissipated as heat — a stretched band feels warm. This is hysteresis."},
+  {type:"num", text:"Use the readouts after the full 500 g cycle: what percentage of the energy stored on loading became heat?",
+   answer:() => { const sp = sprById("band"), c = cyc(sp, 0.5 * G); return 100 * (energyIn(sp, c) - energyOut(sp, c)) / energyIn(sp, c); }, unit:"%",
+   hint:"percentage = (energy in − energy out) / energy in × 100"},
+  {type:"predict", text:"Which material would you choose for the rubber mounts that stop a washing machine shaking?",
+   opts:["one with a LARGE hysteresis loop", "one with NO loop", "it makes no difference"], correct:0,
+   why:"A large loop turns the vibration energy into heat each cycle, so the shaking dies away (damping). A catapult or a trampoline wants a SMALL loop, so most of the energy comes back."},
+];
+const TASKS = [
+ {id:"pre", title:"1 · Pre-lab: predict", time:"≈ 15 min", steps:[
+  {type:"do", setup:{mode:"hang", spr:"inv", g:100, myst:false, noise:false},
+   text:"Investigation spring, 100 g hanging. Watch the mass bounce and settle, and the free-body diagram. Then add 50 g at a time."},
+  {type:"predict", text:"Predict: once the mass hangs at rest, the spring force on it is…",
+   opts:["bigger than its weight", "equal to its weight", "smaller than its weight", "zero"], correct:1,
+   why:"At rest the resultant force is zero: FH = W = mg. That is why we can use the weight of the masses as the load F in F = kx."},
+  {type:"predict", text:"Predict: you double the load from 100 g to 200 g. The extension…",
+   opts:["stays the same", "doubles", "halves", "increases four times"], correct:1,
+   why:"Hooke's law: x = F/k, so x ∝ F (below the limit of proportionality). 0.981 N → 3.92 cm, 1.962 N → 7.85 cm."},
+  {type:"predict", setup:{mode:"hang", spr:"soft", g:0, myst:false, noise:false},
+   text:"Soft spring (limit ≈ 3 N). Predict: you load it with 400 g (3.9 N), then take all the masses off. The spring…",
+   opts:["returns to its original length", "stays longer than before", "becomes shorter than before"], correct:1,
+   why:"Past the elastic limit the spring is permanently deformed; it does not return to its original length. The F–x graph also curves past the limit of proportionality."},
+  {type:"predict", setup:{mode:"push", spr:"inv", d:-6},
+   text:"Push / pull: you squash the spring by 6.0 cm. Which way does the spring push the block?",
+   opts:["Towards the wall (same way as the squash)", "Away from the wall (back towards the natural length)", "It does not push at all"], correct:1,
+   why:"FH = −kx: the spring force is always opposite to the displacement, towards the natural length. That is the meaning of the minus sign."},
+  {type:"num", setup:{mode:"hang", spr:"inv", g:200, myst:false, noise:false},
+   text:"Investigation spring, k = 25.0 N m⁻¹. Calculate the extension (in cm) with 200 g hanging. Then check.",
+   answer:() => 100 * 0.2 * G / 25.0, unit:"cm", hint:"x = F/k = mg/k, then convert m → cm"},
+ ]},
+ {id:"lab", title:"2 · During the lab: Station 3 / investigation", time:"≈ 10 min", steps:[
+  {type:"do", setup:{mode:"hang", spr:"inv", g:100, myst:false, noise:true},
+   text:"Investigation spring, reading uncertainty ON. Record 100, 150, 200, 250 and 300 g (● Record each time). Compare with your own table."},
+  {type:"num", text:"Extension for 200 g (in cm):", answer:() => 100 * 0.2 * G / 25.0, unit:"cm", hint:"pointer reading − unloaded reading"},
+  {type:"num", text:"Data tab: spring constant k from the best-fit line:", answer:() => 25.0, unit:"N m⁻¹", hint:"k = gradient = F/x with x in metres"},
+  {type:"do", setup:{mode:"hang", spr:"inv", g:0, myst:true, noise:true}, text:"Hang the mystery bag. Read its extension and record it."},
+  {type:"num", text:"Use k to find the mass of the mystery bag (in kg):", answer:() => MYSTERY, unit:"kg", hint:"F = kx, then m = F/g"},
+  {type:"predict", text:"Station 3 asks: would your method still work for a 5 kg load?",
+   opts:["Yes — Hooke's law always holds", "No — 5 kg is far past the limit of proportionality (and the elastic limit)", "Only if you measure more carefully"], correct:1,
+   why:"5 kg gives 49 N, eight times the limit of about 6 N. The F–x graph is no longer straight, so F = kx no longer applies — and the spring would be permanently damaged."},
+ ]},
+ {id:"hw", title:"3 · Homework: analyse", time:"≈ 30 min", steps:[
+  {type:"do", setup:{mode:"hang", spr:"st3", g:0, myst:false, noise:true},
+   text:"Station 3 spring, uncertainty ON. Record loads of 100 g to 400 g in 50 g steps. Plot F against x with error bars of ±0.1 cm on your worksheet."},
+  {type:"num", text:"Gradient of your best-fit line = k:", answer:() => 29.4, unit:"N m⁻¹", hint:"Use a large gradient triangle; x in metres."},
+  {type:"do", text:"Draw the steepest and shallowest lines through the origin that pass through all error bars. Δk = ½(k_max − k_min). Check with the Data tab."},
+  {type:"num", setup:{mode:"push", spr:"inv", d:6}, text:"Investigation spring stretched by 6.0 cm (push/pull mode). Calculate the size of the spring force.",
+   answer:() => 25.0 * 0.06, unit:"N", hint:"|FH| = kx"},
+  {type:"num", setup:{mode:"hang", spr:"stiff", g:0, myst:false, noise:false},
+   text:"The stiff spring (k = 40.0 N m⁻¹) stretches by 4.5 cm when an object hangs from it. Calculate the object's mass.",
+   answer:() => 40 * 0.045 / G, unit:"kg", hint:"mg = kx"},
+  {type:"predict", setup:{mode:"hang", spr:"soft", g:0, myst:false, noise:false},
+   text:"Soft spring: load it to 400 g, unload it, then load 100 g again. Compared with a new spring, the extension measured from the original 30.0 cm mark…",
+   opts:["is the same", "is larger (the spring is permanently longer)", "is smaller"], correct:1,
+   why:"The overloaded spring has a permanent extension, so every reading starts from a lower point. Measure extensions from the spring's own unloaded position — or better, use a new spring."},
+ ]},
+ {id:"cyc", title:"4 · Checkpoint: hysteresis & elastic limit", time:"≈ 15 min", steps:CYCLE_TASKS},
+];
+let taskState = {}, curSet = "pre";
+function renderTaskSets(){
+  document.getElementById("taskSets").innerHTML = TASKS.map(s =>
+    `<button class="chip" data-set="${s.id}" aria-pressed="${s.id === curSet}">${s.title} <span class="hint">${s.time}</span></button>`).join("");
+}
+function renderTasks(){
+  const ts = TASKS.find(s => s.id === curSet), box = document.getElementById("taskList"); box.innerHTML = "";
+  ts.steps.forEach((st, i) => {
+    const key = `${ts.id}.${i}`, S = taskState[key] || (taskState[key] = {});
+    const d = document.createElement("div"); d.className = "step" + (S.done ? " done" : "");
+    let html = `<p class="q"><span class="n">${i + 1}</span>${st.type === "predict" ? '<span class="tag">Predict · </span>' : ""}${st.text}</p>`;
+    if (st.setup) html += `<button class="btn small" data-setup="${key}">⚙ Set up the sim for me</button> `;
+    if (st.type === "do"){
+      html += `<label class="switch"><input type="checkbox" data-done="${key}" ${S.done ? "checked" : ""}> Done</label>`;
+    } else if (st.type === "predict"){
+      st.opts.forEach((o, j) => {
+        const cls = S.checked ? (j === st.correct ? " good" : j === S.choice ? " bad" : "") : "";
+        html += `<label class="opt${cls}"><input type="radio" name="r${key}" value="${j}" data-choice="${key}" ${S.choice === j ? "checked" : ""} ${S.locked ? "disabled" : ""}> ${o}</label>`;
+      });
+      if (!S.locked) html += `<button class="btn small primary" data-lock="${key}" ${S.choice === undefined ? "disabled" : ""}>🔒 Lock in my prediction</button>`;
+      else if (!S.checked) html += `<div class="fb info">Prediction locked. Now test it in the sim, then press Check.</div><button class="btn small navy" data-check="${key}">Check</button>`;
+      else html += `<div class="fb ${S.choice === st.correct ? "ok" : "no"}">${S.choice === st.correct ? "✔ Your prediction was right. " : "✘ Not what happens. "}${st.why}</div>`;
+    } else if (st.type === "num"){
+      const a = st.answer(), shown = `${+a.toPrecision(3)}${st.unit ? " " + st.unit : ""}`;
+      html += `<div class="row"><input class="num" inputmode="decimal" data-num="${key}" value="${S.value ?? ""}" aria-label="answer"> ${st.unit}
+               <button class="btn small navy" data-chknum="${key}">Check</button>
+               ${st.hint ? `<button class="btn small" data-hint="${key}">💡 Hint</button>` : ""}</div>`;
+      if (S.showHint && st.hint) html += `<div class="fb info">${st.hint}</div>`;
+      if (S.status === "ok") html += `<div class="fb ok">✔ Correct (within 5 %). Model answer: ${shown}.</div>`;
+      else if (S.status) html += `<div class="fb no">✘ ${S.status === "high" ? "Too high" : S.status === "low" ? "Too low" : "Enter a number"}. ${S.tries >= 2 ? `Model answer: ${shown}.` : "Try again or use the hint."}</div>`;
+    }
+    d.innerHTML = html; box.appendChild(d);
+  });
+}
+function taskClick(e){
+  const t = e.target.closest("[data-setup],[data-lock],[data-check],[data-chknum],[data-hint],[data-set]"); if (!t) return;
+  if (t.dataset.set){ curSet = t.dataset.set; renderTaskSets(); renderTasks(); save(); return; }
+  const key = t.dataset.setup || t.dataset.lock || t.dataset.check || t.dataset.chknum || t.dataset.hint;
+  const [sid, idx] = key.split("."), st = TASKS.find(s => s.id === sid).steps[+idx], S = taskState[key];
+  if (t.dataset.setup){ applySetup(st.setup); }
+  if (t.dataset.lock){ S.locked = true; }
+  if (t.dataset.check){ S.checked = true; S.done = true; }
+  if (t.dataset.hint){ S.showHint = true; }
+  if (t.dataset.chknum){
+    const raw = document.querySelector(`[data-num="${key}"]`).value.replace(",", "."), v = parseFloat(raw), a = st.answer();
+    S.value = raw; S.tries = (S.tries || 0) + 1;
+    if (!isFinite(v)) S.status = "nan";
+    else if (Math.abs(v - a) <= (st.tol ?? 0.05) * Math.abs(a)) { S.status = "ok"; S.done = true; }
+    else S.status = v > a ? "high" : "low";
+  }
+  save(); renderTasks();
+}
+function taskChange(e){
+  const t = e.target;
+  if (t.dataset.choice){ taskState[t.dataset.choice].choice = +t.value; renderTasks(); save(); }
+  if (t.dataset.done){ taskState[t.dataset.done].done = t.checked; renderTasks(); save(); }
+}
+
+/* ============================ 11 UI ============================ */
+const $ = id => document.getElementById(id);
+function save(){ try { localStorage.setItem("sim05-spring", JSON.stringify({trials, taskState, curSet})); } catch (e) {} }
+function load_(){ try { const d = JSON.parse(localStorage.getItem("sim05-spring") || "{}");
+  trials = d.trials || []; taskState = d.taskState || {}; curSet = d.curSet || "pre"; } catch (e) {} }
+function applySetup(st){ Object.assign(set, st); if (st.spr){ S.history = []; S.trail = []; } if (set.mode === "cycle"){ set.myst = false; resetCycle(); S.x = 0; S.v = 0; }
+  changeLoad(); syncControls(); }
+function syncControls(){
+  document.querySelectorAll("#mode button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === set.mode));
+  document.querySelectorAll(".sc").forEach(d => d.style.display = d.dataset.mode.split(" ").includes(set.mode) ? "contents" : "none");
+  $("spr").innerHTML = SPRINGS.filter(s => set.mode === "cycle" || !s.cycleOnly).map(s => `<option value="${s.id}">${s.name}</option>`).join("");
+  $("spr").value = set.spr; const sp = sprById(set.spr);
+  $("kLab").innerHTML = isBand(sp) ? "not Hooke's law: no single k" : `k = ${sp.k.toFixed(1)} N m⁻¹ · ${set.mode === "cycle" ? "elastic limit E" : "limit"} ≈ ${sp.Flim.toFixed(1)} N`;
+  $("mass").max = sp.maxG; $("mass").value = set.g;                // classroom range of this spring; the box goes further
+  $("myst").checked = set.myst; $("noise").checked = set.noise;
+  $("disp").value = set.d; $("dOut").textContent = (set.d > 0 ? "+" : "") + set.d.toFixed(1);
+  $("sceneTitle").textContent = set.mode === "hang" ? "Spring on a clamp stand, ruler and pointer" : set.mode === "cycle" ? "Load & unload: hysteresis and the elastic limit" : "Spring and block on a frictionless table";
+  renderActions();
+}
+function renderActions(recorded = false){
+  const a = $("actions");
+  if (set.mode === "cycle") a.innerHTML = `<button class="btn" data-act="new" title="Start again with an undamaged spring">↺ New ${isBand(sprById(set.spr)) ? "band" : "spring"}</button>`;
+  else if (set.mode === "hang") a.innerHTML = `<button class="btn" data-act="new" title="Replace a damaged spring">↺ New spring</button>
+    <button class="btn navy" data-act="rec" ${recorded ? "disabled" : ""}>${recorded ? "✔ Recorded" : "● Record"}</button>`;
+  else a.innerHTML = `<button class="btn" data-act="zero">↺ x = 0</button>`;
+}
+function readouts(){
+  const sp = sprById(set.spr), f = forcesNow(); let rows;
+  if (set.mode === "hang"){
+    const ext = Math.abs(S.x - S.set[set.spr]) < 5e-4 ? 0 : S.x - S.set[set.spr];   // no "−0.0 cm"
+    rows = [["Load", set.myst ? "mystery bag (?)" : `${fmtLoad(set.g)} → <i>F</i> = ${f3(load() * G)} N`, COL.W],
+            ["Pointer · unloaded reading", `${reading().toFixed(1)} cm · ${(30 + 100 * S.set[set.spr]).toFixed(1)} cm`, COL.F],
+            ["Extension <i>x</i>", `${(100 * ext).toFixed(1)} cm = ${f3(ext)} m`],
+            ["Spring force <i>F</i><sub>H</sub>", set.myst ? "?" : `${f3(f.FH)} N`, COL.H],
+            ["Spring constant <i>k</i>", `${sp.k.toFixed(1)} N m⁻¹`]];
+  } else if (set.mode === "cycle"){
+    const c = cycView(), Fn = load() * G, E = c ? energyIn(sp, c) : 0;
+    const back = c ? energyOut(sp, c, C.Fm > 0 ? Fn : 0) : 0, done = C.Fm === 0 && c;
+    rows = [["Load", `${fmtLoad(set.g)} → <i>F</i> = ${f3(Fn)} N`, COL.W],
+            ["Pointer · extension <i>x</i>", `${reading().toFixed(1)} cm · ${(100 * Math.max(0, S.x)).toFixed(1)} cm`, COL.F],
+            ["Largest load · its extension", c ? `${f2(c.Fm)} N · ${(100 * c.xm).toFixed(1)} cm` : "—"],
+            [isBand(sp) ? "Elastic limit" : `Elastic limit E (${sp.Flim.toFixed(1)} N)`, isBand(sp) ? "never obeys Hooke's law" : c && c.Fm > sp.Flim + 1e-9 ? "passed ✘" : "not passed ✔", isBand(sp) ? null : COL.F],
+            ["Energy stored · given back", c ? `${f3(E)} J · ${f3(back)} J` : "—", COL.accent],
+            ["Loop area = energy → heat", done ? `${f3(E - back)} J (${(100 * (E - back) / E).toFixed(0)} %)` : c ? "unload to 0 g to close the loop" : "—", COL.accent],
+            ["Permanent extension", `${(100 * C.s).toFixed(1)} cm`]];
+  } else rows = [["Displacement <i>x</i>", `${set.d.toFixed(1)} cm = ${f3(set.d / 100)} m`],
+                 ["<i>F</i><sub>H</sub> = −<i>kx</i>", `${f2(f.FH)} N`, COL.H], ["Hand force", `${f2(f.Fhand)} N`, COL.P],
+                 ["Spring constant <i>k</i>", `${sp.k.toFixed(1)} N m⁻¹`]];
+  $("ro").innerHTML = rows.map(([a, b, c]) => `<tr><td>${a}</td><td class="v"${c ? ` style="color:${c}"` : ""}>${b}</td></tr>`).join("");
+}
+
+$("spr").addEventListener("change", e => { set.spr = e.target.value; S.history = []; S.trail = [];
+  if (set.mode === "cycle"){ resetCycle(); S.x = 0; } else S.x = S.set[set.spr]; S.v = 0; changeLoad(); syncControls(); });
+document.querySelectorAll("#mode button").forEach(b => b.addEventListener("click", () => {
+  if (b.dataset.mode === set.mode) return;
+  set.mode = b.dataset.mode; S.trail = [];
+  if (set.mode !== "cycle" && sprById(set.spr).cycleOnly) set.spr = "inv";        // the rubber band only exists in Load & unload
+  if (set.mode === "cycle"){ set.myst = false; resetCycle(); S.x = 0; S.v = 0; } else if (set.mode === "hang"){ S.x = S.set[set.spr]; S.v = 0; }
+  changeLoad(); syncControls(); }));
+$("mass").addEventListener("input", e => { set.g = +e.target.value; changeLoad(); syncControls(); });
+$("myst").addEventListener("change", e => { set.myst = e.target.checked; changeLoad(); syncControls(); });
+$("noise").addEventListener("change", e => { set.noise = e.target.checked; changeLoad(); });
+$("disp").addEventListener("input", e => { set.d = +e.target.value; syncControls(); });
+$("actions").addEventListener("click", e => { const b = e.target.closest("[data-act]"); if (!b) return;
+  if (b.dataset.act === "rec") recordTrial();
+  if (b.dataset.act === "new"){ if (set.mode === "cycle"){ resetCycle(); S.x = 0; S.v = 0; } else { S.set[set.spr] = 0; S.worst[set.spr] = 0; S.peak[set.spr] = null; S.history = []; S.trail = []; } changeLoad(); }
+  if (b.dataset.act === "zero"){ set.d = 0; syncControls(); } });
+$("clearBtn").addEventListener("click", () => { if (confirm("Delete all recorded trials?")){ trials = []; save(); renderTrials(); } });
+$("trials").addEventListener("click", e => { const b = e.target.closest("[data-del]"); if (b){ trials.splice(+b.dataset.del, 1); save(); renderTrials(); } });
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x === t));
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("on", p.id === t.dataset.tab)); }));
+$("pTasks").addEventListener("click", taskClick); $("pTasks").addEventListener("change", taskChange);
+$("helpBtn").addEventListener("click", () => $("help").classList.add("on"));
+$("helpClose").addEventListener("click", () => $("help").classList.remove("on"));
+$("help").addEventListener("click", e => { if (e.target.id === "help") $("help").classList.remove("on"); });
+
+load_(); syncControls(); changeLoad(); renderTrials(); renderTaskSets(); renderTasks();
+let last = performance.now(), wasSettled = false;
+function frame(now){
+  let dt = Math.min(0.05, (now - last) / 1000); last = now;
+  while (dt > 1e-6){ const hh = Math.min(0.002, dt); step(hh); dt -= hh; }
+  const st = set.mode === "hang" && settled();
+  if (st && !wasSettled && !set.myst){ const x = 100 * (S.x - S.set[set.spr]);     // remember each settled load for the Graph tab
+    if (!S.history.some(p => Math.abs(p.F - load() * G) < 1e-6)) S.history.push({x, F:load() * G, s:S.set[set.spr]}); }
+  if (set.mode === "hang"){ const p = [100 * S.x, forcesNow().FH, S.dir], q = S.trail[S.trail.length - 1];   // path on the Graph tab
+    if (!q || Math.abs(p[0] - q[0]) > 0.02 || Math.abs(p[1] - q[1]) > 0.01 || p[2] !== q[2]){ S.trail.push(p); if (S.trail.length > 600) S.trail.shift(); } }
+  if (set.mode === "cycle" && settled()) cycleDot(load() * G);
+  if (st){ const sp = sprById(set.spr), F = load() * G, pk = S.peak[set.spr];   // largest load past E, for the Elastic limit tab
+    if (F > sp.Flim + 1e-9 && (!pk || F >= pk.F - 1e-9)) S.peak[set.spr] = {x:S.x, F}; }
+  wasSettled = st;
+  drawScene(); drawFBD(); drawGraph(); drawElastic(); drawHyst(); drawAna(); readouts();
+  requestAnimationFrame(frame);
+}
+
+// Number boxes (same as the circular motion simulation): every slider has a box next to it. Type a value and press
+// Enter (or leave the box): it is kept to the allowed range and keeps the precision you typed; the slider follows.
+const nbFmt = v => String(+Number(v).toPrecision(5));
+function nbToast(msg){
+  let el = document.getElementById("nbToast");
+  if (!el){ el = document.createElement("div"); el.id = "nbToast"; el.setAttribute("role", "status");
+    el.style.cssText = "position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:#1F3A5F;color:#fff;padding:10px 16px;border-radius:10px;z-index:20;max-width:90vw;font-size:.95rem";
+    document.body.appendChild(el); }
+  el.textContent = msg; el.style.display = "block"; clearTimeout(nbToast.tm); nbToast.tm = setTimeout(() => el.style.display = "none", 3200);
+}
+function numBoxes(list){
+  for (const c of list){
+    const sl = document.getElementById(c.id), rn = document.createElement("div"); rn.className = "rn";
+    sl.parentNode.insertBefore(rn, sl); rn.appendChild(sl);
+    const nb = document.createElement("input"); nb.className = "nb"; nb.type = "text"; nb.id = c.id + "N";
+    nb.inputMode = "decimal"; nb.setAttribute("aria-label", "type a value");
+    const u = document.createElement("span"); u.className = "u"; rn.append(nb, u);
+    const unit = () => typeof c.unit === "function" ? c.unit() : c.unit;
+    const lim = () => c.lim ? c.lim() : c.type ? c.type : c.list ? [c.list[0], c.list[c.list.length - 1]] : [+sl.min, +sl.max];   // type: typed range, wider than the slider
+    let last = null;
+    const commit = () => {
+      const raw = nb.value.trim().replace(",", "."), v = Number(raw);
+      if (raw === last) return;
+      if (!raw || !isFinite(v)){ nb.value = nbFmt(c.get()); return; }
+      last = raw; const [mn, mx] = lim(), cv = Math.min(mx, Math.max(mn, v));
+      nb.classList.toggle("clamped", cv !== v);
+      if (cv !== v){ nbToast(`Allowed range: ${nbFmt(mn)} to ${nbFmt(mx)} ${unit()}. Set to ${nbFmt(cv)}.`); setTimeout(() => nb.classList.remove("clamped"), 1800); }
+      if (c.put) c.put(cv);
+      else { const st = sl.getAttribute("step"), s0 = sl.min, s1 = sl.max;      // pass the exact value to the slider's own handler,
+        sl.step = "any"; sl.min = Math.min(+s0, cv); sl.max = Math.max(+s1, cv); sl.value = cv;   // even outside the slider's range
+        sl.dispatchEvent(new Event("input", {bubbles:true})); sl.setAttribute("step", st); sl.min = s0; sl.max = s1; }
+      if (nb._st) STEPPER.check(nb._st, cv === v);
+    };
+    nb.addEventListener("focus", () => { last = null; });
+    nb.addEventListener("input", () => { clearTimeout(nb._tm); nb._tm = setTimeout(() => {   // apply by itself once typing pauses (no Enter needed)
+      const raw = nb.value.trim().replace(",", "."); if (raw && isFinite(Number(raw)) && !/[.eE+-]$/.test(raw)){ nb._auto = raw; commit(); } }, 600); });
+    nb.addEventListener("change", () => { clearTimeout(nb._tm); commit(); });
+    nb.addEventListener("keydown", e => { if (e.key === "Enter"){ clearTimeout(nb._tm); commit(); nb._auto = null; nb.select(); } });
+    let d0;   // ▼ [box] ▲ ↺ (shared stepper): start value = the value when the page has loaded
+    STEPPER.attach(nb, {get:() => +c.get(), unit, toast:nbToast, hard:lim,
+      room:() => c.lim ? c.lim() : c.list ? [c.list[0], c.list[c.list.length - 1]] : [+sl.min, +sl.max],
+      list:c.list ? () => c.list : null, step:() => c.step ?? sl.getAttribute("step"), base:() => c.step ? 0 : sl.min,
+      def:c.lim ? null : () => d0 === undefined ? (d0 = +c.get()) : d0,
+      apply:v => { nb.value = STEPPER.fmt(v); last = null; commit(); }});
+    c.show = () => { const t = unit(); if (u.textContent !== t) u.textContent = t; nb.disabled = sl.disabled || (c.off ? c.off() : false);
+      const [mn, mx] = lim(); nb.title = `Type a value (${nbFmt(mn)}–${nbFmt(mx)} ${t}) and press Enter`;
+      if (document.activeElement !== nb){ const s = nbFmt(c.get()); if (nb.value !== s) nb.value = s; } };
+  }
+  const tick = () => { for (const c of list) c.show(); requestAnimationFrame(tick); };
+  tick();
+}
+numBoxes([{id:"disp", unit:"cm", get:() => set.d},
+          {id:"mass", unit:"g", step:50, type:[0, 100000], get:() => set.g, off:() => set.myst}]);
+requestAnimationFrame(frame);
+/* NEWTON HOOK */ NEWTON.hook();
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>

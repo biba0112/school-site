@@ -1,0 +1,1934 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Work Done Simulation</title>
+<!--
+  IBDP Physics SL · Grade 11 · Topic A.3 Work, energy and power (work done, Block 9)
+  Simulation 19 — Work done: W = Fs cos θ, area under F–s graphs, the work–energy principle W_net = ΔE_k
+    Pull at an angle · Lift vs ramp · Smart Cart pull (PASCO lab 07) · Braking distance
+  Self-contained: no internet, no external libraries. Open in any modern browser.
+
+  File sections (same order as Simulation 01):
+    1 STYLE     layout, colours (force colours match the slide decks; energy colours shared by sims 19–22)
+    2 MARKUP    header with the four examples · scene + readouts · FBD + work/energy column · tabs (graphs / data / tasks) · controls
+    3 CONFIG    examples (presets) and scenario texts
+    4 PHYSICS   pure functions: forces, work done by each force, the whole run (build)
+    5 RUN       run state; at(t) interpolates the worked-out run
+    6 SCENE     side view
+    7 FBD       free-body diagram + work bars (W_net = ΔE_k) or Sankey diagram
+    8 GRAPHS    F–s (area = work), W/E–s, v–t, E_k–s
+    9 DATA      recorded trials and analysis graphs with best-fit lines
+   10 TASKS     data-driven task list (predict / numeric / do)
+   11 UI        controls, events, storage, main loop
+-->
+<style>
+/* ============================ 1 STYLE ============================ */
+/* Simulation 01 style (approved template), as in Simulations 16–18 */
+:root{
+  --navy:#1F3A5F; --accent:#E65100; --ink:#263238; --muted:#606A72;
+  --bg:#F2F5F9; --card:#FFFFFF; --line:#DDE6F0; --soft:#FFF3E0; --soft-blue:#E3F2FD;
+  --wood:#FFCC80; --wood-edge:#C68A3A;
+  --cW:#2A5D8A; --cN:#2E7D32; --cF:#C62828; --cP:#6A1B9A;   /* weight, normal, friction, pull */
+  --ok:#2E7D32; --bad:#C62828;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);
+  font:16px/1.4 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;min-height:100dvh}
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);
+  display:flex;align-items:center;gap:16px;padding:8px 16px}
+header h1{font-size:1.25rem;margin:0;font-weight:600}
+header .sub{font-size:.85rem;opacity:.85}
+header .grow{flex:1}
+.btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;
+  min-height:44px;padding:6px 14px;cursor:pointer;touch-action:manipulation}
+.btn:hover{border-color:var(--navy)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.small{min-height:36px;padding:4px 10px;font-size:.9rem}
+header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
+
+/* layout: scene + state | FBD (always visible) | tabs; fills the screen height */
+main{flex:1;min-height:500px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1.3fr);
+  grid-template-rows:minmax(0,1fr) auto;gap:12px;padding:12px 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.card h2{font-size:.95rem;margin:0;padding:6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line);
+  color:var(--navy);font-weight:600}
+.left{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0}
+.scenecard{flex:1 1 0;display:flex;flex-direction:column;min-height:0}
+.fbdcol{display:flex;flex-direction:column;min-width:0;min-height:0}
+#sceneWrap{position:relative;flex:1;min-height:150px}
+#scene{width:100%;height:100%;display:block}
+#fbdWrap{flex:1;min-height:220px}
+#fbd{width:100%;height:100%;display:block}
+.readouts{padding:6px 12px;flex:0 1 auto;min-height:0;overflow:auto}  /* natural height; the scene takes the rest */
+.readouts table{width:100%;border-collapse:collapse;font-size:.9rem}
+.readouts td.v{white-space:nowrap;padding-left:6px}
+.readouts td{padding:4px 2px;border-bottom:1px solid #EEF2F6}
+.readouts td.v{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.pill{display:inline-block;white-space:nowrap;padding:3px 10px;border-radius:99px;font-size:.85rem;font-weight:600}
+.pill.rest{background:var(--soft-blue);color:#0D47A1}
+.pill.slide{background:#FFEBEE;color:#B71C1C}
+.pill.ready{background:#ECEFF1;color:var(--muted)}
+
+.right{display:flex;flex-direction:column;min-width:0;min-height:0}
+.cardhead{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:6px 8px 6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line)}
+.cardhead h2{padding:0;border:none;background:none;flex:1}
+.cardhead .btn{min-height:40px;padding:4px 10px}
+.tabs{display:flex;gap:4px;padding:6px 6px 0;background:#F7F9FC;border-bottom:1px solid var(--line)}
+.tab{font:inherit;border:1px solid transparent;border-bottom:none;background:transparent;padding:8px 14px;
+  min-height:44px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--muted);font-weight:600}
+.tab[aria-selected="true"]{background:#fff;border-color:var(--line);color:var(--navy);margin-bottom:-1px}
+.panel{display:none;padding:10px 12px;flex:1;min-height:0;overflow:hidden}
+.panel.on{display:flex;flex-direction:column;gap:8px}
+#graphWrap{position:relative;flex:1;min-height:200px}
+#graph{width:100%;height:100%;display:block;touch-action:none}
+.hint{font-size:.85rem;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#trials{width:100%;border-collapse:collapse;font-size:.85rem;font-variant-numeric:tabular-nums}
+#trials th,#trials td{border-bottom:1px solid var(--line);padding:4px 4px;text-align:right}
+#trials th{color:var(--navy);font-weight:600;background:#F7F9FC;position:sticky;top:0}
+#trials td:first-child,#trials th:first-child,#trials td:nth-child(2),#trials th:nth-child(2){text-align:left}
+.tableBox{max-height:150px;flex:none;overflow:auto;border:1px solid var(--line);border-radius:8px}
+#ffnWrap{flex:1;min-height:180px}
+#ffn{width:100%;height:100%;display:block}
+.x{border:none;background:none;color:var(--bad);font-size:1.1rem;cursor:pointer;min-width:32px;min-height:32px}
+
+/* tasks */
+#taskSets{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:inherit;font-size:.9rem;border:1px solid var(--line);background:#fff;border-radius:99px;padding:6px 14px;
+  min-height:40px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.chip[aria-pressed="true"] .hint{color:#DDE6F0}
+#taskList{overflow:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding-right:2px}
+.step{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff}
+.step .q{margin:0 0 6px}
+.step .n{display:inline-block;min-width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;
+  text-align:center;line-height:26px;font-size:.85rem;font-weight:700;margin-right:6px}
+.step.done .n{background:var(--ok)}
+.opt{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;
+  margin:4px 0;cursor:pointer;min-height:40px}
+.opt input{width:20px;height:20px}
+.opt.good{border-color:var(--ok);background:#E8F5E9}
+.opt.bad{border-color:var(--bad);background:#FFEBEE}
+.fb{margin-top:6px;padding:6px 10px;border-radius:8px;font-size:.92rem}
+.fb.ok{background:#E8F5E9;border-left:4px solid var(--ok)}
+.fb.no{background:#FFEBEE;border-left:4px solid var(--bad)}
+.fb.info{background:var(--soft-blue);border-left:4px solid #1565C0}
+.num{font:inherit;width:110px;min-height:40px;padding:4px 8px;border:1px solid #B0BEC5;border-radius:8px}
+.tag{font-size:.75rem;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+
+/* controls */
+#controls{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end;padding:10px 14px}
+.ctl{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ctl label,.ctl .lab{font-size:.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.ctl select{font:inherit;min-height:44px;border:1px solid #B0BEC5;border-radius:8px;padding:4px 8px;background:#fff}
+.mu{font-size:.85rem;color:var(--navy);font-weight:600}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper .btn{width:44px;padding:0;font-size:1.3rem}
+.stepper output{min-width:24px;text-align:center;font-weight:700;font-size:1.1rem}
+input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
+.seg{display:flex;border:1px solid #B0BEC5;border-radius:8px;overflow:hidden}
+.seg button{font:inherit;border:none;background:#fff;min-height:42px;padding:4px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--navy);color:#fff}
+.switch{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer}
+.switch input{width:22px;height:22px;accent-color:var(--accent)}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* help overlay */
+#help{position:fixed;inset:0;background:rgba(31,58,95,.55);display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:14px;max-width:720px;width:100%;max-height:90vh;overflow:auto;padding:18px 22px}
+#help h3{margin:.2em 0 .4em;color:var(--navy)}
+#help li{margin:.25em 0}
+.eq{font-family:"Cambria Math",Cambria,"Times New Roman",serif;font-size:1.05rem}
+
+@media (max-width:1300px){
+  .readouts table{font-size:.85rem}
+  .pill{font-size:.78rem;padding:2px 8px}
+}
+/* tablet landscape: scene + state on the left; FBD above the tabs on the right */
+@media (max-width:1099px){
+  main{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr) auto;min-height:640px}
+  .left{grid-row:1/3}
+  .fbdcol{grid-column:2;grid-row:1}
+  .right{grid-column:2;grid-row:2}
+  #fbdWrap{min-height:200px}
+  #pGraph .hint{display:none}
+  #controls{gap:8px 12px;padding:8px 12px}
+  input[type=range]{width:118px}
+  header .sub{font-size:0;opacity:1;line-height:1.2}header .sub a.home{font-size:.75rem}
+}
+/* phone / narrow portrait: one scrolling column */
+@media (max-width:759px){
+  body{height:auto}
+  main{display:flex;flex-direction:column}
+  #sceneWrap{flex:none;height:260px}
+  .readouts{flex:none}
+  #fbdWrap{flex:none;height:320px}
+  .right{height:640px;flex:none}
+}
+
+/* Simulation 10–13 additions */
+:root{--cD:#AD1457;--cV:#1565C0;--cA:#E65100}
+#anaWrap{flex:1;min-height:170px}
+#ana{width:100%;height:100%;display:block}
+.seg.small button{min-height:38px;padding:2px 10px;font-size:.92rem}
+.readouts .ev{color:var(--muted);font-weight:600}
+#controls .pair{display:flex;gap:4px 12px;flex-wrap:wrap}
+#controls .pair label{text-transform:none;letter-spacing:0;font-size:.92rem;color:var(--ink);font-weight:400}
+.ctl label i,.ctl label .nt{text-transform:none}
+#controls{gap:10px 14px}
+#controls input[type=range]{width:140px}
+#controls input#tp{width:190px}
+#controls select{max-width:145px}
+.readouts td.gap{width:14px;border-bottom:none}
+@media (max-width:1300px){ #controls input[type=range]{width:118px} #controls input#tp{width:150px} #controls select{max-width:130px} }
+@media (max-width:1099px){ #controls input[type=range]{width:105px} #controls input#tp{width:130px} #controls select{max-width:120px} }
+
+.btn.step{padding:4px 9px;font-variant-numeric:tabular-nums}
+.tools{display:flex;gap:2px 10px;align-items:center;flex-wrap:wrap}
+.tools .switch{min-height:36px;font-size:.9rem}
+.tools .switch input{width:18px;height:18px}
+
+.cardhead .actions{gap:5px}
+.btn.icon{min-width:44px;padding:4px 8px}
+.cardhead .actions .btn{padding-left:10px;padding-right:10px}
+.cardhead .actions .btn.step{padding-left:7px;padding-right:7px}
+/* Author credit (header, far right) */
+.credit{text-align:right;font-size:.74rem;line-height:1.3;opacity:.92;white-space:nowrap}
+.credit a{color:#fff;text-decoration:underline}
+@media (max-width:759px){header{flex-wrap:wrap;row-gap:4px} header .btn{white-space:nowrap}
+  .credit{order:3;flex-basis:100%;text-align:left;font-size:.7rem}
+  .credit br{display:none} .credit a{margin-left:6px}}
+
+/* Simulation 16 additions: four examples in the header, number boxes next to the sliders */
+.scen{display:flex;gap:4px;flex-wrap:wrap}
+.scen button{font:inherit;font-size:.92rem;border:1px solid rgba(255,255,255,.45);background:transparent;color:#fff;border-radius:99px;
+  min-height:40px;padding:4px 14px;cursor:pointer;white-space:nowrap}
+.scen button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);font-weight:600}
+.rn{display:flex;align-items:center;gap:6px}
+.nb{font:inherit;font-size:.95rem;width:80px;min-height:44px;padding:2px 6px;border:1px solid #B0BEC5;border-radius:8px;
+  text-align:right;font-variant-numeric:tabular-nums;background:#fff;-moz-appearance:textfield}
+.nb::-webkit-outer-spin-button,.nb::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.nb.clamped{border-color:var(--accent);background:var(--soft)}
+.nb:disabled{opacity:.45}
+.rn .u{font-size:.85rem;color:var(--muted);white-space:nowrap}
+#controls .rn input[type=range]{width:120px}
+#controls .ctl.hide{display:none}
+.ctl .lab i,.ctl .lab sub,.ctl .lab .badge{text-transform:none}
+#controls .btn.go{min-width:120px}
+.sh{display:none}
+.badge{display:inline-block;font-size:.72rem;font-weight:700;color:#fff;background:#8E24AA;border-radius:99px;padding:1px 8px;
+  text-transform:none;letter-spacing:0;vertical-align:1px}
+.readouts th{font-size:.8rem;color:var(--navy);text-align:right;font-weight:600;padding:2px 2px 2px 6px;border-bottom:1px solid var(--line)}
+.readouts th:first-child{text-align:left}
+#anaSel{margin-right:auto}
+@media (max-width:1300px){ #controls .rn input[type=range]{width:100px} .nb{width:72px} .scen button{padding:4px 10px} }
+@media (max-width:1099px){ #controls .rn input[type=range]{width:84px} .nb{width:66px} .scen button{font-size:.85rem;padding:3px 9px}
+  .lg{display:none} .sh{display:inline} header h1{font-size:1.05rem} header{gap:10px} }
+@media (max-width:759px){ .scen{order:4;flex-basis:100%} }
+/* Simulation 18 additions */
+@media (min-width:1100px){ main{grid-template-columns:minmax(0,1.25fr) minmax(0,0.85fr) minmax(0,1.25fr)} }
+.readouts table.ab td.v,.readouts table.ab th{text-align:right}
+.readouts table.ab{margin-bottom:2px}
+#controls .rn input[type=range]{width:96px} #controls .nb{width:68px} #controls select{max-width:150px}
+@media (max-width:1300px){ #controls .rn input[type=range]{width:80px} #controls .nb{width:62px} #controls select{max-width:128px} }
+.plusTag{display:inline-block;font-weight:700;color:var(--navy);background:var(--soft-blue);border-radius:6px;padding:0 6px}
+.a3{display:inline-block;font-size:.7rem;font-weight:700;color:#fff;background:#00838F;border-radius:99px;padding:0 7px;vertical-align:1px}
+/* A.3 additions (simulations 19–22): energy colours, energy column, scenario-specific graph buttons */
+:root{--eK:#EF6C00;--eP:#00897B;--eH:#8E24AA;--eT:#C62828;--eIn:#5D4037}
+.fbdcol h2 .hint{font-weight:400}
+.readouts .e{font-weight:700}
+#gsel{flex-wrap:wrap}
+.readouts td.k{color:var(--muted)}
+.big{font-size:1.05rem}
+.sub a.home{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55);white-space:nowrap}.sub a.home:hover{border-bottom-color:#fff}
+/* ==== SHARED-UI CSS START: ▼ [box] ▲ steppers (10 Oct 2026) — the sliders are hidden, the number box is the control ==== */
+.rn input[type=range]{display:none!important}
+#controls{align-items:flex-start!important}   /* all controls top-aligned, notes below a box hang underneath */
+#controls .ctl sub,#controls .ctl sup{line-height:0}   /* subscripts in a label (m_A) do not push its box down */
+.rn{gap:4px!important}
+.fld{display:inline-flex;align-items:center;border:1px solid #B0BEC5;border-radius:8px;background:#fff;min-height:44px;padding-right:6px;box-sizing:border-box}
+.fld .nb{border:0!important;background:transparent!important;min-height:42px;padding-right:2px;width:66px!important}
+.fld .u{margin-left:3px}
+.fld .nb:focus{outline:none}
+.fld:focus-within{outline:2px solid var(--navy);outline-offset:1px}
+.fld:has(.nb.clamped){border-color:var(--accent);background:var(--soft)}
+.fld:has(.nb:disabled){opacity:.5}
+.fld .bw{display:none;color:#B26A00;font-size:.9rem;margin-left:3px}
+.fld.beyond{border-color:#F0A202;background:#FFF8E1;box-shadow:inset 0 0 0 1px #F0A202}
+.fld.beyond .bw{display:inline}
+.stp{font:inherit;font-size:.78rem;line-height:1;min-width:34px;min-height:44px;padding:0 6px;border:1px solid #B0BEC5;border-radius:8px;background:#F3F6FA;
+  color:var(--navy);cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.stp:hover:not(:disabled){border-color:var(--navy);background:#E6EDF5}
+.stp:active:not(:disabled){background:#D3DEEB}
+.stp:disabled{opacity:.35;cursor:default}
+.stp.rs{min-width:26px;padding:0 2px;border-color:transparent;background:transparent;font-size:1.05rem;color:var(--muted)}
+.stp.rs:hover:not(:disabled){background:#EEF2F6;border-color:transparent}
+@media (max-width:1300px){ .stp{min-width:30px;padding:0 4px} .fld .nb{width:58px!important} }
+/* ==== SHARED-UI CSS END ==== */
+/* ==== NEWTON CSS START (law badge · ΣF = ma table · 3rd-law checkbox) ==== */
+.nbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:3px 10px;border-bottom:1px solid #E3E9F0;flex:none;min-height:30px}
+.nlaw{font-size:.84rem;padding:2px 10px;border-radius:999px;border:1.5px solid #90A4AE;color:#37474F;background:#F5F7FA;line-height:1.5}
+.nlaw.l1{border-color:#2E7D32;color:#1B5E20;background:#E8F5E9}
+.nlaw.l2{border-color:#E65100;color:#BF360C;background:#FFF3E0}
+.nbar{flex-wrap:nowrap}
+.nlaw{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.nbar .switch{font-size:.84rem;margin-left:auto;white-space:nowrap;flex:none}
+@media (pointer:fine){ .nbar .switch{min-height:28px;padding-top:0;padding-bottom:0} }
+.ntab{flex:none;max-height:40%;overflow:auto;padding:2px 8px 4px;border-top:1px solid #E3E9F0;font-size:.8rem}
+.ntab .nh{display:flex;align-items:center;gap:8px;min-height:26px}
+.ntab .nfold{font:inherit;font-weight:700;color:#1F3A5F;background:none;border:none;cursor:pointer;padding:2px 0;min-height:26px}
+.ntab .nk{color:#606A72}.ntab .nk.ok{color:#2E7D32;font-weight:600}
+.ntab table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.ntab th,.ntab td{padding:1px 4px;text-align:right;border-bottom:1px solid #EEF2F6;white-space:nowrap}
+.ntab th{color:#1F3A5F;font-weight:600}
+.ntab td:first-child,.ntab th:first-child,.ntab td.by,.ntab th:nth-child(2){text-align:left}
+.ntab td:first-child{font-weight:600}.ntab td.by{color:#606A72}
+.ntab tr.ns td{font-weight:700;border-top:1.5px solid #263238}
+.ntab tr.nm td{color:#E65100;font-weight:600}
+.ntab tr.nb td{font-weight:700;color:#1F3A5F;background:#F5F7FA}
+.ntab .ncap{color:#606A72;font-size:.74rem;margin-top:2px;white-space:normal}
+@media (max-height:800px) and (min-width:1100px){ .ntab{font-size:.74rem} .ntab .ncap{display:none} .nbar{min-height:26px;padding:1px 10px} .nlaw{font-size:.78rem} }
+@media (max-width:1099px) and (min-width:760px){ .ntab{font-size:.72rem;max-height:45%} .ntab .ncap{display:none}
+  .fbdcol #fbdWrap{min-height:0} }
+/* ==== NEWTON CSS END ==== */
+/* ==== PHONE CSS START: phone layout (10 Oct 2026) — only phones (narrow, or held sideways with a touch screen); laptops and tablets unchanged ==== */
+@media (max-width:759px), (max-height:500px) and (pointer:coarse){
+  html,body{height:auto}
+  main{display:flex!important;flex-direction:column;min-height:0!important;gap:10px;padding:8px 8px 16px}
+  .left{display:contents}                                  /* scene and readouts become separate steps of the column */
+  .scenecard{order:1;flex:none!important;min-height:0}
+  #controls{order:2}
+  .readouts{order:3;flex:none}
+  .fbdcol{order:4;flex:none}
+  .right{order:5;flex:none;height:auto!important}
+  #sceneWrap{flex:none!important;height:min(58vh,340px)!important;min-height:200px}
+  #fbdWrap{flex:none!important;height:300px!important}
+  .scenecard .cardhead{position:sticky;top:0;z-index:2}    /* run buttons stay at hand while the scene is on screen */
+  .cardhead .btn{min-height:40px;padding:4px 10px}
+  .panel{overflow:visible}
+  .panel.on{flex:none}
+  #graphWrap,#ffnWrap{flex:none!important;height:300px!important;min-height:0}
+  #taskList{overflow:visible;flex:none}
+  .tableBox{max-height:220px}
+  canvas{touch-action:pan-y!important}                     /* a finger on a graph or diagram still scrolls the page */
+  canvas.drag{touch-action:none!important}                 /* except where the scene has things to drag (pulleys) */
+  #controls{gap:10px 12px;padding:10px}
+  #controls .ctl{max-width:100%}
+  #controls select{max-width:100%}
+  .tabs{overflow-x:auto;scrollbar-width:none}
+  .tab{white-space:nowrap}
+  #help .box{max-height:85dvh;padding:14px 16px}
+}
+/* ==== PHONE CSS END ==== */
+</style>
+</head>
+<body>
+<!-- ============================ 2 MARKUP ============================ -->
+<header>
+  <div>
+    <h1>Work done</h1>
+    <div class="sub"><a class="home" href="https://school.taneski.com/physics/dp/#A3" title="Back to all A.3 simulations">← All simulations</a> · IBDP Physics SL · A.3 Work, energy and power</div>
+  </div>
+  <div class="grow"></div>
+  <div class="scen" id="scen" role="group" aria-label="Example">
+    <button data-sc="pull" aria-pressed="true">📐 <span class="lg">Angled pull</span><span class="sh">Angle</span></button>
+    <button data-sc="ramp" aria-pressed="false">⛰️ <span class="lg">Lift vs ramp</span><span class="sh">Ramp</span></button>
+    <button data-sc="cart" aria-pressed="false">🛒 Smart Cart</button>
+    <button data-sc="brake" aria-pressed="false">🚗 Braking</button>
+  </div>
+  <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
+  <div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
+</header>
+
+<main>
+  <section class="left">
+    <div class="card scenecard">
+      <div class="cardhead">
+        <div class="actions">
+          <button class="btn primary" id="startBtn">▶ Start</button>
+          <button class="btn icon" id="pauseBtn" disabled title="Pause / resume" aria-label="Pause">⏸</button>
+          <button class="btn step" id="backBtn" title="Step back (← key)" aria-label="Step back">◂</button>
+          <button class="btn step" id="fwdBtn" title="Step forward (→ key)" aria-label="Step forward">▸</button>
+          <button class="btn icon" id="resetBtn" title="Reset" aria-label="Reset">↺</button>
+          <button class="btn navy" id="recBtn" title="Record this trial in the Data tab">● Record</button>
+        </div>
+      </div>
+<!-- NEWTON BAR --><div class="nbar"><span class="nlaw" id="nlaw"></span><label class="switch" title="Show every force together with its Newton's 3rd-law partner"><input type="checkbox" id="n3"> 3rd-law pairs</label></div><!-- /NEWTON BAR -->
+      <div id="sceneWrap"><canvas id="scene" aria-label="Side view of the experiment"></canvas></div>
+    </div>
+    <div class="card readouts" id="readouts"></div>
+  </section>
+
+  <section class="card fbdcol" aria-label="Free-body diagram and energy">
+    <h2 id="fbdTitle">Free-body diagram · energy</h2>
+    <div id="fbdWrap"><canvas id="fbd" aria-label="Free-body diagram, energy bar chart and Sankey diagram"></canvas></div>
+<!-- NEWTON TABLE --><div class="ntab" id="ntab"></div><!-- /NEWTON TABLE -->
+  </section>
+
+  <section class="card right">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-tab="pGraph">Graphs</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="pData">Data &amp; analysis</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="pTasks">Tasks</button>
+    </div>
+    <div class="panel on" id="pGraph">
+      <div class="row">
+        <div class="seg small" id="gsel"></div>
+        <span class="tools"><span class="hint">Graph tools:</span>
+          <label class="switch"><input type="checkbox" id="areaChk"> Area</label>
+          <label class="switch"><input type="checkbox" id="tanChk"> Tangent</label></span>
+      </div>
+      <div id="graphWrap"><canvas id="graph" aria-label="Graph"></canvas></div>
+      <div class="hint" id="graphHint"></div>
+    </div>
+
+    <div class="panel" id="pData">
+      <div class="row">
+        <div class="seg small" id="anaSel"></div>
+        <label class="switch"><input type="checkbox" id="noiseChk"> ±2 % noise</label>
+        <label class="switch"><input type="checkbox" id="fitChk" checked> Best-fit line</label>
+        <button class="btn small" id="clearBtn">Clear</button>
+      </div>
+      <div class="tableBox">
+        <table id="trials"><thead></thead><tbody></tbody></table>
+      </div>
+      <div id="anaWrap"><canvas id="ana" aria-label="Analysis graph of the recorded trials"></canvas></div>
+    </div>
+
+    <div class="panel" id="pTasks">
+      <div id="taskSets"></div>
+      <div id="taskList"></div>
+    </div>
+  </section>
+
+  <section class="card" id="controls" aria-label="Controls"></section>
+</main>
+
+<div id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="box">
+    <h3 id="helpTitle">How to use this simulation</h3>
+    <ol>
+      <li>Choose an <b>example</b> at the top: 📐 a box pulled at an angle · ⛰️ lifting a load or pushing it up a ramp · 🛒 the Smart Cart pulled
+        with a rubber band (class demo) · 🚗 a car braking.</li>
+      <li>Pick a <b>preset</b> (class demo, slide examples, exit questions) or set the values yourself. Set a value with <b>▼ ▲</b> or type it in the box.</li>
+      <li>Set each value with <b>▼</b> and <b>▲</b> (hold to go faster; the <b>↑ ↓</b> keys or the mouse wheel in the box also work, Shift = ×10), or <b>type a value</b> in the box. <b>↺</b> puts it back to its start value. Outside the classroom range the box turns <b>amber ⚠</b>: fine to explore, but the lab can't do this.</li>
+      <li>Move the pointer over any <b>graph</b> (or tap it): a dashed line shows the values where it cuts each curve, or the values of the nearest data point.</li>
+      <li>Press <b>▶ Start</b>. <b>◂ / ▸</b> (or the <b>← →</b> keys) step through the motion and pause.</li>
+      <li>The middle column shows the <b>free-body diagram</b> (to scale) and the <b>work done by each force</b> (or a Sankey diagram of where the
+        energy goes). Forces at 90° to the motion do no work; friction does negative work.</li>
+      <li><b>Graphs</b>: the <i>Area</i> tool under an <i>F</i>–<i>s</i> graph gives the <b>work done</b>; under <i>v</i>–<i>t</i> it gives the distance.
+        The <i>Tangent</i> tool on <i>E</i><sub>k</sub>–<i>s</i> gives the resultant force.</li>
+      <li><b>● Record</b> saves a trial; the <b>Data</b> tab plots it (best-fit line through the origin).</li>
+      <li>Work through the <b>Tasks</b> tab. Write explanations on your worksheet.</li>
+    </ol>
+    <h3>The physics</h3>
+    <ul>
+      <li class="eq">W = Fs cos θ &nbsp;(1 J = 1 N m = 1 kg m² s⁻²)</li>
+      <li><i>θ</i> is the angle between the force and the displacement. <i>θ</i> = 90°: no work (normal force, weight on a level floor).
+        <i>θ</i> = 180°: negative work (friction, brakes).</li>
+      <li>Variable force: <b>work = area under the <i>F</i>–<i>s</i> graph</b> (spring: <span class="eq">W = ½kx²</span>).</li>
+      <li>Work–energy principle: <span class="eq">W<sub>net</sub> = ΔE<sub>k</sub> = ½mv² − ½mu²</span>. Braking: <span class="eq">F<sub>b</sub>s = ½mu²</span>,
+        so the braking distance ∝ <i>u</i>²: twice the speed, four times the distance.</li>
+      <li>Lifting at constant speed: work done = gain in gravitational potential energy <span class="eq">mgΔh</span>, whatever the path.
+        The ramp needs a smaller force over a longer distance (and more work if there is friction).</li>
+    </ul>
+    <p class="hint">Model: g = 9.81 N kg⁻¹; friction F<sub>f</sub> = μF<sub>N</sub> (the same μ for starting and sliding); the lift and ramp move at a
+      constant slow speed (so ΔE<sub>k</sub> = 0); the Smart Cart pull is fitted to the PASCO lab 07 sample data (0.500 kg, 0.475 J over 0.60 m,
+      rolling friction 0.03 N).</p>
+    <!-- NEWTON HELP --><h3>Newton's laws</h3>
+<p>The badge above the scene says which law applies at this moment: <b>1st law</b> — at rest or moving at a constant velocity, the resultant force is zero (Σ<i>F</i> = 0); <b>2nd law</b> — accelerating, Σ<i>F</i> = <i>ma</i>. The table under the free-body diagram adds up the forces (Σ<i>F</i>) and compares them with <i>m a</i> (▾ folds it). Tick <b>3rd-law pairs</b> to see every force with its partner: the same size and type, in the opposite direction, acting on the <b>other</b> body (the Earth, the floor, the string, the fluid…).</p><!-- /NEWTON HELP -->
+<p style="text-align:right"><button class="btn primary" id="helpClose">Close</button></p>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ==== SHARED-UI START: ▼ [box] ▲ steppers + chart probe (10 Oct 2026, the same block in every simulation) ==== */
+// Steppers: every number box gets ▼ and ▲ (hold to repeat), ↑/↓ keys and the mouse wheel in the box (Shift = ×10) and ↺ (start value).
+// Inside the classroom range (the old slider range) a step is the old slider step (or the next value of its list; log quantities move
+// by one unit in the 2nd significant figure). Beyond it the value may go on up to the physical limits in 1-2-5 steps; the box turns amber.
+const STEPPER = (() => {
+  const all = [], r10 = v => +Number(v).toPrecision(10), fmt = v => String(+Number(v).toPrecision(6));
+  const epsOf = (lo, hi) => 1e-9 * Math.max(1, Math.abs(lo), Math.abs(hi));
+  function s125(v, dir){                                  // next value of …, 0.1, 0.2, 0.5, 1, 2, 5, 10, … beyond v (signed)
+    const a = Math.abs(v); if (a < 1e-15) return null;
+    const s = Math.sign(v), e = Math.floor(Math.log10(a)), c = [];
+    for (let k = e - 1; k <= e + 2; k++) for (const m of [1, 2, 5]) c.push(r10(m * Math.pow(10, k)));
+    if (dir === s) return s * Math.min(...c.filter(x => x > a * (1 + 1e-9)));
+    const d = c.filter(x => x < a * (1 - 1e-9)); return d.length ? s * Math.max(...d) : 0;
+  }
+  function grid(o, v, dir, lo, hi){                       // one step inside the classroom range, snapped to the grid
+    const eps = epsOf(lo, hi);
+    if (o.list){ const L = o.list(); const n = dir > 0 ? L.find(x => x > v + eps) : [...L].reverse().find(x => x < v - eps); return n === undefined ? (dir > 0 ? hi : lo) : n; }
+    const st = o.step ? +o.step() : NaN;
+    if (o.log && lo > 0 && hi / lo > 1e5){ const n = s125(v, dir); return n === null ? lo : n; }   // very wide ranges (satellite mass): 1-2-5
+    if (o.log || !(st > 0)){ if (!(v > 0)) return dir > 0 ? lo : lo;
+      const s = Math.pow(10, Math.floor(Math.log10(dir > 0 ? v : v * (1 - 1e-9))) - 1), k = v / s;
+      return r10((dir > 0 ? Math.floor(k + 1e-6) + 1 : Math.ceil(k - 1e-6) - 1) * s); }
+    const b = o.base ? +o.base() : lo, k = (v - b) / st;
+    return r10(b + (dir > 0 ? Math.floor(k + 1e-6) + 1 : Math.ceil(k - 1e-6) - 1) * st);
+  }
+  function next(o, v, dir){
+    const [lo, hi] = o.room(), eps = epsOf(lo, hi), st = o.step ? +o.step() : NaN;
+    let n;
+    if ((dir > 0 && v >= hi - eps) || (dir < 0 && v <= lo + eps)){            // leaving the classroom range (or already beyond it)
+      n = s125(v, dir); if (n === null) n = v + dir * (st > 0 ? st : (hi - lo) / 100);
+      if (dir > 0 && v < lo - eps && n > lo) n = lo; if (dir < 0 && v > hi + eps && n < hi) n = hi;
+    } else if (v > hi + eps || v < lo - eps){                                   // coming back: 1-2-5 until the range edge
+      n = s125(v, dir); if (n === null) n = dir > 0 ? lo : hi;
+      if (dir < 0 && n <= hi) n = hi; if (dir > 0 && n >= lo) n = lo;
+    } else n = Math.min(hi, Math.max(lo, grid(o, v, dir, lo, hi)));
+    const [mn, mx] = o.hard(); return Math.min(mx, Math.max(mn, r10(n)));
+  }
+  function go(o, dir, times = 1){
+    if (o.nb.disabled) return false;
+    const v0 = +o.get(); if (!isFinite(v0)) return false;
+    let v = v0; for (let i = 0; i < times; i++) v = next(o, v, dir);
+    if (Math.abs(v - v0) <= 1e-12 * Math.max(1, Math.abs(v0))) return false;
+    o.apply(v); if (document.activeElement === o.nb) o.nb.value = fmt(o.get());
+    check(o, true); return true;
+  }
+  function beyond(o){ const v = +o.get(), [lo, hi] = o.room(), eps = epsOf(lo, hi); return v < lo - eps || v > hi + eps; }
+  function check(o, user){                                 // amber box + ⚠ outside the classroom range; a message once on crossing
+    const b = beyond(o), [lo, hi] = o.room(), u = o.unit();
+    if (b && !o.was && user) o.toast(`Beyond the classroom range (${fmt(lo)}–${fmt(hi)}${u ? " " + u : ""}): fine to explore, but the lab can't do this.`);
+    o.was = b; o.fld.classList.toggle("beyond", b);
+    o.warn.title = `Outside the classroom range ${fmt(lo)}–${fmt(hi)}${u ? " " + u : ""}`;
+  }
+  function holdBtn(btn, o, dir){
+    let tm = null, t0 = 0;
+    const stop = () => { clearTimeout(tm); tm = null; };
+    const rep = () => { if (!go(o, dir)) return stop(); tm = setTimeout(rep, performance.now() - t0 > 1400 ? 45 : 110); };
+    btn.addEventListener("pointerdown", e => { if (e.button) return; e.preventDefault(); stop(); go(o, dir, e.shiftKey ? 10 : 1); t0 = performance.now(); tm = setTimeout(rep, 420); });
+    ["pointerup", "pointerleave", "pointercancel", "blur"].forEach(k => btn.addEventListener(k, stop));
+    btn.addEventListener("click", e => { if (e.detail === 0) go(o, dir, e.shiftKey ? 10 : 1); });   // keyboard (Enter/Space)
+    btn.addEventListener("contextmenu", e => e.preventDefault());
+  }
+  const mk = (cls, txt, lab) => { const b = document.createElement("button"); b.type = "button"; b.className = "stp " + cls; b.textContent = txt;
+    b.tabIndex = -1; b.setAttribute("aria-label", lab); return b; };
+  // o: {nb, get, apply(v), room() → classroom [lo, hi], hard() → physical [min, max], step() | list() | log, base(), def() | null, unit(), toast(msg)}
+  function attach(nb, o){
+    o.nb = nb; const u = nb.nextElementSibling && nb.nextElementSibling.classList.contains("u") ? nb.nextElementSibling : null;
+    const fld = document.createElement("span"); fld.className = "fld"; nb.before(fld); fld.appendChild(nb); if (u) fld.appendChild(u);
+    const warn = document.createElement("span"); warn.className = "bw"; warn.textContent = "⚠"; fld.appendChild(warn);
+    const dn = mk("dn", "▼", "decrease"), up = mk("up", "▲", "increase"), rs = mk("rs", "↺", "back to the start value");
+    dn.title = "Decrease · hold to repeat · Shift = ×10"; up.title = "Increase · hold to repeat · Shift = ×10";
+    fld.before(dn); fld.after(up); up.after(rs);
+    if (!o.def) rs.style.visibility = "hidden";
+    Object.assign(o, {fld, warn, dn, up, rs, was:false});
+    holdBtn(dn, o, -1); holdBtn(up, o, 1);
+    rs.addEventListener("click", () => { const d = o.def ? o.def() : null; if (d === null || d === undefined || nb.disabled) return; o.apply(d); check(o, true); });
+    // clicking into the box selects the whole value, so typing replaces it (a 2nd click places the cursor as usual)
+    nb.addEventListener("focus", () => { nb.select(); nb._sel = true; });
+    nb.addEventListener("mouseup", e => { if (nb._sel){ e.preventDefault(); nb._sel = false; } });
+    nb.addEventListener("touchend", e => { if (nb._sel){ nb._sel = false; setTimeout(() => nb.select(), 0); } });
+    nb.addEventListener("blur", () => { nb._sel = false; });
+    nb.addEventListener("keydown", e => { if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return; e.preventDefault();
+      clearTimeout(nb._tm); go(o, e.key === "ArrowUp" ? 1 : -1, e.shiftKey ? 10 : 1); nb.select(); });
+    nb.addEventListener("wheel", e => { if (document.activeElement !== nb || !e.deltaY) return; e.preventDefault();
+      clearTimeout(nb._tm); go(o, e.deltaY < 0 ? 1 : -1, e.shiftKey ? 10 : 1); }, {passive:false});
+    nb._st = o; all.push(o); return o;
+  }
+  function tick(){
+    for (const o of all){
+      if (!o.nb.isConnected) continue;
+      const off = o.nb.disabled, v = +o.get(), [mn, mx] = o.hard(), d = o.def ? o.def() : null;
+      o.dn.disabled = off || !(v > mn + 1e-12 * Math.max(1, Math.abs(mn))); o.up.disabled = off || !(v < mx - 1e-12 * Math.max(1, Math.abs(mx)));
+      o.rs.disabled = off || d === null || d === undefined || Math.abs(v - d) <= 1e-9 * Math.max(1, Math.abs(d));
+      if (o.def && d !== null && d !== undefined) o.rs.title = `Back to the start value (${fmt(d)}${o.unit() ? " " + o.unit() : ""})`;
+      check(o, false);
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+  return {attach, check, fmt, all};
+})();
+
+// Chart probe: move the pointer over any graph (or tap it) → a dashed vertical line, a dot where it cuts each curve and the x and y
+// values (as on the Free fall graphs). It reads what each graph draws after its axes (axes/axesR), so every graph gets it.
+// On graphs with only data points the line snaps to the nearest point; near a point its exact values are shown too.
+const PROBE = (() => {
+  const S = new Map();                                   // canvas → {frames, px, py, on, touch, ov}
+  const st = cv => { let s = S.get(cv); if (!s){ s = {frames:[], on:false}; S.set(cv, s); } return s; };
+  let pause = 0;
+  const P = CanvasRenderingContext2D.prototype, orig = {};
+  const rec = ctx => ctx.__pf && !pause;
+  ["beginPath", "moveTo", "lineTo", "closePath", "arc", "quadraticCurveTo", "bezierCurveTo", "stroke", "fill", "clearRect"].forEach(k => orig[k] = P[k]);
+  P.beginPath = function(){ if (rec(this)) this.__pp = {subs:[], arcs:[], cur:null}; return orig.beginPath.apply(this, arguments); };
+  const pp = ctx => ctx.__pp || (ctx.__pp = {subs:[], arcs:[], cur:null});
+  P.moveTo = function(x, y){ if (rec(this)){ const p = pp(this); p.cur = [[x, y]]; p.subs.push(p.cur); } return orig.moveTo.apply(this, arguments); };
+  P.lineTo = function(x, y){ if (rec(this)){ const p = pp(this); if (!p.cur){ p.cur = [[x, y]]; p.subs.push(p.cur); } else p.cur.push([x, y]); } return orig.lineTo.apply(this, arguments); };
+  P.quadraticCurveTo = function(a, b, x, y){ if (rec(this)){ const p = pp(this); if (p.cur) p.cur.push([x, y]); } return orig.quadraticCurveTo.apply(this, arguments); };
+  P.bezierCurveTo = function(a, b, c, d, x, y){ if (rec(this)){ const p = pp(this); if (p.cur) p.cur.push([x, y]); } return orig.bezierCurveTo.apply(this, arguments); };
+  P.closePath = function(){ if (rec(this)){ const p = pp(this); if (p.cur) p.cur.closed = true; p.cur = null; } return orig.closePath.apply(this, arguments); };
+  P.arc = function(x, y, r){ if (rec(this)) pp(this).arcs.push([x, y, r]); return orig.arc.apply(this, arguments); };
+  function toFrame(ctx, f, pts){                         // path points → the frame's coordinates (if the transform has changed)
+    const m = ctx.getTransform(), g = f.m;
+    if (m.a === g.a && m.b === g.b && m.c === g.c && m.d === g.d && m.e === g.e && m.f === g.f) return pts;
+    const gi = g.inverse(); return pts.map(([x, y]) => { const X = m.a * x + m.c * y + m.e, Y = m.b * x + m.d * y + m.f;
+      return [gi.a * X + gi.c * Y + gi.e, gi.b * X + gi.d * Y + gi.f]; });
+  }
+  function commit(ctx, stroke){
+    const f = ctx.__pf, p = ctx.__pp; if (!f || !p) return;
+    const col = stroke ? ctx.strokeStyle : ctx.fillStyle, c = typeof col === "string" ? col : null;
+    for (const [x, y, r] of p.arcs) if (r <= 9 && r >= 1.5 && c){ const [[X, Y]] = toFrame(ctx, f, [[x, y]]);
+      if (X >= f.box.x - 2 && X <= f.box.x + f.box.w + 2 && Y >= f.box.y - 2 && Y <= f.box.y + f.box.h + 2) f.pts.push({x:X, y:Y, col:c}); }
+    if (stroke && c && ctx.globalAlpha > 0.3) for (const s of p.subs) if (!s.closed && s.length >= 2) f.raw.push({pts:toFrame(ctx, f, s), col:c, dash:ctx.getLineDash().length > 0});
+  }
+  P.stroke = function(){ if (rec(this) && !arguments.length) commit(this, true); return orig.stroke.apply(this, arguments); };
+  P.fill = function(){ if (rec(this) && !(arguments[0] instanceof Path2D)) commit(this, false); return orig.fill.apply(this, arguments); };
+  P.clearRect = function(x, y, w, h){ if (x <= 0 && y <= 0 && w * 1.01 >= this.canvas.clientWidth && h * 1.01 >= this.canvas.clientHeight){ st(this.canvas).frames = []; this.__pf = null; }
+    return orig.clearRect.apply(this, arguments); };
+  // the text helpers, arrows, tangents and shaded areas on a graph are not curves
+  const quiet = fn => function(){ pause++; try { return fn.apply(this, arguments); } finally { pause--; } };
+  function newFrame(ctx, box, x0, x1, y0, y1, xl, yl, noX){
+    const cv = ctx.canvas, s = st(cv), f = {box:{...box}, x0, x1, y0, y1, xl, yl, m:ctx.getTransform(), raw:[], pts:[], skip:!!noX || !(x1 > x0) || !(y1 > y0)};
+    s.frames.push(f); if (s.frames.length > 8) s.frames.shift(); bind(cv); return f;
+  }
+  function wrapAxes(fn, ranged){
+    return function(ctx, box){
+      ctx.__pf = null; const r = fn.apply(this, arguments), a = arguments;
+      ctx.__pf = ranged ? newFrame(ctx, box, a[2], a[3], a[4], a[5], a[6], a[7], a[8]) : newFrame(ctx, box, 0, a[2], 0, a[3], a[4], a[5], false);
+      ctx.__pp = null; return r;
+    };
+  }
+  // ---- labels: "time t / s" → symbol t, unit s
+  function split(parts){
+    if (typeof parts === "string") parts = [[parts, "n"]];
+    if (!Array.isArray(parts)) return {sym:[["x", "i"]], unit:""};
+    const flat = parts.map(p => [String(p[0]), p[1] || "n"]), txt = flat.map(p => p[0]).join(""), k = txt.lastIndexOf(" / ");
+    const left = [], unit = [];
+    let pos = 0;
+    for (const [t, sty] of flat){ const a = pos, b = pos + t.length; pos = b;
+      if (k < 0 || b <= k) left.push([t, sty]); else if (a >= k + 3) unit.push([t, sty]);
+      else { if (k > a) left.push([t.slice(0, k - a), sty]); if (b > k + 3) unit.push([t.slice(Math.max(0, k + 3 - a)), sty]); } }
+    // drop a describing word or two in front of the symbol ("time t", "drop height h"), keep "cos θ", "1 − cos θ"
+    let first = left.findIndex(p => p[1] !== "n" && p[0].trim());
+    if (first > 0){ const pre = left.slice(0, first).map(p => p[0]).join(""); if (!/^([A-Za-z]{4,}\s+)+$/.test(pre)) first = 0; }
+    let sym = first < 0 ? [[left.map(p => p[0]).join("").trim(), "n"]] : left.slice(first).map(p => [p[0], p[1]]);
+    let cut = false; sym = sym.filter(p => { if (cut) return false; const i = p[0].indexOf(" = "); if (i >= 0){ p[0] = p[0].slice(0, i); cut = true; } return true; });
+    if (sym.length) sym[sym.length - 1][0] = sym[sym.length - 1][0].replace(/\s+$/, "");
+    if (sym.length && sym[0][0]) sym[0][0] = sym[0][0].replace(/^\s+/, "");
+    let un = unit.map(p => p[1] === "s" ? toSub(p[0]) : p[0]).join("").replace(/\s*\(.*$/, "").trim(); if (un === "1") un = "";
+    return {sym:sym.filter(p => p[0]), unit:un};
+  }
+  const SUBS = {"0":"₀", "1":"₁", "2":"₂", "3":"₃", "4":"₄", "5":"₅", "6":"₆", "7":"₇", "8":"₈", "9":"₉"};
+  const toSub = t => t.replace(/[0-9]/g, d => SUBS[d]);
+  const SUP = {"0":"⁰", "1":"¹", "2":"²", "3":"³", "4":"⁴", "5":"⁵", "6":"⁶", "7":"⁷", "8":"⁸", "9":"⁹", "-":"⁻"};
+  function num(v, span){                                   // enough decimals for the axis, × 10ⁿ for very big or small values
+    if (!isFinite(v)) return "–";
+    const a = Math.abs(v);
+    if (a >= 1e5 || (a > 0 && a < 1e-3 && span < 1e-2)){ const e = Math.floor(Math.log10(a)), m = v / Math.pow(10, e);
+      return `${m.toFixed(2).replace("-", "−")} × 10${String(e).replace(/[0-9-]/g, c => SUP[c])}`; }
+    const d = Math.max(0, Math.min(6, Math.ceil(-Math.log10(span / 400))));
+    let s = v.toFixed(d); if (/^-0\.?0*$/.test(s)) s = s.slice(1); return s.replace("-", "−");
+  }
+  // ---- curves of a frame: join touching pieces of the same colour, drop vertical lines and short legend strokes
+  function curves(f){
+    if (f.lines && f.nraw === f.raw.length) return f.lines;
+    const L = [];
+    for (const r of f.raw){ const last = L[L.length - 1];
+      if (last && last.col === r.col && Math.hypot(last.pts[last.pts.length - 1][0] - r.pts[0][0], last.pts[last.pts.length - 1][1] - r.pts[0][1]) < 0.6) last.pts = last.pts.concat(r.pts.slice(1));
+      else L.push({pts:r.pts.slice(), col:r.col, dash:r.dash}); }
+    f.lines = L.filter(l => { let lo = Infinity, hi = -Infinity; for (const [x] of l.pts){ lo = Math.min(lo, x); hi = Math.max(hi, x); }
+      const span = hi - lo; return span >= 1.5 && !(l.pts.length <= 3 && span < 0.08 * f.box.w) && hi >= f.box.x - 1 && lo <= f.box.x + f.box.w + 1; });
+    f.nraw = f.raw.length; return f.lines;
+  }
+  function cut(l, x){ const out = [];
+    for (let i = 1; i < l.pts.length; i++){ const [xa, ya] = l.pts[i - 1], [xb, yb] = l.pts[i];
+      if (Math.abs(xb - xa) < 1e-6 || (x - xa) * (x - xb) > 0) continue;
+      const y = ya + (yb - ya) * (x - xa) / (xb - xa); if (!out.some(q => Math.abs(q - y) < 2)) out.push(y); }
+    return out; }
+  // ---- drawing on a transparent canvas laid over the graph
+  function overlay(cv, s){
+    if (!s.ov){ const o = document.createElement("canvas"); o.className = "probeOv"; o.setAttribute("aria-hidden", "true");
+      o.style.cssText = "position:absolute;pointer-events:none;z-index:2"; cv.after(o); s.ov = o;
+      const par = cv.parentNode; if (getComputedStyle(par).position === "static") par.style.position = "relative"; }
+    const o = s.ov; o.style.left = cv.offsetLeft + "px"; o.style.top = cv.offsetTop + "px";
+    o.style.width = cv.offsetWidth + "px"; o.style.height = cv.offsetHeight + "px";
+    if (o.width !== cv.width || o.height !== cv.height){ o.width = cv.width; o.height = cv.height; }
+    return o;
+  }
+  const FONT = (sty, z) => sty === "i" ? `italic 600 ${z}px "Segoe UI",Calibri,Arial,sans-serif` : sty === "s" ? `600 ${Math.round(z * .72)}px "Segoe UI",Calibri,Arial,sans-serif` : `600 ${z}px "Segoe UI",Calibri,Arial,sans-serif`;
+  const runW = (ctx, run, z) => run.reduce((w, [t, sty]) => { ctx.font = FONT(sty, z); return w + ctx.measureText(t).width; }, 0);
+  function runDraw(ctx, run, x, y, col, z){ for (const [t, sty] of run){ ctx.font = FONT(sty, z); ctx.fillStyle = col;
+    ctx.fillText(t, x, sty === "s" ? y + z * .3 : y); x += ctx.measureText(t).width; } return x; }
+  function draw(cv, s){
+    const o = overlay(cv, s), ctx = o.getContext("2d");
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, o.width, o.height);
+    if (!s.on || !cv.offsetParent) return;
+    const dpr = cv.width / Math.max(1, cv.getBoundingClientRect().width), dx = s.px * dpr, dy = s.py * dpr;
+    let f = null, lx = 0, ly = 0;
+    for (const g of s.frames){ if (g.skip) continue; const gi = g.m.inverse(), X = gi.a * dx + gi.c * dy + gi.e, Y = gi.b * dx + gi.d * dy + gi.f;
+      if (X >= g.box.x && X <= g.box.x + g.box.w && Y >= g.box.y - 4 && Y <= g.box.y + g.box.h + 4){ f = g; lx = X; ly = Y; break; } }
+    if (!f) return;
+    const b = f.box, xv = px => f.x0 + (px - b.x) / b.w * (f.x1 - f.x0), yv = py => f.y0 + (b.y + b.h - py) / b.h * (f.y1 - f.y0);
+    const lines = curves(f), pts = f.pts.filter(p => p.x >= b.x - 1 && p.x <= b.x + b.w + 1);
+    let hits = [], near = null, x = lx;
+    for (const l of lines) for (const y of cut(l, x)) if (y >= b.y - 1 && y <= b.y + b.h + 1) hits.push({y, col:l.col, dash:l.dash ? 1 : 0});
+    if (pts.length){ const n = pts.reduce((m, p) => { const d = Math.hypot(p.x - lx, p.y - ly); return d < m.d ? {p, d} : m; }, {p:null, d:Infinity});
+      if (n.d <= 12) near = n.p; }
+    if (!lines.length && pts.length){                    // only data points: snap to the nearest one along x
+      near = pts.reduce((m, p) => Math.abs(p.x - lx) + 1e-3 * Math.abs(p.y - ly) < Math.abs(m.x - lx) + 1e-3 * Math.abs(m.y - ly) ? p : m, pts[0]); x = near.x; }
+    if (!hits.length && !near) return;
+    hits.sort((p, q) => p.y - q.y || p.dash - q.dash);    // curves on top of each other: one row (the solid one)
+    hits = hits.filter((h, i) => !hits.slice(0, i).some(q => Math.abs(q.y - h.y) < 1.5)).slice(0, 6);
+    ctx.setTransform(f.m);
+    ctx.save(); ctx.strokeStyle = "rgba(38,50,56,.55)"; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+    orig.beginPath.call(ctx); orig.moveTo.call(ctx, x, b.y); orig.lineTo.call(ctx, x, b.y + b.h); orig.stroke.call(ctx); ctx.restore();
+    const dot = (X, Y, c, r) => { ctx.save(); ctx.fillStyle = c; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; orig.beginPath.call(ctx); orig.arc.call(ctx, X, Y, r, 0, 7); orig.stroke.call(ctx); orig.fill.call(ctx); ctx.restore(); };
+    for (const h of hits) dot(x, h.y, shade(h.col), 4.5);
+    if (near){ ctx.save(); ctx.strokeStyle = "#263238"; ctx.lineWidth = 2; orig.beginPath.call(ctx); orig.arc.call(ctx, near.x, near.y, 8, 0, 7); orig.stroke.call(ctx); ctx.restore(); }
+    const X = split(f.xl), Y = split(f.yl), xs = f.x1 - f.x0, ys = f.y1 - f.y0, z = 13.5, rows = [];
+    const eq = (sym, v, span, unit) => [...sym, [` = ${num(v, span)}${unit ? (unit === "°" ? "" : " ") + unit : ""}`, "n"]];
+    if (!near || lines.length) rows.push({run:eq(X.sym, xv(x), xs, X.unit), col:"#263238"});
+    if (lines.length) for (const h of hits) rows.push({run:eq(Y.sym, yv(h.y), ys, Y.unit), col:h.col, mark:hits.length > 1});
+    if (near){ rows.push({run:[["point:  ", "n"], ...eq(X.sym, xv(near.x), xs, X.unit)], col:near.col, mark:true});
+      rows.push({run:[["point:  ", "n"], ...eq(Y.sym, yv(near.y), ys, Y.unit)], col:near.col, mark:true, hide:true}); }
+    if (!rows.length) return;
+    ctx.save(); ctx.textBaseline = "middle"; ctx.textAlign = "left";
+    const rh = z + 6, mw = Math.max(...rows.map(r => runW(ctx, r.run, z) + (r.mark ? 14 : 0))), bw = mw + 16, bh = rows.length * rh + 8;
+    const right = x + 10 + bw > b.x + b.w; let bx = right ? x - 10 - bw : x + 10;
+    const cw = o.width / dpr; bx = Math.max(b.x + 2, Math.min(bx, b.x + b.w - bw - 2)); bx = Math.max(2, Math.min(bx, cw - bw - 2));
+    let by = ly - bh / 2;
+    if (near && near.x + 10 > bx && near.x - 10 < bx + bw){ by = near.y + 14; if (by + bh > b.y + b.h - 2) by = near.y - 14 - bh; }   // keep the point visible
+    by = Math.max(b.y + 2, Math.min(by, b.y + b.h - bh - 2));
+    ctx.fillStyle = "rgba(255,255,255,.94)"; ctx.strokeStyle = "rgba(38,50,56,.35)"; ctx.lineWidth = 1;
+    orig.beginPath.call(ctx); ctx.roundRect ? ctx.roundRect(bx, by, bw, bh, 6) : ctx.rect(bx, by, bw, bh); orig.fill.call(ctx); orig.stroke.call(ctx);
+    rows.forEach((r, i) => { const yy = by + 4 + rh * i + rh / 2; let xx = bx + 8;
+      if (r.mark && !r.hide){ ctx.fillStyle = shade(r.col); orig.beginPath.call(ctx); orig.arc.call(ctx, xx + 4, yy, 4, 0, 7); orig.fill.call(ctx); }
+      if (r.mark) xx += 14;
+      let run = r.run; if (r.hide){ ctx.font = FONT("n", z); xx += ctx.measureText(run[0][0]).width; run = run.slice(1); }   // 2nd point row lines up under the 1st
+      runDraw(ctx, run, xx, yy, r.col === "#263238" ? r.col : shade(r.col), z); });
+    ctx.restore();
+  }
+  function shade(c){                                      // pale curve colours (e.g. dashed grey) are darkened for text
+    let r, g, bb; const m = /^#([0-9a-f]{6})$/i.exec(c), q = /^rgba?\(\s*(\d+)[ ,]+(\d+)[ ,]+(\d+)/i.exec(c);
+    if (m){ const n = parseInt(m[1], 16); r = n >> 16; g = (n >> 8) & 255; bb = n & 255; } else if (q){ r = +q[1]; g = +q[2]; bb = +q[3]; } else return c;
+    c = `rgb(${r},${g},${bb})`; const L = 0.299 * r + 0.587 * g + 0.114 * bb;
+    if (L < 150) return c; const k = 150 / L; return `rgb(${Math.round(r * k)},${Math.round(g * k)},${Math.round(bb * k)})`;
+  }
+  function bind(cv){
+    const s = st(cv); if (s.bound) return; s.bound = true;
+    const at = e => { const r = cv.getBoundingClientRect(); s.px = e.clientX - r.left; s.py = e.clientY - r.top; s.on = true; };
+    cv.addEventListener("pointermove", e => { if (e.pointerType === "touch" && !s.touch) return; at(e); });
+    cv.addEventListener("pointerdown", e => { s.touch = e.pointerType === "touch"; at(e); });
+    cv.addEventListener("pointerup", e => { if (e.pointerType === "touch") s.touch = false; });
+    cv.addEventListener("pointercancel", () => { s.touch = false; });   // a finger that scrolls the page lets go of the probe
+    cv.addEventListener("pointerleave", e => { if (e.pointerType !== "touch") s.on = false; });
+    document.addEventListener("pointerdown", e => { if (e.target !== cv) s.on = false; });
+  }
+  function tick(){ for (const [cv, s] of S) if (s.ov || s.on) draw(cv, s); requestAnimationFrame(tick); }
+  requestAnimationFrame(tick);
+  return {wrapAxes, quiet, S};
+})();
+if (typeof axesR === "function") axesR = PROBE.wrapAxes(axesR, true);
+if (typeof axes === "function") axes = PROBE.wrapAxes(axes, false);
+if (typeof drawTangent === "function") drawTangent = PROBE.quiet(drawTangent);
+if (typeof shadeArea === "function") shadeArea = PROBE.quiet(shadeArea);
+if (typeof areaName === "function") areaName = PROBE.quiet(areaName);
+if (typeof toolLabels === "function") toolLabels = PROBE.quiet(toolLabels);
+if (typeof arrow === "function") arrow = PROBE.quiet(arrow);
+if (typeof fArrow === "function") fArrow = PROBE.quiet(fArrow);
+if (typeof label === "function") label = PROBE.quiet(label);
+if (typeof rich === "function") rich = PROBE.quiet(rich);
+if (typeof subLabel === "function") subLabel = PROBE.quiet(subLabel);
+if (typeof note === "function") note = PROBE.quiet(note);
+if (typeof pill === "function") pill = PROBE.quiet(pill);
+/* ==== SHARED-UI END ==== */
+/* ==== NEWTON START — Newton's-law panel (shared by all simulations; source ~/.cache/sharedui-build/newton/) ====
+   The FBD code of each simulation reports what it draws: NF.body(name, m, ax, ay, {v, axes}) and NF.force(label, Fx, Fy, colour, by, kind).
+   Fx, Fy are in N along the body's two axes (default → right, ↑ up); ax, ay the body's acceleration along the same axes.
+   kind: grav · normal · friction · tension · push · pull · spring · drag · buoy · impact · contact (decides the words for the 3rd-law partner).
+   NEWTON then shows: the law badge above the scene (1st law ΣF = 0 / 2nd law ΣF = ma), the ΣF = ma table under the FBD (foldable),
+   and, with "3rd-law pairs" ticked, every force with its partner on the other body (same size, opposite direction). */
+const NF = (() => {
+  let bodies = [], cur = null, msg = "", cap = null;
+  return {
+    reset(){ bodies = []; cur = null; msg = ""; cap = null; },
+    body(name, m, ax, ay, o = {}){ cur = {name, m, ax:ax || 0, ay:ay || 0, v:o.v, axes:o.axes || ["→", "↑"], forces:[], law:o.law, pre:o.pre || "", auto:!!o.auto}; bodies.push(cur); return cur; },
+    force(lab, fx, fy, col, by, kind = "contact"){ if (!cur || !isFinite(fx) || !isFinite(fy)) return;
+      if (Math.hypot(fx, fy) < 1e-9) return; cur.forces.push({lab, fx, fy, col, by, kind}); },
+    none(t){ bodies = []; cur = null; msg = t || ""; cap = null; },
+    // capture: while a map is set, every fArrow(…) the FBD draws is also reported (key "W", "F_N", "T"… → [by, kind]); ΣF arrows are skipped
+    cap(map){ cap = map; }, get capturing(){ return !!cap; },
+    capF(main, sub, fx, fy, col){ if (!cap || String(main).startsWith("Σ")) return; const k = main + (sub ? "_" + sub : ""), b = cap[k] || cap[main] || ["", "contact"];
+      NF.force(main + (sub ? `<sub>${sub}</sub>` : ""), fx, fy, col, b[0], b[1]); },
+    // auto: the acceleration is not stored by the simulation → a = ΣF/m from the forces drawn (zero below rounding)
+    finish(){ cap = null; for (const b of bodies) if (b.auto){ const sx = b.forces.reduce((t, f) => t + f.fx, 0), sy = b.forces.reduce((t, f) => t + f.fy, 0),
+      big = 1e-6 * (1 + Math.max(0, ...b.forces.map(f => Math.hypot(f.fx, f.fy)))); b.ax = b.m && Math.abs(sx) > big ? sx / b.m : 0; b.ay = b.m && Math.abs(sy) > big ? sy / b.m : 0; } },
+    get bodies(){ return bodies; }, get msg(){ return msg; },
+  };
+})();
+const NEWTON = (() => {
+  const VERB = {grav:"gravitational pull", normal:"normal force (push)", friction:"friction", tension:"pull (tension)", push:"push", pull:"pull",
+    spring:"spring force", drag:"drag", buoy:"buoyancy (push of the fluid)", impact:"contact force", contact:"contact force"};
+  const fmtN = v => { const a = Math.abs(v); return a >= 1e4 ? `${(v / 1000).toPrecision(3)} kN` : a < 1e-3 && a > 0 ? `${v.toExponential(2)} N` : `${+v.toPrecision(3)} N`; };
+  const z = v => Math.abs(v) < 5e-4 ? "0" : String(+v.toPrecision(3)).replace("-", "−");
+  const dirGlyph = (x, y) => { const a = Math.atan2(y, x) * 180 / Math.PI; return ["→", "↗", "↑", "↖", "←", "↙", "↓", "↘"][((Math.round(a / 45) % 8) + 8) % 8]; };
+  const plain = s => String(s).replace(/<sub>(.*?)<\/sub>/g, "$1").replace(/<[^>]+>/g, "");
+  let fold = false, last = "";
+  try { const v = localStorage.getItem("newton-fold"); fold = v === null ? innerWidth >= 760 && innerWidth < 1100 : v === "1"; } catch (e) {}   // tablets start folded
+  const lawOf = b => b.law || (Math.hypot(b.ax, b.ay) < 1e-6 ? "1st" : "2nd");
+  function badge(){
+    const el = document.getElementById("nlaw"); if (!el) return;
+    const B = NF.bodies; let html, cls;
+    if (!B.length){ html = NF.msg || "No forces to show here"; cls = "none"; }
+    else {
+      const laws = B.map(lawOf), all1 = laws.every(l => l === "1st"), all2 = laws.every(l => l === "2nd");
+      const who = l => B.length > 1 ? ` (${B.filter((b, i) => laws[i] === l).map(b => b.name).join(", ")})` : "";
+      const rest = B.every(b => b.v !== undefined && Math.abs(b.v) < 1e-6);
+      if (all1){ cls = "l1"; html = `<b>1st law</b> · ${rest ? "at rest" : B.some(b => b.v === undefined) ? "at rest or constant velocity" : "constant velocity"} · Σ<i>F</i> = 0`; }
+      else if (all2){ cls = "l2"; html = `<b>2nd law</b> · accelerating · Σ<i>F</i> = <i>ma</i>`; }
+      else { cls = "l2"; html = `<b>2nd law</b>${who("2nd")} · <b>1st law</b>${who("1st")}`; }
+    }
+    if (B.length && B[0].pre) html = B[0].pre + html;
+    if (el.dataset.h !== html + cls){ el.innerHTML = html; el.className = "nlaw " + cls; el.dataset.h = html + cls; }
+  }
+  function table(){
+    const el = document.getElementById("ntab"); if (!el) return;
+    const B = NF.bodies; let html = "";
+    if (!B.length) html = `<div class="nh"><button class="nfold" data-nfold aria-expanded="${!fold}">${fold ? "▸" : "▾"} Σ<i>F</i> = <i>ma</i> check</button><span class="nk">${NF.msg || "no forces here"}</span></div>`;
+    else {
+      const twoD = B.some(b => b.forces.some(f => Math.abs(f.fy) > 1e-9) && b.forces.some(f => Math.abs(f.fx) > 1e-9) || Math.abs(b.ay) > 1e-9 && Math.abs(b.ax) > 1e-9);
+      const sums = B.map(b => [b.forces.reduce((s, f) => s + f.fx, 0), b.forces.reduce((s, f) => s + f.fy, 0)]);
+      const ok = B.every((b, i) => Math.abs(sums[i][0] - b.m * b.ax) <= 0.01 * (1 + Math.abs(b.m * b.ax)) && Math.abs(sums[i][1] - b.m * b.ay) <= 0.01 * (1 + Math.abs(b.m * b.ay)));
+      html += `<div class="nh"><button class="nfold" data-nfold aria-expanded="${!fold}">${fold ? "▸" : "▾"} Σ<i>F</i> = <i>ma</i> check</button><span class="nk ${ok ? "ok" : ""}">${ok ? "✔ Σ<i>F</i> = <i>ma</i> for every body" : ""}</span></div>`;
+      if (!fold){
+        const vert = !twoD && !B.some(bb => bb.forces.some(f => Math.abs(f.fx) > 1e-9));
+        html += `<table><tr><th>force</th><th>by</th><th>${twoD ? B[0].axes[0] : vert ? B[0].axes[1] : B[0].axes[0]} / N</th>${twoD ? `<th>${B[0].axes[1]} / N</th>` : ""}</tr>`;
+        B.forEach((b, i) => {
+          const comp = (f, k) => k ? f.fy : f.fx, one = !twoD && !B.some(bb => bb.forces.some(f => Math.abs(f.fx) > 1e-9)) ? 1 : 0;   // 1-D vertical: show the y value
+          if (B.length > 1) html += `<tr class="nb"><td colspan="${twoD ? 4 : 3}">on ${b.name}${b.m ? ` (${+b.m.toPrecision(3)} kg)` : ""}</td></tr>`;
+          b.forces.forEach(f => { html += `<tr><td style="color:${f.col}">${f.lab}</td><td class="by">${f.by}</td><td>${z(twoD ? f.fx : comp(f, one))}</td>${twoD ? `<td>${z(f.fy)}</td>` : ""}</tr>`; });
+          html += `<tr class="ns"><td>Σ<i>F</i></td><td></td><td>${z(twoD ? sums[i][0] : sums[i][one])}</td>${twoD ? `<td>${z(sums[i][1])}</td>` : ""}</tr>`;
+          html += `<tr class="nm"><td><i>m a</i></td><td class="by">${b.m ? `${+b.m.toPrecision(3)} kg` : ""}</td><td>${z(b.m * (twoD ? b.ax : (one ? b.ay : b.ax)))}</td>${twoD ? `<td>${z(b.m * b.ay)}</td>` : ""}</tr>`;
+        });
+        html += `</table><div class="ncap">3rd law: each force has a partner of the same size and type, in the opposite direction, on the other body — tick <b>3rd-law pairs</b>.</div>`;
+      }
+    }
+    if (html !== last){ el.innerHTML = html; last = html; }
+  }
+  // 3rd-law pairs: drawn over the scene as a card, one row per force (the force on the body · its partner on the other body)
+  function pairs(){
+    const cb = document.getElementById("n3"); if (!cb || !cb.checked) return;
+    const cv = document.getElementById("scene"); if (!cv) return;
+    const ctx = cv.getContext("2d"), r = cv.getBoundingClientRect(), w = r.width, h = r.height;
+    const rows = NF.bodies.flatMap(b => b.forces.map(f => ({b, f}))).slice(0, 8);
+    const txt = rows.map(({b, f}) => { const M = Math.hypot(f.fx, f.fy), by = plain(f.by), nm = plain(b.name);
+      return [`${plain(f.lab)}: ${by} on ${nm} ${fmtN(M)}`, `${nm} on ${by} ${fmtN(M)}`]; });
+    const title = "3rd-law pairs: same size · same type · opposite direction · on different bodies";
+    ctx.save(); ctx.setTransform(window.devicePixelRatio || 1, 0, 0, window.devicePixelRatio || 1, 0, 0);
+    ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.setLineDash([]); ctx.globalAlpha = 1;
+    const pw = Math.min(w - 16, 600); let fs = 12.5;
+    const fits = () => { ctx.font = `${fs}px "Segoe UI",Calibri,Arial,sans-serif`;
+      const c1 = Math.max(0, ...txt.map(t => ctx.measureText(t[0]).width)), c2 = Math.max(0, ...txt.map(t => ctx.measureText(t[1]).width));
+      ctx.font = `700 ${fs}px "Segoe UI",Calibri,Arial,sans-serif`; return Math.max(ctx.measureText(title).width + 20, c1 + c2 + 90) <= pw ? c1 : -1; };
+    let c1 = fits(); while (c1 < 0 && fs > 8.5){ fs -= 0.5; c1 = fits(); } if (c1 < 0) c1 = pw / 2 - 60;
+    const rh = fs + 8, ph = 24 + rh * Math.max(1, rows.length), x0 = 8, y0 = h - ph - 8;
+    ctx.fillStyle = "rgba(255,255,255,.96)"; ctx.strokeStyle = "#1F3A5F"; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x0, y0, pw, ph, 8) : ctx.rect(x0, y0, pw, ph); ctx.fill(); ctx.stroke();
+    ctx.font = `700 ${fs}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = "#1F3A5F"; ctx.fillText(title, x0 + 10, y0 + 12);
+    if (!rows.length){ ctx.font = `${fs}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillText(NF.msg || "No forces in this example.", x0 + 10, y0 + 12 + rh); }
+    const arr = (x, y, ux, uy, L, c, dash) => { ctx.save(); ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineWidth = 2.5; if (dash) ctx.setLineDash([4, 3]);
+      const x1 = x - ux * L / 2, y1 = y + uy * L / 2, x2 = x + ux * L / 2, y2 = y - uy * L / 2;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - ux * 5, y2 + uy * 5); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x2 - ux * 7 - uy * 4, y2 + uy * 7 - ux * 4); ctx.lineTo(x2 - ux * 7 + uy * 4, y2 + uy * 7 + ux * 4); ctx.closePath(); ctx.fill(); ctx.restore(); };
+    const col2 = x0 + 34 + c1 + 22;
+    rows.forEach(({b, f}, i) => {
+      const y = y0 + 12 + rh * (i + 1), M = Math.hypot(f.fx, f.fy), ux = f.fx / M, uy = f.fy / M;
+      ctx.font = `${fs}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = f.col;
+      arr(x0 + 19, y, ux, uy, 15, f.col, false); ctx.fillText(txt[i][0], x0 + 34, y);
+      ctx.fillStyle = "#90A4AE"; ctx.fillText("⇄", col2 - 16, y); ctx.fillStyle = f.col;
+      arr(col2 + 9, y, -ux, -uy, 15, f.col, true); ctx.fillText(txt[i][1], col2 + 24, y);
+    });
+    ctx.restore();
+  }
+  function frame(){ try { NF.finish(); badge(); table(); pairs(); } catch (e) { console.error(e); } }
+  function hook(){
+    const o = drawFBD;
+    drawFBD = function(){ NF.reset(); const r = o.apply(this, arguments); frame(); return r; };
+    if (typeof fArrow === "function"){ const fa = fArrow;
+      fArrow = function(ctx, x, y, Fx, Fy, k, col, main, sub){ if (NF.capturing) NF.capF(main, sub, Fx, Fy, col); return fa.apply(this, arguments); }; }
+    document.addEventListener("click", e => { const b = e.target.closest("[data-nfold]"); if (!b) return; fold = !fold;
+      try { localStorage.setItem("newton-fold", fold ? "1" : "0"); } catch (er) {} last = ""; table(); });
+  }
+  return {hook, frame, lawOf};
+})();
+/* ==== NEWTON END ==== */
+/* ============================ 3 CONFIG ============================ */
+const STORE = "sim19-work";
+const COL = {W:"#2A5D8A", N:"#2E7D32", F:"#C62828", P:"#6A1B9A", v:"#1565C0", a:"#E65100",
+             navy:"#1F3A5F", accent:"#E65100", ink:"#263238", muted:"#606A72", grid:"#E3E9F0", grey:"#90A4AE"};
+const PRESETS = [
+  {id:"custom", name:"my own values"},
+  {id:"hook0",  sc:"pull", name:"Hook demo: 5.0 N at 0°",  m:1.0, F:5.0, th:0,  mu:0.30, s:1.0},
+  {id:"hook30", sc:"pull", name:"Hook demo: 5.0 N at 30°", m:1.0, F:5.0, th:30, mu:0.30, s:1.0},
+  {id:"hook60", sc:"pull", name:"Hook demo: 5.0 N at 60°", m:1.0, F:5.0, th:60, mu:0.30, s:1.0},
+  {id:"sled",   sc:"pull", name:"Exit question: sled, 40 N at 60°", m:8.0, F:40, th:60, mu:0.10, s:5.0},
+  {id:"crate",  sc:"pull", name:"Heavy crate: 20 kg, 80 N at 25°", m:20, F:80, th:25, mu:0.35, s:3.0},
+  {id:"lift",   sc:"ramp", name:"Hook demo: lift 1 kg up 0.30 m", meth:"lift", mr:1.0, h:0.30, L:1.0, mur:0},
+  {id:"ramp",   sc:"ramp", name:"Hook demo: push it up a 1.0 m ramp", meth:"ramp", mr:1.0, h:0.30, L:1.0, mur:0},
+  {id:"rampf",  sc:"ramp", name:"Ramp with friction (μ = 0.20)", meth:"ramp", mr:1.0, h:0.30, L:1.0, mur:0.20},
+  {id:"loader", sc:"ramp", name:"Loading ramp: 50 kg up 1.2 m on a 3.0 m ramp", meth:"ramp", mr:50, h:1.2, L:3.0, mur:0.10},
+  {id:"class",  sc:"cart", name:"Class demo (PASCO lab 07): 0.500 kg", mc:0.500, prof:"smooth", Fpk:1.205, d:0.60, fr:0.03},
+  {id:"harder", sc:"cart", name:"Class demo: a harder pull", mc:0.500, prof:"smooth", Fpk:2.0, d:0.60, fr:0.03},
+  {id:"steady", sc:"cart", name:"Steady pull: 1.0 N over 0.60 m", mc:0.500, prof:"steady", Fpk:1.0, d:0.60, fr:0.03},
+  {id:"band1",  sc:"cart", name:"Elastic band: stretch 1 (peak 1.0 N, 0.30 m)", mc:0.500, prof:"rising", Fpk:1.0, d:0.30, fr:0.03},
+  {id:"band2",  sc:"cart", name:"Elastic band: stretch 2 (peak 2.0 N, 0.60 m)", mc:0.500, prof:"rising", Fpk:2.0, d:0.60, fr:0.03},
+  {id:"exit2",  sc:"cart", name:"Exit question: 16 J on a 2.0 kg trolley", mc:2.0, prof:"steady", Fpk:16, d:1.0, fr:0},
+  {id:"car20",  sc:"brake", name:"Slide 8: 1000 kg at 20 m s⁻¹, 8000 N", mb:1000, u:20, Fb:8000},
+  {id:"car40",  sc:"brake", name:"Slide 8: the same car at 40 m s⁻¹", mb:1000, u:40, Fb:8000},
+  {id:"wet",    sc:"brake", name:"Wet road: 1000 kg at 20 m s⁻¹, 4000 N", mb:1000, u:20, Fb:4000},
+  {id:"van",    sc:"brake", name:"Loaded van: 2500 kg at 20 m s⁻¹, 8000 N", mb:2500, u:20, Fb:8000},
+];
+const SCN = {
+  pull:{pre:"hook30", mid:"Free-body diagram · work done by each force",
+    hint:"<i>F</i>–<i>s</i>: tick <i>Area</i> — the area under <i>F</i> cos <i>θ</i> is the work done by the pull. <i>W</i>–<i>s</i>: the net work line and the <i>E</i><sub>k</sub> line are the same."},
+  ramp:{pre:"ramp", mid:"Free-body diagram · Sankey diagram of the work done",
+    hint:"<i>F</i>–<i>s</i>: the dashed line is the other method. Both rectangles have the same area (= <i>mgh</i>) when there is no friction."},
+  cart:{pre:"class", mid:"Free-body diagram · work done on the cart",
+    hint:"<i>F</i>–<i>s</i>: tick <i>Area</i> and step to the end of the pull (0.60 m in the class demo) — this is the Capstone highlighter."},
+  brake:{pre:"car20", mid:"Free-body diagram · energy",
+    hint:"<i>v</i>–<i>t</i>: the area is the braking distance. <i>E</i><sub>k</sub>–<i>s</i>: a straight line; <i>Tangent</i> gives its gradient = −<i>F</i><sub>b</sub>."},
+};
+const METH = [["lift", "Lift straight up"], ["ramp", "Push up the ramp"]];
+const PROF = [["smooth", "Smooth pull (hump)"], ["steady", "Steady pull"], ["rising", "Stretching band"]];
+
+/* ============================ 4 PHYSICS ============================ */
+// shared number helpers (as in Simulations 16–18)
+const g = 9.81, TWO_PI = 2 * Math.PI;
+const f0 = x => String(Math.round(x));
+const f1 = x => (Math.round(x * 10) / 10).toFixed(1);
+const f2 = x => (Math.round(x * 100) / 100).toFixed(2);
+const f3 = x => (Math.round(x * 1000) / 1000).toFixed(3);
+const sig = (x, n = 3) => { const a = Math.abs(x); return a >= 1e6 || (a > 0 && a < 1e-4) ? sci(x, n) : String(+Number(x).toPrecision(n)); };   // very big/small typed values in × 10ⁿ form
+const SUP = {"0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹","-":"⁻"};
+const sup = n => String(n).split("").map(c => SUP[c] ?? c).join("");
+function sci(x, n = 3){ if (!x) return "0"; let e = Math.floor(Math.log10(Math.abs(x)));
+  if (e >= -2 && e <= 4) return sig(x, n);
+  let m = x / Math.pow(10, e); if (Math.abs(+m.toFixed(n - 1)) >= 10){ e += 1; m = x / Math.pow(10, e); }   // 9.999… rounds up to 1.00 × 10^(e+1)
+  return `${m.toFixed(n - 1)} × 10${sup(e)}`; }
+const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const mn = x => String(x).replace(/^-/, "−");
+// value + unit with SI prefixes for big numbers: 30500 W → "30.5 kW"
+function fmtU(x, u, n = 3){
+  const a = Math.abs(x);
+  if (a > 0 && a < 1e-3) return `${mn(sci(x, n))} ${u}`;
+  if (a >= 1e9) return `${mn(sig(x / 1e9, n))} G${u}`;
+  if (a >= 1e6) return `${mn(sig(x / 1e6, n))} M${u}`;
+  if (a >= 1e4) return `${mn(sig(x / 1e3, n))} k${u}`;
+  return `${mn(sig(x, n))} ${u}`;
+}
+const fmtF = F => fmtU(F, "N"), fmtE = E => fmtU(E, "J"), fmtP = P => fmtU(P, "W");
+function originFit(pts){ const sxx = pts.reduce((a, p) => a + p[0] * p[0], 0);
+  return sxx && pts.length >= 2 ? {k:pts.reduce((a, p) => a + p[0] * p[1], 0) / sxx, b:0} : null; }
+function linFit(pts){
+  const n = pts.length; if (n < 2) return null;
+  const sx = pts.reduce((a, p) => a + p[0], 0), sy = pts.reduce((a, p) => a + p[1], 0);
+  const sxx = pts.reduce((a, p) => a + p[0] * p[0], 0), sxy = pts.reduce((a, p) => a + p[0] * p[1], 0), d = n * sxx - sx * sx;
+  if (Math.abs(d) < 1e-15) return null;
+  const k = (n * sxy - sx * sy) / d; return {k, b:(sy - k * sx) / n};
+}
+// energy colours (the same in every A.3 simulation)
+const EC = {K:"#EF6C00", P:"#00897B", H:"#8E24AA", T:"#C62828", In:"#5D4037", tot:"#37474F", S:"#6D4C41", L:"#F9A825"};
+// Pull at an angle: forces on the box. Static friction can hold up to μF_N (same μ for moving).
+function pullForces(m, F, th, mu){
+  const Fx = F * Math.cos(rad(th)), Fy = F * Math.sin(rad(th)), N = Math.max(0, m * g - Fy), fmax = mu * N, moves = Fx > fmax + 1e-12;
+  return {Fx, Fy, N, Ff:moves ? fmax : Fx, a:moves ? (Fx - fmax) / m : 0, moves, lifts:Fy >= m * g};
+}
+const workF = (F, s, th) => F * s * Math.cos(rad(th));
+// Lift vs ramp at constant speed: the force needed and the work done by it
+function rampForces(meth, m, h, L, mu){
+  if (meth === "lift") return {th:90, d:h, F:m * g, N:0, Ff:0, W:m * g * h, Ep:m * g * h, Q:0};
+  const th = deg(Math.asin(clamp(h / L, 0, 1))), N = m * g * Math.cos(rad(th)), Ff = mu * N, F = m * g * Math.sin(rad(th)) + Ff;
+  return {th, d:L, F, N, Ff, W:F * L, Ep:m * g * h, Q:Ff * L};
+}
+// Smart Cart pull: force against position for the three pull shapes (δ: the band is already a little stretched at the start)
+const DEL = 0.01;
+function pullF(prof, Fpk, d, x){
+  if (x > d) return 0;
+  if (prof === "steady") return Fpk;
+  if (prof === "rising") return Fpk * (0.1 + 0.9 * x / d);
+  return Fpk * Math.sin(Math.PI * (x + DEL) / (d + 2 * DEL));
+}
+function pullWork(prof, Fpk, d){            // area under F–s from 0 to d (exact)
+  if (prof === "steady") return Fpk * d;
+  if (prof === "rising") return Fpk * d * 0.55;
+  const D = d + 2 * DEL; return Fpk * D / Math.PI * 2 * Math.cos(Math.PI * DEL / D);
+}
+const cartKE = (prof, Fpk, d, fr) => Math.max(0, pullWork(prof, Fpk, d) - fr * d);   // E_k at the end of the pull (W_net = ΔE_k)
+// Braking: F_b s = ½mu²
+const brakeDist = (m, u, Fb) => m * u * u / (2 * Fb);
+// screen pace: short runs in slow motion, long runs sped up
+const pace = T => T < 2 ? T / 2 : T > 10 ? T / 10 : 1;
+function build(){
+  const sc = set.sc;
+  if (sc === "pull"){
+    const f = pullForces(set.m, set.F, set.th, set.mu);
+    const base = {x:0, v:0, Fx:f.Fx, Ff:f.Ff, WF:0, Wf:0, Ek:0};
+    if (!f.moves || f.lifts) return {S:[{...base, t:0}], dt:1, still:f.lifts ? "The pull lifts the box off the floor: use a smaller force or angle." : "The box does not move: friction holds it. No displacement, so no work is done."};
+    const T = Math.sqrt(2 * set.s / f.a), n = 300, dt = T / n, S = [];
+    for (let i = 0; i <= n; i++){ const t = i * dt, x = f.a * t * t / 2, v = f.a * t;
+      S.push({t, x, v, Fx:f.Fx, Ff:f.Ff, WF:f.Fx * x, Wf:-f.Ff * x, Ek:set.m * v * v / 2}); }
+    return {S, dt, speed:pace(T), stepDt:niceUp(T / 12), f};
+  }
+  if (sc === "ramp"){
+    const r = rampForces(set.meth, set.mr, set.h, set.L, set.mur), T = 4, n = 200, dt = T / n, S = [];
+    for (let i = 0; i <= n; i++){ const t = i * dt, d = r.d * t / T;
+      S.push({t, d, y:set.meth === "lift" ? d : d * Math.sin(rad(r.th)), F:r.F, W:r.F * d, Ep:set.mr * g * (set.meth === "lift" ? d : d * Math.sin(rad(r.th))), Q:r.Ff * d}); }
+    return {S, dt, r, stepDt:0.4};
+  }
+  if (sc === "cart"){
+    const {mc:m, prof, Fpk, d, fr} = set;
+    if (pullF(prof, Fpk, d, 0) <= fr) return {S:[{t:0, x:0, v:0, F:pullF(prof, Fpk, d, 0), Wp:0, Wf:0, Ek:0}], dt:1, still:"The pull is too weak to start the cart: friction holds it."};
+    const S = integrate({x:0, v:0, F:pullF(prof, Fpk, d, 0), Wp:0, Wf:0, Ek:0}, (s, h) => {
+      const F = pullF(prof, Fpk, d, s.x), f = s.v > 0 || F > fr ? fr : F, a = (F - f) / m, dx = Math.max(0, s.v * h + a * h * h / 2);
+      s.Wp += F * dx; s.Wf -= f * dx; s.x += dx; s.v = Math.max(0, s.v + a * h); s.F = pullF(prof, Fpk, d, s.x); s.Ek = m * s.v * s.v / 2;
+    }, {dt:0.01, h:0.0005, tMax:8, stop:s => s.x >= d + 0.6 || (s.x > d && s.v <= 0)});
+    return {S, dt:0.01, stepDt:0.1};
+  }
+  const {mb:m, u, Fb} = set, a = Fb / m, T = u / a, n = 300, dt = T / n, S = [];
+  for (let i = 0; i <= n; i++){ const t = i * dt, v = u - a * t, x = u * t - a * t * t / 2;
+    S.push({t, x, v, Ek:m * v * v / 2, Q:m * u * u / 2 - m * v * v / 2, Wb:-Fb * x}); }
+  return {S, dt, speed:pace(T), stepDt:niceUp(T / 12)};
+}
+
+/* ============================ 5 RUN ============================ */
+const presetById = id => PRESETS.find(p => p.id === id);
+const P = id => { const p = presetById(id), o = {pre:id}; for (const k in p) if (k !== "id" && k !== "name") o[k] = p[k]; return o; };
+// The whole run is worked out when a setting changes (build() in PHYSICS gives states every M.dt seconds);
+// at(t) interpolates between them, so ▶, ⏸, the ◂ ▸ steps and the graph probe all show the same numbers.
+const R = {playing:false, paused:false, t:0};
+let M = null;
+const tEnd = () => M.S[M.S.length - 1].t;
+function at(t){
+  const S = M.S, n = S.length; if (n === 1 || t <= S[0].t) return S[0]; if (t >= S[n - 1].t) return S[n - 1];
+  const i = Math.min(n - 2, Math.max(0, Math.floor((t - S[0].t) / M.dt)));
+  const a = S[i], b = S[i + 1], u = clamp((t - a.t) / ((b.t - a.t) || 1), 0, 1), o = {};
+  for (const k in a){ const va = a[k], vb = b[k]; o[k] = typeof va === "number" && typeof vb === "number" ? va + (vb - va) * u : va; }
+  o.t = t; return o;
+}
+function reset(){
+  M = build(); R.t = 0; R.playing = false; R.paused = false;
+  updateButtons(); updateStepLabels();
+}
+function stepDt(){ return M.stepDt || 0.1; }
+function start(){ if (tEnd() <= 0){ flash(M.still || "Nothing moves here: change the values and watch the diagrams."); return; }
+  R.t = 0; R.playing = true; R.paused = false; updateButtons(); }
+function stepBy(d){
+  R.t = Math.min(tEnd(), Math.max(0, R.t + d));
+  R.playing = R.t < tEnd(); R.paused = R.playing; updateButtons();
+}
+function step(dt){
+  if (!R.playing || R.paused) return;
+  R.t += dt * (M.speed || 1);
+  if (R.t >= tEnd()){ R.t = tEnd(); R.playing = false; updateButtons(); }
+}
+// fixed-step integrator helper: calls f(state, h) every h seconds and records a copy every dt seconds
+function integrate(s0, f, {dt = 0.01, h = 0.001, tMax = 30, stop = () => false} = {}){
+  const S = [{...s0, t:0}]; let s = {...s0, t:0}; const per = Math.max(1, Math.round(dt / h));
+  for (let i = 1; i <= Math.ceil(tMax / h); i++){
+    f(s, h); s.t = i * h;
+    if (i % per === 0) S.push({...s});
+    if (stop(s)){ if (i % per) { s.t = S[S.length - 1].t + dt; S.push({...s}); } break; }
+  }
+  return S;
+}
+const set = {sc:"pull", pre:"hook30", m:1.0, F:5.0, th:30, mu:0.30, s:1.0,
+             meth:"ramp", mr:1.0, h:0.30, L:1.0, mur:0, mc:0.5, prof:"smooth", Fpk:1.205, d:0.60, fr:0.03, mb:1000, u:20, Fb:8000};
+
+/* ============================ 6 SCENE ============================ */
+function fitCanvas(cv){
+  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+  if (cv.width !== w || cv.height !== h){ cv.width = w; cv.height = h; }
+  const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return {ctx, w:r.width, h:r.height};
+}
+function arrow(ctx, x1, y1, x2, y2, color, width = 4, dashed = false){
+  const L = Math.hypot(x2 - x1, y2 - y1); if (L < 2) return;
+  const ux = (x2 - x1) / L, uy = (y2 - y1) / L, hs = Math.min(13, 6 + width * 1.6, L * 0.6);
+  ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width; ctx.lineCap = "round";
+  if (dashed) ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - ux * hs * 0.8, y2 - uy * hs * 0.8); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - ux * hs - uy * hs * 0.5, y2 - uy * hs + ux * hs * 0.5);
+  ctx.lineTo(x2 - ux * hs + uy * hs * 0.5, y2 - uy * hs - ux * hs * 0.5); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function label(ctx, txt, x, y, color, align = "center", size = 15, base = "middle"){
+  ctx.save(); ctx.font = `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = color;
+  ctx.textAlign = align; ctx.textBaseline = base;
+  ctx.lineWidth = 4; ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.strokeText(txt, x, y); ctx.fillText(txt, x, y);
+  ctx.restore();
+}
+function subLabel(ctx, main, sub, rest, x, y, color, align = "center", size = 15){
+  ctx.save(); const f1 = `italic 600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`,
+    f2 = `600 ${Math.round(size * .72)}px "Segoe UI",Calibri,Arial,sans-serif`, f3 = `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`;
+  ctx.font = f1; const w1 = ctx.measureText(main).width; ctx.font = f2; const w2 = sub ? ctx.measureText(sub).width : 0;
+  ctx.font = f3; const w3 = ctx.measureText(rest).width; const W = w1 + w2 + w3;
+  let x0 = align === "center" ? x - W / 2 : align === "right" ? x - W : x;
+  ctx.textBaseline = "middle"; ctx.lineWidth = 4; ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.fillStyle = color;
+  ctx.font = f1; ctx.strokeText(main, x0, y); ctx.fillText(main, x0, y);
+  if (sub){ ctx.font = f2; ctx.strokeText(sub, x0 + w1, y + size * .3); ctx.fillText(sub, x0 + w1, y + size * .3); }
+  ctx.font = f3; ctx.strokeText(rest, x0 + w1 + w2, y); ctx.fillText(rest, x0 + w1 + w2, y);
+  ctx.restore(); return W;
+}
+function rich(ctx, parts, x, y, color, size = 14){
+  const font = st => st === "i" ? `italic 600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`
+    : st === "s" ? `600 ${Math.round(size * .72)}px "Segoe UI",Calibri,Arial,sans-serif` : `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`;
+  ctx.save(); ctx.fillStyle = color; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+  const ws = parts.map(([t, st]) => { ctx.font = font(st); return ctx.measureText(t).width; });
+  let cx = x - ws.reduce((a, b) => a + b, 0) / 2;
+  parts.forEach(([t, st], i) => { ctx.font = font(st); ctx.fillText(t, cx, st === "s" ? y + size * .3 : y); cx += ws[i]; });
+  ctx.restore();
+}
+function bg(ctx, w, h, c0 = "#FAFCFF", c1 = "#EEF3F8"){ const gr = ctx.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, c0); gr.addColorStop(1, c1);
+  ctx.fillStyle = gr; ctx.fillRect(0, 0, w, h); }
+function wrap(ctx, text, maxW, size){
+  ctx.save(); ctx.font = `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`;
+  const out = []; let line = "";
+  for (const wd of text.split(" ")){ const tryL = line ? line + " " + wd : wd; if (ctx.measureText(tryL).width > maxW && line){ out.push(line); line = wd; } else line = tryL; }
+  if (line) out.push(line); ctx.restore(); return out;
+}
+function note(ctx, text, x, y, maxW, color = "#606A72", size = 11.5, align = "center"){   // wrapped grey note, bottom line at y
+  const nl = wrap(ctx, text, maxW, size); nl.forEach((L, i) => label(ctx, L, x, y - (nl.length - 1 - i) * (size + 2.5), color, align, size)); return nl.length;
+}
+function rrect(ctx, x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+// force arrow on a free-body diagram: from (x, y), components in N, k px per N; label just beyond the tip
+function fArrow(ctx, x, y, Fx, Fy, k, col, main, sub, rest = "", size = 13, dashed = false){
+  const L = Math.hypot(Fx, Fy) * k; if (L < 2) return;
+  const ux = Fx / Math.hypot(Fx, Fy), uy = -Fy / Math.hypot(Fx, Fy), x2 = x + ux * L, y2 = y + uy * L;
+  arrow(ctx, x, y, x2, y2, col, 4, dashed);
+  const lx = x2 + ux * 14, ly = y2 + uy * 12, al = Math.abs(ux) < 0.35 ? "center" : ux > 0 ? "left" : "right";
+  subLabel(ctx, main, sub, rest, al === "center" ? lx : lx + (ux > 0 ? -6 : 6), ly, col, al, size);
+}
+// energy (or work) bar chart: bars = [{nm:[main, sub, rest], v, col}]; negative values go below the zero line;
+// optional dashed "total" line
+function energyBars(ctx, box, bars, {title = "Energy / J", total = null, max = null, fmt = v => mn(sci(v, 3))} = {}){
+  const {x, y, w, h} = box;
+  label(ctx, title, x, y + 8, "#1F3A5F", "left", 12.5);
+  const vals = bars.map(b => b.v).concat(total ?? 0), vmax = Math.max(0, ...vals, max ?? 0), vmin = Math.min(0, ...vals);
+  const span = Math.max(1e-12, vmax - vmin), yT = y + 36, yB = y + h - 36, kk = (yB - yT) / span, yz = yT + vmax * kk;
+  const n = bars.length, gap = Math.min(16, w / n * 0.25), bw = Math.min(56, (w - 10 - gap * (n - 1)) / n), x0 = x + (w - (bw * n + gap * (n - 1))) / 2;
+  bars.forEach((b, i) => {
+    const bx = x0 + i * (bw + gap), H = b.v * kk;
+    ctx.save(); ctx.fillStyle = b.col; ctx.globalAlpha = .85; ctx.fillRect(bx, H >= 0 ? yz - H : yz, bw, Math.abs(H)); ctx.restore();
+    label(ctx, Math.abs(b.v) < 1e-3 * span ? "0" : fmt(b.v), bx + bw / 2, H >= 0 ? yz - H - 9 : yz - H + 10, b.col, "center", 11.5);
+    subLabel(ctx, b.nm[0], b.nm[1], b.nm[2] || "", bx + bw / 2, y + h - 12, b.col, "center", 12.5);
+  });
+  ctx.save(); ctx.strokeStyle = "#263238"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x + 2, yz); ctx.lineTo(x + w - 2, yz); ctx.stroke(); ctx.restore();
+  if (total !== null){ const yt = yz - total * kk;
+    ctx.save(); ctx.strokeStyle = EC.tot; ctx.setLineDash([6, 4]); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x + 2, yt); ctx.lineTo(x + w - 2, yt); ctx.stroke(); ctx.restore();
+    label(ctx, `total ${fmt(total)}`, x + w - 4, yt - 9, EC.tot, "right", 11.5); }
+}
+// Sankey diagram, arrow widths to scale. inp = {nm, v}; outs = [{nm, v, col, useful}]. Useful outputs go straight on (top),
+// wasted outputs bend down, one after the other. unitFmt(v) gives the value text.
+function sankey(ctx, box, inp, outs, unitFmt, {title = "", inCol = EC.In, maxW = null, exact = false} = {}){
+  const {x, y, w, h} = box;
+  if (title) label(ctx, title, x, y + 8, "#1F3A5F", "left", 12.5);
+  const tot = inp.v;
+  if (!(tot > 1e-12)){ label(ctx, "No energy transferred yet", x + w / 2, y + h / 2, "#606A72", "center", 13); return; }
+  const use = outs.filter(o => o.useful && o.v > tot * 1e-4), was = outs.filter(o => !o.useful && o.v > tot * 1e-4);
+  const nW = was.length, nU = use.length, labH = 34, top = y + (title ? 40 : 22) + 15 * nU;
+  const xs = x + Math.min(110, w * 0.26), xe = x + w - 6, legGap = nW ? (xe - 40 - xs) / nW : 0;
+  let W = Math.max(8, Math.min(maxW ?? 90, (h - (top - y) - labH - 30) * 0.55, w * 0.22)); if (exact && maxW) W = maxW; if (nW > 1) W = Math.min(W, legGap - 16);
+  const k = W / tot;
+  // input band
+  ctx.save(); ctx.fillStyle = inCol; ctx.globalAlpha = .85; ctx.fillRect(x + 4, top, xs - x - 4, W); ctx.restore();
+  label(ctx, `${inp.nm}: ${unitFmt(tot)}`, x + 6, top - 9, inCol, "left", 12);
+  // stack: useful on top, wasted below (the bottom one peels off first)
+  let yc = top; const pct = v => `${f0(v / tot * 100)} %`;
+  use.forEach((o, i) => { const ww = Math.max(1.5, o.v * k), ah = Math.min(16, Math.max(8, ww * 0.6));
+    ctx.save(); ctx.fillStyle = o.col; ctx.globalAlpha = .85; ctx.beginPath();
+    ctx.moveTo(xs, yc); ctx.lineTo(xe - ah, yc); ctx.lineTo(xe - ah, yc - Math.min(6, ww * .3)); ctx.lineTo(xe, yc + ww / 2);
+    ctx.lineTo(xe - ah, yc + ww + Math.min(6, ww * .3)); ctx.lineTo(xe - ah, yc + ww); ctx.lineTo(xs, yc + ww); ctx.closePath(); ctx.fill(); ctx.restore();
+    label(ctx, `→ ${o.nm}: ${unitFmt(o.v)} (${pct(o.v)})`, xe - 2, top - 9 - 15 * (nU - i), o.col, "right", 12);
+    yc += ww; });
+  const ybot = y + h - labH;
+  // wasted bands from the bottom of the stack
+  let yb = top + Math.max(0, use.reduce((a, o) => a + Math.max(1.5, o.v * k), 0)) + was.reduce((a, o) => a + Math.max(1.5, o.v * k), 0);
+  was.slice().reverse().forEach((o, i) => {
+    const ww = Math.max(1.5, o.v * k), xt = xs + i * legGap, rin = 10, cx = xt, cy = yb + rin, ah = Math.min(14, Math.max(8, ww * 0.6));
+    const yTop = yb - ww, legL = cx + rin, legR = cx + rin + ww;
+    ctx.save(); ctx.fillStyle = o.col; ctx.globalAlpha = .85; ctx.beginPath();
+    ctx.moveTo(xs, yTop); ctx.lineTo(xt, yTop); ctx.arc(cx, cy, rin + ww, -Math.PI / 2, 0); ctx.lineTo(legR, ybot - ah);
+    ctx.lineTo(legR + Math.min(6, ww * .3), ybot - ah); ctx.lineTo((legL + legR) / 2, ybot); ctx.lineTo(legL - Math.min(6, ww * .3), ybot - ah);
+    ctx.lineTo(legL, ybot - ah); ctx.lineTo(legL, cy); ctx.arc(cx, cy, rin, 0, -Math.PI / 2, true); ctx.lineTo(xs, yb); ctx.closePath(); ctx.fill(); ctx.restore();
+    const lx = clamp((legL + legR) / 2, x + 40, x + w - 40);
+    label(ctx, o.nm, lx, ybot + 11, o.col, "center", 11.5); label(ctx, `${unitFmt(o.v)} (${pct(o.v)})`, lx, ybot + 25, o.col, "center", 11);
+    yb = yTop;
+  });
+}
+// middle column: FBD on top and the energy chart below; side by side when the column is short and wide (tablet layout)
+function midBoxes(w, h){
+  if (h < 400 && w > h * 1.4){ const a = Math.round(w * 0.44); return {fb:{x:0, y:0, w:a, h}, lo:{x:a + 6, y:4, w:w - a - 14, h:h - 8}}; }
+  const top = Math.round(h * 0.5); return {fb:{x:0, y:0, w, h:top}, lo:{x:8, y:top + 4, w:w - 16, h:h - top - 8}};
+}
+function plain(ctx, txt, x, y, col, size = 12, align = "center"){ ctx.save(); ctx.fillStyle = col; ctx.font = `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`;
+  ctx.textAlign = align; ctx.textBaseline = "middle"; ctx.fillText(txt, x, y); ctx.restore(); }
+function woodBox(ctx, x, y, w, h, ang = 0){            // box with its bottom-left corner at (x, y), tilted by ang (rad, uphill +)
+  ctx.save(); ctx.translate(x, y); ctx.rotate(-ang);
+  ctx.fillStyle = "#FFCC80"; ctx.strokeStyle = "#C68A3A"; ctx.lineWidth = 2; ctx.fillRect(0, -h, w, h); ctx.strokeRect(0, -h, w, h);
+  ctx.strokeStyle = "rgba(198,138,58,.45)"; ctx.lineWidth = 1; for (let i = 1; i < 4; i++){ ctx.beginPath(); ctx.moveTo(4, -h * i / 4); ctx.lineTo(w - 4, -h * i / 4); ctx.stroke(); }
+  ctx.restore();
+}
+function distMark(ctx, x1, x2, y, txt, col = COL.ink){
+  ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x1, y - 6); ctx.lineTo(x1, y + 6); ctx.moveTo(x2, y - 6); ctx.lineTo(x2, y + 6); ctx.stroke(); ctx.restore();
+  if (x2 - x1 > 20) arrow(ctx, x1 + 1, y, x2 - 1, y, col, 1.6); label(ctx, txt, (x1 + x2) / 2, y + 13, col, "center", 12.5);
+}
+function scaleBar(ctx, k, h, y = null){
+  const sb = niceUp(Math.max(1e-3, 60 / k)), t = sb < 1 ? `${sig(sb * 100)} cm` : `${sig(sb)} m`, yy = y ?? h - 14;
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(12, yy); ctx.lineTo(12 + sb * k, yy); ctx.stroke();
+  label(ctx, t, 12 + sb * k / 2, yy - 12, COL.ink, "center", 11.5);
+}
+function sceneMain(ctx, w, h, s){
+  bg(ctx, w, h);
+  const sc = set.sc;
+  if (sc === "pull"){
+    const yG = h * 0.66, bw = 70, bh = 46, k = Math.max(1, (w - 60 - bw - 90) / set.s), X0 = 30;
+    ctx.fillStyle = "#D7CCC8"; ctx.fillRect(0, yG, w, h - yG); ctx.fillStyle = "#8D6E63"; ctx.fillRect(0, yG, w, 3);
+    const bx = X0 + s.x * k; woodBox(ctx, bx, yG, bw, bh);
+    label(ctx, `${sig(set.m)} kg`, bx + bw / 2, yG - bh / 2, "#6D4C41", "center", 12.5);
+    // rope + newton meter at angle θ from the front of the box
+    const ax = bx + bw, ay = yG - bh * 0.55, L = 80, hx = ax + L * Math.cos(rad(set.th)), hy = ay - L * Math.sin(rad(set.th));
+    ctx.strokeStyle = COL.P; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(hx, hy); ctx.stroke();
+    ctx.save(); ctx.translate(hx, hy); ctx.rotate(-rad(set.th)); ctx.fillStyle = "#ECEFF1"; ctx.strokeStyle = COL.P; ctx.lineWidth = 1.5;
+    ctx.fillRect(0, -7, 34, 14); ctx.strokeRect(0, -7, 34, 14); ctx.restore();
+    label(ctx, `${sig(set.F)} N at ${sig(set.th)}°`, Math.min(w - 60, hx + 20), Math.max(44, hy - 26), COL.P, "center", 12.5);
+    if (set.th > 0){ ctx.save(); ctx.strokeStyle = COL.P; ctx.setLineDash([4, 3]); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax + 60, ay); ctx.stroke();
+      ctx.setLineDash([]); ctx.beginPath(); ctx.arc(ax, ay, 30, -rad(set.th), 0); ctx.stroke(); ctx.restore();
+      label(ctx, "θ", ax + 38 * Math.cos(rad(set.th / 2)), ay - 38 * Math.sin(rad(set.th / 2)), COL.P, "center", 13); }
+    distMark(ctx, X0 + bw / 2, X0 + bw / 2 + set.s * k, yG + 22, `s = ${sig(set.s)} m`);
+    if (s.v > 0) arrow(ctx, bx + bw / 2 - 20, yG - bh - 16, bx + bw / 2 - 20 + Math.min(70, 18 + s.v * 30), yG - bh - 16, COL.v, 3);
+    scaleBar(ctx, k, h);
+    label(ctx, "Pull at an angle · only F cos θ moves the box along", 10, 14, COL.navy, "left", 13);
+    if (M.still) note(ctx, M.still, w / 2, h * 0.28, w - 40, COL.F, 13);
+    return;
+  }
+  if (sc === "ramp"){
+    const r = M.r, yG = h * 0.84, ramp = set.meth === "ramp", Lx = Math.sqrt(Math.max(0, set.L * set.L - set.h * set.h)), bs = 40, shelf = 56;
+    const k = Math.min((w - 40 - shelf - bs - 70) / Math.max(Lx, 0.1), (h * 0.58) / set.h), x0 = 30, xt = x0 + Lx * k, yt = yG - set.h * k, xl = xt + shelf + 8;
+    ctx.fillStyle = "#D7CCC8"; ctx.fillRect(0, yG, w, h - yG); ctx.fillStyle = "#8D6E63"; ctx.fillRect(0, yG, w, 3);
+    ctx.fillStyle = ramp ? "#BCAAA4" : "#E0D6D2"; ctx.strokeStyle = "#6D4C41"; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(x0, yG); ctx.lineTo(xt, yt); ctx.lineTo(xt, yG); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#A1887F"; ctx.fillRect(xt, yt, shelf, yG - yt); ctx.strokeRect(xt, yt, shelf, yG - yt);
+    plain(ctx, "shelf", xt + shelf / 2, yt + 14, "#fff", 11.5);
+    ctx.save(); ctx.setLineDash([5, 4]); ctx.strokeStyle = ramp ? COL.grey : COL.P; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(xl + bs / 2, yG - 4); ctx.lineTo(xl + bs / 2, yt - 4); ctx.stroke(); ctx.restore();
+    const xh = xl + bs + 16;
+    ctx.save(); ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(xh, yG); ctx.lineTo(xh, yt); ctx.moveTo(xh - 5, yt); ctx.lineTo(xh + 5, yt); ctx.stroke(); ctx.restore();
+    label(ctx, "h", xh + 6, (yG + yt) / 2, COL.ink, "left", 13);
+    const th = Math.atan2(set.h, Lx), mx = (x0 + xt) / 2, my = (yG + yt) / 2;
+    label(ctx, `L = ${sig(set.L)} m`, mx + 26 * Math.sin(th), my + 26 * Math.cos(th), COL.ink, "center", 12.5);
+    label(ctx, `θ = ${f1(deg(th))}°`, x0 + 46, yG - 10, COL.muted, "left", 12);
+    if (ramp){ const p = s.d * k, bx = x0 + p * Math.cos(th), by = yG - p * Math.sin(th);
+      woodBox(ctx, bx - bs * 0.5 * Math.cos(th), by + bs * 0.5 * Math.sin(th), bs, bs * 0.8, th);
+      const ax = bx - (bs * 0.5 + 6) * Math.cos(th) - bs * 0.4 * Math.sin(th), ay = by + (bs * 0.5 + 6) * Math.sin(th) - bs * 0.4 * Math.cos(th);
+      arrow(ctx, ax - 34 * Math.cos(th), ay + 34 * Math.sin(th), ax, ay, COL.P, 3.5);
+    } else { const by = yG - s.d * k; woodBox(ctx, xl, by, bs, bs * 0.8);
+      arrow(ctx, xl + bs / 2, by - bs * 0.8 - 4, xl + bs / 2, by - bs * 0.8 - 36, COL.P, 3.5); }
+    label(ctx, `h = ${sig(set.h)} m`, w - 10, 32, COL.ink, "right", 12.5);
+    label(ctx, `${ramp ? "Pushing up the ramp" : "Lifting straight up"} at a constant slow speed · ${sig(set.mr)} kg`, 10, 14, COL.navy, "left", 13);
+    label(ctx, `force needed ${fmtF(r.F)} over ${sig(r.d)} m`, 10, 32, COL.P, "left", 12.5);
+    return;
+  }
+  if (sc === "cart"){
+    const yG = h * 0.62, cw = 84, chh = 34, span = set.d + 0.7, k = (w - 70 - cw) / span, X0 = 20;
+    ctx.fillStyle = "#ECEFF1"; ctx.fillRect(0, yG, w, 14); ctx.fillStyle = "#90A4AE"; ctx.fillRect(0, yG, w, 2);
+    ctx.fillStyle = "#D7CCC8"; ctx.fillRect(0, yG + 14, w, h - yG - 14);
+    const cx = X0 + s.x * k;
+    ctx.fillStyle = "#E53935"; ctx.strokeStyle = "#263238"; ctx.lineWidth = 1.5; rrect(ctx, cx, yG - chh - 10, cw, chh, 6); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#212121"; for (const fx of [0.22, 0.78]){ ctx.beginPath(); ctx.arc(cx + fx * cw, yG - 7, 7, 0, TWO_PI); ctx.fill(); }
+    ctx.fillStyle = "#fff"; ctx.font = '600 11.5px "Segoe UI",Calibri,Arial,sans-serif'; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("Smart Cart", cx + cw / 2, yG - chh / 2 - 10);
+    // force sensor hook, rubber band, hand (stretch grows with the force)
+    const hookX = cx + cw + 6, hy = yG - chh / 2 - 10, stretch = s.x <= set.d ? 26 + 30 * s.F / Math.max(set.Fpk, 1e-9) : 0;
+    ctx.fillStyle = "#455A64"; ctx.fillRect(cx + cw, hy - 4, 8, 8);
+    if (s.x <= set.d){ ctx.strokeStyle = "#A1887F"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(hookX, hy); ctx.lineTo(hookX + stretch, hy); ctx.stroke();
+      ctx.fillStyle = "#F1C27D"; ctx.beginPath(); ctx.arc(hookX + stretch + 9, hy, 9, 0, TWO_PI); ctx.fill();
+      label(ctx, `F = ${fmtF(s.F)}`, hookX + stretch / 2 + 6, hy - 22, COL.P, "center", 12.5); }
+    // marks: start line and end of the pull
+    ctx.strokeStyle = COL.navy; ctx.lineWidth = 2; for (const xx of [0, set.d]){ ctx.beginPath(); ctx.moveTo(X0 + cw + xx * k, yG); ctx.lineTo(X0 + cw + xx * k, yG + 14); ctx.stroke(); }
+    distMark(ctx, X0 + cw, X0 + cw + set.d * k, yG + 30, `pull over ${sig(set.d)} m`);
+    ctx.fillStyle = "#FFE082"; ctx.fillRect(w - 18, yG - 40, 14, 40);
+    label(ctx, "foam", w - 11, yG - 48, COL.muted, "center", 11);
+    if (s.v > 0.005) arrow(ctx, cx + cw / 2 - 25, yG - chh - 26, cx + cw / 2 - 25 + Math.min(80, 15 + s.v * 40), yG - chh - 26, COL.v, 3);
+    scaleBar(ctx, k, h);
+    label(ctx, `${sig(set.mc)} kg cart pulled by a ${PROF.find(p => p[0] === set.prof)[1].toLowerCase()}`, 10, 14, COL.navy, "left", 13);
+    if (M.still) note(ctx, M.still, w / 2, h * 0.3, w - 40, COL.F, 13);
+    return;
+  }
+  // braking
+  const sb = brakeDist(set.mb, set.u, set.Fb), yG = h * 0.62, cw = 90, k = (w - 50 - cw) / (sb * 1.08), X0 = 16;
+  ctx.fillStyle = "#546E7A"; ctx.fillRect(0, yG, w, 34); ctx.fillStyle = "#C5E1A5"; ctx.fillRect(0, yG + 34, w, h - yG - 34);
+  ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.setLineDash([16, 12]); ctx.beginPath(); ctx.moveTo(0, yG + 17); ctx.lineTo(w, yG + 17); ctx.stroke(); ctx.setLineDash([]);
+  const cx = X0 + s.x * k;
+  if (s.x > 0.01){ ctx.strokeStyle = "rgba(33,33,33,.55)"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(X0 + cw * 0.25, yG - 1); ctx.lineTo(cx + cw * 0.25, yG - 1); ctx.stroke(); }
+  ctx.fillStyle = "#1565C0"; ctx.strokeStyle = "#263238"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(cx, yG - 10); ctx.lineTo(cx, yG - 30); ctx.lineTo(cx + 22, yG - 32); ctx.lineTo(cx + 36, yG - 48); ctx.lineTo(cx + 66, yG - 48);
+  ctx.lineTo(cx + 80, yG - 32); ctx.lineTo(cx + cw, yG - 28); ctx.lineTo(cx + cw, yG - 10); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#212121"; for (const fx of [0.22, 0.78]){ ctx.beginPath(); ctx.arc(cx + fx * cw, yG - 9, 9, 0, TWO_PI); ctx.fill(); }
+  if (s.v > 0.01) arrow(ctx, cx + cw / 2 - 20, yG - 64, cx + cw / 2 - 20 + Math.min(90, 12 + s.v * 2.4), yG - 64, COL.v, 3);
+  label(ctx, `${f1(s.v)} m s⁻¹`, cx + cw / 2, yG - 80, COL.v, "center", 12.5);
+  distMark(ctx, X0 + cw / 2, X0 + cw / 2 + sb * k, yG + 52, `braking distance ${sig(sb)} m`);
+  scaleBar(ctx, k, h);
+  label(ctx, `${sig(set.mb)} kg car braking from ${sig(set.u)} m s⁻¹ with ${fmtF(set.Fb)}`, 10, 14, COL.navy, "left", 13);
+  label(ctx, `at ${sig(2 * set.u)} m s⁻¹ it would need ${sig(4 * sb)} m (×4)`, 10, 32, COL.muted, "left", 12);
+}
+
+/* ============================ 7 FBD ============================ */
+function midMain(ctx, w, h, s){
+/*NF*/  { const sc = set.sc, E = ["the Earth", "grav"];
+    if (sc === "pull"){ NF.body("the box", set.m, 0, 0, {auto:true}); NF.cap({W:E, F_N:["the floor", "normal"], F_f:["the floor", "friction"], F:["the rope", "pull"]}); }
+    else if (sc === "ramp"){ NF.body("the load", set.mr, 0, 0, {auto:true, v:1}); NF.cap({W:E, F_N:["the ramp", "normal"], F_f:["the ramp", "friction"],
+      F:set.meth === "lift" ? ["the rope (you)", "pull"] : ["you (the push)", "push"]}); }
+    else if (sc === "cart"){ NF.body("the Smart Cart", set.mc, 0, 0, {auto:true}); NF.cap({W:E, F_N:["the track", "normal"], F_f:["the track", "friction"], F:["the hand (pull)", "pull"]}); }
+    else { NF.body("the car", set.mb, 0, 0, {auto:true}); NF.cap({W:E, F_N:["the road", "normal"], F_b:["the road (brakes)", "friction"]}); } }/*/NF*/
+  const sc = set.sc, B = midBoxes(w, h), fb = B.fb, cx = fb.x + fb.w / 2, cy = fb.y + fb.h * 0.46, room = Math.max(20, Math.min(cy - fb.y - 36, fb.y + fb.h - 64 - cy, fb.w * 0.3));
+  if (sc === "pull"){
+    const f = pullForces(set.m, set.F, set.th, set.mu), Wt = set.m * g, mx = Math.max(Wt, set.F, 1e-9), k = room / mx;
+    ctx.save(); ctx.globalAlpha = .5; ctx.fillStyle = "#FFCC80"; ctx.fillRect(cx - 24, cy - 18, 48, 36); ctx.restore();
+    fArrow(ctx, cx, cy, 0, -Wt, k, COL.W, "W", "", ` = ${fmtF(Wt)}`);
+    fArrow(ctx, cx, cy, 0, f.N, k, COL.N, "F", "N", ` = ${fmtF(f.N)}`);
+    if (f.Ff > 1e-9) fArrow(ctx, cx, cy, -f.Ff, 0, k, COL.F, "F", "f", ` = ${fmtF(f.Ff)}`);
+    fArrow(ctx, cx, cy, f.Fx, f.Fy, k, COL.P, "F", "", ` = ${fmtF(set.F)}`);
+    if (set.th > 0 && set.th < 90){ arrow(ctx, cx, cy, cx + f.Fx * k, cy, COL.P, 2, true);
+      subLabel(ctx, "F", "", ` cos θ = ${fmtF(f.Fx)}`, cx + f.Fx * k / 2 + 4, cy + 14, COL.P, "left", 11.5); }
+    label(ctx, "displacement →", fb.x + 10, 14, COL.v, "left", 12);
+    note(ctx, "Only forces with a component along the displacement do work. F_N and W are at 90° to it: no work.", cx, fb.y + fb.h - 8, fb.w - 20);
+    const W = workF(set.F, s.x, set.th), Wf = -f.Ff * s.x;
+    energyBars(ctx, B.lo, [
+      {nm:["W", "F", ""], v:W, col:COL.P}, {nm:["W", "f", ""], v:Wf, col:COL.F}, {nm:["W", "N", ""], v:0, col:COL.N}, {nm:["W", "W", ""], v:0, col:COL.W},
+      {nm:["W", "net", ""], v:W + Wf, col:COL.ink}, {nm:["ΔE", "k", ""], v:s.Ek, col:EC.K}], {title:"Work done by each force so far / J", max:workF(set.F, set.s, set.th)});
+    return;
+  }
+  if (sc === "ramp"){
+    const r = M.r, Wt = set.mr * g, k = room / Math.max(Wt, r.F, 1e-9);
+    if (set.meth === "lift"){
+      ctx.save(); ctx.globalAlpha = .5; ctx.fillStyle = "#FFCC80"; ctx.fillRect(cx - 24, cy - 18, 48, 36); ctx.restore();
+      fArrow(ctx, cx, cy, 0, -Wt, k, COL.W, "W", "", ` = ${fmtF(Wt)}`); fArrow(ctx, cx + 1, cy, 0, r.F, k, COL.P, "F", "", ` = ${fmtF(r.F)}`);
+      note(ctx, "Constant speed: the lifting force balances the weight. It acts along the displacement (up).", cx, fb.y + fb.h - 8, fb.w - 20);
+    } else {
+      const th = rad(r.th), ux = Math.cos(th), uy = Math.sin(th);
+      ctx.save(); ctx.translate(cx, cy); ctx.rotate(-th); ctx.globalAlpha = .5; ctx.fillStyle = "#FFCC80"; ctx.fillRect(-24, -18, 48, 36); ctx.restore();
+      ctx.save(); ctx.strokeStyle = COL.grey; ctx.setLineDash([4, 4]); ctx.beginPath(); ctx.moveTo(cx - 90 * ux, cy + 90 * uy + 20); ctx.lineTo(cx + 90 * ux, cy - 90 * uy + 20); ctx.stroke(); ctx.restore();
+      fArrow(ctx, cx, cy, 0, -Wt, k, COL.W, "W", "", ` = ${fmtF(Wt)}`);
+      fArrow(ctx, cx, cy, -uy * r.N, ux * r.N, k, COL.N, "F", "N", ` = ${fmtF(r.N)}`);
+      if (r.Ff > 1e-9) fArrow(ctx, cx, cy, -ux * r.Ff, -uy * r.Ff, k, COL.F, "F", "f", ` = ${fmtF(r.Ff)}`);
+      fArrow(ctx, cx, cy, ux * r.F, uy * r.F, k, COL.P, "F", "", ` = ${fmtF(r.F)}`);
+      note(ctx, "Constant speed: the push balances mg sin θ (+ friction). Smaller force, longer distance.", cx, fb.y + fb.h - 8, fb.w - 20);
+    }
+    sankey(ctx, B.lo, {nm:"Work done by you", v:s.W},
+      [{nm:"Gravitational PE", v:s.Ep, col:EC.P, useful:true}, {nm:"Thermal (friction)", v:s.Q, col:EC.T}], v => `${sig(v, 3)} J`, {title:"Where the work done goes (Sankey, to scale)"});
+    return;
+  }
+  if (sc === "cart"){
+    const Wt = set.mc * g, k = room / Math.max(Wt, set.Fpk, 1e-9), f = s.v > 0 ? set.fr : Math.min(set.fr, s.F);
+    ctx.save(); ctx.globalAlpha = .5; ctx.fillStyle = "#E53935"; ctx.fillRect(cx - 28, cy - 14, 56, 28); ctx.restore();
+    fArrow(ctx, cx, cy, 0, -Wt, k, COL.W, "W", "", ` = ${fmtF(Wt)}`); fArrow(ctx, cx, cy, 0, Wt, k, COL.N, "F", "N", ` = ${fmtF(Wt)}`);
+    if (s.F > 1e-9) fArrow(ctx, cx, cy, s.F, 0, k, COL.P, "F", "", ` = ${fmtF(s.F)}`);
+    if (f > 1e-9) fArrow(ctx, cx, cy, -f, 0, k, COL.F, "F", "f", ` = ${fmtF(f)}`, 12);
+    note(ctx, s.x <= set.d ? "During the pull the resultant force (F − F_f) does positive work: the cart speeds up." : "After the pull only rolling friction acts: negative work, the cart slows down slowly.", cx, fb.y + fb.h - 8, fb.w - 20);
+    energyBars(ctx, B.lo, [
+      {nm:["W", "pull", ""], v:s.Wp, col:COL.P}, {nm:["W", "f", ""], v:s.Wf, col:COL.F}, {nm:["W", "net", ""], v:s.Wp + s.Wf, col:COL.ink}, {nm:["ΔE", "k", ""], v:s.Ek, col:EC.K}],
+      {title:"Work done on the cart so far / J", max:pullWork(set.prof, set.Fpk, set.d)});
+    return;
+  }
+  const Wt = set.mb * g, k = room / Math.max(Wt, set.Fb);
+  ctx.save(); ctx.globalAlpha = .5; ctx.fillStyle = "#1565C0"; ctx.fillRect(cx - 30, cy - 14, 60, 28); ctx.restore();
+  fArrow(ctx, cx, cy, 0, -Wt, k, COL.W, "W", "", ` = ${fmtF(Wt)}`); fArrow(ctx, cx, cy, 0, Wt, k, COL.N, "F", "N", ` = ${fmtF(Wt)}`);
+  if (s.v > 1e-6) fArrow(ctx, cx, cy, -set.Fb, 0, k, COL.F, "F", "b", ` = ${fmtF(set.Fb)}`);
+  note(ctx, "The braking force acts opposite to the displacement (θ = 180°): negative work, W = −F_b s. It takes away the kinetic energy.", cx, fb.y + fb.h - 8, fb.w - 20);
+  energyBars(ctx, B.lo, [
+    {nm:["E", "k", ""], v:s.Ek, col:EC.K}, {nm:["thermal", "", ""], v:s.Q, col:EC.T}, {nm:["W", "brakes", ""], v:s.Wb, col:COL.F}],
+    {title:"Energy / kJ  (thermal: brakes and tyres heat up)", total:s.Ek + s.Q, fmt:v => mn(sig(v / 1000, 3))});
+}
+
+/* ============================ 8 GRAPHS ============================ */
+function niceUp(x){ const p = Math.pow(10, Math.floor(Math.log10(x))), m = x / p;
+  return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p; }
+function niceStep(range, n){ return niceUp(range / n); }
+function niceCeil(x, n = 5){ const st = niceUp(x / n); return Math.ceil(x / st - 1e-9) * st; }
+// axis numbers: enough decimals for small steps, × 10ⁿ form for very big values (typed values can be far outside the sliders)
+const tickTxt = (v, st, d0) => { if (Math.abs(v) >= 1e6){ const e = Math.floor(Math.log10(Math.abs(v)) + 1e-9);
+    return `${+(v / 10 ** e).toPrecision(3)}×10${[...String(e)].map(c => "⁰¹²³⁴⁵⁶⁷⁸⁹"[c]).join("")}`; }
+  return String(+v.toFixed(Math.min(12, Math.max(d0, Math.ceil(-Math.log10(st)) + 1)))); };
+function axesR(ctx, box, x0, x1, y0, y1, xLab, yLab, noX = false){
+  const {x, y, w, h} = box, X = v => x + w * (v - x0) / (x1 - x0), Y = v => y + h - h * (v - y0) / (y1 - y0);
+  ctx.save(); ctx.font = `13px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = COL.muted; ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
+  const xs = niceStep(x1 - x0, 8), ys = niceStep(y1 - y0, 6);
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  if (!noX) for (let v = Math.ceil(x0 / xs - 1e-9) * xs; v <= x1 + xs * 1e-6; v += xs){ ctx.beginPath(); ctx.moveTo(X(v), y); ctx.lineTo(X(v), y + h); ctx.stroke(); ctx.fillText(tickTxt(v, xs, 3), X(v), y + h + 4); }
+  ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  for (let v = Math.ceil(y0 / ys - 1e-9) * ys; v <= y1 + ys * 1e-6; v += ys){ ctx.beginPath(); ctx.moveTo(x, Y(v)); ctx.lineTo(x + w, Y(v)); ctx.stroke(); ctx.fillText(tickTxt(v, ys, 3), x - 5, Y(v)); }
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.5; ctx.beginPath();
+  const zx = x0 <= 0 && x1 >= 0 ? X(0) : x, zy = y0 <= 0 && y1 >= 0 ? Y(0) : y + h;
+  ctx.moveTo(zx, y); ctx.lineTo(zx, y + h); ctx.moveTo(x, zy); ctx.lineTo(x + w, zy); ctx.stroke();
+  ctx.restore();
+  rich(ctx, xLab, x + w / 2, y + h + 30, COL.ink);
+  ctx.save(); ctx.translate(x - 46, y + h / 2); ctx.rotate(-Math.PI / 2); rich(ctx, yLab, 0, 0, COL.ink); ctx.restore();
+  return {X, Y};
+}
+function shadeArea(ctx, X, Y, f, t1, n = 240){
+  if (!(t1 > 0)) return 0;
+  let A = 0, ta = 0, fa = f(0); ctx.save();
+  for (let i = 1; i <= n; i++){
+    const tb = t1 * i / n, fb = f(tb); A += (fa + fb) / 2 * (tb - ta);
+    ctx.fillStyle = fa + fb >= 0 ? "rgba(21,101,192,.22)" : "rgba(198,40,40,.22)";
+    ctx.beginPath(); ctx.moveTo(X(ta), Y(0)); ctx.lineTo(X(ta), Y(fa)); ctx.lineTo(X(tb), Y(fb)); ctx.lineTo(X(tb), Y(0)); ctx.closePath(); ctx.fill();
+    ta = tb; fa = fb;
+  }
+  ctx.restore(); return A;
+}
+// Name + value of the shaded area, written inside it (beside it with a leader line when it does not fit) — as in sims 10–15
+function areaName(ctx, box, L){
+  const {X, Y, f, t1, nm, val} = L; if (!(t1 > 0)) return;
+  const l1 = nm[0], l2 = `${nm[1]} = ${mn(sci(val))} ${nm[2]}`, col = val >= 0 ? "#0D47A1" : "#B71C1C", fs = 13;
+  ctx.save(); ctx.font = `700 ${fs}px "Segoe UI",Calibri,Arial,sans-serif`;
+  const w = Math.max(ctx.measureText(l1).width, ctx.measureText(l2).width) + 14, h = 2 * fs + 14;
+  const xa = X(0), xb = X(t1), wt = w / ((xb - xa) / t1 || 1);
+  let best = {d:-1, t:t1 / 2, s:1};
+  if (wt < t1) for (let i = 0; i <= 40; i++){
+    const t = wt / 2 + (t1 - wt) * i / 40, s = f(t) >= 0 ? 1 : -1; let d = Infinity;
+    for (let j = 0; j <= 6; j++){ const tj = t - wt / 2 + wt * j / 6, dp = (Y(0) - Y(f(tj))) * s; d = Math.min(d, dp); }
+    if (d > best.d) best = {d, t, s};
+  }
+  let cx, cy; const beside = best.d < h + 8;
+  const tm = beside ? (best.d > 0 ? best.t : t1 / 2) : best.t, yc = Y(f(tm) / 2);
+  if (!beside){ cx = X(best.t); cy = Y(0) - best.s * best.d / 2; }
+  else {
+    const iX = x => (x - xa) / ((xb - xa) / t1 || 1), clash = (x0, y0) => {
+      for (let j = 0; j <= 12; j++){ const t = iX(x0 - w / 2 - 4 + (w + 8) * j / 12); if (t < 0) continue;
+        if (t > t1){ if (Math.abs(Y(f(t)) - y0) < h / 2 + 4) return true; continue; }
+        const ya = Y(0), yf = Y(f(t)); if (Math.max(ya, yf) + 4 > y0 - h / 2 && Math.min(ya, yf) - 4 < y0 + h / 2) return true; }
+      return false; };
+    let bd = Infinity;
+    for (let x0 = box.x + w / 2 + 4; x0 <= box.x + box.w - w / 2 - 4; x0 += 8)
+      for (let y0 = box.y + 46 + h / 2; y0 <= box.y + box.h - 30 - h / 2; y0 += 6){
+        const dd = Math.hypot(x0 - X(tm), y0 - yc); if (dd < bd && !clash(x0, y0)){ bd = dd; cx = x0; cy = y0; } }
+    if (cx === undefined){ cx = X(tm); cy = yc; }
+  }
+  cx = Math.min(Math.max(cx, box.x + w / 2 + 2), box.x + box.w - w / 2 - 2);
+  cy = Math.min(Math.max(cy, box.y + h / 2 + 2), box.y + box.h - h / 2 - 4);
+  if (beside){ ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(X(tm), yc); ctx.lineTo(cx, cy); ctx.stroke(); ctx.setLineDash([]); }
+  const x0 = cx - w / 2, y0 = cy - h / 2, r = 6;
+  ctx.fillStyle = "rgba(255,255,255,.88)"; ctx.strokeStyle = col; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(x0 + r, y0); ctx.arcTo(x0 + w, y0, x0 + w, y0 + h, r); ctx.arcTo(x0 + w, y0 + h, x0, y0 + h, r);
+  ctx.arcTo(x0, y0 + h, x0, y0, r); ctx.arcTo(x0, y0, x0 + w, y0, r); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = col; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(l1, cx, cy - fs / 2 - 1); ctx.font = `600 ${fs}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillText(l2, cx, cy + fs / 2 + 2);
+  ctx.restore();
+}
+const toolOn = id => !!document.getElementById(id)?.checked;
+// Generic graph. Spec (GQ[key]): {btn, sym, un, s:[[name, f(state), colour, dashed?]], x?:{f, sym, un} (default: time),
+//   area?:{nm:[line 1, symbol, unit], i?:series index}, tan?:{nm, un}, extra?(ctx, X, Y, box)}. The curve is drawn up to now.
+let gq = null;
+function gSpec(){ const keys = graphsFor(); if (!keys.includes(gq)) gq = keys[0]; return GQ[gq]; }
+function drawGraph(){
+  const cv = document.getElementById("graph"); if (!cv.offsetParent) return;
+  const {ctx, w, h} = fitCanvas(cv);
+  ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  const q = gSpec(); if (q.custom){ q.custom(ctx, w, h); return; }
+  const box = {x:66, y:16, w:w - 82, h:h - 66}, T = tEnd(), tu = M.tu || 1, N = 500;
+  const tNow = clamp(R.t, 0, T), ts = [];
+  for (let i = 0; i <= N; i++) ts.push(T * i / N);
+  const st = ts.map(t => at(t)), xf = q.x ? q.x.f : (s => s.t / tu);
+  const xs = st.map(xf), ser = q.s.map(([nm, f, col, dash]) => ({nm, f, col, dash, ys:st.map(f)}));
+  let x0 = Math.min(0, ...xs), x1 = Math.max(...xs); if (x1 - x0 < 1e-9) x1 = x0 + 1;
+  if (!q.x) { x0 = 0; x1 = Math.max(T / tu, 1e-6); }
+  if (q.xMax) x1 = Math.max(x1, q.xMax());
+  let lo = Math.min(0, ...ser.flatMap(s => s.ys)), hi = Math.max(0, ...ser.flatMap(s => s.ys)); const span = hi - lo || 1;
+  if (q.yMax) hi = Math.max(hi, q.yMax());
+  hi = hi > 0 ? niceCeil(hi + span * 0.1) : niceUp(span * 0.1); lo = lo < 0 ? -niceCeil(-lo + span * 0.08) : 0;
+  const {X, Y} = axesR(ctx, box, x0, x1, lo, hi, q.x ? [...q.x.sym, [` / ${q.x.un}`,"n"]] : [["time ","n"],["t","i"],[` / ${M.tn || "s"}`,"n"]], [...q.sym, [` / ${q.un}`,"n"]]);
+  if (q.extra) q.extra(ctx, X, Y, box);
+  const sNow = at(tNow), xNow = xf(sNow), nNow = Math.round(tNow / T * N) || 0, tl = [];
+  // points up to now (with the exact current state at the end)
+  const upTo = arr => arr.slice(0, Math.min(nNow, N) + 1);
+  if (toolOn("areaChk")){
+    if (!q.area) tl.push(M.noArea || "Area: not used on this graph");
+    else { const S = ser[q.area.i || 0], px = [...upTo(xs), xNow], py = [...upTo(S.ys), S.f(sNow)];
+      let mono = true; for (let i = 1; i < px.length; i++) if (px[i] < px[i - 1] - 1e-9) mono = false;
+      if (!mono) tl.push("Area: the quantity on the x-axis must keep increasing");
+      else if (xNow > px[0] + 1e-12){
+        let A = 0; ctx.save(); ctx.globalAlpha = .2;
+        for (let i = 1; i < px.length; i++){ A += (py[i] + py[i - 1]) / 2 * (px[i] - px[i - 1]);
+          ctx.fillStyle = py[i] + py[i - 1] >= 0 ? "#1565C0" : "#C62828";
+          ctx.beginPath(); ctx.moveTo(X(px[i - 1]), Y(0)); ctx.lineTo(X(px[i - 1]), Y(py[i - 1])); ctx.lineTo(X(px[i]), Y(py[i])); ctx.lineTo(X(px[i]), Y(0)); ctx.closePath(); ctx.fill(); }
+        ctx.restore();
+        const fI = xx => { let j = 1; while (j < px.length - 1 && px[j] < xx) j++; const u = (xx - px[j - 1]) / ((px[j] - px[j - 1]) || 1); return py[j - 1] + (py[j] - py[j - 1]) * clamp(u, 0, 1); };
+        const sh = px[0];
+        areaName(ctx, box, {X:xx => X(xx + sh), Y, f:xx => fI(xx + sh), t1:xNow - sh, nm:q.area.nm, val:A * (q.area.k || 1)});
+      }
+    }
+  }
+  ser.forEach(S => { const px = [...upTo(xs), xNow], py = [...upTo(S.ys), S.f(sNow)];
+    ctx.save(); ctx.strokeStyle = S.col; ctx.lineWidth = S.dash ? 2.6 : 2.4; if (S.dash) ctx.setLineDash([8, 4]); ctx.beginPath();
+    px.forEach((xx, i) => i ? ctx.lineTo(X(xx), Y(py[i])) : ctx.moveTo(X(xx), Y(py[i]))); ctx.stroke(); ctx.restore(); });
+  if (!q.x){ ctx.save(); ctx.strokeStyle = COL.accent; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(X(xNow), box.y); ctx.lineTo(X(xNow), box.y + box.h); ctx.stroke(); ctx.restore(); }
+  if (toolOn("tanChk")){
+    if (!q.tan) tl.push(M.noTan || "Tangent: not used on this graph");
+    else { const S = ser[q.tan.i || 0], d = Math.max(T * 2e-3, 1e-6), sa = at(clamp(tNow - d, 0, T)), sb = at(clamp(tNow + d, 0, T));
+      const dx = xf(sb) - xf(sa);
+      if (Math.abs(dx) < 1e-12 || tNow <= 0) tl.push("Tangent: move the time on (▶ or ▸) first");
+      else { const kk = (S.f(sb) - S.f(sa)) / dx, y0 = S.f(sNow), sp = (x1 - x0) * 0.14;
+        ctx.save(); ctx.beginPath(); ctx.rect(box.x, box.y, box.w, box.h); ctx.clip();
+        ctx.strokeStyle = COL.accent; ctx.lineWidth = 2; ctx.setLineDash([8, 4]);
+        ctx.beginPath(); ctx.moveTo(X(xNow - sp), Y(y0 - kk * sp)); ctx.lineTo(X(xNow + sp), Y(y0 + kk * sp)); ctx.stroke(); ctx.restore();
+        tl.push(`gradient = ${q.tan.nm} = ${mn(sci(kk * (q.tan.k || 1)))} ${q.tan.un}`); }
+    }
+  }
+  ser.forEach((S, i) => { const v = S.f(sNow); ctx.fillStyle = S.col; ctx.beginPath(); ctx.arc(X(xNow), Y(v), 4.5, 0, 7); ctx.fill();
+    label(ctx, `${S.nm}: ${mn(sci(v))} ${q.un}`, box.x + 8, box.y + 12 + 17 * i, S.col, "left", 13); });
+  tl.forEach((t, i) => label(ctx, t, box.x + box.w - 6, box.y + 12 + 17 * i, COL.accent, "right", 13));
+  if (!q.x){ const rt = X(xNow) > box.x + box.w * 0.7;
+    label(ctx, `t = ${sig(tNow / tu, 3)} ${M.tn || "s"}`, X(xNow) + (rt ? -6 : 6), box.y + box.h - 12, COL.accent, rt ? "right" : "left", 12.5); }
+}
+function renderGsel(){
+  const keys = graphsFor(); gSpec();
+  document.getElementById("gsel").innerHTML = keys.map(k => `<button data-g="${k}" aria-pressed="${k === gq}">${GQ[k].btn}</button>`).join("");
+}
+const S_ = [["s","i"]];
+const GQ = {
+  pFs:{btn:"<i>F</i>–<i>s</i>", x:{f:s => s.x, sym:[["displacement ","n"],["s","i"]], un:"m"}, sym:[["F","i"]], un:"N",
+       s:[["F cos θ", s => s.Fx, COL.P], ["−F_f", s => -s.Ff, COL.F]], area:{nm:["Work done by the pull", "W", "J"]}, xMax:() => set.s},
+  pWs:{btn:"<i>W</i>–<i>s</i>", x:{f:s => s.x, sym:[["displacement ","n"],["s","i"]], un:"m"}, sym:[["W","i"],[", ","n"],["E","i"],["k","s"]], un:"J",
+       s:[["W by F", s => s.WF, COL.P], ["W by friction", s => s.Wf, COL.F], ["W net", s => s.WF + s.Wf, COL.ink], ["E_k", s => s.Ek, EC.K, true]], tan:{nm:"force", un:"N"}, xMax:() => set.s},
+  pvt:{btn:"<i>v</i>–<i>t</i>", sym:[["v","i"]], un:"m s⁻¹", s:[["v", s => s.v, COL.v]], area:{nm:["Distance moved", "s", "m"]}, tan:{nm:"a", un:"m s⁻²"}},
+  rFs:{btn:"<i>F</i>–<i>s</i>", x:{f:s => s.d, sym:[["distance moved ","n"],["s","i"]], un:"m"}, sym:[["F","i"]], un:"N",
+       s:[["force needed", s => s.F, COL.P]], area:{nm:["Work done", "W", "J"]},
+       xMax:() => Math.max(set.h, set.L), yMax:() => set.mr * g,
+       extra(ctx, X, Y){ const o = rampForces(set.meth === "lift" ? "ramp" : "lift", set.mr, set.h, set.L, set.mur);
+         ctx.save(); ctx.strokeStyle = COL.grey; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.beginPath(); ctx.moveTo(X(0), Y(o.F)); ctx.lineTo(X(o.d), Y(o.F)); ctx.lineTo(X(o.d), Y(0)); ctx.stroke(); ctx.restore();
+         label(ctx, `${set.meth === "lift" ? "ramp" : "lift"}: ${sig(o.F)} N × ${sig(o.d)} m = ${sig(o.W)} J`, X(o.d) - 4, Y(o.F) + 12, COL.muted, "right", 12); }},
+  rEs:{btn:"<i>E</i>–<i>s</i>", x:{f:s => s.d, sym:[["distance moved ","n"],["s","i"]], un:"m"}, sym:[["E","i"]], un:"J",
+       s:[["work done", s => s.W, COL.P], ["GPE gained", s => s.Ep, EC.P], ["thermal", s => s.Q, EC.T]], tan:{nm:"force", un:"N"}},
+  cFs:{btn:"<i>F</i>–<i>s</i>", x:{f:s => s.x, sym:[["position ","n"],["s","i"]], un:"m"}, sym:[["F","i"]], un:"N",
+       s:[["pull F", s => s.F, COL.P]], area:{nm:["Work done by the pull", "W", "J"]}},
+  cEs:{btn:"<i>W</i>, <i>E</i><sub>k</sub>–<i>s</i>", x:{f:s => s.x, sym:[["position ","n"],["s","i"]], un:"m"}, sym:[["E","i"]], un:"J",
+       s:[["W by pull", s => s.Wp, COL.P], ["W net", s => s.Wp + s.Wf, COL.ink], ["E_k", s => s.Ek, EC.K, true]], tan:{nm:"resultant force", un:"N", i:2}},
+  cvt:{btn:"<i>v</i>–<i>t</i>", sym:[["v","i"]], un:"m s⁻¹", s:[["v", s => s.v, COL.v]], area:{nm:["Distance moved", "s", "m"]}, tan:{nm:"a", un:"m s⁻²"}},
+  bvt:{btn:"<i>v</i>–<i>t</i>", sym:[["v","i"]], un:"m s⁻¹", s:[["v", s => s.v, COL.v]], area:{nm:["Braking distance", "s", "m"]}, tan:{nm:"a", un:"m s⁻²"}},
+  bFs:{btn:"<i>F</i>–<i>s</i>", x:{f:s => s.x, sym:[["displacement ","n"],["s","i"]], un:"m"}, sym:[["F","i"]], un:"kN",
+       s:[["braking force", s => s.v > 1e-9 ? -set.Fb / 1000 : 0, COL.F]], area:{nm:["Work done by the brakes", "W", "J"], k:1000}},
+  bEs:{btn:"<i>E</i><sub>k</sub>–<i>s</i>", x:{f:s => s.x, sym:[["displacement ","n"],["s","i"]], un:"m"}, sym:[["E","i"],["k","s"]], un:"kJ",
+       s:[["E_k", s => s.Ek / 1000, EC.K]], tan:{nm:"resultant force", un:"N", k:1000}},
+};
+const graphsFor = () => ({pull:["pFs", "pWs", "pvt"], ramp:["rFs", "rEs"], cart:["cFs", "cEs", "cvt"], brake:["bvt", "bFs", "bEs"]})[set.sc];
+
+/* ============================ 9 DATA ============================ */
+// Recorded trials are kept per example (scenario). DCOLS[sc] = table columns; ANA = analysis graphs
+// {id, sc:[...], name, x(t), y(t), xs, xu, ys, yu, fit:"origin"|"line", g(fit) → text, hint}.
+let trials = [], anaId = {};
+const noisy = x => document.getElementById("noiseChk").checked ? x * (1 + 0.02 * (2 * Math.random() - 1)) : x;
+function recordTrial(){
+  const d = trialData(); if (typeof d === "string"){ flash(d); return; }
+  trials.push({sc:set.sc, ...d}); save(); renderTrials(); flash("Trial recorded: see the Data & analysis tab.");
+}
+const anaFor = () => ANA.filter(a => a.sc.includes(set.sc));
+function curAna(){ const L = anaFor(); return L.find(a => a.id === anaId[set.sc]) || L[0]; }
+function renderTrials(){
+  const cols = DCOLS[set.sc] || [], list = trials.map((t, i) => [t, i]).filter(([t]) => t.sc === set.sc);
+  document.querySelector("#trials thead").innerHTML = `<tr><th>#</th>${cols.map(c => `<th>${c[0]}</th>`).join("")}<th></th></tr>`;
+  document.querySelector("#trials tbody").innerHTML = list.map(([t, i], n) =>
+    `<tr><td>${n + 1}</td>${cols.map(c => `<td>${c[1](t)}</td>`).join("")}<td><button class="x" aria-label="Delete trial ${n + 1}" data-del="${i}">×</button></td></tr>`).join("");
+  const A = curAna();
+  document.getElementById("anaSel").innerHTML = anaFor().map(a => `<button data-a="${a.id}" aria-pressed="${A && a.id === A.id}">${a.name}</button>`).join("");
+}
+function drawAna(){
+  const cv = document.getElementById("ana"); if (!cv.offsetParent) return;
+  const {ctx, w, h} = fitCanvas(cv);
+  ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  const A = curAna(); if (!A){ label(ctx, "No analysis graph for this example", w / 2, h / 2, COL.muted, "center", 14); return; }
+  const tr = trials.filter(t => t.sc === set.sc && (!A.filter || A.filter(t)));
+  const pts = tr.map(t => [A.x(t), A.y(t)]).filter(p => isFinite(p[0]) && isFinite(p[1]));
+  const xm = niceCeil(Math.max(1e-12, ...pts.map(p => p[0])) * 1.1), ym = niceCeil(Math.max(1e-12, ...pts.map(p => p[1])) * 1.15);
+  const box = {x:68, y:44, w:w - 84, h:h - 94};
+  const {X, Y} = axesR(ctx, box, 0, pts.length ? xm : 1, 0, pts.length ? ym : 1, [...A.xs, [` / ${A.xu}`, "n"]], [...A.ys, [` / ${A.yu}`, "n"]]);
+  label(ctx, `Recorded trials · ${A.hint}`, box.x, 14, COL.muted, "left", 12.5);
+  if (!pts.length){ label(ctx, "Press ● Record to add trials", box.x + box.w / 2, box.y + box.h / 2, COL.muted, "center", 15); return; }
+  for (const p of pts){ ctx.fillStyle = COL.navy; ctx.beginPath(); ctx.arc(X(p[0]), Y(p[1]), 5, 0, 7); ctx.fill(); }
+  if (document.getElementById("fitChk").checked){
+    const fit = A.fit === "line" ? linFit(pts) : originFit(pts);
+    if (!fit){ label(ctx, "Need at least 2 trials (with different values)", box.x, 30, COL.muted, "left", 13); return; }
+    const xa = 0, xb = xm;
+    ctx.save(); ctx.beginPath(); ctx.rect(box.x, box.y, box.w, box.h); ctx.clip(); ctx.strokeStyle = COL.accent; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(X(xa), Y(fit.k * xa + fit.b)); ctx.lineTo(X(xb), Y(fit.k * xb + fit.b)); ctx.stroke(); ctx.restore();
+    label(ctx, A.g(fit), box.x, 30, COL.accent, "left", 13.5);
+  }
+}
+function trialData(){
+  const sc = set.sc;
+  if (sc === "pull"){ const f = pullForces(set.m, set.F, set.th, set.mu); if (!f.moves || f.lifts) return M.still;
+    const W = noisy(workF(set.F, set.s, set.th)), Wf = -f.Ff * set.s;
+    return {F:set.F, th:set.th, s:set.s, W, Wf, Wnet:W + Wf, dEk:noisy(set.m * f.a * set.s)}; }
+  if (sc === "ramp"){ const r = rampForces(set.meth, set.mr, set.h, set.L, set.mur);
+    return {meth:set.meth, m:set.mr, h:set.h, L:r.d, F:noisy(r.F), W:noisy(r.F) * r.d, mgh:set.mr * g * set.h}; }
+  if (sc === "cart"){ if (M.still) return M.still; const W = noisy(pullWork(set.prof, set.Fpk, set.d)), Ek = noisy(cartKE(set.prof, set.Fpk, set.d, set.fr));
+    return {m:set.mc, d:set.d, W, Ek, v:Math.sqrt(2 * Ek / set.mc)}; }
+  return {m:set.mb, u:set.u, Fb:set.Fb, sb:noisy(brakeDist(set.mb, set.u, set.Fb))};
+}
+const DCOLS = {
+  pull:[["<i>F</i> / N", t => sig(t.F)], ["<i>θ</i> / °", t => sig(t.th)], ["cos <i>θ</i>", t => f3(Math.cos(rad(t.th)))], ["<i>s</i> / m", t => sig(t.s)],
+        ["<i>W</i><sub>F</sub> / J", t => sig(t.W)], ["<i>W</i><sub>f</sub> / J", t => mn(sig(t.Wf))], ["<i>W</i><sub>net</sub> / J", t => sig(t.Wnet)], ["Δ<i>E</i><sub>k</sub> / J", t => sig(t.dEk)]],
+  ramp:[["method", t => t.meth], ["<i>m</i> / kg", t => sig(t.m)], ["<i>h</i> / m", t => sig(t.h)], ["distance / m", t => sig(t.L)], ["<i>F</i> / N", t => sig(t.F)],
+        ["<i>W</i> = <i>Fs</i> / J", t => sig(t.W)], ["<i>mgh</i> / J", t => sig(t.mgh)]],
+  cart:[["<i>m</i> / kg", t => sig(t.m)], ["pull over / m", t => sig(t.d)], ["<i>W</i> (area) / J", t => sig(t.W)], ["<i>E</i><sub>k</sub> / J", t => sig(t.Ek)], ["<i>v</i> / m s⁻¹", t => sig(t.v)],
+        ["difference", t => `${f1((t.W - t.Ek) / t.W * 100)} %`]],
+  brake:[["<i>m</i> / kg", t => sig(t.m)], ["<i>u</i> / m s⁻¹", t => sig(t.u)], ["<i>u</i>² / m² s⁻²", t => sig(t.u * t.u)], ["<i>F</i><sub>b</sub> / N", t => sig(t.Fb)], ["<i>s</i> / m", t => sig(t.sb)]],
+};
+const ANA = [
+  {id:"Wcos", sc:["pull"], name:"<i>W</i>–cos <i>θ</i>", x:t => Math.cos(rad(t.th)), y:t => t.W, xs:[["cos ","n"],["θ","i"]], xu:"1", ys:[["W","i"],["F","s"]], yu:"J",
+   g:f => `gradient = ${sig(f.k)} J = Fs`, hint:"same F and s, different angles"},
+  {id:"Wnet", sc:["pull"], name:"Δ<i>E</i><sub>k</sub>–<i>W</i><sub>net</sub>", x:t => t.Wnet, y:t => t.dEk, xs:[["W","i"],["net","s"]], xu:"J", ys:[["ΔE","i"],["k","s"]], yu:"J",
+   g:f => `gradient = ${f2(f.k)} → W_net = ΔE_k`, hint:"any values"},
+  {id:"Wmgh", sc:["ramp"], name:"<i>W</i>–<i>mgh</i>", x:t => t.mgh, y:t => t.W, xs:[["mgh","i"]], xu:"J", ys:[["W","i"],[" = Fs","n"]], yu:"J",
+   g:f => `gradient = ${f2(f.k)} (1 when there is no friction)`, hint:"lift and ramp, different heights"},
+  {id:"EkW", sc:["cart"], name:"<i>E</i><sub>k</sub>–<i>W</i>", x:t => t.W, y:t => t.Ek, xs:[["W","i"],[" (area)","n"]], xu:"J", ys:[["E","i"],["k","s"]], yu:"J",
+   g:f => `gradient = ${f2(f.k)} → ${f0(f.k * 100)} % of the work became E_k`, hint:"different pulls"},
+  {id:"su2", sc:["brake"], name:"<i>s</i>–<i>u</i>²", x:t => t.u * t.u, y:t => t.sb, xs:[["u","i"],["²","n"]], xu:"m² s⁻²", ys:[["s","i"]], yu:"m",
+   g:f => `gradient = ${sci(f.k)} s² m⁻¹ = m/2F_b`, hint:"same car and braking force, different speeds"},
+];
+
+/* ============================ 10 TASKS ============================ */
+const TASKS = [
+ {id:"pre", title:"1 · Pre-lab: predict", time:"≈ 15 min", steps:[
+  {type:"predict", setup:P("hook0"), text:"📐 A 5.0 N pull moves a box 1.0 m along the floor. The newton meter is held at 0°, 30° or 60° above the horizontal. Which angle does the <b>most work</b> on the box?",
+   opts:["0°", "30°", "60°", "the same: the force is always 5.0 N"], correct:0,
+   why:"W = Fs cos θ: only the component along the displacement does work. cos 0° = 1, cos 30° = 0.87, cos 60° = 0.5. Try the three presets and watch the W_F bar."},
+  {type:"num", setup:P("hook60"), text:"Calculate the work done by the 5.0 N pull at 60° over 1.0 m.", answer:() => workF(5, 1, 60), unit:"J", hint:"W = Fs cos θ = 5.0 × 1.0 × cos 60°."},
+  {type:"predict", setup:P("lift"), text:"⛰️ You lift a 1.0 kg box 0.30 m straight up, or push it up a smooth 1.0 m ramp to the same height. Which needs more <b>work</b>?",
+   opts:["lifting", "the ramp", "the same work", "the ramp needs no work"], correct:2,
+   why:"Both end with the same gain in GPE, mgh = 2.94 J. The ramp needs a smaller force (2.94 N instead of 9.81 N) over a longer distance (1.0 m instead of 0.30 m). Compare the two rectangles on the F–s graph."},
+  {type:"num", setup:P("ramp"), text:"Calculate the force needed to push the 1.0 kg box up the smooth 1.0 m ramp (height 0.30 m) at constant speed.",
+   answer:() => rampForces("ramp", 1, 0.3, 1, 0).F, unit:"N", hint:"F = mg sin θ, and sin θ = h/L = 0.30."},
+  {type:"predict", text:"Concept check: you carry a bag horizontally at constant velocity. The work done by your upward force on the bag is…",
+   opts:["positive", "negative", "zero", "equal to mg × distance"], correct:2,
+   why:"Your force is vertical, the displacement is horizontal: θ = 90°, cos 90° = 0. No work is done on the bag (its energy does not change)."},
+  {type:"predict", setup:P("car20"), text:"🚗 A car brakes with the same force from 20 m s⁻¹ and from 40 m s⁻¹. At 40 m s⁻¹ the braking distance is…",
+   opts:["the same", "2 times longer", "4 times longer", "8 times longer"], correct:2,
+   why:"F_b s = ½mu², so s ∝ u². Twice the speed means four times the kinetic energy, so four times the braking distance."},
+  {type:"num", setup:P("car20"), text:"Slide 8: a 1000 kg car at 20 m s⁻¹ brakes with 8000 N. Calculate the braking distance.", answer:() => brakeDist(1000, 20, 8000), unit:"m",
+   hint:"Work done by the brakes = loss of KE: F_b s = ½mu²."},
+ ]},
+ {id:"lab", title:"2 · During the lab: compare", time:"≈ 20 min", steps:[
+  {type:"do", setup:P("hook0"), text:"📐 Hook demo: run the pull at 0°, then 30° and 60° (presets) and press ● Record after each. Compare with the newton meter on the bench."},
+  {type:"num", setup:P("hook30"), text:"Read the work done by the 5.0 N pull at 30° over 1.0 m.", answer:() => workF(5, 1, 30), unit:"J", hint:"Middle column: the W_F bar at the end of the run (or 5.0 × 1.0 × cos 30°)."},
+  {type:"num", setup:P("hook30"), text:"At 30°, the friction force is smaller than at 0°. Read F_f at 30° (μ = 0.30, 1.0 kg).", answer:() => pullForces(1, 5, 30, 0.3).Ff, unit:"N",
+   hint:"The upward part of the pull, F sin θ, makes F_N smaller: F_N = mg − F sin θ, F_f = μF_N."},
+  {type:"do", setup:P("class"), text:"🛒 Smart Cart demo (PASCO lab 07): press ▶ Start. On the F–s graph tick Area and step to the end of the pull (0.60 m). Press ● Record."},
+  {type:"num", setup:P("class"), text:"Read the work done by the pull (the area under F–s from 0 to 0.60 m).", answer:() => pullWork("smooth", 1.205, 0.60), unit:"J", hint:"The class data gave 0.475 J."},
+  {type:"num", setup:P("class"), text:"Read the kinetic energy of the cart at 0.60 m.", answer:() => cartKE("smooth", 1.205, 0.60, 0.03), unit:"J", hint:"Readouts: E_k at the end of the pull. The class data gave 0.444 J."},
+  {type:"predict", setup:P("class"), text:"The kinetic energy is a little smaller than the work done by the pull. Why?",
+   opts:["the force sensor is wrong", "rolling friction does negative work", "kinetic energy is not conserved", "the cart's mass changes"], correct:1,
+   why:"W_net = W_pull + W_friction = ΔE_k. Friction (≈ 0.03 N × 0.60 m ≈ 0.02 J) takes a little of the work and turns it into thermal energy."},
+  {type:"num", setup:P("class"), text:"Use your E_k to calculate the speed of the 0.500 kg cart at 0.60 m.", answer:() => Math.sqrt(2 * cartKE("smooth", 1.205, 0.6, 0.03) / 0.5), unit:"m s⁻¹",
+   hint:"v = √(2E_k/m). The encoder gave 1.33 m s⁻¹."},
+  {type:"predict", setup:P("band1"), text:"Hook demo 3: an elastic band is stretched twice as far (the force also doubles). The work done on the toy car is…",
+   opts:["the same", "2 times bigger", "4 times bigger", "half"], correct:2,
+   why:"The area under F–s doubles in height AND in width: ×4. Try the two 'Elastic band' presets. For a spring, W = ½kx² ∝ x²."},
+ ]},
+ {id:"hw", title:"3 · Homework: analyse", time:"≈ 30 min", steps:[
+  {type:"num", setup:P("sled"), text:"Exit question 1: a 40 N force at 60° above the horizontal pulls a sled 5.0 m. Calculate the work done by the force.", answer:() => workF(40, 5, 60), unit:"J",
+   hint:"W = Fs cos θ."},
+  {type:"num", setup:P("exit2"), text:"Exit question 2: 16 J of net work is done on a 2.0 kg trolley at rest. Calculate its final speed.", answer:() => 4, unit:"m s⁻¹", hint:"W_net = ½mv² − 0."},
+  {type:"num", text:"Concept check: a box slides 2.0 m while a 5.0 N friction force acts on it. Calculate the work done by friction (with its sign).", answer:() => -10, unit:"J",
+   hint:"θ = 180°: W = 5.0 × 2.0 × cos 180°."},
+  {type:"num", setup:P("car40"), text:"The slide 8 car brakes from 40 m s⁻¹ with the same 8000 N. Calculate the braking distance.", answer:() => brakeDist(1000, 40, 8000), unit:"m", hint:"s = ½mu²/F_b."},
+  {type:"num", setup:{pre:"custom", sc:"brake", mb:1200, u:25, Fb:7500}, text:"A 1200 kg car must stop from 25 m s⁻¹ within 50 m. Calculate the smallest braking force needed.", answer:() => 1200 * 625 / 100, unit:"N",
+   hint:"F_b = ½mu²/s. The sim is set up with the answer: check the braking distance."},
+  {type:"do", setup:P("car20"), text:"Record the slide 8 car (1000 kg, 8000 N) at 5 different speeds from 10 to 40 m s⁻¹. Data tab → <b>s–u²</b>."},
+  {type:"num", text:"Enter the gradient of your s–u² line.", answer:() => 1000 / (2 * 8000), unit:"s² m⁻¹", hint:"s = (m/2F_b) u²: the gradient is m/(2F_b)."},
+  {type:"num", setup:P("band2"), text:"Elastic band, stretch 2: the force rises from 0.20 N to 2.0 N over 0.60 m (a straight line). Calculate the work done (area of the trapezium).", answer:() => pullWork("rising", 2, 0.6), unit:"J",
+   hint:"Area = ½(0.20 + 2.0) × 0.60. Check with the Area tool."},
+ ]},
+];
+// Step types: "do" (instruction + done tick), "predict" (lock in a choice, then check),
+// "num" (numeric answer checked within tol, default 5 %). "setup" applies sim settings for the student.
+let taskState = {}, curSet = "pre";
+function renderTaskSets(){
+  document.getElementById("taskSets").innerHTML = TASKS.map(s =>
+    `<button class="chip" data-set="${s.id}" aria-pressed="${s.id === curSet}">${s.title} <span class="hint">${s.time}</span></button>`).join("");
+}
+function renderTasks(){
+  const ts = TASKS.find(s => s.id === curSet), box = document.getElementById("taskList"); box.innerHTML = "";
+  ts.steps.forEach((st, i) => {
+    const key = `${ts.id}.${i}`, S = taskState[key] || (taskState[key] = {});
+    const d = document.createElement("div"); d.className = "step" + (S.done ? " done" : "");
+    let html = `<p class="q"><span class="n">${i + 1}</span>${st.type === "predict" ? '<span class="tag">Predict · </span>' : ""}${st.text}</p>`;
+    if (st.setup) html += `<button class="btn small" data-setup="${key}">⚙ Set up the sim for me</button> `;
+    if (st.type === "do"){
+      html += `<label class="switch"><input type="checkbox" data-done="${key}" ${S.done ? "checked" : ""}> Done</label>`;
+    } else if (st.type === "predict"){
+      st.opts.forEach((o, j) => {
+        const cls = S.checked ? (j === st.correct ? " good" : j === S.choice ? " bad" : "") : "";
+        html += `<label class="opt${cls}"><input type="radio" name="r${key}" value="${j}" data-choice="${key}" ${S.choice === j ? "checked" : ""} ${S.locked ? "disabled" : ""}> ${o}</label>`;
+      });
+      if (!S.locked) html += `<button class="btn small primary" data-lock="${key}" ${S.choice === undefined ? "disabled" : ""}>🔒 Lock in my prediction</button>`;
+      else if (!S.checked) html += `<div class="fb info">Prediction locked. Now test it in the sim, then press Check.</div><button class="btn small navy" data-check="${key}">Check</button>`;
+      else html += `<div class="fb ${S.choice === st.correct ? "ok" : "no"}">${S.choice === st.correct ? "✔ Your prediction was right. " : "✘ Not what happens. "}${st.why}</div>`;
+    } else if (st.type === "num"){
+      const a = st.answer(), shown = st.unit ? `${mn(sci(a))} ${st.unit}` : mn(sci(a));
+      html += `<div class="row"><input class="num" inputmode="decimal" data-num="${key}" value="${S.value ?? ""}" aria-label="answer"> ${st.unit}
+               <button class="btn small navy" data-chknum="${key}">Check</button>
+               ${st.hint ? `<button class="btn small" data-hint="${key}">💡 Hint</button>` : ""}</div>`;
+      if (S.showHint && st.hint) html += `<div class="fb info">${st.hint}</div>`;
+      if (S.status === "ok") html += `<div class="fb ok">✔ Correct (within ${Math.round((st.tol ?? 0.05) * 100)} %). Model answer: ${shown}.</div>`;
+      else if (S.status) html += `<div class="fb no">✘ ${S.status === "high" ? "Too high" : S.status === "low" ? "Too low" : "Enter a number"}. ${S.tries >= 2 ? `Model answer: ${shown}.` : "Try again or use the hint."}</div>`;
+    }
+    d.innerHTML = html; box.appendChild(d);
+  });
+}
+function applySetup(su){
+  const c = JSON.parse(JSON.stringify(su)); if (c.pre && presetById(c.pre)) Object.assign(set, P(c.pre));
+  Object.assign(set, c); setScenarioUI(); syncControls(); reset(); renderTrials(); renderGsel();
+}
+function taskClick(e){
+  const t = e.target.closest("[data-setup],[data-lock],[data-check],[data-chknum],[data-hint],[data-set]"); if (!t) return;
+  if (t.dataset.set){ curSet = t.dataset.set; renderTaskSets(); renderTasks(); save(); return; }
+  const key = t.dataset.setup || t.dataset.lock || t.dataset.check || t.dataset.chknum || t.dataset.hint;
+  const [sid, idx] = key.split("."), st = TASKS.find(s => s.id === sid).steps[+idx], S = taskState[key];
+  if (t.dataset.setup) applySetup(st.setup);
+  if (t.dataset.lock){ S.locked = true; }
+  if (t.dataset.check){ S.checked = true; S.done = true; }
+  if (t.dataset.hint){ S.showHint = true; }
+  if (t.dataset.chknum){
+    const raw = document.querySelector(`[data-num="${key}"]`).value.replace(",", "."), v = parseFloat(raw), a = st.answer();
+    S.value = raw; S.tries = (S.tries || 0) + 1;
+    if (!isFinite(v)) S.status = "nan";
+    else if (Math.abs(v - a) <= Math.max((st.tol ?? 0.05) * Math.abs(a), st.abs ?? 1e-9)) { S.status = "ok"; S.done = true; }
+    else S.status = v > a ? "high" : "low";
+  }
+  save(); renderTasks();
+}
+function taskChange(e){
+  const t = e.target;
+  if (t.dataset.choice){ taskState[t.dataset.choice].choice = +t.value; renderTasks(); save(); }
+  if (t.dataset.done){ taskState[t.dataset.done].done = t.checked; renderTasks(); save(); }
+}
+
+/* ============================ 11 UI ============================ */
+const CTL = [
+  {id:"pre", kind:"select", lab:"Example", opts:() => PRESETS.filter(p => p.id === "custom" || p.sc === set.sc).map(p => [p.id, p.name]), keepPre:true},
+  {id:"m", sc:["pull"], kind:"range", log:true, lab:"Mass <i>m</i>", unit:"kg", min:0.2, max:50, tmin:0.01, tmax:5000},
+  {id:"F", sc:["pull"], kind:"range", log:true, lab:"Pull <i>F</i>", unit:"N", min:0.5, max:500, tmin:0.01, tmax:100000},
+  {id:"th", sc:["pull"], kind:"range", lab:"Angle <i>θ</i>", unit:"°", min:0, max:85, tmin:0, tmax:90, step:1},
+  {id:"mu", sc:["pull"], kind:"range", lab:"Friction <i>μ</i>", unit:"", min:0, max:0.8, tmin:0, tmax:2, step:0.01},
+  {id:"s", sc:["pull"], kind:"range", lab:"Distance <i>s</i>", unit:"m", min:0.2, max:20, tmin:0.01, tmax:1000, step:0.1},
+  {id:"meth", sc:["ramp"], kind:"seg", lab:"Method", opts:METH},
+  {id:"mr", sc:["ramp"], kind:"range", log:true, lab:"Mass <i>m</i>", unit:"kg", min:0.1, max:200, tmin:0.01, tmax:5000},
+  {id:"h", sc:["ramp"], kind:"range", lab:"Height <i>h</i>", unit:"m", min:0.1, max:3, tmin:0.01, tmax:100, step:0.01},
+  {id:"L", sc:["ramp"], kind:"range", lab:"Ramp length <i>L</i>", unit:"m", min:0.2, max:10, tmin:0.02, tmax:1000, step:0.1},
+  {id:"mur", sc:["ramp"], kind:"range", lab:"Friction <i>μ</i>", unit:"", min:0, max:0.6, tmin:0, tmax:2, step:0.01},
+  {id:"mc", sc:["cart"], kind:"range", lab:"Cart mass <i>m</i>", unit:"kg", min:0.25, max:3, tmin:0.05, tmax:50, step:0.005},
+  {id:"prof", sc:["cart"], kind:"select", lab:"Pull shape", opts:PROF},
+  {id:"Fpk", sc:["cart"], kind:"range", log:true, lab:"Peak force", unit:"N", min:0.2, max:20, tmin:0.01, tmax:500},
+  {id:"d", sc:["cart"], kind:"range", lab:"Pull over", unit:"m", min:0.2, max:1.2, tmin:0.05, tmax:10, step:0.01},
+  {id:"fr", sc:["cart"], kind:"range", lab:"Rolling friction", unit:"N", min:0, max:0.3, tmin:0, tmax:10, step:0.005},
+  {id:"mb", sc:["brake"], kind:"range", log:true, lab:"Mass <i>m</i>", unit:"kg", min:500, max:5000, tmin:100, tmax:100000},
+  {id:"u", sc:["brake"], kind:"range", lab:"Speed <i>u</i>", unit:"m s⁻¹", min:2, max:45, tmin:0.5, tmax:200, step:0.5},
+  {id:"Fb", sc:["brake"], kind:"range", log:true, lab:"Braking force <i>F</i><sub>b</sub>", unit:"N", min:500, max:30000, tmin:10, tmax:1e+06},
+];
+function onChanged(c, v){
+  if (c.id === "h" && set.L < set.h * 1.02) set.L = +(set.h * 1.2).toFixed(2);
+  if (c.id === "L" && set.L < set.h * 1.02){ set.L = +(set.h * 1.02).toFixed(2); flash("The ramp must be longer than its height."); }
+}
+const vrow = (a, b, col = "") => `<tr><td>${a}</td><td class="v"${col ? ` style="color:${col}"` : ""}>${b}</td></tr>`;
+function readouts(s){
+  const sc = set.sc;
+  if (sc === "pull"){ const f = pullForces(set.m, set.F, set.th, set.mu), W = workF(set.F, s.x, set.th);
+    return `<table>${row("<i>F</i> cos <i>θ</i>", fmtF(f.Fx), "<i>F</i><sub>N</sub>", fmtF(f.N), COL.P, COL.N)}
+      ${row("<i>F</i><sub>f</sub>", fmtF(f.Ff), "moved <i>s</i>", `${f2(s.x)} m`, COL.F)}
+      ${row("<i>W</i> by <i>F</i>", `${sig(W)} J`, "<i>W</i> by friction", `${mn(sig(-f.Ff * s.x))} J`, COL.P, COL.F)}
+      ${row("<i>W</i> by <i>F</i><sub>N</sub>, <i>W</i>", "0 J", "<i>W</i><sub>net</sub>", `${sig(W - f.Ff * s.x)} J`)}
+      ${row("<i>v</i>", `${f2(s.v)} m s⁻¹`, "<i>E</i><sub>k</sub> = ½<i>mv</i>²", `${sig(s.Ek)} J`, COL.v, EC.K)}
+      <tr><td colspan="5" class="ev">${M.still ? pill(false, "", "no motion: no work") : `<i>W</i><sub>net</sub> = Δ<i>E</i><sub>k</sub> · work done by the pull over ${sig(set.s)} m = ${sig(workF(set.F, set.s, set.th))} J`}</td></tr></table>`; }
+  if (sc === "ramp"){ const r = M.r, o = rampForces(set.meth === "lift" ? "ramp" : "lift", set.mr, set.h, set.L, set.mur);
+    return `<table>${row("force needed", fmtF(r.F), "distance", `${sig(r.d)} m`, COL.P)}
+      ${row("work done <i>Fs</i>", `${sig(s.W)} J`, "GPE gained", `${sig(s.Ep)} J`, COL.P, EC.P)}
+      ${row("thermal (friction)", `${sig(s.Q)} J`, "ramp angle", `${f1(deg(Math.asin(set.h / set.L)))}°`, EC.T)}
+      ${row(`other method (${set.meth === "lift" ? "ramp" : "lift"})`, fmtF(o.F), "its work", `${sig(o.W)} J`, COL.muted, COL.muted)}
+      <tr><td colspan="5" class="ev">at the top: work done = <i>mgh</i> ${r.Q > 1e-9 ? "+ thermal energy" : ""} = ${sig(r.W)} J ·
+        ${pill(r.Q < 1e-9, "same work for any smooth path", `efficiency ${f0(r.Ep / r.W * 100)} %`)}</td></tr></table>`; }
+  if (sc === "cart"){ const Wp = pullWork(set.prof, set.Fpk, set.d), Ek = cartKE(set.prof, set.Fpk, set.d, set.fr);
+    return `<table>${row("pull <i>F</i>", fmtF(s.F), "position <i>s</i>", `${f3(s.x)} m`, COL.P)}
+      ${row("<i>W</i> by pull", `${sig(s.Wp)} J`, "<i>W</i> by friction", `${mn(sig(s.Wf))} J`, COL.P, COL.F)}
+      ${row("<i>v</i>", `${f3(s.v)} m s⁻¹`, "<i>E</i><sub>k</sub>", `${sig(s.Ek)} J`, COL.v, EC.K)}
+      ${row(`area 0–${sig(set.d)} m`, `${sig(Wp)} J`, `<i>E</i><sub>k</sub> at ${sig(set.d)} m`, `${sig(Ek)} J`, COL.P, EC.K)}
+      <tr><td colspan="5" class="ev">${M.still ? pill(false, "", "too weak to start") : `difference ${sig(Wp - Ek)} J = work against friction (${f1((Wp - Ek) / Wp * 100)} %) · class data: 0.475 J and 0.444 J`}</td></tr></table>`; }
+  const sb = brakeDist(set.mb, set.u, set.Fb);
+  return `<table>${row("<i>E</i><sub>k</sub> at the start", fmtE(set.mb * set.u * set.u / 2), "deceleration", `${sig(set.Fb / set.mb)} m s⁻²`, EC.K)}
+    ${row("<i>v</i>", `${f2(s.v)} m s⁻¹`, "distance so far", `${f2(s.x)} m`, COL.v)}
+    ${row("<i>W</i> by the brakes", `${mn(fmtE(s.Wb))}`, "<i>E</i><sub>k</sub> now", fmtE(s.Ek), COL.F, EC.K)}
+    ${row("braking distance", `${sig(sb)} m`, "time to stop", `${sig(set.u * set.mb / set.Fb)} s`)}
+    <tr><td colspan="5" class="ev"><i>F</i><sub>b</sub><i>s</i> = ½<i>mu</i>² · twice the speed ⇒ ${sig(4 * sb)} m (×4)</td></tr></table>`;
+}
+const $ = id => document.getElementById(id);
+function save(){ try { localStorage.setItem(STORE, JSON.stringify({trials, taskState, curSet, anaId})); } catch (e) {} }
+function load(){ try { const d = JSON.parse(localStorage.getItem(STORE) || "{}");
+  trials = d.trials || []; taskState = d.taskState || {}; curSet = d.curSet || "pre"; anaId = {...anaId, ...(d.anaId || {})}; } catch (e) {} }
+function flash(msg){ let el = $("toast");
+  if (!el){ el = document.createElement("div"); el.id = "toast"; el.setAttribute("role", "status");
+    el.style.cssText = "position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:#1F3A5F;color:#fff;padding:10px 16px;border-radius:10px;z-index:20;max-width:90vw;font-size:.95rem";
+    document.body.appendChild(el); }
+  el.textContent = msg; el.style.display = "block"; clearTimeout(flash.tm); flash.tm = setTimeout(() => el.style.display = "none", 3200); }
+
+// Controls: every slider has a number box next to it. Type a value and press Enter (or leave the box):
+// it is kept to the allowed range and keeps the precision you typed; the slider follows.
+// CTL entries: {id, kind:"range"|"select"|"seg"|"check", lab, unit, min, max, step | log, opts, sc:[scenarios], show()}
+const getV = id => set[id];
+function putV(id, v){ set[id] = v; }
+const fmtBox = v => String(+Number(v).toPrecision(5));
+const txt = x => typeof x === "function" ? x() : x;
+const ctlOn = c => (!c.sc || c.sc.includes(set.sc)) && (!c.show || c.show());
+const optsOf = c => typeof c.opts === "function" ? c.opts() : c.opts;
+function buildControls(){
+  $("controls").innerHTML = CTL.map(c => {
+    const lab = `<span class="lab" id="${c.id}Lab">${txt(c.lab)}</span>`;
+    if (c.kind === "range"){
+      const mn = c.log ? Math.log10(c.min) : c.min, mx = c.log ? Math.log10(c.max) : c.max, st = c.log ? 0.001 : c.step;
+      return `<div class="ctl" id="${c.id}C">${lab}<div class="rn">
+        <input type="range" id="${c.id}" min="${mn}" max="${mx}" step="${st}" aria-labelledby="${c.id}Lab">
+        <input class="nb" type="text" inputmode="decimal" id="${c.id}N" aria-label="type a value" title="Type a value (${fmtBox(c.tmin ?? c.min)}–${fmtBox(c.tmax ?? c.max)} ${c.unit}) and press Enter">
+        <span class="u">${c.unit}</span></div></div>`;
+    }
+    if (c.kind === "seg") return `<div class="ctl" id="${c.id}C">${lab}<div class="seg" id="${c.id}">${c.opts.map(o => `<button data-v="${o[0]}">${o[1]}</button>`).join("")}</div></div>`;
+    if (c.kind === "select") return `<div class="ctl" id="${c.id}C">${lab}<select id="${c.id}" aria-labelledby="${c.id}Lab"></select></div>`;
+    return `<div class="ctl" id="${c.id}C">${lab}<label class="switch"><input type="checkbox" id="${c.id}"> ${c.text}</label></div>`;
+  }).join("");
+  for (const c of CTL){
+    const el = $(c.id);
+    if (c.kind === "range"){
+      el.addEventListener("input", () => { let v = c.log ? +Number(Math.pow(10, +el.value)).toPrecision(3) : +el.value; changed(c, v); });
+      const nb = $(c.id + "N");
+      const commit = () => { const raw = nb.value.trim().replace(",", "."), v = Number(raw);
+        if (!raw || !isFinite(v)){ nb.value = fmtBox(getV(c.id)); return; }
+        const cv = clamp(v, c.tmin ?? c.min, c.tmax ?? c.max); nb.classList.toggle("clamped", cv !== v);   // typed range (tmin/tmax) can be wider than the slider
+        if (cv !== v){ flash(`Allowed range: ${fmtBox(c.tmin ?? c.min)} to ${fmtBox(c.tmax ?? c.max)} ${c.unit}. Set to ${fmtBox(cv)}.`); setTimeout(() => nb.classList.remove("clamped"), 1800); }
+        changed(c, cv); if (nb._st) STEPPER.check(nb._st, cv === v); };
+      nb.addEventListener("input", () => { clearTimeout(nb._tm); nb._tm = setTimeout(() => {   // apply by itself once typing pauses (no Enter needed)
+        const raw = nb.value.trim().replace(",", "."); if (raw && isFinite(Number(raw)) && !/[.eE+-]$/.test(raw)){ nb._auto = raw; commit(); } }, 600); });
+      nb.addEventListener("change", () => { clearTimeout(nb._tm); if (nb.value.trim().replace(",", ".") !== nb._auto) commit(); nb._auto = null; });
+      nb.addEventListener("keydown", e => { if (e.key === "Enter"){ clearTimeout(nb._tm); commit(); nb._auto = null; nb.select(); } });
+      let d0;   // ▼ [box] ▲ ↺ (shared stepper): start value = the value when the page has loaded
+      STEPPER.attach(nb, {get:() => +getV(c.id), unit:() => c.unit, toast:flash, room:() => [c.min, c.max], hard:() => [c.tmin ?? c.min, c.tmax ?? c.max],
+        log:!!c.log, step:() => c.bstep ?? c.step, base:() => c.min,
+        def:() => { if (d0 === undefined) d0 = JSON.parse(JSON.stringify(set)); const d = d0[c.id]; return Array.isArray(d) ? d[set.kSel] : d; },
+        apply:v => { nb.value = STEPPER.fmt(v); nb._auto = null; commit(); }});
+    } else if (c.kind === "seg") el.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return;
+      changed(c, typeof c.opts[0][0] === "number" ? +b.dataset.v : b.dataset.v); });
+    else if (c.kind === "select") el.addEventListener("change", () => changed(c, el.value));
+    else el.addEventListener("change", () => changed(c, el.checked));
+  }
+}
+function changed(c, v){
+  putV(c.id, v);
+  if (c.id === "pre"){ if (presetById(v) && v !== "custom") Object.assign(set, P(v)); }
+  else if (!c.keepPre) set.pre = "custom";
+  if (typeof onChanged === "function") onChanged(c, v);
+  syncControls(); reset(); renderTrials();
+}
+function syncControls(){
+  for (const c of CTL){
+    const on = ctlOn(c), box = $(c.id + "C"); box.classList.toggle("hide", !on);
+    if (!on) continue;
+    $(c.id + "Lab").innerHTML = txt(c.lab);
+    const el = $(c.id), v = getV(c.id);
+    if (c.kind === "range"){
+      el.value = c.log ? Math.log10(v) : v; const nb = $(c.id + "N");
+      if (document.activeElement !== nb) nb.value = fmtBox(v);
+    } else if (c.kind === "seg") el.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v) === String(v)));
+    else if (c.kind === "select"){ const html = optsOf(c).map(o => `<option value="${o[0]}">${o[1]}</option>`).join("");
+      if (el.dataset.h !== html){ el.innerHTML = html; el.dataset.h = html; } el.value = v; }
+    else el.checked = !!v;
+  }
+}
+function setScenarioUI(){
+  document.querySelectorAll("#scen button").forEach(b => b.setAttribute("aria-pressed", b.dataset.sc === set.sc));
+  $("graphHint").innerHTML = txt(SCN[set.sc].hint);
+  $("fbdTitle").innerHTML = txt(SCN[set.sc].mid);
+}
+function updateButtons(){
+  $("startBtn").disabled = R.playing && !R.paused;
+  $("pauseBtn").disabled = !R.playing; $("pauseBtn").textContent = R.paused ? "▶" : "⏸"; $("pauseBtn").setAttribute("aria-label", R.paused ? "Resume" : "Pause");
+}
+const fmtDur = s => s >= 3600 ? `${+(s / 3600).toPrecision(2)} h` : s >= 60 ? `${+(s / 60).toPrecision(2)} min` : s < 0.1 ? `${+(s * 1000).toPrecision(2)} ms` : `${+s.toPrecision(2)} s`;
+function updateStepLabels(){ const d = fmtDur(stepDt()); $("backBtn").textContent = `◂ ${d}`; $("fwdBtn").textContent = `${d} ▸`; }
+
+// readouts helpers
+let lastRO = "";
+const row = (a, b, c = "", d = "", col1 = "", col2 = "") => `<tr><td>${a}</td><td class="v"${col1 ? ` style="color:${col1}"` : ""}>${b}</td><td class="gap"></td><td>${c}</td><td class="v"${col2 ? ` style="color:${col2}"` : ""}>${d}</td></tr>`;
+function pill(ok, yes, no){ return `<span class="pill ${ok ? "rest" : "slide"}">${ok ? yes : no}</span>`; }
+function showReadouts(){ const html = readouts(at(R.t)); if (html !== lastRO){ $("readouts").innerHTML = html; lastRO = html; } }
+function drawScene(){
+  const {ctx, w, h} = fitCanvas($("scene")); ctx.clearRect(0, 0, w, h);
+  const s = at(R.t); sceneMain(ctx, w, h, s);
+  if (tEnd() > 0) label(ctx, `t = ${M.tu ? sig(R.t / M.tu, 3) + " " + M.tn : f2(R.t) + " s"}`, w - 10, h - 12, COL.P, "right", 14);
+  const sp = M.speed || 1; if (tEnd() > 0 && Math.abs(sp - 1) > 0.05) label(ctx, sp < 1 ? `slow motion ×${sig(1 / sp, 2)}` : `speeded up ×${sig(sp, 2)}`, w - 10, h - 30, COL.muted, "right", 12);
+}
+function drawFBD(){
+  const {ctx, w, h} = fitCanvas($("fbd")); ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  midMain(ctx, w, h, at(R.t));
+}
+
+$("scen").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return;
+  set.sc = b.dataset.sc; Object.assign(set, P(SCN[set.sc].pre));
+  setScenarioUI(); syncControls(); reset(); renderTrials(); renderGsel(); });
+$("startBtn").addEventListener("click", start);
+$("pauseBtn").addEventListener("click", () => { R.paused = !R.paused; updateButtons(); });
+$("resetBtn").addEventListener("click", () => { reset(); });
+$("recBtn").addEventListener("click", recordTrial);
+$("gsel").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; gq = b.dataset.g; renderGsel(); });
+$("anaSel").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; anaId[set.sc] = b.dataset.a; save(); renderTrials(); });
+$("clearBtn").addEventListener("click", () => { if (confirm("Delete the recorded trials of this example?")){ trials = trials.filter(t => t.sc !== set.sc); save(); renderTrials(); } });
+$("trials").addEventListener("click", e => { const b = e.target.closest("[data-del]"); if (b){ trials.splice(+b.dataset.del, 1); save(); renderTrials(); } });
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x === t));
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("on", p.id === t.dataset.tab));
+}));
+$("pTasks").addEventListener("click", taskClick);
+$("pTasks").addEventListener("change", taskChange);
+$("helpBtn").addEventListener("click", () => $("help").classList.add("on"));
+$("helpClose").addEventListener("click", () => $("help").classList.remove("on"));
+$("help").addEventListener("click", e => { if (e.target.id === "help") $("help").classList.remove("on"); });
+const gcv = $("graph");
+const probeFromGraph = e => { if (e.buttons !== 1 && e.type !== "pointerdown") return; if (GQ[gq] && GQ[gq].x) return;
+  const r = gcv.getBoundingClientRect(), bw = r.width - 82;
+  R.t = clamp((e.clientX - r.left - 66) / bw * tEnd(), 0, tEnd());
+  R.playing = R.t < tEnd(); R.paused = R.playing; updateButtons(); };
+gcv.addEventListener("pointerdown", probeFromGraph); gcv.addEventListener("pointermove", probeFromGraph);
+$("backBtn").addEventListener("click", () => stepBy(-stepDt()));
+$("fwdBtn").addEventListener("click", () => stepBy(stepDt()));
+document.addEventListener("keydown", e => {
+  const t = e.target; if (t.tagName === "SELECT" || t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && t.type !== "checkbox")) return;
+  if ($("help").classList.contains("on")) return;
+  if (e.key === "ArrowLeft"){ stepBy(-stepDt()); e.preventDefault(); }
+  else if (e.key === "ArrowRight"){ stepBy(stepDt()); e.preventDefault(); }
+});
+
+load(); Object.assign(set, P(SCN[set.sc].pre)); buildControls(); setScenarioUI(); syncControls(); reset(); renderTrials(); renderGsel(); renderTaskSets(); renderTasks();
+let last = performance.now();
+function frame(now){
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  step(dt);
+  drawScene(); drawFBD(); drawGraph(); drawAna(); showReadouts();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+/* NEWTON HOOK */ NEWTON.hook();
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>

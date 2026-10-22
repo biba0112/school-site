@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz – Circular motion</title>
+<style>
+:root{--navy:#1F3A5F;--accent:#E65100;--ink:#263238;--muted:#606A72;--bg:#F2F5F9;--line:#DDE6F0;
+  --ok:#2E7D32;--okbg:#E8F5E9;--bad:#C62828;--badbg:#FFEBEE;--blue:#1565C0;--bluebg:#E3F2FD}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif}
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);padding:14px 16px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+header h1{margin:0;font-size:1.4rem}
+header p{margin:2px 0 0;opacity:.85;font-size:.95rem}
+.credit{text-align:right;font-size:.85rem;line-height:1.35;opacity:.92}
+.credit a{color:#fff}
+svg.fig{max-width:100%;height:auto;display:block;margin:6px auto;background:#fff}
+
+.hl{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+a.home{color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.5);border-radius:8px;padding:8px 12px;
+  font-weight:600;min-height:40px;display:inline-flex;align-items:center}
+a.home:hover{background:rgba(255,255,255,.12)}
+main{max-width:1180px;margin:0 auto;padding:16px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.intro{max-width:760px;margin:10px auto}
+.intro h2{margin:0 0 6px;color:var(--navy)}
+.intro ul{margin:6px 0 12px;padding-left:20px}
+.intro a{color:var(--navy)}
+.best{color:var(--muted);font-size:.95rem;margin:8px 0}
+button{font:inherit;cursor:pointer}
+.btn{border:0;border-radius:8px;padding:11px 20px;font-weight:700;min-height:46px}
+.primary{background:var(--accent);color:#fff}
+.primary:disabled{background:#BFC7CF;cursor:default}
+.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+.topbar{display:flex;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.qno{font-weight:700;color:var(--navy);white-space:nowrap}
+.bar{flex:1;min-width:140px;height:10px;background:#DDE6F0;border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.score{color:var(--muted);white-space:nowrap}
+.qgrid{display:grid;grid-template-columns:1fr;gap:16px}
+@media (min-width:980px){.qgrid.hasfig{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.qtext{font-size:1.12rem;margin:0 0 6px}
+.opts{display:flex;flex-direction:column;gap:9px}
+.opt{display:flex;align-items:center;gap:12px;text-align:left;background:#fff;border:2px solid var(--line);
+  border-radius:10px;padding:10px 12px;min-height:52px;color:var(--ink);font-size:1.02rem}
+.opt:hover:not(:disabled){border-color:var(--navy)}
+.opt .L{flex:none;width:32px;height:32px;border-radius:50%;background:var(--bg);color:var(--navy);font-weight:700;
+  display:flex;align-items:center;justify-content:center;border:1px solid var(--line)}
+.opt.sel{border-color:var(--navy);background:#EEF3F9}
+.opt.sel .L{background:var(--navy);color:#fff}
+.opt.right{border-color:var(--ok);background:var(--okbg)}
+.opt.right .L{background:var(--ok);color:#fff;border-color:var(--ok)}
+.opt.wrong{border-color:var(--bad);background:var(--badbg)}
+.opt.wrong .L{background:var(--bad);color:#fff;border-color:var(--bad)}
+.opt:disabled{cursor:default}
+.actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
+.fb{margin-top:12px;border-radius:10px;padding:12px 14px;border-left:6px solid}
+.fb.ok{background:var(--okbg);border-color:var(--ok)}
+.fb.no{background:var(--badbg);border-color:var(--bad)}
+.fb h3{margin:0 0 4px;font-size:1.05rem}
+.fb.ok h3{color:var(--ok)} .fb.no h3{color:var(--bad)}
+.fb .exp{margin:4px 0 8px}
+.fb a{color:var(--blue);font-weight:600}
+.hint{color:var(--muted);font-size:.85rem;margin-top:8px}
+.result{max-width:860px;margin:0 auto}
+.big{font-size:2.6rem;font-weight:800;color:var(--navy);margin:0}
+.review{list-style:none;padding:0;margin:14px 0}
+.review li{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--line);align-items:flex-start}
+.review .m{flex:none;width:28px;height:28px;border-radius:50%;color:#fff;font-weight:700;display:flex;
+  align-items:center;justify-content:center}
+.review .m.y{background:var(--ok)} .review .m.n{background:var(--bad)}
+.review small{color:var(--muted)}
+.review button{background:none;border:0;color:var(--blue);padding:0;text-align:left;font-weight:600}
+[hidden]{display:none!important}
+@media (max-width:600px){.credit{text-align:left}header h1{font-size:1.2rem}.card{padding:14px}}
+
+.qbtn{background:#2E7D32;color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;font-weight:700;
+  min-height:44px;cursor:pointer;white-space:nowrap}
+.qbtn:hover{background:#256628}
+.hbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+dialog.qd{border:0;border-radius:14px;padding:0;width:min(680px,calc(100vw - 32px));max-height:calc(100vh - 40px);
+  color:#263238;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+dialog.qd::backdrop{background:rgba(15,30,50,.55)}
+.qd-head{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#1F3A5F;color:#fff;
+  padding:12px 16px;border-bottom:4px solid #E65100;position:sticky;top:0}
+.qd-head h2{margin:0;font-size:1.15rem}
+.qd-x{background:none;border:0;color:#fff;font-size:1.5rem;line-height:1;cursor:pointer;min-width:44px;min-height:44px}
+.qd-body{padding:6px 16px 14px}
+.qd-body>p{margin:8px 0;color:#606A72;font-size:.92rem}
+.qd-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #DDE6F0;flex-wrap:wrap}
+.qd-row .t{flex:1;min-width:180px}
+.qd-row .tag{display:block;font-size:.75rem;font-weight:700;color:#2E7D32;text-transform:uppercase;letter-spacing:.04em}
+.qd-row b{color:#1F3A5F;font-size:1.05rem}
+.qd-row .sc{display:block;font-size:.85rem;color:#606A72}
+.qd-row .sc.done{color:#2E7D32;font-weight:600}
+.qd-row.here{background:#FFF3E0;margin:0 -16px;padding:10px 16px}
+.qd-row .here-tag{font-size:.75rem;font-weight:700;color:#E65100;margin-left:6px}
+.qd-row .acts{display:flex;gap:8px;flex:none}
+.qd-row a{display:inline-flex;align-items:center;border-radius:8px;padding:8px 14px;min-height:42px;text-decoration:none;font-weight:600}
+.qd-row a.go{background:#E65100;color:#fff}
+.qd-row a.pdf{border:1px solid #DDE6F0;color:#1F3A5F;background:#fff}
+/* ==== PHONE CSS START: compact header on phones (10 Oct 2026); wider screens unchanged ==== */
+@media (max-width:759px){
+  header{padding:10px 14px;gap:8px}
+  header h1{font-size:1.15rem}
+  header p{font-size:.85rem}
+  .hl{gap:8px;width:100%}
+  a.home,.qbtn{min-height:40px;padding:6px 10px;font-size:.88rem}
+  .credit{flex-basis:100%;text-align:left;font-size:.75rem}
+  .credit br{display:none} .credit a{margin-left:6px}
+}
+/* ==== PHONE CSS END ==== */
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Topic quiz: Circular motion</h1>
+    <p>IBDP Physics SL · Grade 11 · A.2 Circular motion · 10 questions</p>
+  </div>
+  <div class="hl"><a class="home" href="https://school.taneski.com/physics/dp/">← All simulations</a><button class="qbtn" type="button" id="qbtn" aria-haspopup="dialog">✔ Test yourself — topic quizzes</button><div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div></div>
+</header>
+<main>
+  <section id="intro" class="card intro">
+    <h2>Test yourself: Circular motion</h2>
+    <p>Speed and period, centripetal acceleration and force, cars on bends, satellites and pendulums. Practise with the simulations and worksheets first:</p>
+    <ul><li><a href="https://school.taneski.com/physics/dp/16-circular-motion/" target="_blank" rel="noopener">Circular motion</a></li><li><a href="https://school.taneski.com/physics/dp/09-pendulum-tension/" target="_blank" rel="noopener">Pendulum tension</a></li></ul>
+    <p>10 multiple-choice questions. Choose one answer and press <b>Check</b>: you see straight away whether you are
+      right, with a short explanation and a link to the simulation where you can try it. Use g = 9.81 m s⁻².
+      Your score stays on this device only.</p>
+    <p class="best" id="best"></p>
+    <button class="btn primary" id="start">Start the quiz</button>
+  </section>
+  <section id="quiz" class="card" hidden>
+    <div class="topbar"><span class="qno" id="qno"></span><div class="bar"><i id="barfill"></i></div><span class="score" id="score"></span></div>
+    <div class="qgrid" id="qgrid">
+      <div><p class="qtext" id="qtext"></p><div id="fig"></div></div>
+      <div>
+        <div class="opts" id="opts"></div>
+        <div class="fb" id="fb" hidden></div>
+        <div class="actions"><button class="btn primary" id="check" disabled>Check</button><button class="btn primary" id="next" hidden>Next question →</button></div>
+        <div class="hint">Keys: A–D or 1–4 to choose, Enter to check.</div>
+      </div>
+    </div>
+  </section>
+  <section id="result" class="card result" hidden>
+    <p>Your score</p>
+    <p class="big" id="final"></p>
+    <p id="msg"></p>
+    <p class="best" id="best2"></p>
+    <div class="actions" style="justify-content:flex-start">
+      <button class="btn primary" id="retry">↻ Try again (answers shuffled)</button>
+      <a class="btn ghost" href="https://school.taneski.com/physics/dp/" style="text-decoration:none;display:inline-flex;align-items:center">← Back to the simulations</a>
+    </div>
+    <ul class="review" id="review"></ul>
+  </section>
+</main>
+<dialog class="qd" id="qd" aria-labelledby="qd-t"><div class="qd-head"><h2 id="qd-t">Test yourself — topic quizzes</h2><button class="qd-x" type="button" id="qd-x" aria-label="Close">✕</button></div><div class="qd-body"><p>Practised the simulations and worksheets? 10 multiple-choice questions per topic, with instant feedback. Your best scores are saved on this device only.</p><div class="qd-row"><div class="t"><span class="tag">A.1 Kinematics</span><b>Projectile motion</b><span class="sc" data-slug="quiz-projectile-motion">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-projectile-motion/">✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-projectile-motion/quiz.pdf">PDF</a></span></div><div class="qd-row"><div class="t"><span class="tag">A.1 Kinematics · graphs</span><b>Motion graphs</b><span class="sc" data-slug="quiz-motion-graphs">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-motion-graphs/">✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-motion-graphs/quiz.pdf">PDF</a></span></div><div class="qd-row"><div class="t"><span class="tag">A.2 Forces · Newton&#x27;s laws</span><b>Forces</b><span class="sc" data-slug="quiz-forces">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-forces/">✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-forces/quiz.pdf">PDF</a></span></div><div class="qd-row here"><div class="t"><span class="tag">A.2 Circular motion</span><b>Circular motion</b><span class=here-tag>● You are here</span><span class="sc" data-slug="quiz-circular-motion">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-circular-motion/" data-here=1>✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-circular-motion/quiz.pdf">PDF</a></span></div><div class="qd-row"><div class="t"><span class="tag">A.2 Momentum</span><b>Momentum and impulse</b><span class="sc" data-slug="quiz-momentum">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-momentum/">✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-momentum/quiz.pdf">PDF</a></span></div><div class="qd-row"><div class="t"><span class="tag">A.3 Work and energy</span><b>Work and energy</b><span class="sc" data-slug="quiz-work-energy">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-work-energy/">✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-work-energy/quiz.pdf">PDF</a></span></div><div class="qd-row"><div class="t"><span class="tag">A.3 Power and efficiency</span><b>Power and efficiency</b><span class="sc" data-slug="quiz-power-efficiency">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-power-efficiency/">✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-power-efficiency/quiz.pdf">PDF</a></span></div></div></dialog>
+<script>
+const DATA = {"slug": "quiz-circular-motion", "qs": [{"q": "An object moves in a horizontal circle at constant speed. Which statement is correct?", "fig": null, "opts": ["Its velocity is constant, so there is no resultant force", "Its velocity changes, and its acceleration points towards the centre", "Its acceleration points along its direction of motion", "Its acceleration points away from the centre"], "ans": 1, "exp": "Velocity is a vector: its <b>direction<\/b> keeps changing, so the object accelerates even at constant speed. The acceleration (and resultant force) point towards the centre: centripetal.", "simUrl": "https://school.taneski.com/physics/dp/16-circular-motion/", "simName": "Circular motion"}, {"q": "A child sits 2.0 m from the centre of a playground carousel that makes one turn every 4.0 s. What is the child's speed?", "fig": null, "opts": ["0.50 m s⁻¹", "1.6 m s⁻¹", "3.1 m s⁻¹", "4.9 m s⁻¹"], "ans": 2, "exp": "One turn = circumference 2πr in one period T:<br>v = 2πr / T = 2π × 2.0 / 4.0 = <b>3.1 m s⁻¹<\/b>.<br>4.9 is the centripetal acceleration 4π²r/T² in m s⁻², not a speed.", "simUrl": "https://school.taneski.com/physics/dp/16-circular-motion/", "simName": "Circular motion"}, {"q": "A 1200 kg car drives round a bend of radius 50 m at 15 m s⁻¹. What is the centripetal force on the car?", "fig": null, "opts": ["360 N", "2700 N", "5400 N", "11 800 N"], "ans": 2, "exp": "F = mv² / r = 1200 × 15² / 50 = <b>5400 N<\/b>.<br>360 N forgets to square v; 11 800 N is the car's weight.", "simUrl": "https://school.taneski.com/physics/dp/16-circular-motion/", "simName": "Circular motion"}, {"q": "A car goes round a flat (unbanked) bend at constant speed. What provides the centripetal force?", "fig": null, "opts": ["Friction between the tyres and the road, acting towards the centre", "A centrifugal force acting outwards", "The driving force of the engine", "The normal force of the road"], "ans": 0, "exp": "On a flat road the only horizontal force on the car is <b>static friction<\/b> on the tyres, pointing towards the centre. There is no outward 'centrifugal' force on the car; the normal force is vertical. On ice the friction is too small and the car skids straight on (along the tangent).", "simUrl": "https://school.taneski.com/physics/dp/16-circular-motion/", "simName": "Circular motion"}, {"q": "On a wet road μ<sub>s<\/sub> = 0.40. What is the maximum speed at which a car can take a flat bend of radius 50 m without skidding?", "fig": null, "opts": ["3.9 m s⁻¹", "14.0 m s⁻¹", "22.1 m s⁻¹", "196 m s⁻¹"], "ans": 1, "exp": "Maximum friction provides the centripetal force: μ<sub>s<\/sub>mg = mv²/r, so the mass cancels:<br>v = √(μ<sub>s<\/sub> g r) = √(0.40 × 9.81 × 50) = <b>14.0 m s⁻¹<\/b>.<br>196 forgets the square root; 22.1 leaves out μ.", "simUrl": "https://school.taneski.com/physics/dp/16-circular-motion/", "simName": "Circular motion"}, {"q": "A ball on a string moves in a horizontal circle (seen from above). The string breaks when the ball is at P. Which path does the ball follow?", "fig": "<svg class=\"fig\" viewBox=\"0 0 400 315\" width=\"400\" height=\"315\" font-family=\"Segoe UI,Calibri,Helvetica,Arial,sans-serif\" font-size=\"14\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\"><defs><marker id=\"ah2A5D8A\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#2A5D8A\"/><\/marker><marker id=\"ah2E7D32\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#2E7D32\"/><\/marker><marker id=\"ahC62828\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#C62828\"/><\/marker><marker id=\"ah6A1B9A\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#6A1B9A\"/><\/marker><marker id=\"ahE65100\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#E65100\"/><\/marker><marker id=\"ah1F3A5F\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#1F3A5F\"/><\/marker><marker id=\"ah263238\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#263238\"/><\/marker><marker id=\"ah1565C0\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#1565C0\"/><\/marker><\/defs><circle cx=\"200\" cy=\"185\" r=\"95\" fill=\"none\" stroke=\"#1F3A5F\" stroke-width=\"2\" stroke-dasharray=\"6 5\"/><circle cx=\"200\" cy=\"185\" r=\"5\" fill=\"#263238\"/><text x=\"208\" y=\"205\">O<\/text><line x1=\"200\" y1=\"185\" x2=\"200\" y2=\"90\" stroke=\"#6A1B9A\" stroke-width=\"2\"/><path d=\"M300.6,231.9 A111,111 0 0,0 300.6,138.1\" fill=\"none\" stroke=\"#E65100\" stroke-width=\"3\" marker-end=\"url(#ahE65100)\"/><text x=\"325\" y=\"190\" fill=\"#E65100\" font-weight=\"600\">motion<\/text><line x1=\"188\" y1=\"90\" x2=\"50\" y2=\"90\" stroke=\"#263238\" stroke-width=\"2.5\" marker-end=\"url(#ah263238)\"/><text x=\"34\" y=\"95\" fill=\"#263238\" font-weight=\"700\" text-anchor=\"start\">1<\/text><line x1=\"200\" y1=\"78\" x2=\"200\" y2=\"28\" stroke=\"#263238\" stroke-width=\"2.5\" marker-end=\"url(#ah263238)\"/><text x=\"208\" y=\"32\" fill=\"#263238\" font-weight=\"700\" text-anchor=\"start\">2<\/text><line x1=\"191\" y1=\"81\" x2=\"110\" y2=\"28\" stroke=\"#263238\" stroke-width=\"2.5\" marker-end=\"url(#ah263238)\"/><text x=\"94\" y=\"28\" fill=\"#263238\" font-weight=\"700\" text-anchor=\"start\">3<\/text><path d=\"M186.8,90.9 A95,95 0 0,0 117.7,137.5\" fill=\"none\" stroke=\"#263238\" stroke-width=\"2.5\" marker-end=\"url(#ah263238)\"/><text x=\"95.7\" y=\"143.5\" font-weight=\"700\">4<\/text><circle cx=\"200\" cy=\"90\" r=\"10\" fill=\"#E65100\"/><text x=\"212\" y=\"112\" font-weight=\"700\">P<\/text><text x=\"200\" y=\"304\" fill=\"#606A72\" font-size=\"13\" text-anchor=\"middle\">view from above<\/text><\/svg>", "opts": ["Path 1", "Path 2", "Path 3", "Path 4"], "ans": 0, "exp": "When the string breaks there is no longer a centripetal force, so the ball moves in a straight line in the direction of its velocity at that moment: along the <b>tangent<\/b> (path 1). It does not fly outwards (path 2) or keep curving (path 4).", "simUrl": "https://school.taneski.com/physics/dp/16-circular-motion/", "simName": "Circular motion"}, {"q": "The International Space Station orbits at radius 6.77 × 10⁶ m from Earth's centre with a speed of 7.67 × 10³ m s⁻¹. What is the centripetal acceleration of an astronaut on board?", "fig": null, "opts": ["0 m s⁻² — the astronaut is weightless", "1.13 × 10⁻³ m s⁻²", "8.69 m s⁻²", "9.81 m s⁻²"], "ans": 2, "exp": "a = v² / r = (7.67 × 10³)² / 6.77 × 10⁶ = <b>8.69 m s⁻²<\/b>.<br>Gravity is still strong at that height — it provides the centripetal force. Astronauts only <i>feel<\/i> weightless because they and the station fall together.", "simUrl": "https://school.taneski.com/physics/dp/16-circular-motion/", "simName": "Circular motion"}, {"q": "A 0.200 kg pendulum bob on a 0.80 m string passes through its lowest point at 2.0 m s⁻¹. What is the tension in the string there?", "fig": "<svg class=\"fig\" viewBox=\"0 0 420 235\" width=\"420\" height=\"235\" font-family=\"Segoe UI,Calibri,Helvetica,Arial,sans-serif\" font-size=\"14\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\"><defs><marker id=\"ah2A5D8A\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#2A5D8A\"/><\/marker><marker id=\"ah2E7D32\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#2E7D32\"/><\/marker><marker id=\"ahC62828\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#C62828\"/><\/marker><marker id=\"ah6A1B9A\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#6A1B9A\"/><\/marker><marker id=\"ahE65100\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#E65100\"/><\/marker><marker id=\"ah1F3A5F\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#1F3A5F\"/><\/marker><marker id=\"ah263238\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#263238\"/><\/marker><marker id=\"ah1565C0\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#1565C0\"/><\/marker><\/defs><rect x=\"120\" y=\"10\" width=\"140\" height=\"10\" fill=\"#90A4AE\"/><line x1=\"190\" y1=\"20\" x2=\"190\" y2=\"170\" stroke=\"#263238\" stroke-width=\"2\"/><path d=\"M190,20 L120,150\" stroke=\"#B0BEC5\" stroke-dasharray=\"5 5\"/><circle cx=\"120\" cy=\"150\" r=\"13\" fill=\"none\" stroke=\"#B0BEC5\" stroke-dasharray=\"4 4\"/><text x=\"198\" y=\"95\">0.80 m<\/text><circle cx=\"190\" cy=\"183\" r=\"13\" fill=\"#E65100\"/><line x1=\"222\" y1=\"183\" x2=\"290\" y2=\"183\" stroke=\"#1565C0\" stroke-width=\"3\" marker-end=\"url(#ah1565C0)\"/><text x=\"296\" y=\"188\" fill=\"#1565C0\" font-weight=\"700\" text-anchor=\"start\">v = 2.0 m s⁻¹<\/text><text x=\"210\" y=\"220\">0.200 kg, lowest point<\/text><\/svg>", "opts": ["0.96 N", "1.00 N", "1.96 N", "2.96 N"], "ans": 3, "exp": "At the lowest point the resultant force points up, to the centre: T − mg = mv²/r<br>T = mg + mv²/r = 0.200 × 9.81 + 0.200 × 2.0² / 0.80 = 1.96 + 1.00 = <b>2.96 N<\/b>.<br>The tension is bigger than the weight while it swings through the bottom.", "simUrl": "https://school.taneski.com/physics/dp/09-pendulum-tension/", "simName": "Pendulum tension"}, {"q": "The angular speed of a carousel is doubled. What happens to the centripetal acceleration of a child sitting at the same place?", "fig": null, "opts": ["It halves", "It stays the same", "It doubles", "It becomes four times as large"], "ans": 3, "exp": "a = ω²r. With r the same, doubling ω gives 2² = <b>4 times<\/b> the acceleration (and needs 4 times the grip force).", "simUrl": "https://school.taneski.com/physics/dp/16-circular-motion/", "simName": "Circular motion"}, {"q": "Two children sit on the same carousel: A is 1.0 m from the centre and B is 2.0 m from the centre. Which statement is correct?", "fig": null, "opts": ["They have the same speed and the same acceleration", "B has twice the speed of A and twice the acceleration", "B has twice the speed of A and the same acceleration", "B has twice the speed of A and half the acceleration"], "ans": 1, "exp": "Same carousel → same ω. v = ωr: B is twice as fast. a = ω²r: B's acceleration is also twice as large. (a = v²/r only gives 'half' if you wrongly keep v the same.)", "simUrl": "https://school.taneski.com/physics/dp/16-circular-motion/", "simName": "Circular motion"}]};
+const KEY = "physics-" + DATA.slug + "-best";
+const $ = id => document.getElementById(id);
+let order, cur, picks, chosen, checked;
+function loadBest(){ try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) { return null; } }
+function saveBest(s){ try { const b = loadBest(); if (b === null || s > b) localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {} }
+function showBest(){ const b = loadBest(), t = b === null ? "" : "Your best score so far: " + b + " / " + DATA.qs.length;
+  $("best").textContent = t; $("best2").textContent = t; }
+function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function start(shuf){
+  // order[q] = option indices in display order (printed order first time, shuffled on retry)
+  order = DATA.qs.map(q => shuf ? shuffle([0, 1, 2, 3]) : [0, 1, 2, 3]);
+  picks = DATA.qs.map(() => null); cur = 0;
+  $("intro").hidden = true; $("result").hidden = true; $("quiz").hidden = false;
+  render();
+}
+function render(){
+  const q = DATA.qs[cur], n = DATA.qs.length;
+  chosen = null; checked = false;
+  $("qno").textContent = "Question " + (cur + 1) + " of " + n;
+  $("barfill").style.width = (100 * cur / n) + "%";
+  $("score").textContent = "Score " + picks.filter((p, i) => p === DATA.qs[i].ans).length + " / " + cur;
+  $("qtext").innerHTML = q.q;
+  $("fig").innerHTML = q.fig || "";
+  $("qgrid").classList.toggle("hasfig", !!q.fig);
+  const box = $("opts"); box.innerHTML = "";
+  order[cur].forEach((oi, k) => {
+    const b = document.createElement("button");
+    b.className = "opt"; b.dataset.oi = oi;
+    b.innerHTML = '<span class="L">' + "ABCD"[k] + '</span><span>' + q.opts[oi] + '</span>';
+    b.onclick = () => pick(oi);
+    box.appendChild(b);
+  });
+  $("fb").hidden = true; $("check").hidden = false; $("check").disabled = true; $("next").hidden = true;
+  $("quiz").scrollIntoView({block: "start"});
+}
+function pick(oi){
+  if (checked) return;
+  chosen = oi;
+  document.querySelectorAll(".opt").forEach(b => b.classList.toggle("sel", +b.dataset.oi === oi));
+  $("check").disabled = false;
+}
+function letterOf(oi){ return "ABCD"[order[cur].indexOf(oi)]; }
+function doCheck(){
+  if (chosen === null || checked) return;
+  checked = true; picks[cur] = chosen;
+  const q = DATA.qs[cur], ok = chosen === q.ans;
+  document.querySelectorAll(".opt").forEach(b => {
+    const oi = +b.dataset.oi; b.disabled = true; b.classList.remove("sel");
+    if (oi === q.ans) b.classList.add("right"); else if (oi === chosen) b.classList.add("wrong");
+  });
+  const fb = $("fb");
+  fb.className = "fb " + (ok ? "ok" : "no");
+  fb.innerHTML = "<h3>" + (ok ? "✔ Correct!" : "✘ Not quite — the answer is " + letterOf(q.ans) + ".") + "</h3>" +
+    '<div class="exp">' + q.exp + '</div>' +
+    '<a href="' + q.simUrl + '" target="_blank" rel="noopener">▶ Try it in the simulation: ' + q.simName + '</a>';
+  fb.hidden = false;
+  $("score").textContent = "Score " + picks.filter((p, i) => p === DATA.qs[i].ans).length + " / " + (cur + 1);
+  $("check").hidden = true; $("next").hidden = false;
+  $("next").textContent = cur + 1 < DATA.qs.length ? "Next question →" : "See my score →";
+  $("next").focus();
+}
+function next(){ if (cur + 1 < DATA.qs.length){ cur++; render(); } else finish(); }
+function finish(){
+  const n = DATA.qs.length, s = picks.filter((p, i) => p === DATA.qs[i].ans).length;
+  saveBest(s);
+  $("barfill").style.width = "100%";
+  $("quiz").hidden = true; $("result").hidden = false;
+  $("final").textContent = s + " / " + n;
+  $("msg").textContent = s === n ? "Perfect — you have mastered this topic!" :
+    s >= 8 ? "Great work! Read the explanations for the ones you missed." :
+    s >= 5 ? "Good start. Go back to the simulations for the questions you missed, then try again." :
+    "Keep practising: work through the simulations and worksheets again, then retry the quiz.";
+  const ul = $("review"); ul.innerHTML = "";
+  DATA.qs.forEach((q, i) => {
+    const ok = picks[i] === q.ans, li = document.createElement("li");
+    const plain = q.q.replace(/<[^>]+>/g, "");
+    li.innerHTML = '<span class="m ' + (ok ? "y" : "n") + '">' + (ok ? "✔" : "✘") + '</span><div><b>Q' + (i + 1) + '.</b> ' +
+      (plain.length > 110 ? plain.slice(0, 107) + "…" : plain) + '<br><small>Your answer: ' + q.opts[picks[i]] +
+      (ok ? "" : ' · Correct: ' + q.opts[q.ans]) + '</small><br><button data-i="' + i + '">Show the explanation</button>' +
+      '<div class="exp" hidden>' + q.exp + ' <a href="' + q.simUrl + '" target="_blank" rel="noopener">▶ ' + q.simName + '</a></div></div>';
+    li.querySelector("button").onclick = e => { const d = li.querySelector(".exp"); d.hidden = !d.hidden;
+      e.target.textContent = d.hidden ? "Show the explanation" : "Hide the explanation"; };
+    ul.appendChild(li);
+  });
+  showBest();
+  $("result").scrollIntoView({block: "start"});
+}
+$("start").onclick = () => start(false);
+$("check").onclick = doCheck;
+$("next").onclick = next;
+$("retry").onclick = () => start(true);
+document.addEventListener("keydown", e => {
+  if ($("quiz").hidden || e.altKey || e.ctrlKey || e.metaKey) return;
+  const k = e.key.toUpperCase(), idx = "ABCD".indexOf(k) >= 0 ? "ABCD".indexOf(k) : "1234".indexOf(k);
+  if (idx >= 0 && !checked){ pick(order[cur][idx]); }
+  else if (e.key === "Enter"){ if (!checked && chosen !== null){ e.preventDefault(); doCheck(); } }
+});
+window.quizInProgress = () => !$("quiz").hidden && (cur > 0 || checked || chosen !== null);
+showBest();
+
+(function(){
+  const d = document.getElementById("qd"), b = document.getElementById("qbtn");
+  function best(slug){ try { return JSON.parse(localStorage.getItem("physics-" + slug + "-best") || "null"); } catch (e) { return null; } }
+  function fill(){ d.querySelectorAll(".sc").forEach(s => { const v = best(s.dataset.slug);
+    s.textContent = v === null ? "Not tried yet" : "Best: " + v + " / 10"; s.classList.toggle("done", v !== null); }); }
+  b.onclick = () => { fill(); d.showModal(); };
+  document.getElementById("qd-x").onclick = () => d.close();
+  d.addEventListener("click", e => { if (e.target === d) d.close(); });   // click on the dimmed backdrop
+  d.querySelectorAll("a.go").forEach(a => a.addEventListener("click", e => {
+    if (a.dataset.here){ e.preventDefault(); d.close(); return; }
+    if (typeof window.quizInProgress === "function" && window.quizInProgress() &&
+        !confirm("Leave this quiz? Your answers so far will be lost.")) e.preventDefault();
+  }));
+})();
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>

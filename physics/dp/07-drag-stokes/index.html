@@ -1,0 +1,1322 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Drag and Stokes' Law</title>
+<!--
+  IBDP Physics SL · Grade 11 · Topic A.2 Types of forces
+  Simulation 07 — Drag, Stokes' law and terminal velocity (pairs with carousel Station 5) + skydiver (qualitative, drag ∝ v²)
+  Self-contained: no internet, no external libraries. Open in any modern browser.
+  Built from the simulation template (Simulation 01 CSS, helpers and task engine).
+
+  File sections:
+    1 STYLE · 2 MARKUP · 3 CONFIG · 4 PHYSICS · 5 RUN · 6 SCENE · 7 FBD · 8 GRAPHS · 9 DATA · 10 TASKS · 11 UI
+-->
+<style>
+/* ============================ 1 STYLE ============================ */
+:root{
+  --navy:#1F3A5F; --accent:#E65100; --ink:#263238; --muted:#606A72;
+  --bg:#F2F5F9; --card:#FFFFFF; --line:#DDE6F0; --soft:#FFF3E0; --soft-blue:#E3F2FD;
+  --wood:#FFCC80; --wood-edge:#C68A3A;
+  --cW:#2A5D8A; --cN:#2E7D32; --cF:#C62828; --cP:#6A1B9A;   /* weight, normal, friction, pull */
+  --ok:#2E7D32; --bad:#C62828;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);
+  font:16px/1.4 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;min-height:100dvh}
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);
+  display:flex;align-items:center;gap:16px;padding:8px 16px}
+header h1{font-size:1.25rem;margin:0;font-weight:600}
+header .sub{font-size:.85rem;opacity:.85}
+header .grow{flex:1}
+.btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;
+  min-height:44px;padding:6px 14px;cursor:pointer;touch-action:manipulation}
+.btn:hover{border-color:var(--navy)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.small{min-height:36px;padding:4px 10px;font-size:.9rem}
+header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
+
+/* layout: scene + state | FBD (always visible) | tabs; fills the screen height */
+main{flex:1;min-height:500px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1.3fr);
+  grid-template-rows:minmax(0,1fr) auto;gap:12px;padding:12px 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.card h2{font-size:.95rem;margin:0;padding:6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line);
+  color:var(--navy);font-weight:600}
+.left{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0}
+.scenecard{flex:1 1 0;display:flex;flex-direction:column;min-height:0}
+.fbdcol{display:flex;flex-direction:column;min-width:0;min-height:0}
+#sceneWrap{position:relative;flex:1;min-height:150px}
+#scene{width:100%;height:100%;display:block}
+#fbdWrap{flex:1;min-height:220px}
+#fbd{width:100%;height:100%;display:block}
+.readouts{padding:6px 12px;flex:0 1 auto;min-height:0;overflow:auto}  /* natural height; the scene takes the rest */
+.readouts table{width:100%;border-collapse:collapse;font-size:.9rem}
+.readouts td.v{white-space:nowrap;padding-left:6px}
+.readouts td{padding:4px 2px;border-bottom:1px solid #EEF2F6}
+.readouts td.v{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.pill{display:inline-block;white-space:nowrap;padding:3px 10px;border-radius:99px;font-size:.85rem;font-weight:600}
+.pill.rest{background:var(--soft-blue);color:#0D47A1}
+.pill.slide{background:#FFEBEE;color:#B71C1C}
+.pill.ready{background:#ECEFF1;color:var(--muted)}
+
+.right{display:flex;flex-direction:column;min-width:0;min-height:0}
+.cardhead{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:6px 8px 6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line)}
+.cardhead h2{padding:0;border:none;background:none;flex:1}
+.cardhead .btn{min-height:40px;padding:4px 10px}
+.tabs{display:flex;gap:4px;padding:6px 6px 0;background:#F7F9FC;border-bottom:1px solid var(--line)}
+.tab{font:inherit;border:1px solid transparent;border-bottom:none;background:transparent;padding:8px 14px;
+  min-height:44px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--muted);font-weight:600}
+.tab[aria-selected="true"]{background:#fff;border-color:var(--line);color:var(--navy);margin-bottom:-1px}
+.panel{display:none;padding:10px 12px;flex:1;min-height:0;overflow:hidden}
+.panel.on{display:flex;flex-direction:column;gap:8px}
+#graphWrap{position:relative;flex:1;min-height:200px}
+#graph{width:100%;height:100%;display:block;touch-action:none}
+.hint{font-size:.85rem;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#trials{width:100%;border-collapse:collapse;font-size:.85rem;font-variant-numeric:tabular-nums}
+#trials th,#trials td{border-bottom:1px solid var(--line);padding:4px 4px;text-align:right}
+#trials th{color:var(--navy);font-weight:600;background:#F7F9FC;position:sticky;top:0}
+#trials td:first-child,#trials th:first-child,#trials td:nth-child(2),#trials th:nth-child(2){text-align:left}
+.tableBox{max-height:150px;flex:none;overflow:auto;border:1px solid var(--line);border-radius:8px}
+#anaWrap{flex:1;min-height:180px}
+#ana{width:100%;height:100%;display:block}
+.x{border:none;background:none;color:var(--bad);font-size:1.1rem;cursor:pointer;min-width:32px;min-height:32px}
+
+/* tasks */
+#taskSets{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:inherit;font-size:.9rem;border:1px solid var(--line);background:#fff;border-radius:99px;padding:6px 14px;
+  min-height:40px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.chip[aria-pressed="true"] .hint{color:#DDE6F0}
+#taskList{overflow:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding-right:2px}
+.step{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff}
+.step .q{margin:0 0 6px}
+.step .n{display:inline-block;min-width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;
+  text-align:center;line-height:26px;font-size:.85rem;font-weight:700;margin-right:6px}
+.step.done .n{background:var(--ok)}
+.opt{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;
+  margin:4px 0;cursor:pointer;min-height:40px}
+.opt input{width:20px;height:20px}
+.opt.good{border-color:var(--ok);background:#E8F5E9}
+.opt.bad{border-color:var(--bad);background:#FFEBEE}
+.fb{margin-top:6px;padding:6px 10px;border-radius:8px;font-size:.92rem}
+.fb.ok{background:#E8F5E9;border-left:4px solid var(--ok)}
+.fb.no{background:#FFEBEE;border-left:4px solid var(--bad)}
+.fb.info{background:var(--soft-blue);border-left:4px solid #1565C0}
+.num{font:inherit;width:110px;min-height:40px;padding:4px 8px;border:1px solid #B0BEC5;border-radius:8px}
+.tag{font-size:.75rem;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+
+/* controls */
+#controls{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end;padding:10px 14px}
+.ctl{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ctl label,.ctl .lab{font-size:.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.ctl select{font:inherit;min-height:44px;border:1px solid #B0BEC5;border-radius:8px;padding:4px 8px;background:#fff}
+.mu{font-size:.85rem;color:var(--navy);font-weight:600}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper .btn{width:44px;padding:0;font-size:1.3rem}
+.stepper output{min-width:24px;text-align:center;font-weight:700;font-size:1.1rem}
+input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
+.seg{display:flex;border:1px solid #B0BEC5;border-radius:8px;overflow:hidden}
+.seg button{font:inherit;border:none;background:#fff;min-height:42px;padding:4px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--navy);color:#fff}
+.switch{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer}
+.switch input{width:22px;height:22px;accent-color:var(--accent)}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* help overlay */
+#help{position:fixed;inset:0;background:rgba(31,58,95,.55);display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:14px;max-width:720px;width:100%;max-height:90vh;overflow:auto;padding:18px 22px}
+#help h3{margin:.2em 0 .4em;color:var(--navy)}
+#help li{margin:.25em 0}
+.eq{font-family:"Cambria Math",Cambria,"Times New Roman",serif;font-size:1.05rem}
+
+@media (max-width:1300px){
+  .readouts table{font-size:.85rem}
+  .pill{font-size:.78rem;padding:2px 8px}
+}
+/* tablet landscape: scene + state on the left; FBD above the tabs on the right */
+@media (max-width:1099px){
+  main{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr) auto;min-height:640px}
+  .left{grid-row:1/3}
+  .fbdcol{grid-column:2;grid-row:1}
+  .right{grid-column:2;grid-row:2}
+  #fbdWrap{min-height:200px}
+  #pGraph .hint{display:none}
+  #controls{gap:8px 12px;padding:8px 12px}
+  input[type=range]{width:118px}
+  header .sub{font-size:0;opacity:1;line-height:1.2}header .sub a.home{font-size:.75rem}
+}
+/* phone / narrow portrait: one scrolling column */
+@media (max-width:759px){
+  body{height:auto}
+  main{display:flex;flex-direction:column}
+  #sceneWrap{flex:none;height:260px}
+  .readouts{flex:none}
+  #fbdWrap{flex:none;height:320px}
+  .right{height:640px;flex:none}
+}
+/* Author credit (header, far right) */
+.credit{text-align:right;font-size:.74rem;line-height:1.3;opacity:.92;white-space:nowrap}
+.credit a{color:#fff;text-decoration:underline}
+@media (max-width:759px){header{flex-wrap:wrap;row-gap:4px} header .btn{white-space:nowrap}
+  .credit{order:3;flex-basis:100%;text-align:left;font-size:.7rem}
+  .credit br{display:none} .credit a{margin-left:6px}}
+
+/* Number boxes next to the sliders (same as the circular motion simulation): type a value + Enter */
+.rn{display:flex;align-items:center;gap:6px}
+.rn input[type=range]{width:120px}
+.nb{font:inherit;font-size:.95rem;width:76px;min-height:44px;padding:2px 6px;border:1px solid #B0BEC5;border-radius:8px;
+  text-align:right;font-variant-numeric:tabular-nums;background:#fff}
+.nb.clamped{border-color:var(--accent);background:var(--soft)}
+.nb:disabled{opacity:.45}
+.rn .u{font-size:.85rem;color:var(--muted);white-space:nowrap}
+.dup{display:none}
+@media (max-width:1300px){ .rn input[type=range]{width:100px} .nb{width:70px} }
+@media (max-width:1099px){ .rn input[type=range]{width:84px} .nb{width:64px} }
+.sub a.home{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55);white-space:nowrap}.sub a.home:hover{border-bottom-color:#fff}
+/* ==== SHARED-UI CSS START: ▼ [box] ▲ steppers (10 Oct 2026) — the sliders are hidden, the number box is the control ==== */
+.rn input[type=range]{display:none!important}
+#controls{align-items:flex-start!important}   /* all controls top-aligned, notes below a box hang underneath */
+#controls .ctl sub,#controls .ctl sup{line-height:0}   /* subscripts in a label (m_A) do not push its box down */
+.rn{gap:4px!important}
+.fld{display:inline-flex;align-items:center;border:1px solid #B0BEC5;border-radius:8px;background:#fff;min-height:44px;padding-right:6px;box-sizing:border-box}
+.fld .nb{border:0!important;background:transparent!important;min-height:42px;padding-right:2px;width:66px!important}
+.fld .u{margin-left:3px}
+.fld .nb:focus{outline:none}
+.fld:focus-within{outline:2px solid var(--navy);outline-offset:1px}
+.fld:has(.nb.clamped){border-color:var(--accent);background:var(--soft)}
+.fld:has(.nb:disabled){opacity:.5}
+.fld .bw{display:none;color:#B26A00;font-size:.9rem;margin-left:3px}
+.fld.beyond{border-color:#F0A202;background:#FFF8E1;box-shadow:inset 0 0 0 1px #F0A202}
+.fld.beyond .bw{display:inline}
+.stp{font:inherit;font-size:.78rem;line-height:1;min-width:34px;min-height:44px;padding:0 6px;border:1px solid #B0BEC5;border-radius:8px;background:#F3F6FA;
+  color:var(--navy);cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.stp:hover:not(:disabled){border-color:var(--navy);background:#E6EDF5}
+.stp:active:not(:disabled){background:#D3DEEB}
+.stp:disabled{opacity:.35;cursor:default}
+.stp.rs{min-width:26px;padding:0 2px;border-color:transparent;background:transparent;font-size:1.05rem;color:var(--muted)}
+.stp.rs:hover:not(:disabled){background:#EEF2F6;border-color:transparent}
+@media (max-width:1300px){ .stp{min-width:30px;padding:0 4px} .fld .nb{width:58px!important} }
+/* ==== SHARED-UI CSS END ==== */
+/* ==== NEWTON CSS START (law badge · ΣF = ma table · 3rd-law checkbox) ==== */
+.nbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:3px 10px;border-bottom:1px solid #E3E9F0;flex:none;min-height:30px}
+.nlaw{font-size:.84rem;padding:2px 10px;border-radius:999px;border:1.5px solid #90A4AE;color:#37474F;background:#F5F7FA;line-height:1.5}
+.nlaw.l1{border-color:#2E7D32;color:#1B5E20;background:#E8F5E9}
+.nlaw.l2{border-color:#E65100;color:#BF360C;background:#FFF3E0}
+.nbar{flex-wrap:nowrap}
+.nlaw{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.nbar .switch{font-size:.84rem;margin-left:auto;white-space:nowrap;flex:none}
+@media (pointer:fine){ .nbar .switch{min-height:28px;padding-top:0;padding-bottom:0} }
+.ntab{flex:none;max-height:40%;overflow:auto;padding:2px 8px 4px;border-top:1px solid #E3E9F0;font-size:.8rem}
+.ntab .nh{display:flex;align-items:center;gap:8px;min-height:26px}
+.ntab .nfold{font:inherit;font-weight:700;color:#1F3A5F;background:none;border:none;cursor:pointer;padding:2px 0;min-height:26px}
+.ntab .nk{color:#606A72}.ntab .nk.ok{color:#2E7D32;font-weight:600}
+.ntab table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.ntab th,.ntab td{padding:1px 4px;text-align:right;border-bottom:1px solid #EEF2F6;white-space:nowrap}
+.ntab th{color:#1F3A5F;font-weight:600}
+.ntab td:first-child,.ntab th:first-child,.ntab td.by,.ntab th:nth-child(2){text-align:left}
+.ntab td:first-child{font-weight:600}.ntab td.by{color:#606A72}
+.ntab tr.ns td{font-weight:700;border-top:1.5px solid #263238}
+.ntab tr.nm td{color:#E65100;font-weight:600}
+.ntab tr.nb td{font-weight:700;color:#1F3A5F;background:#F5F7FA}
+.ntab .ncap{color:#606A72;font-size:.74rem;margin-top:2px;white-space:normal}
+@media (max-height:800px) and (min-width:1100px){ .ntab{font-size:.74rem} .ntab .ncap{display:none} .nbar{min-height:26px;padding:1px 10px} .nlaw{font-size:.78rem} }
+@media (max-width:1099px) and (min-width:760px){ .ntab{font-size:.72rem;max-height:45%} .ntab .ncap{display:none}
+  .fbdcol #fbdWrap{min-height:0} }
+/* ==== NEWTON CSS END ==== */
+/* ==== PHONE CSS START: phone layout (10 Oct 2026) — only phones (narrow, or held sideways with a touch screen); laptops and tablets unchanged ==== */
+@media (max-width:759px), (max-height:500px) and (pointer:coarse){
+  html,body{height:auto}
+  main{display:flex!important;flex-direction:column;min-height:0!important;gap:10px;padding:8px 8px 16px}
+  .left{display:contents}                                  /* scene and readouts become separate steps of the column */
+  .scenecard{order:1;flex:none!important;min-height:0}
+  #controls{order:2}
+  .readouts{order:3;flex:none}
+  .fbdcol{order:4;flex:none}
+  .right{order:5;flex:none;height:auto!important}
+  #sceneWrap{flex:none!important;height:min(58vh,340px)!important;min-height:200px}
+  #fbdWrap{flex:none!important;height:300px!important}
+  .scenecard .cardhead{position:sticky;top:0;z-index:2}    /* run buttons stay at hand while the scene is on screen */
+  .cardhead .btn{min-height:40px;padding:4px 10px}
+  .panel{overflow:visible}
+  .panel.on{flex:none}
+  #graphWrap,#ffnWrap{flex:none!important;height:300px!important;min-height:0}
+  #taskList{overflow:visible;flex:none}
+  .tableBox{max-height:220px}
+  canvas{touch-action:pan-y!important}                     /* a finger on a graph or diagram still scrolls the page */
+  canvas.drag{touch-action:none!important}                 /* except where the scene has things to drag (pulleys) */
+  #controls{gap:10px 12px;padding:10px}
+  #controls .ctl{max-width:100%}
+  #controls select{max-width:100%}
+  .tabs{overflow-x:auto;scrollbar-width:none}
+  .tab{white-space:nowrap}
+  #help .box{max-height:85dvh;padding:14px 16px}
+}
+/* ==== PHONE CSS END ==== */
+</style>
+</head>
+<body>
+<!-- ============================ 2 MARKUP ============================ -->
+<header>
+  <div>
+    <h1>Drag — Stokes' law and terminal velocity</h1>
+    <div class="sub"><a class="home" href="https://school.taneski.com/physics/dp/#A2" title="Back to all A.2 simulations">← All simulations</a> · IBDP Physics SL · A.2 Types of forces · g = 9.81 N kg⁻¹</div>
+  </div>
+  <div class="grow"></div>
+  <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
+  <div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
+</header>
+
+<main>
+  <section class="left">
+    <div class="card scenecard">
+      <div class="cardhead">
+        <h2 id="sceneTitle">Experiment</h2>
+        <div class="actions" id="actions"></div>
+      </div>
+<!-- NEWTON BAR --><div class="nbar"><span class="nlaw" id="nlaw"></span><label class="switch" title="Show every force together with its Newton's 3rd-law partner"><input type="checkbox" id="n3"> 3rd-law pairs</label></div><!-- /NEWTON BAR -->
+      <div id="sceneWrap"><canvas id="scene" aria-label="Falling ball or skydiver"></canvas></div>
+    </div>
+    <div class="card readouts"><table><tbody id="ro"></tbody></table></div>
+  </section>
+
+  <section class="card fbdcol" aria-label="Free-body diagram">
+    <h2 id="fbdTitle">Free-body diagram</h2>
+    <div id="fbdWrap"><canvas id="fbd" aria-label="Free-body diagram"></canvas></div>
+<!-- NEWTON TABLE --><div class="ntab" id="ntab"></div><!-- /NEWTON TABLE -->
+  </section>
+
+  <section class="card right">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-tab="pGraph">Graph</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="pData">Data &amp; analysis</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="pTasks">Tasks</button>
+    </div>
+    <div class="panel on" id="pGraph">
+      <div id="graphWrap"><canvas id="graph" aria-label="Velocity against time"></canvas></div>
+      <div class="hint" id="graphHint"></div>
+    </div>
+    <div class="panel" id="pData">
+      <div class="row">
+        <button class="btn small" id="clearBtn">Clear all trials</button>
+        <span style="flex:1"></span>
+        <label class="switch"><input type="checkbox" id="fitChk"> Show best-fit line</label>
+      </div>
+      <div class="tableBox"><table id="trials"><thead><tr><th>#</th><th>liquid</th><th>ball</th><th>r / mm</th>
+        <th>t<sub>AB</sub> / s</th><th>v = 0.200/t / cm s⁻¹</th><th>r² / mm²</th><th></th></tr></thead><tbody></tbody></table></div>
+      <div id="anaWrap"><canvas id="ana" aria-label="Terminal speed against radius squared"></canvas></div>
+    </div>
+    <div class="panel" id="pTasks">
+      <div id="taskSets"></div>
+      <div id="taskList"></div>
+    </div>
+  </section>
+
+  <section class="card" id="controls" aria-label="Controls">
+    <div class="ctl">
+      <span class="lab">Mode</span>
+      <div class="seg" id="mode">
+        <button data-mode="liquid" aria-pressed="true">Ball in a liquid</button>
+        <button data-mode="air" aria-pressed="false">Skydiver (air)</button>
+      </div>
+    </div>
+    <div class="sc" data-mode="liquid">
+      <div class="ctl"><label for="liq">Liquid</label><select id="liq"></select><span class="mu" id="liqLab"></span></div>
+      <div class="ctl"><label for="ball">Ball</label><select id="ball"></select></div>
+      <div class="ctl"><label for="rad">Radius r<span class="dup"> = <span id="rOut"></span> mm</span></label>
+        <input type="range" id="rad" min="0.5" max="5" step="0.25"></div>
+    </div>
+    <div class="ctl"><span class="lab">Speed of time</span>
+      <div class="seg" id="warp"><button data-w="1" aria-pressed="true">×1</button><button data-w="5" aria-pressed="false">×5</button><button data-w="20" aria-pressed="false">×20</button></div></div>
+    <div class="sc" data-mode="air">
+      <div class="ctl"><label for="mass">Skydiver + kit m<span class="dup"> = <span id="mOut"></span> kg</span></label>
+        <input type="range" id="mass" min="50" max="120" step="5"></div>
+    </div>
+  </section>
+</main>
+
+<div id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="box">
+    <h3 id="helpTitle">How to use this simulation</h3>
+    <ol>
+      <li><b>Ball in a liquid</b>: choose the liquid, the ball and its radius, then press <b>▶ Drop</b>. The stopwatch times the
+        ball between the two bands A and B (20 cm apart), like Station 5. Press <b>● Record</b> after each drop.</li>
+      <li>Set each value with <b>▼</b> and <b>▲</b> (hold to go faster; the <b>↑ ↓</b> keys or the mouse wheel in the box also work, Shift = ×10), or <b>type a value</b> in the box. <b>↺</b> puts it back to its start value. Outside the classroom range the box turns <b>amber ⚠</b>: fine to explore, but the lab can't do this.</li>
+      <li>Move the pointer over any <b>graph</b> (or tap it): a dashed line shows the values where it cuts each curve, or the values of the nearest data point.</li>
+      <li>Slow runs take a while — use <b>×5</b> or <b>×20</b>. The times shown are always real times.</li>
+      <li>The <b>Data &amp; analysis</b> tab plots the terminal speed against r².</li>
+      <li><b>Skydiver</b>: press <b>▶ Jump</b>, then <b>☂ Open parachute</b> whenever you like.</li>
+    </ol>
+    <h3>The physics</h3>
+    <ul>
+      <li class="eq">Stokes' law (small sphere, slow smooth flow): F<sub>d</sub> = 6πηrv.</li>
+      <li class="eq">Buoyancy: F<sub>b</sub> = ρ<sub>fluid</sub>Vg with V = 4/3 πr³. Weight W = ρ<sub>ball</sub>Vg.</li>
+      <li class="eq">Terminal speed when W = F<sub>b</sub> + F<sub>d</sub>: v<sub>t</sub> = 2r²(ρ<sub>ball</sub> − ρ<sub>fluid</sub>)g / (9η), so v<sub>t</sub> ∝ r².</li>
+      <li>Stokes' law only works when the Reynolds number Re = ρ<sub>fluid</sub>v(2r)/η is small (Re &lt; 1). Fast balls in water and
+        skydivers are far outside it: there the drag grows roughly with v².</li>
+    </ul>
+    <p class="hint">Model: the drag on the ball is 6πηrv × (1 + 0.15 Re^0.687) (a standard correction that is ≈ 1 when Re is small).
+      Skydiver: drag = ½ρC<sub>d</sub>Av² with ρ = 1.2 kg m⁻³; area × C<sub>d</sub> = 0.70 m² body, 37.5 m² with the parachute — qualitative only.</p>
+    <!-- NEWTON HELP --><h3>Newton's laws</h3>
+<p>The badge above the scene says which law applies at this moment: <b>1st law</b> — at rest or moving at a constant velocity, the resultant force is zero (Σ<i>F</i> = 0); <b>2nd law</b> — accelerating, Σ<i>F</i> = <i>ma</i>. The table under the free-body diagram adds up the forces (Σ<i>F</i>) and compares them with <i>m a</i> (▾ folds it). Tick <b>3rd-law pairs</b> to see every force with its partner: the same size and type, in the opposite direction, acting on the <b>other</b> body (the Earth, the floor, the string, the fluid…).</p><!-- /NEWTON HELP -->
+<p style="text-align:right"><button class="btn primary" id="helpClose">Close</button></p>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ==== SHARED-UI START: ▼ [box] ▲ steppers + chart probe (10 Oct 2026, the same block in every simulation) ==== */
+// Steppers: every number box gets ▼ and ▲ (hold to repeat), ↑/↓ keys and the mouse wheel in the box (Shift = ×10) and ↺ (start value).
+// Inside the classroom range (the old slider range) a step is the old slider step (or the next value of its list; log quantities move
+// by one unit in the 2nd significant figure). Beyond it the value may go on up to the physical limits in 1-2-5 steps; the box turns amber.
+const STEPPER = (() => {
+  const all = [], r10 = v => +Number(v).toPrecision(10), fmt = v => String(+Number(v).toPrecision(6));
+  const epsOf = (lo, hi) => 1e-9 * Math.max(1, Math.abs(lo), Math.abs(hi));
+  function s125(v, dir){                                  // next value of …, 0.1, 0.2, 0.5, 1, 2, 5, 10, … beyond v (signed)
+    const a = Math.abs(v); if (a < 1e-15) return null;
+    const s = Math.sign(v), e = Math.floor(Math.log10(a)), c = [];
+    for (let k = e - 1; k <= e + 2; k++) for (const m of [1, 2, 5]) c.push(r10(m * Math.pow(10, k)));
+    if (dir === s) return s * Math.min(...c.filter(x => x > a * (1 + 1e-9)));
+    const d = c.filter(x => x < a * (1 - 1e-9)); return d.length ? s * Math.max(...d) : 0;
+  }
+  function grid(o, v, dir, lo, hi){                       // one step inside the classroom range, snapped to the grid
+    const eps = epsOf(lo, hi);
+    if (o.list){ const L = o.list(); const n = dir > 0 ? L.find(x => x > v + eps) : [...L].reverse().find(x => x < v - eps); return n === undefined ? (dir > 0 ? hi : lo) : n; }
+    const st = o.step ? +o.step() : NaN;
+    if (o.log && lo > 0 && hi / lo > 1e5){ const n = s125(v, dir); return n === null ? lo : n; }   // very wide ranges (satellite mass): 1-2-5
+    if (o.log || !(st > 0)){ if (!(v > 0)) return dir > 0 ? lo : lo;
+      const s = Math.pow(10, Math.floor(Math.log10(dir > 0 ? v : v * (1 - 1e-9))) - 1), k = v / s;
+      return r10((dir > 0 ? Math.floor(k + 1e-6) + 1 : Math.ceil(k - 1e-6) - 1) * s); }
+    const b = o.base ? +o.base() : lo, k = (v - b) / st;
+    return r10(b + (dir > 0 ? Math.floor(k + 1e-6) + 1 : Math.ceil(k - 1e-6) - 1) * st);
+  }
+  function next(o, v, dir){
+    const [lo, hi] = o.room(), eps = epsOf(lo, hi), st = o.step ? +o.step() : NaN;
+    let n;
+    if ((dir > 0 && v >= hi - eps) || (dir < 0 && v <= lo + eps)){            // leaving the classroom range (or already beyond it)
+      n = s125(v, dir); if (n === null) n = v + dir * (st > 0 ? st : (hi - lo) / 100);
+      if (dir > 0 && v < lo - eps && n > lo) n = lo; if (dir < 0 && v > hi + eps && n < hi) n = hi;
+    } else if (v > hi + eps || v < lo - eps){                                   // coming back: 1-2-5 until the range edge
+      n = s125(v, dir); if (n === null) n = dir > 0 ? lo : hi;
+      if (dir < 0 && n <= hi) n = hi; if (dir > 0 && n >= lo) n = lo;
+    } else n = Math.min(hi, Math.max(lo, grid(o, v, dir, lo, hi)));
+    const [mn, mx] = o.hard(); return Math.min(mx, Math.max(mn, r10(n)));
+  }
+  function go(o, dir, times = 1){
+    if (o.nb.disabled) return false;
+    const v0 = +o.get(); if (!isFinite(v0)) return false;
+    let v = v0; for (let i = 0; i < times; i++) v = next(o, v, dir);
+    if (Math.abs(v - v0) <= 1e-12 * Math.max(1, Math.abs(v0))) return false;
+    o.apply(v); if (document.activeElement === o.nb) o.nb.value = fmt(o.get());
+    check(o, true); return true;
+  }
+  function beyond(o){ const v = +o.get(), [lo, hi] = o.room(), eps = epsOf(lo, hi); return v < lo - eps || v > hi + eps; }
+  function check(o, user){                                 // amber box + ⚠ outside the classroom range; a message once on crossing
+    const b = beyond(o), [lo, hi] = o.room(), u = o.unit();
+    if (b && !o.was && user) o.toast(`Beyond the classroom range (${fmt(lo)}–${fmt(hi)}${u ? " " + u : ""}): fine to explore, but the lab can't do this.`);
+    o.was = b; o.fld.classList.toggle("beyond", b);
+    o.warn.title = `Outside the classroom range ${fmt(lo)}–${fmt(hi)}${u ? " " + u : ""}`;
+  }
+  function holdBtn(btn, o, dir){
+    let tm = null, t0 = 0;
+    const stop = () => { clearTimeout(tm); tm = null; };
+    const rep = () => { if (!go(o, dir)) return stop(); tm = setTimeout(rep, performance.now() - t0 > 1400 ? 45 : 110); };
+    btn.addEventListener("pointerdown", e => { if (e.button) return; e.preventDefault(); stop(); go(o, dir, e.shiftKey ? 10 : 1); t0 = performance.now(); tm = setTimeout(rep, 420); });
+    ["pointerup", "pointerleave", "pointercancel", "blur"].forEach(k => btn.addEventListener(k, stop));
+    btn.addEventListener("click", e => { if (e.detail === 0) go(o, dir, e.shiftKey ? 10 : 1); });   // keyboard (Enter/Space)
+    btn.addEventListener("contextmenu", e => e.preventDefault());
+  }
+  const mk = (cls, txt, lab) => { const b = document.createElement("button"); b.type = "button"; b.className = "stp " + cls; b.textContent = txt;
+    b.tabIndex = -1; b.setAttribute("aria-label", lab); return b; };
+  // o: {nb, get, apply(v), room() → classroom [lo, hi], hard() → physical [min, max], step() | list() | log, base(), def() | null, unit(), toast(msg)}
+  function attach(nb, o){
+    o.nb = nb; const u = nb.nextElementSibling && nb.nextElementSibling.classList.contains("u") ? nb.nextElementSibling : null;
+    const fld = document.createElement("span"); fld.className = "fld"; nb.before(fld); fld.appendChild(nb); if (u) fld.appendChild(u);
+    const warn = document.createElement("span"); warn.className = "bw"; warn.textContent = "⚠"; fld.appendChild(warn);
+    const dn = mk("dn", "▼", "decrease"), up = mk("up", "▲", "increase"), rs = mk("rs", "↺", "back to the start value");
+    dn.title = "Decrease · hold to repeat · Shift = ×10"; up.title = "Increase · hold to repeat · Shift = ×10";
+    fld.before(dn); fld.after(up); up.after(rs);
+    if (!o.def) rs.style.visibility = "hidden";
+    Object.assign(o, {fld, warn, dn, up, rs, was:false});
+    holdBtn(dn, o, -1); holdBtn(up, o, 1);
+    rs.addEventListener("click", () => { const d = o.def ? o.def() : null; if (d === null || d === undefined || nb.disabled) return; o.apply(d); check(o, true); });
+    // clicking into the box selects the whole value, so typing replaces it (a 2nd click places the cursor as usual)
+    nb.addEventListener("focus", () => { nb.select(); nb._sel = true; });
+    nb.addEventListener("mouseup", e => { if (nb._sel){ e.preventDefault(); nb._sel = false; } });
+    nb.addEventListener("touchend", e => { if (nb._sel){ nb._sel = false; setTimeout(() => nb.select(), 0); } });
+    nb.addEventListener("blur", () => { nb._sel = false; });
+    nb.addEventListener("keydown", e => { if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return; e.preventDefault();
+      clearTimeout(nb._tm); go(o, e.key === "ArrowUp" ? 1 : -1, e.shiftKey ? 10 : 1); nb.select(); });
+    nb.addEventListener("wheel", e => { if (document.activeElement !== nb || !e.deltaY) return; e.preventDefault();
+      clearTimeout(nb._tm); go(o, e.deltaY < 0 ? 1 : -1, e.shiftKey ? 10 : 1); }, {passive:false});
+    nb._st = o; all.push(o); return o;
+  }
+  function tick(){
+    for (const o of all){
+      if (!o.nb.isConnected) continue;
+      const off = o.nb.disabled, v = +o.get(), [mn, mx] = o.hard(), d = o.def ? o.def() : null;
+      o.dn.disabled = off || !(v > mn + 1e-12 * Math.max(1, Math.abs(mn))); o.up.disabled = off || !(v < mx - 1e-12 * Math.max(1, Math.abs(mx)));
+      o.rs.disabled = off || d === null || d === undefined || Math.abs(v - d) <= 1e-9 * Math.max(1, Math.abs(d));
+      if (o.def && d !== null && d !== undefined) o.rs.title = `Back to the start value (${fmt(d)}${o.unit() ? " " + o.unit() : ""})`;
+      check(o, false);
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+  return {attach, check, fmt, all};
+})();
+
+// Chart probe: move the pointer over any graph (or tap it) → a dashed vertical line, a dot where it cuts each curve and the x and y
+// values (as on the Free fall graphs). It reads what each graph draws after its axes (axes/axesR), so every graph gets it.
+// On graphs with only data points the line snaps to the nearest point; near a point its exact values are shown too.
+const PROBE = (() => {
+  const S = new Map();                                   // canvas → {frames, px, py, on, touch, ov}
+  const st = cv => { let s = S.get(cv); if (!s){ s = {frames:[], on:false}; S.set(cv, s); } return s; };
+  let pause = 0;
+  const P = CanvasRenderingContext2D.prototype, orig = {};
+  const rec = ctx => ctx.__pf && !pause;
+  ["beginPath", "moveTo", "lineTo", "closePath", "arc", "quadraticCurveTo", "bezierCurveTo", "stroke", "fill", "clearRect"].forEach(k => orig[k] = P[k]);
+  P.beginPath = function(){ if (rec(this)) this.__pp = {subs:[], arcs:[], cur:null}; return orig.beginPath.apply(this, arguments); };
+  const pp = ctx => ctx.__pp || (ctx.__pp = {subs:[], arcs:[], cur:null});
+  P.moveTo = function(x, y){ if (rec(this)){ const p = pp(this); p.cur = [[x, y]]; p.subs.push(p.cur); } return orig.moveTo.apply(this, arguments); };
+  P.lineTo = function(x, y){ if (rec(this)){ const p = pp(this); if (!p.cur){ p.cur = [[x, y]]; p.subs.push(p.cur); } else p.cur.push([x, y]); } return orig.lineTo.apply(this, arguments); };
+  P.quadraticCurveTo = function(a, b, x, y){ if (rec(this)){ const p = pp(this); if (p.cur) p.cur.push([x, y]); } return orig.quadraticCurveTo.apply(this, arguments); };
+  P.bezierCurveTo = function(a, b, c, d, x, y){ if (rec(this)){ const p = pp(this); if (p.cur) p.cur.push([x, y]); } return orig.bezierCurveTo.apply(this, arguments); };
+  P.closePath = function(){ if (rec(this)){ const p = pp(this); if (p.cur) p.cur.closed = true; p.cur = null; } return orig.closePath.apply(this, arguments); };
+  P.arc = function(x, y, r){ if (rec(this)) pp(this).arcs.push([x, y, r]); return orig.arc.apply(this, arguments); };
+  function toFrame(ctx, f, pts){                         // path points → the frame's coordinates (if the transform has changed)
+    const m = ctx.getTransform(), g = f.m;
+    if (m.a === g.a && m.b === g.b && m.c === g.c && m.d === g.d && m.e === g.e && m.f === g.f) return pts;
+    const gi = g.inverse(); return pts.map(([x, y]) => { const X = m.a * x + m.c * y + m.e, Y = m.b * x + m.d * y + m.f;
+      return [gi.a * X + gi.c * Y + gi.e, gi.b * X + gi.d * Y + gi.f]; });
+  }
+  function commit(ctx, stroke){
+    const f = ctx.__pf, p = ctx.__pp; if (!f || !p) return;
+    const col = stroke ? ctx.strokeStyle : ctx.fillStyle, c = typeof col === "string" ? col : null;
+    for (const [x, y, r] of p.arcs) if (r <= 9 && r >= 1.5 && c){ const [[X, Y]] = toFrame(ctx, f, [[x, y]]);
+      if (X >= f.box.x - 2 && X <= f.box.x + f.box.w + 2 && Y >= f.box.y - 2 && Y <= f.box.y + f.box.h + 2) f.pts.push({x:X, y:Y, col:c}); }
+    if (stroke && c && ctx.globalAlpha > 0.3) for (const s of p.subs) if (!s.closed && s.length >= 2) f.raw.push({pts:toFrame(ctx, f, s), col:c, dash:ctx.getLineDash().length > 0});
+  }
+  P.stroke = function(){ if (rec(this) && !arguments.length) commit(this, true); return orig.stroke.apply(this, arguments); };
+  P.fill = function(){ if (rec(this) && !(arguments[0] instanceof Path2D)) commit(this, false); return orig.fill.apply(this, arguments); };
+  P.clearRect = function(x, y, w, h){ if (x <= 0 && y <= 0 && w * 1.01 >= this.canvas.clientWidth && h * 1.01 >= this.canvas.clientHeight){ st(this.canvas).frames = []; this.__pf = null; }
+    return orig.clearRect.apply(this, arguments); };
+  // the text helpers, arrows, tangents and shaded areas on a graph are not curves
+  const quiet = fn => function(){ pause++; try { return fn.apply(this, arguments); } finally { pause--; } };
+  function newFrame(ctx, box, x0, x1, y0, y1, xl, yl, noX){
+    const cv = ctx.canvas, s = st(cv), f = {box:{...box}, x0, x1, y0, y1, xl, yl, m:ctx.getTransform(), raw:[], pts:[], skip:!!noX || !(x1 > x0) || !(y1 > y0)};
+    s.frames.push(f); if (s.frames.length > 8) s.frames.shift(); bind(cv); return f;
+  }
+  function wrapAxes(fn, ranged){
+    return function(ctx, box){
+      ctx.__pf = null; const r = fn.apply(this, arguments), a = arguments;
+      ctx.__pf = ranged ? newFrame(ctx, box, a[2], a[3], a[4], a[5], a[6], a[7], a[8]) : newFrame(ctx, box, 0, a[2], 0, a[3], a[4], a[5], false);
+      ctx.__pp = null; return r;
+    };
+  }
+  // ---- labels: "time t / s" → symbol t, unit s
+  function split(parts){
+    if (typeof parts === "string") parts = [[parts, "n"]];
+    if (!Array.isArray(parts)) return {sym:[["x", "i"]], unit:""};
+    const flat = parts.map(p => [String(p[0]), p[1] || "n"]), txt = flat.map(p => p[0]).join(""), k = txt.lastIndexOf(" / ");
+    const left = [], unit = [];
+    let pos = 0;
+    for (const [t, sty] of flat){ const a = pos, b = pos + t.length; pos = b;
+      if (k < 0 || b <= k) left.push([t, sty]); else if (a >= k + 3) unit.push([t, sty]);
+      else { if (k > a) left.push([t.slice(0, k - a), sty]); if (b > k + 3) unit.push([t.slice(Math.max(0, k + 3 - a)), sty]); } }
+    // drop a describing word or two in front of the symbol ("time t", "drop height h"), keep "cos θ", "1 − cos θ"
+    let first = left.findIndex(p => p[1] !== "n" && p[0].trim());
+    if (first > 0){ const pre = left.slice(0, first).map(p => p[0]).join(""); if (!/^([A-Za-z]{4,}\s+)+$/.test(pre)) first = 0; }
+    let sym = first < 0 ? [[left.map(p => p[0]).join("").trim(), "n"]] : left.slice(first).map(p => [p[0], p[1]]);
+    let cut = false; sym = sym.filter(p => { if (cut) return false; const i = p[0].indexOf(" = "); if (i >= 0){ p[0] = p[0].slice(0, i); cut = true; } return true; });
+    if (sym.length) sym[sym.length - 1][0] = sym[sym.length - 1][0].replace(/\s+$/, "");
+    if (sym.length && sym[0][0]) sym[0][0] = sym[0][0].replace(/^\s+/, "");
+    let un = unit.map(p => p[1] === "s" ? toSub(p[0]) : p[0]).join("").replace(/\s*\(.*$/, "").trim(); if (un === "1") un = "";
+    return {sym:sym.filter(p => p[0]), unit:un};
+  }
+  const SUBS = {"0":"₀", "1":"₁", "2":"₂", "3":"₃", "4":"₄", "5":"₅", "6":"₆", "7":"₇", "8":"₈", "9":"₉"};
+  const toSub = t => t.replace(/[0-9]/g, d => SUBS[d]);
+  const SUP = {"0":"⁰", "1":"¹", "2":"²", "3":"³", "4":"⁴", "5":"⁵", "6":"⁶", "7":"⁷", "8":"⁸", "9":"⁹", "-":"⁻"};
+  function num(v, span){                                   // enough decimals for the axis, × 10ⁿ for very big or small values
+    if (!isFinite(v)) return "–";
+    const a = Math.abs(v);
+    if (a >= 1e5 || (a > 0 && a < 1e-3 && span < 1e-2)){ const e = Math.floor(Math.log10(a)), m = v / Math.pow(10, e);
+      return `${m.toFixed(2).replace("-", "−")} × 10${String(e).replace(/[0-9-]/g, c => SUP[c])}`; }
+    const d = Math.max(0, Math.min(6, Math.ceil(-Math.log10(span / 400))));
+    let s = v.toFixed(d); if (/^-0\.?0*$/.test(s)) s = s.slice(1); return s.replace("-", "−");
+  }
+  // ---- curves of a frame: join touching pieces of the same colour, drop vertical lines and short legend strokes
+  function curves(f){
+    if (f.lines && f.nraw === f.raw.length) return f.lines;
+    const L = [];
+    for (const r of f.raw){ const last = L[L.length - 1];
+      if (last && last.col === r.col && Math.hypot(last.pts[last.pts.length - 1][0] - r.pts[0][0], last.pts[last.pts.length - 1][1] - r.pts[0][1]) < 0.6) last.pts = last.pts.concat(r.pts.slice(1));
+      else L.push({pts:r.pts.slice(), col:r.col, dash:r.dash}); }
+    f.lines = L.filter(l => { let lo = Infinity, hi = -Infinity; for (const [x] of l.pts){ lo = Math.min(lo, x); hi = Math.max(hi, x); }
+      const span = hi - lo; return span >= 1.5 && !(l.pts.length <= 3 && span < 0.08 * f.box.w) && hi >= f.box.x - 1 && lo <= f.box.x + f.box.w + 1; });
+    f.nraw = f.raw.length; return f.lines;
+  }
+  function cut(l, x){ const out = [];
+    for (let i = 1; i < l.pts.length; i++){ const [xa, ya] = l.pts[i - 1], [xb, yb] = l.pts[i];
+      if (Math.abs(xb - xa) < 1e-6 || (x - xa) * (x - xb) > 0) continue;
+      const y = ya + (yb - ya) * (x - xa) / (xb - xa); if (!out.some(q => Math.abs(q - y) < 2)) out.push(y); }
+    return out; }
+  // ---- drawing on a transparent canvas laid over the graph
+  function overlay(cv, s){
+    if (!s.ov){ const o = document.createElement("canvas"); o.className = "probeOv"; o.setAttribute("aria-hidden", "true");
+      o.style.cssText = "position:absolute;pointer-events:none;z-index:2"; cv.after(o); s.ov = o;
+      const par = cv.parentNode; if (getComputedStyle(par).position === "static") par.style.position = "relative"; }
+    const o = s.ov; o.style.left = cv.offsetLeft + "px"; o.style.top = cv.offsetTop + "px";
+    o.style.width = cv.offsetWidth + "px"; o.style.height = cv.offsetHeight + "px";
+    if (o.width !== cv.width || o.height !== cv.height){ o.width = cv.width; o.height = cv.height; }
+    return o;
+  }
+  const FONT = (sty, z) => sty === "i" ? `italic 600 ${z}px "Segoe UI",Calibri,Arial,sans-serif` : sty === "s" ? `600 ${Math.round(z * .72)}px "Segoe UI",Calibri,Arial,sans-serif` : `600 ${z}px "Segoe UI",Calibri,Arial,sans-serif`;
+  const runW = (ctx, run, z) => run.reduce((w, [t, sty]) => { ctx.font = FONT(sty, z); return w + ctx.measureText(t).width; }, 0);
+  function runDraw(ctx, run, x, y, col, z){ for (const [t, sty] of run){ ctx.font = FONT(sty, z); ctx.fillStyle = col;
+    ctx.fillText(t, x, sty === "s" ? y + z * .3 : y); x += ctx.measureText(t).width; } return x; }
+  function draw(cv, s){
+    const o = overlay(cv, s), ctx = o.getContext("2d");
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, o.width, o.height);
+    if (!s.on || !cv.offsetParent) return;
+    const dpr = cv.width / Math.max(1, cv.getBoundingClientRect().width), dx = s.px * dpr, dy = s.py * dpr;
+    let f = null, lx = 0, ly = 0;
+    for (const g of s.frames){ if (g.skip) continue; const gi = g.m.inverse(), X = gi.a * dx + gi.c * dy + gi.e, Y = gi.b * dx + gi.d * dy + gi.f;
+      if (X >= g.box.x && X <= g.box.x + g.box.w && Y >= g.box.y - 4 && Y <= g.box.y + g.box.h + 4){ f = g; lx = X; ly = Y; break; } }
+    if (!f) return;
+    const b = f.box, xv = px => f.x0 + (px - b.x) / b.w * (f.x1 - f.x0), yv = py => f.y0 + (b.y + b.h - py) / b.h * (f.y1 - f.y0);
+    const lines = curves(f), pts = f.pts.filter(p => p.x >= b.x - 1 && p.x <= b.x + b.w + 1);
+    let hits = [], near = null, x = lx;
+    for (const l of lines) for (const y of cut(l, x)) if (y >= b.y - 1 && y <= b.y + b.h + 1) hits.push({y, col:l.col, dash:l.dash ? 1 : 0});
+    if (pts.length){ const n = pts.reduce((m, p) => { const d = Math.hypot(p.x - lx, p.y - ly); return d < m.d ? {p, d} : m; }, {p:null, d:Infinity});
+      if (n.d <= 12) near = n.p; }
+    if (!lines.length && pts.length){                    // only data points: snap to the nearest one along x
+      near = pts.reduce((m, p) => Math.abs(p.x - lx) + 1e-3 * Math.abs(p.y - ly) < Math.abs(m.x - lx) + 1e-3 * Math.abs(m.y - ly) ? p : m, pts[0]); x = near.x; }
+    if (!hits.length && !near) return;
+    hits.sort((p, q) => p.y - q.y || p.dash - q.dash);    // curves on top of each other: one row (the solid one)
+    hits = hits.filter((h, i) => !hits.slice(0, i).some(q => Math.abs(q.y - h.y) < 1.5)).slice(0, 6);
+    ctx.setTransform(f.m);
+    ctx.save(); ctx.strokeStyle = "rgba(38,50,56,.55)"; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+    orig.beginPath.call(ctx); orig.moveTo.call(ctx, x, b.y); orig.lineTo.call(ctx, x, b.y + b.h); orig.stroke.call(ctx); ctx.restore();
+    const dot = (X, Y, c, r) => { ctx.save(); ctx.fillStyle = c; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; orig.beginPath.call(ctx); orig.arc.call(ctx, X, Y, r, 0, 7); orig.stroke.call(ctx); orig.fill.call(ctx); ctx.restore(); };
+    for (const h of hits) dot(x, h.y, shade(h.col), 4.5);
+    if (near){ ctx.save(); ctx.strokeStyle = "#263238"; ctx.lineWidth = 2; orig.beginPath.call(ctx); orig.arc.call(ctx, near.x, near.y, 8, 0, 7); orig.stroke.call(ctx); ctx.restore(); }
+    const X = split(f.xl), Y = split(f.yl), xs = f.x1 - f.x0, ys = f.y1 - f.y0, z = 13.5, rows = [];
+    const eq = (sym, v, span, unit) => [...sym, [` = ${num(v, span)}${unit ? (unit === "°" ? "" : " ") + unit : ""}`, "n"]];
+    if (!near || lines.length) rows.push({run:eq(X.sym, xv(x), xs, X.unit), col:"#263238"});
+    if (lines.length) for (const h of hits) rows.push({run:eq(Y.sym, yv(h.y), ys, Y.unit), col:h.col, mark:hits.length > 1});
+    if (near){ rows.push({run:[["point:  ", "n"], ...eq(X.sym, xv(near.x), xs, X.unit)], col:near.col, mark:true});
+      rows.push({run:[["point:  ", "n"], ...eq(Y.sym, yv(near.y), ys, Y.unit)], col:near.col, mark:true, hide:true}); }
+    if (!rows.length) return;
+    ctx.save(); ctx.textBaseline = "middle"; ctx.textAlign = "left";
+    const rh = z + 6, mw = Math.max(...rows.map(r => runW(ctx, r.run, z) + (r.mark ? 14 : 0))), bw = mw + 16, bh = rows.length * rh + 8;
+    const right = x + 10 + bw > b.x + b.w; let bx = right ? x - 10 - bw : x + 10;
+    const cw = o.width / dpr; bx = Math.max(b.x + 2, Math.min(bx, b.x + b.w - bw - 2)); bx = Math.max(2, Math.min(bx, cw - bw - 2));
+    let by = ly - bh / 2;
+    if (near && near.x + 10 > bx && near.x - 10 < bx + bw){ by = near.y + 14; if (by + bh > b.y + b.h - 2) by = near.y - 14 - bh; }   // keep the point visible
+    by = Math.max(b.y + 2, Math.min(by, b.y + b.h - bh - 2));
+    ctx.fillStyle = "rgba(255,255,255,.94)"; ctx.strokeStyle = "rgba(38,50,56,.35)"; ctx.lineWidth = 1;
+    orig.beginPath.call(ctx); ctx.roundRect ? ctx.roundRect(bx, by, bw, bh, 6) : ctx.rect(bx, by, bw, bh); orig.fill.call(ctx); orig.stroke.call(ctx);
+    rows.forEach((r, i) => { const yy = by + 4 + rh * i + rh / 2; let xx = bx + 8;
+      if (r.mark && !r.hide){ ctx.fillStyle = shade(r.col); orig.beginPath.call(ctx); orig.arc.call(ctx, xx + 4, yy, 4, 0, 7); orig.fill.call(ctx); }
+      if (r.mark) xx += 14;
+      let run = r.run; if (r.hide){ ctx.font = FONT("n", z); xx += ctx.measureText(run[0][0]).width; run = run.slice(1); }   // 2nd point row lines up under the 1st
+      runDraw(ctx, run, xx, yy, r.col === "#263238" ? r.col : shade(r.col), z); });
+    ctx.restore();
+  }
+  function shade(c){                                      // pale curve colours (e.g. dashed grey) are darkened for text
+    let r, g, bb; const m = /^#([0-9a-f]{6})$/i.exec(c), q = /^rgba?\(\s*(\d+)[ ,]+(\d+)[ ,]+(\d+)/i.exec(c);
+    if (m){ const n = parseInt(m[1], 16); r = n >> 16; g = (n >> 8) & 255; bb = n & 255; } else if (q){ r = +q[1]; g = +q[2]; bb = +q[3]; } else return c;
+    c = `rgb(${r},${g},${bb})`; const L = 0.299 * r + 0.587 * g + 0.114 * bb;
+    if (L < 150) return c; const k = 150 / L; return `rgb(${Math.round(r * k)},${Math.round(g * k)},${Math.round(bb * k)})`;
+  }
+  function bind(cv){
+    const s = st(cv); if (s.bound) return; s.bound = true;
+    const at = e => { const r = cv.getBoundingClientRect(); s.px = e.clientX - r.left; s.py = e.clientY - r.top; s.on = true; };
+    cv.addEventListener("pointermove", e => { if (e.pointerType === "touch" && !s.touch) return; at(e); });
+    cv.addEventListener("pointerdown", e => { s.touch = e.pointerType === "touch"; at(e); });
+    cv.addEventListener("pointerup", e => { if (e.pointerType === "touch") s.touch = false; });
+    cv.addEventListener("pointercancel", () => { s.touch = false; });   // a finger that scrolls the page lets go of the probe
+    cv.addEventListener("pointerleave", e => { if (e.pointerType !== "touch") s.on = false; });
+    document.addEventListener("pointerdown", e => { if (e.target !== cv) s.on = false; });
+  }
+  function tick(){ for (const [cv, s] of S) if (s.ov || s.on) draw(cv, s); requestAnimationFrame(tick); }
+  requestAnimationFrame(tick);
+  return {wrapAxes, quiet, S};
+})();
+if (typeof axesR === "function") axesR = PROBE.wrapAxes(axesR, true);
+if (typeof axes === "function") axes = PROBE.wrapAxes(axes, false);
+if (typeof drawTangent === "function") drawTangent = PROBE.quiet(drawTangent);
+if (typeof shadeArea === "function") shadeArea = PROBE.quiet(shadeArea);
+if (typeof areaName === "function") areaName = PROBE.quiet(areaName);
+if (typeof toolLabels === "function") toolLabels = PROBE.quiet(toolLabels);
+if (typeof arrow === "function") arrow = PROBE.quiet(arrow);
+if (typeof fArrow === "function") fArrow = PROBE.quiet(fArrow);
+if (typeof label === "function") label = PROBE.quiet(label);
+if (typeof rich === "function") rich = PROBE.quiet(rich);
+if (typeof subLabel === "function") subLabel = PROBE.quiet(subLabel);
+if (typeof note === "function") note = PROBE.quiet(note);
+if (typeof pill === "function") pill = PROBE.quiet(pill);
+/* ==== SHARED-UI END ==== */
+/* ==== NEWTON START — Newton's-law panel (shared by all simulations; source ~/.cache/sharedui-build/newton/) ====
+   The FBD code of each simulation reports what it draws: NF.body(name, m, ax, ay, {v, axes}) and NF.force(label, Fx, Fy, colour, by, kind).
+   Fx, Fy are in N along the body's two axes (default → right, ↑ up); ax, ay the body's acceleration along the same axes.
+   kind: grav · normal · friction · tension · push · pull · spring · drag · buoy · impact · contact (decides the words for the 3rd-law partner).
+   NEWTON then shows: the law badge above the scene (1st law ΣF = 0 / 2nd law ΣF = ma), the ΣF = ma table under the FBD (foldable),
+   and, with "3rd-law pairs" ticked, every force with its partner on the other body (same size, opposite direction). */
+const NF = (() => {
+  let bodies = [], cur = null, msg = "";
+  return {
+    reset(){ bodies = []; cur = null; msg = ""; },
+    body(name, m, ax, ay, o = {}){ cur = {name, m, ax:ax || 0, ay:ay || 0, v:o.v, axes:o.axes || ["→", "↑"], forces:[], law:o.law, pre:o.pre || ""}; bodies.push(cur); return cur; },
+    force(lab, fx, fy, col, by, kind = "contact"){ if (!cur || !isFinite(fx) || !isFinite(fy)) return;
+      if (Math.hypot(fx, fy) < 1e-9) return; cur.forces.push({lab, fx, fy, col, by, kind}); },
+    none(t){ bodies = []; cur = null; msg = t || ""; },
+    get bodies(){ return bodies; }, get msg(){ return msg; },
+  };
+})();
+const NEWTON = (() => {
+  const VERB = {grav:"gravitational pull", normal:"normal force (push)", friction:"friction", tension:"pull (tension)", push:"push", pull:"pull",
+    spring:"spring force", drag:"drag", buoy:"buoyancy (push of the fluid)", impact:"contact force", contact:"contact force"};
+  const fmtN = v => { const a = Math.abs(v); return a >= 1e4 ? `${(v / 1000).toPrecision(3)} kN` : a < 1e-3 && a > 0 ? `${v.toExponential(2)} N` : `${+v.toPrecision(3)} N`; };
+  const z = v => Math.abs(v) < 5e-4 ? "0" : String(+v.toPrecision(3)).replace("-", "−");
+  const dirGlyph = (x, y) => { const a = Math.atan2(y, x) * 180 / Math.PI; return ["→", "↗", "↑", "↖", "←", "↙", "↓", "↘"][((Math.round(a / 45) % 8) + 8) % 8]; };
+  const plain = s => String(s).replace(/<sub>(.*?)<\/sub>/g, "$1").replace(/<[^>]+>/g, "");
+  let fold = false, last = "";
+  try { const v = localStorage.getItem("newton-fold"); fold = v === null ? innerWidth >= 760 && innerWidth < 1100 : v === "1"; } catch (e) {}   // tablets start folded
+  const lawOf = b => b.law || (Math.hypot(b.ax, b.ay) < 1e-6 ? "1st" : "2nd");
+  function badge(){
+    const el = document.getElementById("nlaw"); if (!el) return;
+    const B = NF.bodies; let html, cls;
+    if (!B.length){ html = NF.msg || "No forces to show here"; cls = "none"; }
+    else {
+      const laws = B.map(lawOf), all1 = laws.every(l => l === "1st"), all2 = laws.every(l => l === "2nd");
+      const who = l => B.length > 1 ? ` (${B.filter((b, i) => laws[i] === l).map(b => b.name).join(", ")})` : "";
+      const rest = B.every(b => b.v !== undefined && Math.abs(b.v) < 1e-6);
+      if (all1){ cls = "l1"; html = `<b>1st law</b> · ${rest ? "at rest" : B.some(b => b.v === undefined) ? "at rest or constant velocity" : "constant velocity"} · Σ<i>F</i> = 0`; }
+      else if (all2){ cls = "l2"; html = `<b>2nd law</b> · accelerating · Σ<i>F</i> = <i>ma</i>`; }
+      else { cls = "l2"; html = `<b>2nd law</b>${who("2nd")} · <b>1st law</b>${who("1st")}`; }
+    }
+    if (B.length && B[0].pre) html = B[0].pre + html;
+    if (el.dataset.h !== html + cls){ el.innerHTML = html; el.className = "nlaw " + cls; el.dataset.h = html + cls; }
+  }
+  function table(){
+    const el = document.getElementById("ntab"); if (!el) return;
+    const B = NF.bodies; let html = "";
+    if (!B.length) html = `<div class="nh"><button class="nfold" data-nfold aria-expanded="${!fold}">${fold ? "▸" : "▾"} Σ<i>F</i> = <i>ma</i> check</button><span class="nk">${NF.msg || "no forces here"}</span></div>`;
+    else {
+      const twoD = B.some(b => b.forces.some(f => Math.abs(f.fy) > 1e-9) && b.forces.some(f => Math.abs(f.fx) > 1e-9) || Math.abs(b.ay) > 1e-9 && Math.abs(b.ax) > 1e-9);
+      const sums = B.map(b => [b.forces.reduce((s, f) => s + f.fx, 0), b.forces.reduce((s, f) => s + f.fy, 0)]);
+      const ok = B.every((b, i) => Math.abs(sums[i][0] - b.m * b.ax) <= 0.01 * (1 + Math.abs(b.m * b.ax)) && Math.abs(sums[i][1] - b.m * b.ay) <= 0.01 * (1 + Math.abs(b.m * b.ay)));
+      html += `<div class="nh"><button class="nfold" data-nfold aria-expanded="${!fold}">${fold ? "▸" : "▾"} Σ<i>F</i> = <i>ma</i> check</button><span class="nk ${ok ? "ok" : ""}">${ok ? "✔ Σ<i>F</i> = <i>ma</i> for every body" : ""}</span></div>`;
+      if (!fold){
+        const vert = !twoD && !B.some(bb => bb.forces.some(f => Math.abs(f.fx) > 1e-9));
+        html += `<table><tr><th>force</th><th>by</th><th>${twoD ? B[0].axes[0] : vert ? B[0].axes[1] : B[0].axes[0]} / N</th>${twoD ? `<th>${B[0].axes[1]} / N</th>` : ""}</tr>`;
+        B.forEach((b, i) => {
+          const comp = (f, k) => k ? f.fy : f.fx, one = !twoD && !B.some(bb => bb.forces.some(f => Math.abs(f.fx) > 1e-9)) ? 1 : 0;   // 1-D vertical: show the y value
+          if (B.length > 1) html += `<tr class="nb"><td colspan="${twoD ? 4 : 3}">on ${b.name}${b.m ? ` (${+b.m.toPrecision(3)} kg)` : ""}</td></tr>`;
+          b.forces.forEach(f => { html += `<tr><td style="color:${f.col}">${f.lab}</td><td class="by">${f.by}</td><td>${z(twoD ? f.fx : comp(f, one))}</td>${twoD ? `<td>${z(f.fy)}</td>` : ""}</tr>`; });
+          html += `<tr class="ns"><td>Σ<i>F</i></td><td></td><td>${z(twoD ? sums[i][0] : sums[i][one])}</td>${twoD ? `<td>${z(sums[i][1])}</td>` : ""}</tr>`;
+          html += `<tr class="nm"><td><i>m a</i></td><td class="by">${b.m ? `${+b.m.toPrecision(3)} kg` : ""}</td><td>${z(b.m * (twoD ? b.ax : (one ? b.ay : b.ax)))}</td>${twoD ? `<td>${z(b.m * b.ay)}</td>` : ""}</tr>`;
+        });
+        html += `</table><div class="ncap">3rd law: each force has a partner of the same size and type, in the opposite direction, on the other body — tick <b>3rd-law pairs</b>.</div>`;
+      }
+    }
+    if (html !== last){ el.innerHTML = html; last = html; }
+  }
+  // 3rd-law pairs: drawn over the scene as a card, one row per force (the force on the body · its partner on the other body)
+  function pairs(){
+    const cb = document.getElementById("n3"); if (!cb || !cb.checked) return;
+    const cv = document.getElementById("scene"); if (!cv) return;
+    const ctx = cv.getContext("2d"), r = cv.getBoundingClientRect(), w = r.width, h = r.height;
+    const rows = NF.bodies.flatMap(b => b.forces.map(f => ({b, f}))).slice(0, 8);
+    const txt = rows.map(({b, f}) => { const M = Math.hypot(f.fx, f.fy), by = plain(f.by), nm = plain(b.name);
+      return [`${plain(f.lab)}: ${by} on ${nm} ${fmtN(M)}`, `${nm} on ${by} ${fmtN(M)}`]; });
+    const title = "3rd-law pairs: same size · same type · opposite direction · on different bodies";
+    ctx.save(); ctx.setTransform(window.devicePixelRatio || 1, 0, 0, window.devicePixelRatio || 1, 0, 0);
+    ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.setLineDash([]); ctx.globalAlpha = 1;
+    const pw = Math.min(w - 16, 600); let fs = 12.5;
+    const fits = () => { ctx.font = `${fs}px "Segoe UI",Calibri,Arial,sans-serif`;
+      const c1 = Math.max(0, ...txt.map(t => ctx.measureText(t[0]).width)), c2 = Math.max(0, ...txt.map(t => ctx.measureText(t[1]).width));
+      ctx.font = `700 ${fs}px "Segoe UI",Calibri,Arial,sans-serif`; return Math.max(ctx.measureText(title).width + 20, c1 + c2 + 90) <= pw ? c1 : -1; };
+    let c1 = fits(); while (c1 < 0 && fs > 8.5){ fs -= 0.5; c1 = fits(); } if (c1 < 0) c1 = pw / 2 - 60;
+    const rh = fs + 8, ph = 24 + rh * Math.max(1, rows.length), x0 = 8, y0 = h - ph - 8;
+    ctx.fillStyle = "rgba(255,255,255,.96)"; ctx.strokeStyle = "#1F3A5F"; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x0, y0, pw, ph, 8) : ctx.rect(x0, y0, pw, ph); ctx.fill(); ctx.stroke();
+    ctx.font = `700 ${fs}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = "#1F3A5F"; ctx.fillText(title, x0 + 10, y0 + 12);
+    if (!rows.length){ ctx.font = `${fs}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillText(NF.msg || "No forces in this example.", x0 + 10, y0 + 12 + rh); }
+    const arr = (x, y, ux, uy, L, c, dash) => { ctx.save(); ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineWidth = 2.5; if (dash) ctx.setLineDash([4, 3]);
+      const x1 = x - ux * L / 2, y1 = y + uy * L / 2, x2 = x + ux * L / 2, y2 = y - uy * L / 2;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - ux * 5, y2 + uy * 5); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x2 - ux * 7 - uy * 4, y2 + uy * 7 - ux * 4); ctx.lineTo(x2 - ux * 7 + uy * 4, y2 + uy * 7 + ux * 4); ctx.closePath(); ctx.fill(); ctx.restore(); };
+    const col2 = x0 + 34 + c1 + 22;
+    rows.forEach(({b, f}, i) => {
+      const y = y0 + 12 + rh * (i + 1), M = Math.hypot(f.fx, f.fy), ux = f.fx / M, uy = f.fy / M;
+      ctx.font = `${fs}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = f.col;
+      arr(x0 + 19, y, ux, uy, 15, f.col, false); ctx.fillText(txt[i][0], x0 + 34, y);
+      ctx.fillStyle = "#90A4AE"; ctx.fillText("⇄", col2 - 16, y); ctx.fillStyle = f.col;
+      arr(col2 + 9, y, -ux, -uy, 15, f.col, true); ctx.fillText(txt[i][1], col2 + 24, y);
+    });
+    ctx.restore();
+  }
+  function frame(){ try { badge(); table(); pairs(); } catch (e) { console.error(e); } }
+  function hook(){
+    const o = drawFBD;
+    drawFBD = function(){ NF.reset(); const r = o.apply(this, arguments); frame(); return r; };
+    document.addEventListener("click", e => { const b = e.target.closest("[data-nfold]"); if (!b) return; fold = !fold;
+      try { localStorage.setItem("newton-fold", fold ? "1" : "0"); } catch (er) {} last = ""; table(); });
+  }
+  return {hook, frame, lawOf};
+})();
+/* ==== NEWTON END ==== */
+/* ============================ 3 CONFIG ============================ */
+const G = 9.81;                 // N kg⁻¹ (IB data booklet)
+const H = 0.40, BAND_A = 0.15, BAND_B = 0.35;     // m below the surface: liquid depth and the two rubber bands (20 cm apart)
+const LIQUIDS = [
+  {id:"gly",    name:"Glycerol",    rho:1260, eta:1.41,   col:"rgba(255,248,225,.85)"},
+  {id:"castor", name:"Castor oil",  rho:960,  eta:0.99,   col:"rgba(255,236,179,.85)"},
+  {id:"oil",    name:"Cooking oil", rho:920,  eta:0.065,  col:"rgba(255,224,130,.75)"},
+  {id:"water",  name:"Water",       rho:1000, eta:0.0010, col:"rgba(179,229,252,.7)"},
+];
+const BALLS = [{id:"steel", name:"Steel ball bearing", rho:7850, col:"#78909C"},
+               {id:"glass", name:"Glass marble",       rho:2500, col:"#80CBC4"},
+               {id:"alu",   name:"Aluminium ball",     rho:2700, col:"#B0BEC5"}];
+const AIR = {rho:1.2, CdA_body:0.70, CdA_chute:37.5, h0:1500};   // skydiver model (qualitative)
+const COL = {W:"#2A5D8A", N:"#2E7D32", F:"#C62828", P:"#6A1B9A", b:"#00838F", d:"#AD1457", navy:"#1F3A5F", accent:"#E65100",
+             ink:"#263238", muted:"#606A72", grid:"#E3E9F0", v:"#1565C0", grey:"#90A4AE"};
+const liqById = id => LIQUIDS.find(l => l.id === id), ballById = id => BALLS.find(b => b.id === id);
+
+/* ============================ 4 PHYSICS ============================ */
+const f2 = x => (Math.round(x * 100) / 100).toFixed(2);
+const sig = (x, n = 3) => String(+Number(x).toPrecision(n));          // 3 s.f., never in e-notation
+const vol = r => 4 / 3 * Math.PI * r ** 3;
+const stokesVt = (r, rb, rf, eta) => 2 * r * r * (rb - rf) * G / (9 * eta);         // Stokes' law terminal speed
+const reynolds = (rf, v, r, eta) => rf * Math.abs(v) * 2 * r / eta;
+function dragBall(v, r, liq){ const Re = reynolds(liq.rho, v, r, liq.eta); return 6 * Math.PI * liq.eta * r * v * (1 + 0.15 * Re ** 0.687); }
+function terminal(r, ball, liq){                                                       // true terminal speed of the model (bisection)
+  const net = W => (ball.rho - liq.rho) * vol(r) * G;
+  let lo = 0, hi = Math.max(1e-6, Math.abs(stokesVt(r, ball.rho, liq.rho, liq.eta)) * 1.01);
+  for (let i = 0; i < 80; i++){ const m = (lo + hi) / 2; dragBall(m, r, liq) < Math.abs(net()) ? lo = m : hi = m; }
+  return (lo + hi) / 2 * Math.sign(ball.rho - liq.rho);
+}
+function linFit(pts){ const n = pts.length; if (n < 2) return null;
+  const mx = pts.reduce((a, p) => a + p[0], 0) / n, my = pts.reduce((a, p) => a + p[1], 0) / n;
+  const sxx = pts.reduce((a, p) => a + (p[0] - mx) ** 2, 0); if (!sxx) return null;
+  const k = pts.reduce((a, p) => a + (p[0] - mx) * (p[1] - my), 0) / sxx; return {k, b:my - k * mx}; }
+function originFit(pts){ const sxx = pts.reduce((a, p) => a + p[0] * p[0], 0);
+  return sxx && pts.length >= 2 ? {k:pts.reduce((a, p) => a + p[0] * p[1], 0) / sxx, b:0} : null; }
+
+/* ============================ 5 RUN ============================ */
+const set = {mode:"liquid", liq:"gly", ball:"steel", r:1.0, warp:1, m:80};
+const R = {phase:"ready", t:0, y:0, v:0, tA:null, tB:null, samples:[], chute:false, hold:false};
+function reset(){ Object.assign(R, {phase:"ready", t:0, y:set.mode === "air" ? AIR.h0 : 0, v:0, tA:null, tB:null, samples:[], chute:false, hold:false}); renderActions(); }
+function start(){ reset(); R.phase = "run"; R.samples = [{t:0, v:0}]; renderActions(); }
+function stepLiquid(dt){
+  const r = set.r / 1000, b = ballById(set.ball), l = liqById(set.liq), V = vol(r), m = b.rho * V;
+  const tau = m / (6 * Math.PI * l.eta * r), h = Math.min(dt, tau / 4);
+  let left = dt;
+  while (left > 1e-12){ const s = Math.min(h, left);
+    const a = ((b.rho - l.rho) * V * G - dragBall(R.v, r, l)) / m;
+    R.v += a * s; const y0 = R.y; R.y += R.v * s; R.t += s; left -= s;
+    if (R.tA === null && y0 < BAND_A && R.y >= BAND_A) R.tA = R.t - (R.y - BAND_A) / R.v;
+    if (R.tB === null && y0 < BAND_B && R.y >= BAND_B){ R.tB = R.t - (R.y - BAND_B) / R.v; }
+    if (R.y >= H){ R.y = H; R.phase = "done"; renderActions(); break; }
+    if (R.y < 0){ R.y = 0; R.phase = "done"; renderActions(); break; }            // lighter than the liquid: floats back up
+  }
+}
+function stepAir(dt){
+  const CdA = R.chute ? AIR.CdA_chute : AIR.CdA_body;
+  const a = (set.m * G - 0.5 * AIR.rho * CdA * R.v * R.v) / set.m;
+  R.v += a * dt; R.y -= R.v * dt; R.t += dt;
+  if (R.y <= 0){ R.y = 0; R.phase = "done"; renderActions(); }
+}
+function step(dt){
+  if (R.phase !== "run" || R.hold) return;
+  const warp = set.warp, sub = 40;
+  for (let i = 0; i < sub && R.phase === "run"; i++) (set.mode === "liquid" ? stepLiquid : stepAir)(dt * warp / sub);
+  const last = R.samples[R.samples.length - 1];
+  if (!last || R.t - last.t >= (set.mode === "liquid" ? Math.max(0.01, R.t / 400) : 0.1)) R.samples.push({t:R.t, v:R.v});
+}
+function forcesNow(){
+  if (set.mode === "air"){ const CdA = R.chute ? AIR.CdA_chute : AIR.CdA_body; return {W:set.m * G, Fd:0.5 * AIR.rho * CdA * R.v * R.v, Fb:0}; }
+  const r = set.r / 1000, b = ballById(set.ball), l = liqById(set.liq), V = vol(r);
+  return {W:b.rho * V * G, Fb:l.rho * V * G, Fd:dragBall(R.v, r, l), Re:reynolds(l.rho, R.v, r, l.eta)};
+}
+
+/* ============================ 6 SCENE ============================ */
+function fitCanvas(cv){
+  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+  if (cv.width !== w || cv.height !== h){ cv.width = w; cv.height = h; }
+  const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return {ctx, w:r.width, h:r.height};
+}
+function arrow(ctx, x1, y1, x2, y2, color, width = 4, dashed = false){
+  const L = Math.hypot(x2 - x1, y2 - y1); if (L < 2) return;
+  const ux = (x2 - x1) / L, uy = (y2 - y1) / L, hs = Math.min(13, 6 + width * 1.6);
+  ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width; ctx.lineCap = "round";
+  if (dashed) ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - ux * hs * 0.8, y2 - uy * hs * 0.8); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - ux * hs - uy * hs * 0.5, y2 - uy * hs + ux * hs * 0.5);
+  ctx.lineTo(x2 - ux * hs + uy * hs * 0.5, y2 - uy * hs - ux * hs * 0.5); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function label(ctx, txt, x, y, color, align = "center", size = 15, base = "middle"){
+  ctx.save(); ctx.font = `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = color;
+  ctx.textAlign = align; ctx.textBaseline = base;
+  // white halo so labels stay readable over lines
+  ctx.lineWidth = 4; ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.strokeText(txt, x, y); ctx.fillText(txt, x, y);
+  ctx.restore();
+}
+// Labels with a subscript, e.g. sub(ctx,"F","N"," = 2.45 N",…)
+function subLabel(ctx, main, sub, rest, x, y, color, align = "center", size = 15){
+  ctx.save(); const f1 = `italic 600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`,
+    f2 = `600 ${Math.round(size * .72)}px "Segoe UI",Calibri,Arial,sans-serif`, f3 = `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`;
+  ctx.font = f1; const w1 = ctx.measureText(main).width; ctx.font = f2; const w2 = sub ? ctx.measureText(sub).width : 0;
+  ctx.font = f3; const w3 = ctx.measureText(rest).width; const W = w1 + w2 + w3;
+  let x0 = align === "center" ? x - W / 2 : align === "right" ? x - W : x;
+  ctx.textBaseline = "middle"; ctx.lineWidth = 4; ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.fillStyle = color;
+  ctx.font = f1; ctx.strokeText(main, x0, y); ctx.fillText(main, x0, y);
+  if (sub){ ctx.font = f2; ctx.strokeText(sub, x0 + w1, y + size * .3); ctx.fillText(sub, x0 + w1, y + size * .3); }
+  ctx.font = f3; ctx.strokeText(rest, x0 + w1 + w2, y); ctx.fillText(rest, x0 + w1 + w2, y);
+  ctx.restore();
+}
+// Mixed text: parts = [[text, "n" normal | "i" italic | "s" subscript], …], centred on (x, y)
+function rich(ctx, parts, x, y, color, size = 14){
+  const font = st => st === "i" ? `italic 600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`
+    : st === "s" ? `600 ${Math.round(size * .72)}px "Segoe UI",Calibri,Arial,sans-serif` : `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`;
+  ctx.save(); ctx.fillStyle = color; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+  const ws = parts.map(([t, st]) => { ctx.font = font(st); return ctx.measureText(t).width; });
+  let cx = x - ws.reduce((a, b) => a + b, 0) / 2;
+  parts.forEach(([t, st], i) => { ctx.font = font(st); ctx.fillText(t, cx, st === "s" ? y + size * .3 : y); cx += ws[i]; });
+  ctx.restore();
+}
+function bg(ctx, w, h){ const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#FAFCFF"); g.addColorStop(1, "#EEF3F8");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h); }
+function bench(ctx, w, y, h){ ctx.fillStyle = "#E8DCC4"; ctx.fillRect(0, y, w, 8); ctx.fillStyle = "#8D6E63"; ctx.fillRect(0, y + 8, w, 16);
+  ctx.fillStyle = "#6D4C41"; ctx.fillRect(w * 0.06, y + 24, 12, h); ctx.fillRect(w * 0.9, y + 24, 12, h); }
+function woodBox(ctx, x, y, w, h, txt){
+  ctx.fillStyle = COL.wood; ctx.strokeStyle = COL.woodEdge; ctx.lineWidth = 2; ctx.fillRect(x, y, w, h); ctx.strokeRect(x, y, w, h);
+  if (txt) label(ctx, txt, x + w / 2, y + h / 2, "#6D4C41", "center", 13);
+}
+// kitchen / bathroom scale with a digital display; (x, y) = top-left of the platform
+function scale(ctx, x, y, w, h, reading){
+  ctx.fillStyle = "#ECEFF1"; ctx.strokeStyle = "#90A4AE"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, 4) : ctx.rect(x, y, w, h); ctx.fill(); ctx.stroke();
+  const dw = Math.min(70, w * 0.5), dh = Math.max(10, h - 8);
+  ctx.fillStyle = "#263238"; ctx.fillRect(x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+  ctx.fillStyle = "#76FF03"; ctx.font = `600 ${Math.min(13, dh - 2)}px Consolas,"Courier New",monospace`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(reading, x + w / 2, y + h / 2 + 1);
+}
+function hand(ctx, x, y, k){ ctx.fillStyle = "#F1C27D"; ctx.strokeStyle = "#C99A5B"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.ellipse(x, y, 20 * k, 13 * k, 0, 0, 7); ctx.fill(); ctx.stroke(); }
+function drawScene(){
+  const {ctx, w, h} = fitCanvas($("scene")); ctx.clearRect(0, 0, w, h);
+  if (set.mode === "air") return sceneAir(ctx, w, h);
+  bg(ctx, w, h);
+  const l = liqById(set.liq), b = ballById(set.ball), top = 34, cw = Math.min(110, w * 0.25), cx = w * 0.32, ppm = (h - top - 26) / (H + 0.04);
+  const surf = top + 0.03 * ppm, Y = d => surf + d * ppm;
+  ctx.fillStyle = l.col; ctx.fillRect(cx - cw / 2, surf, cw, H * ppm);
+  ctx.strokeStyle = "#90A4AE"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx - cw / 2, top); ctx.lineTo(cx - cw / 2, Y(H) + 4); ctx.lineTo(cx + cw / 2, Y(H) + 4); ctx.lineTo(cx + cw / 2, top); ctx.stroke();
+  for (const [d, name] of [[BAND_A, "A"], [BAND_B, "B"]]){ ctx.fillStyle = "#C62828"; ctx.fillRect(cx - cw / 2 - 4, Y(d) - 2, cw + 8, 4);
+    label(ctx, `band ${name}`, cx + cw / 2 + 10, Y(d), "#C62828", "left", 12); }
+  label(ctx, "20.0 cm", cx + cw / 2 + 58, (Y(BAND_A) + Y(BAND_B)) / 2, COL.muted, "left", 12);
+  ctx.strokeStyle = COL.muted; ctx.beginPath(); ctx.moveTo(cx + cw / 2 + 50, Y(BAND_A)); ctx.lineTo(cx + cw / 2 + 50, Y(BAND_B)); ctx.stroke();
+  const rpx = Math.max(3, set.r / 1000 * ppm * 2.2);                    // drawn about 2× life size so small balls are visible
+  ctx.fillStyle = b.col; ctx.strokeStyle = "#37474F"; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(cx, Y(R.y) - (R.phase === "ready" ? rpx + 4 : 0), rpx, 0, 7); ctx.fill(); ctx.stroke();
+  // stopwatch
+  const t = R.tB !== null ? R.tB - R.tA : R.tA !== null ? R.t - R.tA : 0;
+  label(ctx, `⏱ ${t.toFixed(2)} s`, w - 10, 20, R.tB !== null ? COL.accent : COL.ink, "right", 20);
+  label(ctx, R.tB !== null ? `v = 0.200 m / ${t.toFixed(2)} s = ${(100 * 0.2 / t).toFixed(2)} cm s⁻¹` : R.tA !== null ? "timing A → B…" : "starts at band A", w - 10, 46, COL.muted, "right", 13);
+  const st = {ready:"Ready — press ▶ Drop", run:R.hold ? "Paused" : `Falling (time ×${set.warp})`, done:R.y <= 0 ? "Floats up — less dense than the liquid" : "At the bottom"}[R.phase];
+  label(ctx, st, 10, 20, COL.navy, "left", 14);
+  const f = forcesNow();
+  if (R.phase !== "ready" && f.Re > 1) label(ctx, `Re = ${sig(f.Re, 2)} > 1: Stokes' law does not apply here!`, 10, h - 12, COL.accent, "left", 12);
+}
+function sceneAir(ctx, w, h){
+  const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#64B5F6"); g.addColorStop(1, "#E3F2FD"); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  const frac = R.y / AIR.h0, gy = h - 16 + (1 - frac) * 0;                           // ground appears near the end
+  ctx.fillStyle = "#81C784"; const groundY = h - 14 + Math.max(0, (R.y - 100) / 100) * 120; ctx.fillRect(0, Math.min(h, groundY), w, h);
+  // the camera falls with the skydiver, so clouds and air streaks move UP the screen as height decreases
+  for (let i = 0; i < 6; i++){ const cy = ((i * 97 + R.y * 2.5) % (h + 60)) - 30; ctx.fillStyle = "rgba(255,255,255,.75)";
+    ctx.beginPath(); ctx.ellipse((i * 131 + 40) % w, cy, 34, 12, 0, 0, 7); ctx.fill(); }
+  if (R.phase === "run"){ ctx.strokeStyle = "rgba(255,255,255,.6)"; ctx.lineWidth = 1.5;
+    const len = Math.min(40, 4 + R.v * 0.8);                                         // longer streaks = faster
+    for (let i = 0; i < 14; i++){ const sx = (i * 53 + 17) % w, sy = ((i * 71 + R.y * 12) % (h + 40)) - 20;
+      ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx, sy + len); ctx.stroke(); } }
+  const cx = w * 0.42, cy = h * 0.48;
+  if (R.chute){ ctx.fillStyle = "#E65100"; ctx.beginPath(); ctx.arc(cx, cy - 60, 46, Math.PI, 0); ctx.fill();
+    ctx.strokeStyle = "#455A64"; ctx.lineWidth = 1; for (const dx of [-44, -15, 15, 44]){ ctx.beginPath(); ctx.moveTo(cx + dx, cy - 60); ctx.lineTo(cx, cy - 12); ctx.stroke(); } }
+  ctx.fillStyle = "#37474F"; ctx.beginPath(); ctx.arc(cx, cy - 8, 7, 0, 7); ctx.fill();
+  ctx.strokeStyle = "#37474F"; ctx.lineWidth = 5; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy + 22);
+  ctx.moveTo(cx - 18, cy + 4); ctx.lineTo(cx + 18, cy + 4); ctx.moveTo(cx, cy + 22); ctx.lineTo(cx - 10, cy + 38); ctx.moveTo(cx, cy + 22); ctx.lineTo(cx + 10, cy + 38); ctx.stroke();
+  label(ctx, `height ${Math.max(0, R.y).toFixed(0)} m`, w - 10, 20, COL.navy, "right", 16);
+  label(ctx, `v = ${R.v.toFixed(1)} m s⁻¹`, w - 10, 44, COL.v, "right", 16);
+  label(ctx, R.phase === "ready" ? "Ready — press ▶ Jump" : R.phase === "done" ? "Landed" : (R.chute ? "Parachute open" : "Free fall with air resistance") + ` (time ×${set.warp})`, 10, 20, COL.navy, "left", 14);
+  label(ctx, "Air resistance ≈ kv² — NOT Stokes' law", 10, h - 12, COL.navy, "left", 12);
+}
+
+/* ============================ 7 FBD ============================ */
+function drawFBD(){
+  const {ctx, w, h} = fitCanvas($("fbd")); ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  const f = forcesNow(), cx = w * 0.45, cy = h * 0.5, up = f.Fb + f.Fd, sc = h * 0.36 / Math.max(f.W, up), L = v => v * sc;
+/*NF*/  if (R.phase === "ready") NF.none("Before the release the ball is held — press ▶");
+  else { const m = f.W / G, ay = (up - f.W) / m, fl = set.mode === "air" ? "the air" : "the liquid";
+    NF.body(set.mode === "air" ? "the skydiver" : "the ball", m, 0, Math.abs(ay) < 1e-3 * G ? 0 : ay, {v:R.v});
+    NF.force("W", 0, -f.W, COL.W, "the Earth", "grav"); NF.force("F<sub>d</sub>", 0, f.Fd, COL.d, fl, "drag");
+    if (set.mode === "liquid") NF.force("F<sub>b</sub>", 0, f.Fb, COL.b, fl, "buoy"); }/*/NF*/
+  $("fbdTitle").textContent = set.mode === "air" ? "Free-body diagram of the skydiver" : "Free-body diagram of the ball";
+  ctx.fillStyle = set.mode === "air" ? "#37474F" : ballById(set.ball).col; ctx.beginPath(); ctx.arc(cx, cy, 13, 0, 7); ctx.fill();
+  arrow(ctx, cx, cy, cx, cy + L(f.W), COL.W, 4); subLabel(ctx, "W", "", ` = ${sig(f.W)} N`, cx + 10, cy + L(f.W) - 4, COL.W, "left");
+  if (set.mode === "liquid"){
+    arrow(ctx, cx - 9, cy, cx - 9, cy - L(f.Fb), COL.b, 4); subLabel(ctx, "F", "b", ` = ${sig(f.Fb)} N`, cx - 16, cy - L(f.Fb) + 6, COL.b, "right");
+    if (f.Fd > f.W * 1e-4){ arrow(ctx, cx + 9, cy, cx + 9, cy - L(f.Fd), COL.d, 4); subLabel(ctx, "F", "d", ` = ${sig(f.Fd)} N`, cx + 16, cy - L(f.Fd) + 6, COL.d, "left"); }
+  } else if (f.Fd > 0.5){ arrow(ctx, cx, cy, cx, cy - L(f.Fd), COL.d, 4); subLabel(ctx, "F", "d", ` = ${f.Fd.toFixed(0)} N`, cx + 10, cy - L(f.Fd) + 6, COL.d, "left"); }
+  const Rn = f.W - up, msg = Math.abs(Rn) < 0.01 * f.W ? "Forces balance → terminal velocity (a = 0)" : Rn > 0 ? "W > upward forces → speeding up" : "Upward forces > W → slowing down";
+  label(ctx, R.phase === "ready" ? "Before release: drag = 0" : msg, w / 2, 13, COL.navy, "center", 13);
+  if (Math.abs(Rn) > 0.01 * f.W){ const rx = w * 0.86; arrow(ctx, rx, cy, rx, cy + Math.sign(Rn) * Math.max(14, L(Math.abs(Rn))), COL.grey, 4, true);
+    label(ctx, "ΣF", rx, cy - Math.sign(Rn) * 14, COL.muted, "center", 12); }
+  if (set.mode === "liquid") label(ctx, "Terminal velocity: W = Fb + Fd", w / 2, h - 12, COL.muted, "center", 12);
+}
+
+/* ============================ 8 GRAPHS ============================ */
+function niceUp(x){ const p = Math.pow(10, Math.floor(Math.log10(x))), m = x / p;
+  return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p; }
+function niceStep(range, n){ return niceUp(range / n); }
+function niceCeil(x, n = 5){ const st = niceUp(x / n); return Math.ceil(x / st - 1e-9) * st; }  // e.g. 11.4 → 12.5
+// axis numbers: enough decimals for small steps, × 10ⁿ form for very big values (typed values can be far outside the sliders)
+const tickTxt = (v, st, d0) => { if (Math.abs(v) >= 1e6){ const e = Math.floor(Math.log10(Math.abs(v)) + 1e-9);
+    return `${+(v / 10 ** e).toPrecision(3)}×10${[...String(e)].map(c => "⁰¹²³⁴⁵⁶⁷⁸⁹"[c]).join("")}`; }
+  return String(+v.toFixed(Math.min(12, Math.max(d0, Math.ceil(-Math.log10(st)) + 1)))); };
+function axes(ctx, box, xMax, yMax, xLab, yLab){
+  const {x, y, w, h} = box;
+  ctx.save(); ctx.font = `13px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = COL.muted;
+  ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
+  const xs = niceStep(xMax, 8), ys = niceStep(yMax, 6);
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  for (let v = 0; v <= xMax + xs * 1e-6; v += xs){ const X = x + w * v / xMax; ctx.beginPath(); ctx.moveTo(X, y); ctx.lineTo(X, y + h); ctx.stroke(); ctx.fillText(tickTxt(v, xs, 2), X, y + h + 4); }
+  ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  for (let v = 0; v <= yMax + ys * 1e-6; v += ys){ const Y = y + h - h * v / yMax; ctx.beginPath(); ctx.moveTo(x, Y); ctx.lineTo(x + w, Y); ctx.stroke(); ctx.fillText(tickTxt(v, ys, 2), x - 5, Y); }
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + h); ctx.lineTo(x + w, y + h); ctx.stroke();
+  ctx.restore();
+  rich(ctx, xLab, x + w / 2, y + h + 30, COL.ink);
+  ctx.save(); ctx.translate(x - 44, y + h / 2); ctx.rotate(-Math.PI / 2); rich(ctx, yLab, 0, 0, COL.ink); ctx.restore();
+}
+function axesR(ctx, box, x0, x1, y0, y1, xLab, yLab, noX = false){
+  const {x, y, w, h} = box, X = v => x + w * (v - x0) / (x1 - x0), Y = v => y + h - h * (v - y0) / (y1 - y0);
+  ctx.save(); ctx.font = `13px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = COL.muted; ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
+  const xs = niceStep(x1 - x0, 8), ys = niceStep(y1 - y0, 6);
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  if (!noX) for (let v = Math.ceil(x0 / xs - 1e-9) * xs; v <= x1 + xs * 1e-6; v += xs){ ctx.beginPath(); ctx.moveTo(X(v), y); ctx.lineTo(X(v), y + h); ctx.stroke(); ctx.fillText(tickTxt(v, xs, 2), X(v), y + h + 4); }
+  ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  for (let v = Math.ceil(y0 / ys - 1e-9) * ys; v <= y1 + ys * 1e-6; v += ys){ ctx.beginPath(); ctx.moveTo(x, Y(v)); ctx.lineTo(x + w, Y(v)); ctx.stroke(); ctx.fillText(tickTxt(v, ys, 2), x - 5, Y(v)); }
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.5; ctx.beginPath();
+  const zx = x0 <= 0 && x1 >= 0 ? X(0) : x, zy = y0 <= 0 && y1 >= 0 ? Y(0) : y + h;
+  ctx.moveTo(zx, y); ctx.lineTo(zx, y + h); ctx.moveTo(x, zy); ctx.lineTo(x + w, zy); ctx.stroke();
+  ctx.restore();
+  rich(ctx, xLab, x + w / 2, y + h + 30, COL.ink);
+  ctx.save(); ctx.translate(x - 44, y + h / 2); ctx.rotate(-Math.PI / 2); rich(ctx, yLab, 0, 0, COL.ink); ctx.restore();
+  return {X, Y};
+}
+function drawGraph(){
+  const cv = $("graph"); if (!cv.offsetParent) return;
+  const {ctx, w, h} = fitCanvas(cv); ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  const box = {x:62, y:24, w:w - 78, h:h - 76};
+  if (set.mode === "air"){
+    const vtB = Math.sqrt(2 * set.m * G / (AIR.rho * AIR.CdA_body)), T = Math.max(20, niceCeil(R.t * 1.1)), vm = vtB > 55 ? niceCeil(vtB * 1.1) : 60;   // taller axis only for a typed heavy skydiver
+    const g = axesR(ctx, box, 0, T, 0, vm, [["time ", "n"], ["t", "i"], [" / s", "n"]], [["v", "i"], [" / m s⁻¹", "n"]]);
+    for (const CdA of [AIR.CdA_body, AIR.CdA_chute]){ const vt = Math.sqrt(2 * set.m * G / (AIR.rho * CdA));
+      ctx.save(); ctx.strokeStyle = COL.grey; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(g.X(0), g.Y(vt)); ctx.lineTo(g.X(T), g.Y(vt)); ctx.stroke(); ctx.restore();
+      label(ctx, `terminal ${CdA === AIR.CdA_body ? "(no parachute)" : "(parachute)"} ≈ ${vt.toFixed(0)} m s⁻¹`, g.X(T) - 4, g.Y(vt) - 10, COL.muted, "right", 12); }
+    plot(ctx, g);
+    $("graphHint").textContent = "Speeds up until drag = weight; opening the parachute makes the drag much bigger, so the skydiver slows down to a new, lower terminal speed.";
+    return;
+  }
+  const r = set.r / 1000, b = ballById(set.ball), l = liqById(set.liq), vt = Math.abs(terminal(r, b, l)), vs = Math.abs(stokesVt(r, b.rho, l.rho, l.eta));
+  const tEnd = R.samples.length ? R.samples[R.samples.length - 1].t : 0;
+  const T = niceCeil(Math.max(tEnd * 1.1, Math.min(H / Math.max(vt, 1e-6) * 1.1, 60), 0.2)), vm = niceCeil(Math.max(vt, vs > 3 * vt ? vt : vs) * 1.25);
+  const g = axesR(ctx, box, 0, T, 0, 100 * vm, [["time ", "n"], ["t", "i"], [" / s", "n"]], [["v", "i"], [" / cm s⁻¹", "n"]]);
+  if (vs <= vm){ ctx.save(); ctx.strokeStyle = COL.accent; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(g.X(0), g.Y(100 * vs)); ctx.lineTo(g.X(T), g.Y(100 * vs)); ctx.stroke(); ctx.restore();
+    label(ctx, `Stokes: vₜ = 2r²(ρb − ρf)g/(9η) = ${sig(100 * vs)} cm s⁻¹`, g.X(T) - 4, g.Y(100 * vs) - 10, COL.accent, "right", 12); }
+  else label(ctx, `Stokes' law would predict ${sig(vs, 2)} m s⁻¹ — far too fast (Re ≫ 1)`, box.x + box.w - 6, box.y + box.h - 16, COL.accent, "right", 12);
+  ctx.save(); ctx.strokeStyle = COL.v; ctx.lineWidth = 2.4; ctx.beginPath();
+  R.samples.forEach((p, i) => i ? ctx.lineTo(g.X(p.t), g.Y(100 * Math.abs(p.v))) : ctx.moveTo(g.X(p.t), g.Y(100 * Math.abs(p.v)))); ctx.stroke(); ctx.restore();
+  for (const [tt, nm] of [[R.tA, "A"], [R.tB, "B"]]) if (tt !== null){ ctx.save(); ctx.strokeStyle = "#C62828"; ctx.setLineDash([2, 3]); ctx.beginPath(); ctx.moveTo(g.X(tt), g.Y(0)); ctx.lineTo(g.X(tt), g.Y(100 * vm)); ctx.stroke(); ctx.restore();
+    label(ctx, nm, g.X(tt) + 4, g.Y(100 * vm) + 10, "#C62828", "left", 12); }
+  $("graphHint").textContent = "The ball reaches terminal speed almost at once in glycerol; the bands A–B time only the constant-speed part. Dashed: Stokes' law prediction.";
+}
+function plot(ctx, g){ ctx.save(); ctx.strokeStyle = COL.v; ctx.lineWidth = 2.4; ctx.beginPath();
+  R.samples.forEach((p, i) => i ? ctx.lineTo(g.X(p.t), g.Y(p.v)) : ctx.moveTo(g.X(p.t), g.Y(p.v))); ctx.stroke(); ctx.restore(); }
+function drawAna(){
+  const cv = $("ana"); if (!cv.offsetParent) return;
+  const {ctx, w, h} = fitCanvas(cv); ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  const key = `${set.liq}|${set.ball}`, tr = trials.filter(t => `${t.liq}|${t.ball}` === key), pts = tr.map(t => [t.r * t.r, t.v]);
+  const xm = niceCeil(Math.max(1, ...pts.map(p => p[0])) * 1.1), ym = niceCeil(Math.max(0.5, ...pts.map(p => p[1])) * 1.15);
+  const box = {x:62, y:58, w:w - 78, h:h - 108};
+  const g = axesR(ctx, box, 0, xm, 0, ym, [["r²", "i"], [" / mm²", "n"]], [["v", "i"], ["t", "s"], [" / cm s⁻¹", "n"]]);
+  label(ctx, `${ballById(set.ball).name} in ${liqById(set.liq).name.toLowerCase()}`, box.x + 4, 10, COL.navy, "left", 13);
+  if (!pts.length){ label(ctx, "Record drops with different radii to plot them here", box.x + box.w / 2, box.y + box.h / 2, COL.muted, "center", 14); return; }
+  ctx.fillStyle = COL.v; for (const [x, y] of pts){ ctx.beginPath(); ctx.arc(g.X(x), g.Y(y), 5, 0, 7); ctx.fill(); }
+  if ($("fitChk").checked){
+    const fit = originFit(pts); if (!fit){ label(ctx, "Need 2 different radii", box.x + 4, 28, COL.muted, "left", 12); return; }
+    ctx.save(); ctx.strokeStyle = COL.accent; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(g.X(0), g.Y(0)); ctx.lineTo(g.X(xm), g.Y(fit.k * xm)); ctx.stroke(); ctx.restore();
+    const k = fit.k * 1e-2 / 1e-6, b = ballById(set.ball), l = liqById(set.liq);                 // gradient in m⁻¹ s⁻¹
+    label(ctx, `gradient = ${sig(fit.k)} cm s⁻¹ mm⁻² = ${sig(k)} m⁻¹ s⁻¹`, box.x + 4, 28, COL.accent, "left", 12);
+    label(ctx, `→ η = 2(ρb − ρf)g / (9 × gradient) = ${sig(2 * (b.rho - l.rho) * G / (9 * k))} Pa s`, box.x + 4, 44, COL.accent, "left", 12);
+  } else label(ctx, "Stokes: vₜ = [2(ρb − ρf)g/(9η)] r² — a straight line through the origin", box.x + 4, 28, COL.muted, "left", 12);
+}
+
+/* ============================ 9 DATA ============================ */
+let trials = [];
+function recordTrial(){
+  if (R.tB === null) return;
+  const t = R.tB - R.tA; trials.push({liq:set.liq, ball:set.ball, r:set.r, t:Math.round(t * 100) / 100, v:Math.round(100 * 0.2 / t * 1000) / 1000});
+  save(); renderTrials(); renderActions(true);
+}
+function renderTrials(){
+  $("trials").querySelector("tbody").innerHTML = trials.map((t, i) => `<tr><td>${i + 1}</td><td>${liqById(t.liq).name}</td><td>${ballById(t.ball).name.split(" ")[0]}</td>
+    <td>${t.r.toFixed(2)}</td><td>${t.t.toFixed(2)}</td><td>${t.v.toFixed(3)}</td><td>${(t.r * t.r).toFixed(2)}</td>
+    <td><button class="x" data-del="${i}" aria-label="Delete trial ${i + 1}">×</button></td></tr>`).join("");
+}
+
+/* ============================ 10 TASKS ============================ */
+// Step types: "do" (instruction + done tick), "predict" (lock in a choice, then check), "num" (checked within ±5 %).
+const VT = (r, ball, liq) => Math.abs(terminal(r / 1000, ballById(ball), liqById(liq)));
+const TASKS = [
+ {id:"pre", title:"1 · Pre-lab: predict", time:"≈ 15 min", steps:[
+  {type:"do", setup:{mode:"liquid", liq:"gly", ball:"steel", r:1.0, warp:5}, text:"A 2 mm-diameter steel ball (r = 1.0 mm) in glycerol, like Station 5. Press ▶ Drop and watch the v–t graph and the free-body diagram."},
+  {type:"predict", text:"Predict: what happens to the speed of the ball after you let go?",
+   opts:["it keeps increasing all the way down", "it increases, then stays constant", "it stays constant from the start"], correct:1,
+   why:"Drag grows with speed. The ball speeds up until W = Fb + Fd; then the resultant force is zero and it moves at a constant terminal velocity. In glycerol this happens within a few milliseconds."},
+  {type:"predict", text:"Predict: at terminal velocity, the resultant force on the ball is…",
+   opts:["downwards, equal to its weight", "zero", "upwards"], correct:1,
+   why:"Constant velocity ⇒ zero acceleration ⇒ zero resultant force (Newton's 1st law): W = Fb + Fd."},
+  {type:"predict", text:"Predict: you double the radius of the ball (r = 2.0 mm). The terminal speed…",
+   opts:["doubles", "becomes about 4 times bigger", "halves", "stays the same"], correct:1,
+   why:"Weight − buoyancy ∝ r³ but Stokes drag ∝ r v, so vₜ ∝ r³/r = r². Twice the radius ⇒ about 4× the speed."},
+  {type:"predict", setup:{mode:"liquid", liq:"water", ball:"steel", r:1.0, warp:1}, text:"Predict: the same 2 mm steel ball in water. What happens?",
+   opts:["it falls about 4 times faster than in glycerol", "it falls so fast that Stokes' law no longer applies", "it floats"], correct:1,
+   why:"Water is about 1400 times less viscous. Stokes' law would predict ≈ 15 m s⁻¹ — the real speed is under 1 m s⁻¹, because at high Reynolds number the flow becomes turbulent and drag grows like v². It is very hard to time by hand."},
+  {type:"num", setup:{mode:"liquid", liq:"gly", ball:"steel", r:1.0, warp:5},
+   text:"Use Stokes' law to calculate the terminal speed (cm s⁻¹) of the steel ball (r = 1.0 mm, ρ = 7850 kg m⁻³) in glycerol (ρ = 1260 kg m⁻³, η = 1.41 Pa s).",
+   answer:() => 100 * stokesVt(0.001, 7850, 1260, 1.41), unit:"cm s⁻¹", hint:"vₜ = 2r²(ρb − ρf)g / (9η)"},
+ ]},
+ {id:"lab", title:"2 · During the lab: Station 5", time:"≈ 10 min", steps:[
+  {type:"do", setup:{mode:"liquid", liq:"gly", ball:"steel", r:1.0, warp:5}, text:"Station 5: small ball (r = 1.0 mm) in glycerol. ▶ Drop and ● Record the time between the bands. Time your real ball 3 times."},
+  {type:"num", text:"Time between the bands A and B in the sim:", answer:() => 0.2 / VT(1.0, "steel", "gly"), unit:"s", hint:"read the stopwatch after band B"},
+  {type:"num", text:"Speed v = d/t:", answer:() => 100 * VT(1.0, "steel", "gly"), unit:"cm s⁻¹"},
+  {type:"num", setup:{mode:"liquid", liq:"gly", ball:"steel", r:2.0, warp:5}, text:"Large ball (r = 2.0 mm): speed between the bands =", answer:() => 100 * VT(2.0, "steel", "gly"), unit:"cm s⁻¹"},
+  {type:"predict", text:"Has the ball reached terminal speed by band A? How could you check in the lab?",
+   opts:["Yes — check that the time from A to the middle equals the time from the middle to B", "No — it keeps speeding up all the way", "You can't check"], correct:0,
+   why:"If the speed is constant, equal distances take equal times. Add a third band halfway and compare the two half-times. (In the sim the v–t graph is flat long before band A.)"},
+  {type:"do", text:"Compare your measured speeds with the sim's. Write both on your worksheet with one reason why they differ."},
+ ]},
+ {id:"hw", title:"3 · Homework: analyse", time:"≈ 30 min", steps:[
+  {type:"do", setup:{mode:"liquid", liq:"gly", ball:"steel", r:0.5, warp:20}, text:"Steel balls in glycerol: record r = 0.50, 0.75, 1.00, 1.25 and 1.50 mm (●Record each). Plot vₜ against r² on your worksheet."},
+  {type:"num", text:"Gradient of your line (in cm s⁻¹ per mm²):", answer:() => 100 * VT(1.0, "steel", "gly"), unit:"cm s⁻¹ mm⁻²", hint:"vₜ at r = 1 mm, because r² = 1 mm²"},
+  {type:"num", text:"Use gradient = 2(ρb − ρf)g/(9η) to find the viscosity of glycerol (convert the gradient to m⁻¹ s⁻¹ first!):",
+   answer:() => 1.41, unit:"Pa s", hint:"1 cm s⁻¹ mm⁻² = 10⁻²/10⁻⁶ = 10⁴ m⁻¹ s⁻¹"},
+  {type:"num", setup:{mode:"liquid", liq:"castor", ball:"glass", r:2.0, warp:5}, text:"A glass marble (r = 2.0 mm, ρ = 2500 kg m⁻³) in castor oil (ρ = 960 kg m⁻³, η = 0.99 Pa s): terminal speed by Stokes' law?",
+   answer:() => 100 * stokesVt(0.002, 2500, 960, 0.99), unit:"cm s⁻¹"},
+  {type:"predict", setup:{mode:"air", m:80}, text:"Skydiver: after the parachute opens, the skydiver…",
+   opts:["immediately stops", "slows down to a new, lower terminal speed", "keeps the same speed", "speeds up"], correct:1,
+   why:"The parachute makes the drag much bigger than the weight, so the resultant force points up and the skydiver decelerates. Drag falls as v falls, until it equals W again at a much lower terminal speed."},
+  {type:"predict", text:"Why can't Stokes' law be used for the skydiver?",
+   opts:["The skydiver is not a small sphere moving slowly in a viscous fluid (Re is huge)", "Air has no viscosity", "Gravity is different in the air"], correct:0,
+   why:"Stokes' law needs slow, smooth (laminar) flow round a small sphere. A skydiver has Re ≈ 10⁶: the flow is turbulent and drag grows roughly with v²."},
+ ]},
+];
+let taskState = {}, curSet = "pre";
+function renderTaskSets(){
+  document.getElementById("taskSets").innerHTML = TASKS.map(s =>
+    `<button class="chip" data-set="${s.id}" aria-pressed="${s.id === curSet}">${s.title} <span class="hint">${s.time}</span></button>`).join("");
+}
+function renderTasks(){
+  const ts = TASKS.find(s => s.id === curSet), box = document.getElementById("taskList"); box.innerHTML = "";
+  ts.steps.forEach((st, i) => {
+    const key = `${ts.id}.${i}`, S = taskState[key] || (taskState[key] = {});
+    const d = document.createElement("div"); d.className = "step" + (S.done ? " done" : "");
+    let html = `<p class="q"><span class="n">${i + 1}</span>${st.type === "predict" ? '<span class="tag">Predict · </span>' : ""}${st.text}</p>`;
+    if (st.setup) html += `<button class="btn small" data-setup="${key}">⚙ Set up the sim for me</button> `;
+    if (st.type === "do"){
+      html += `<label class="switch"><input type="checkbox" data-done="${key}" ${S.done ? "checked" : ""}> Done</label>`;
+    } else if (st.type === "predict"){
+      st.opts.forEach((o, j) => {
+        const cls = S.checked ? (j === st.correct ? " good" : j === S.choice ? " bad" : "") : "";
+        html += `<label class="opt${cls}"><input type="radio" name="r${key}" value="${j}" data-choice="${key}" ${S.choice === j ? "checked" : ""} ${S.locked ? "disabled" : ""}> ${o}</label>`;
+      });
+      if (!S.locked) html += `<button class="btn small primary" data-lock="${key}" ${S.choice === undefined ? "disabled" : ""}>🔒 Lock in my prediction</button>`;
+      else if (!S.checked) html += `<div class="fb info">Prediction locked. Now test it in the sim, then press Check.</div><button class="btn small navy" data-check="${key}">Check</button>`;
+      else html += `<div class="fb ${S.choice === st.correct ? "ok" : "no"}">${S.choice === st.correct ? "✔ Your prediction was right. " : "✘ Not what happens. "}${st.why}</div>`;
+    } else if (st.type === "num"){
+      const a = st.answer(), shown = `${+a.toPrecision(3)}${st.unit ? " " + st.unit : ""}`;
+      html += `<div class="row"><input class="num" inputmode="decimal" data-num="${key}" value="${S.value ?? ""}" aria-label="answer"> ${st.unit}
+               <button class="btn small navy" data-chknum="${key}">Check</button>
+               ${st.hint ? `<button class="btn small" data-hint="${key}">💡 Hint</button>` : ""}</div>`;
+      if (S.showHint && st.hint) html += `<div class="fb info">${st.hint}</div>`;
+      if (S.status === "ok") html += `<div class="fb ok">✔ Correct (within 5 %). Model answer: ${shown}.</div>`;
+      else if (S.status) html += `<div class="fb no">✘ ${S.status === "high" ? "Too high" : S.status === "low" ? "Too low" : "Enter a number"}. ${S.tries >= 2 ? `Model answer: ${shown}.` : "Try again or use the hint."}</div>`;
+    }
+    d.innerHTML = html; box.appendChild(d);
+  });
+}
+function taskClick(e){
+  const t = e.target.closest("[data-setup],[data-lock],[data-check],[data-chknum],[data-hint],[data-set]"); if (!t) return;
+  if (t.dataset.set){ curSet = t.dataset.set; renderTaskSets(); renderTasks(); save(); return; }
+  const key = t.dataset.setup || t.dataset.lock || t.dataset.check || t.dataset.chknum || t.dataset.hint;
+  const [sid, idx] = key.split("."), st = TASKS.find(s => s.id === sid).steps[+idx], S = taskState[key];
+  if (t.dataset.setup){ applySetup(st.setup); }
+  if (t.dataset.lock){ S.locked = true; }
+  if (t.dataset.check){ S.checked = true; S.done = true; }
+  if (t.dataset.hint){ S.showHint = true; }
+  if (t.dataset.chknum){
+    const raw = document.querySelector(`[data-num="${key}"]`).value.replace(",", "."), v = parseFloat(raw), a = st.answer();
+    S.value = raw; S.tries = (S.tries || 0) + 1;
+    if (!isFinite(v)) S.status = "nan";
+    else if (Math.abs(v - a) <= (st.tol ?? 0.05) * Math.abs(a)) { S.status = "ok"; S.done = true; }
+    else S.status = v > a ? "high" : "low";
+  }
+  save(); renderTasks();
+}
+function taskChange(e){
+  const t = e.target;
+  if (t.dataset.choice){ taskState[t.dataset.choice].choice = +t.value; renderTasks(); save(); }
+  if (t.dataset.done){ taskState[t.dataset.done].done = t.checked; renderTasks(); save(); }
+}
+
+/* ============================ 11 UI ============================ */
+const $ = id => document.getElementById(id);
+function save(){ try { localStorage.setItem("sim07-drag", JSON.stringify({trials, taskState, curSet})); } catch (e) {} }
+function load_(){ try { const d = JSON.parse(localStorage.getItem("sim07-drag") || "{}");
+  trials = d.trials || []; taskState = d.taskState || {}; curSet = d.curSet || "pre"; } catch (e) {} }
+function applySetup(s){ Object.assign(set, s); reset(); syncControls(); }
+function syncControls(){
+  document.querySelectorAll("#mode button").forEach(b => b.setAttribute("aria-pressed", b.dataset.mode === set.mode));
+  document.querySelectorAll(".sc").forEach(d => d.style.display = d.dataset.mode === set.mode ? "contents" : "none");
+  $("liq").value = set.liq; $("ball").value = set.ball; $("rad").value = set.r; $("rOut").textContent = set.r.toFixed(2);
+  const l = liqById(set.liq), b = ballById(set.ball);
+  $("liqLab").innerHTML = `ρ = ${l.rho} kg m⁻³ · η = ${l.eta} Pa s · ball ρ = ${b.rho}`;
+  document.querySelectorAll("#warp button").forEach(x => x.setAttribute("aria-pressed", +x.dataset.w === set.warp));
+  $("mass").value = set.m; $("mOut").textContent = set.m;
+  $("sceneTitle").textContent = set.mode === "liquid" ? "Ball bearing in a tall cylinder" : "Skydiver (air resistance)";
+  renderActions();
+}
+function renderActions(recorded = false){
+  const a = $("actions"), run = R.phase === "run";
+  a.innerHTML = set.mode === "liquid"
+    ? `<button class="btn primary" data-act="go" ${run ? "disabled" : ""}>▶ Drop</button><button class="btn" data-act="hold" ${run ? "" : "disabled"} aria-label="Pause">${R.hold ? "▶" : "⏸"}</button>
+       <button class="btn" data-act="reset">↺</button><button class="btn navy" data-act="rec" ${R.tB !== null && !recorded ? "" : "disabled"}>${recorded ? "✔ Recorded" : "● Record"}</button>`
+    : `<button class="btn primary" data-act="go" ${run ? "disabled" : ""}>▶ Jump</button><button class="btn primary" data-act="chute" ${run && !R.chute ? "" : "disabled"}>☂ Open parachute</button>
+       <button class="btn" data-act="reset">↺</button>`;
+}
+function readouts(){
+  const f = forcesNow(); let rows;
+  if (set.mode === "liquid"){
+    const r = set.r / 1000, b = ballById(set.ball), l = liqById(set.liq);
+    rows = [["Weight <i>W</i> · buoyancy <i>F</i><sub>b</sub>", `${sig(f.W)} N · ${sig(f.Fb)} N`, COL.W],
+            ["Drag <i>F</i><sub>d</sub> (now)", `${sig(f.Fd)} N`, COL.d],
+            ["Speed now · terminal (model)", `${sig(100 * Math.abs(R.v))} · ${sig(100 * Math.abs(terminal(r, b, l)))} cm s⁻¹`, COL.v],
+            ["Stokes' prediction <i>v</i><sub>t</sub>", `${sig(100 * Math.abs(stokesVt(r, b.rho, l.rho, l.eta)))} cm s⁻¹`, COL.accent],
+            ["Reynolds number Re", `${sig(reynolds(l.rho, terminal(r, b, l), r, l.eta), 2)} ${reynolds(l.rho, terminal(r, b, l), r, l.eta) < 1 ? "(< 1: Stokes OK)" : "(> 1: Stokes fails)"}`]];
+  } else rows = [["Weight <i>W</i>", `${f.W.toFixed(0)} N`, COL.W], ["Air resistance <i>F</i><sub>d</sub>", `${f.Fd.toFixed(0)} N`, COL.d],
+                 ["Speed", `${R.v.toFixed(1)} m s⁻¹`, COL.v], ["Height", `${Math.max(0, R.y).toFixed(0)} m`]];
+  $("ro").innerHTML = rows.map(([a, b, c]) => `<tr><td>${a}</td><td class="v"${c ? ` style="color:${c}"` : ""}>${b}</td></tr>`).join("");
+}
+
+$("liq").innerHTML = LIQUIDS.map(l => `<option value="${l.id}">${l.name}</option>`).join("");
+$("ball").innerHTML = BALLS.map(b => `<option value="${b.id}">${b.name}</option>`).join("");
+$("liq").addEventListener("change", e => { set.liq = e.target.value; reset(); syncControls(); });
+$("ball").addEventListener("change", e => { set.ball = e.target.value; reset(); syncControls(); });
+$("rad").addEventListener("input", e => { set.r = +e.target.value; reset(); syncControls(); });
+$("mass").addEventListener("input", e => { set.m = +e.target.value; reset(); syncControls(); });
+$("warp").addEventListener("click", e => { const b = e.target.closest("button"); if (b){ set.warp = +b.dataset.w; syncControls(); } });
+document.querySelectorAll("#mode button").forEach(b => b.addEventListener("click", () => { set.mode = b.dataset.mode; reset(); syncControls(); }));
+$("actions").addEventListener("click", e => { const b = e.target.closest("[data-act]"); if (!b) return; const a = b.dataset.act;
+  if (a === "go") start(); if (a === "reset") reset(); if (a === "rec") recordTrial();
+  if (a === "hold"){ R.hold = !R.hold; renderActions(); } if (a === "chute"){ R.chute = true; renderActions(); } });
+$("clearBtn").addEventListener("click", () => { if (confirm("Delete all recorded trials?")){ trials = []; save(); renderTrials(); } });
+$("trials").addEventListener("click", e => { const b = e.target.closest("[data-del]"); if (b){ trials.splice(+b.dataset.del, 1); save(); renderTrials(); } });
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x === t));
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("on", p.id === t.dataset.tab)); }));
+$("pTasks").addEventListener("click", taskClick); $("pTasks").addEventListener("change", taskChange);
+$("helpBtn").addEventListener("click", () => $("help").classList.add("on"));
+$("helpClose").addEventListener("click", () => $("help").classList.remove("on"));
+$("help").addEventListener("click", e => { if (e.target.id === "help") $("help").classList.remove("on"); });
+
+load_(); reset(); syncControls(); renderTrials(); renderTaskSets(); renderTasks();
+let last = performance.now(), prevB = null;
+function frame(t){
+  const dt = Math.min(0.05, (t - last) / 1000); last = t;
+  step(dt);
+  if (R.tB !== prevB){ prevB = R.tB; renderActions(); }
+  drawScene(); drawFBD(); drawGraph(); drawAna(); readouts();
+  requestAnimationFrame(frame);
+}
+
+// Number boxes (same as the circular motion simulation): every slider has a box next to it. Type a value and press
+// Enter (or leave the box): it is kept to the allowed range and keeps the precision you typed; the slider follows.
+const nbFmt = v => String(+Number(v).toPrecision(5));
+function nbToast(msg){
+  let el = document.getElementById("nbToast");
+  if (!el){ el = document.createElement("div"); el.id = "nbToast"; el.setAttribute("role", "status");
+    el.style.cssText = "position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:#1F3A5F;color:#fff;padding:10px 16px;border-radius:10px;z-index:20;max-width:90vw;font-size:.95rem";
+    document.body.appendChild(el); }
+  el.textContent = msg; el.style.display = "block"; clearTimeout(nbToast.tm); nbToast.tm = setTimeout(() => el.style.display = "none", 3200);
+}
+function numBoxes(list){
+  for (const c of list){
+    const sl = document.getElementById(c.id), rn = document.createElement("div"); rn.className = "rn";
+    sl.parentNode.insertBefore(rn, sl); rn.appendChild(sl);
+    const nb = document.createElement("input"); nb.className = "nb"; nb.type = "text"; nb.id = c.id + "N";
+    nb.inputMode = "decimal"; nb.setAttribute("aria-label", "type a value");
+    const u = document.createElement("span"); u.className = "u"; rn.append(nb, u);
+    const unit = () => typeof c.unit === "function" ? c.unit() : c.unit;
+    const lim = () => c.lim ? c.lim() : c.type ? c.type : c.list ? [c.list[0], c.list[c.list.length - 1]] : [+sl.min, +sl.max];   // type: typed range, wider than the slider
+    let last = null;
+    const commit = () => {
+      const raw = nb.value.trim().replace(",", "."), v = Number(raw);
+      if (raw === last) return;
+      if (!raw || !isFinite(v)){ nb.value = nbFmt(c.get()); return; }
+      last = raw; const [mn, mx] = lim(), cv = Math.min(mx, Math.max(mn, v));
+      nb.classList.toggle("clamped", cv !== v);
+      if (cv !== v){ nbToast(`Allowed range: ${nbFmt(mn)} to ${nbFmt(mx)} ${unit()}. Set to ${nbFmt(cv)}.`); setTimeout(() => nb.classList.remove("clamped"), 1800); }
+      if (c.put) c.put(cv);
+      else { const st = sl.getAttribute("step"), s0 = sl.min, s1 = sl.max;      // pass the exact value to the slider's own handler,
+        sl.step = "any"; sl.min = Math.min(+s0, cv); sl.max = Math.max(+s1, cv); sl.value = cv;   // even outside the slider's range
+        sl.dispatchEvent(new Event("input", {bubbles:true})); sl.setAttribute("step", st); sl.min = s0; sl.max = s1; }
+      if (nb._st) STEPPER.check(nb._st, cv === v);
+    };
+    nb.addEventListener("focus", () => { last = null; });
+    nb.addEventListener("input", () => { clearTimeout(nb._tm); nb._tm = setTimeout(() => {   // apply by itself once typing pauses (no Enter needed)
+      const raw = nb.value.trim().replace(",", "."); if (raw && isFinite(Number(raw)) && !/[.eE+-]$/.test(raw)){ nb._auto = raw; commit(); } }, 600); });
+    nb.addEventListener("change", () => { clearTimeout(nb._tm); commit(); });
+    nb.addEventListener("keydown", e => { if (e.key === "Enter"){ clearTimeout(nb._tm); commit(); nb._auto = null; nb.select(); } });
+    let d0;   // ▼ [box] ▲ ↺ (shared stepper): start value = the value when the page has loaded
+    STEPPER.attach(nb, {get:() => +c.get(), unit, toast:nbToast, hard:lim,
+      room:() => c.lim ? c.lim() : c.list ? [c.list[0], c.list[c.list.length - 1]] : [+sl.min, +sl.max],
+      list:c.list ? () => c.list : null, step:() => c.step ?? sl.getAttribute("step"), base:() => c.step ? 0 : sl.min,
+      def:c.lim ? null : () => d0 === undefined ? (d0 = +c.get()) : d0,
+      apply:v => { nb.value = STEPPER.fmt(v); last = null; commit(); }});
+    c.show = () => { const t = unit(); if (u.textContent !== t) u.textContent = t; nb.disabled = sl.disabled || (c.off ? c.off() : false);
+      const [mn, mx] = lim(); nb.title = `Type a value (${nbFmt(mn)}–${nbFmt(mx)} ${t}) and press Enter`;
+      if (document.activeElement !== nb){ const s = nbFmt(c.get()); if (nb.value !== s) nb.value = s; } };
+  }
+  const tick = () => { for (const c of list) c.show(); requestAnimationFrame(tick); };
+  tick();
+}
+numBoxes([{id:"rad", unit:"mm", get:() => set.r, type:[0.2, 15]}, {id:"mass", unit:"kg", get:() => set.m, type:[10, 1000]}]);
+requestAnimationFrame(frame);
+/* NEWTON HOOK */ NEWTON.hook();
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>

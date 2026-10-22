@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz – Motion graphs</title>
+<style>
+:root{--navy:#1F3A5F;--accent:#E65100;--ink:#263238;--muted:#606A72;--bg:#F2F5F9;--line:#DDE6F0;
+  --ok:#2E7D32;--okbg:#E8F5E9;--bad:#C62828;--badbg:#FFEBEE;--blue:#1565C0;--bluebg:#E3F2FD}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif}
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);padding:14px 16px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+header h1{margin:0;font-size:1.4rem}
+header p{margin:2px 0 0;opacity:.85;font-size:.95rem}
+.credit{text-align:right;font-size:.85rem;line-height:1.35;opacity:.92}
+.credit a{color:#fff}
+svg.fig{max-width:100%;height:auto;display:block;margin:6px auto;background:#fff}
+
+.hl{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+a.home{color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.5);border-radius:8px;padding:8px 12px;
+  font-weight:600;min-height:40px;display:inline-flex;align-items:center}
+a.home:hover{background:rgba(255,255,255,.12)}
+main{max-width:1180px;margin:0 auto;padding:16px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.intro{max-width:760px;margin:10px auto}
+.intro h2{margin:0 0 6px;color:var(--navy)}
+.intro ul{margin:6px 0 12px;padding-left:20px}
+.intro a{color:var(--navy)}
+.best{color:var(--muted);font-size:.95rem;margin:8px 0}
+button{font:inherit;cursor:pointer}
+.btn{border:0;border-radius:8px;padding:11px 20px;font-weight:700;min-height:46px}
+.primary{background:var(--accent);color:#fff}
+.primary:disabled{background:#BFC7CF;cursor:default}
+.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+.topbar{display:flex;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.qno{font-weight:700;color:var(--navy);white-space:nowrap}
+.bar{flex:1;min-width:140px;height:10px;background:#DDE6F0;border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.score{color:var(--muted);white-space:nowrap}
+.qgrid{display:grid;grid-template-columns:1fr;gap:16px}
+@media (min-width:980px){.qgrid.hasfig{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.qtext{font-size:1.12rem;margin:0 0 6px}
+.opts{display:flex;flex-direction:column;gap:9px}
+.opt{display:flex;align-items:center;gap:12px;text-align:left;background:#fff;border:2px solid var(--line);
+  border-radius:10px;padding:10px 12px;min-height:52px;color:var(--ink);font-size:1.02rem}
+.opt:hover:not(:disabled){border-color:var(--navy)}
+.opt .L{flex:none;width:32px;height:32px;border-radius:50%;background:var(--bg);color:var(--navy);font-weight:700;
+  display:flex;align-items:center;justify-content:center;border:1px solid var(--line)}
+.opt.sel{border-color:var(--navy);background:#EEF3F9}
+.opt.sel .L{background:var(--navy);color:#fff}
+.opt.right{border-color:var(--ok);background:var(--okbg)}
+.opt.right .L{background:var(--ok);color:#fff;border-color:var(--ok)}
+.opt.wrong{border-color:var(--bad);background:var(--badbg)}
+.opt.wrong .L{background:var(--bad);color:#fff;border-color:var(--bad)}
+.opt:disabled{cursor:default}
+.actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
+.fb{margin-top:12px;border-radius:10px;padding:12px 14px;border-left:6px solid}
+.fb.ok{background:var(--okbg);border-color:var(--ok)}
+.fb.no{background:var(--badbg);border-color:var(--bad)}
+.fb h3{margin:0 0 4px;font-size:1.05rem}
+.fb.ok h3{color:var(--ok)} .fb.no h3{color:var(--bad)}
+.fb .exp{margin:4px 0 8px}
+.fb a{color:var(--blue);font-weight:600}
+.hint{color:var(--muted);font-size:.85rem;margin-top:8px}
+.result{max-width:860px;margin:0 auto}
+.big{font-size:2.6rem;font-weight:800;color:var(--navy);margin:0}
+.review{list-style:none;padding:0;margin:14px 0}
+.review li{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--line);align-items:flex-start}
+.review .m{flex:none;width:28px;height:28px;border-radius:50%;color:#fff;font-weight:700;display:flex;
+  align-items:center;justify-content:center}
+.review .m.y{background:var(--ok)} .review .m.n{background:var(--bad)}
+.review small{color:var(--muted)}
+.review button{background:none;border:0;color:var(--blue);padding:0;text-align:left;font-weight:600}
+[hidden]{display:none!important}
+@media (max-width:600px){.credit{text-align:left}header h1{font-size:1.2rem}.card{padding:14px}}
+
+.qbtn{background:#2E7D32;color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;font-weight:700;
+  min-height:44px;cursor:pointer;white-space:nowrap}
+.qbtn:hover{background:#256628}
+.hbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+dialog.qd{border:0;border-radius:14px;padding:0;width:min(680px,calc(100vw - 32px));max-height:calc(100vh - 40px);
+  color:#263238;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+dialog.qd::backdrop{background:rgba(15,30,50,.55)}
+.qd-head{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#1F3A5F;color:#fff;
+  padding:12px 16px;border-bottom:4px solid #E65100;position:sticky;top:0}
+.qd-head h2{margin:0;font-size:1.15rem}
+.qd-x{background:none;border:0;color:#fff;font-size:1.5rem;line-height:1;cursor:pointer;min-width:44px;min-height:44px}
+.qd-body{padding:6px 16px 14px}
+.qd-body>p{margin:8px 0;color:#606A72;font-size:.92rem}
+.qd-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #DDE6F0;flex-wrap:wrap}
+.qd-row .t{flex:1;min-width:180px}
+.qd-row .tag{display:block;font-size:.75rem;font-weight:700;color:#2E7D32;text-transform:uppercase;letter-spacing:.04em}
+.qd-row b{color:#1F3A5F;font-size:1.05rem}
+.qd-row .sc{display:block;font-size:.85rem;color:#606A72}
+.qd-row .sc.done{color:#2E7D32;font-weight:600}
+.qd-row.here{background:#FFF3E0;margin:0 -16px;padding:10px 16px}
+.qd-row .here-tag{font-size:.75rem;font-weight:700;color:#E65100;margin-left:6px}
+.qd-row .acts{display:flex;gap:8px;flex:none}
+.qd-row a{display:inline-flex;align-items:center;border-radius:8px;padding:8px 14px;min-height:42px;text-decoration:none;font-weight:600}
+.qd-row a.go{background:#E65100;color:#fff}
+.qd-row a.pdf{border:1px solid #DDE6F0;color:#1F3A5F;background:#fff}
+/* ==== PHONE CSS START: compact header on phones (10 Oct 2026); wider screens unchanged ==== */
+@media (max-width:759px){
+  header{padding:10px 14px;gap:8px}
+  header h1{font-size:1.15rem}
+  header p{font-size:.85rem}
+  .hl{gap:8px;width:100%}
+  a.home,.qbtn{min-height:40px;padding:6px 10px;font-size:.88rem}
+  .credit{flex-basis:100%;text-align:left;font-size:.75rem}
+  .credit br{display:none} .credit a{margin-left:6px}
+}
+/* ==== PHONE CSS END ==== */
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Topic quiz: Motion graphs</h1>
+    <p>IBDP Physics SL · Grade 11 · A.1 Kinematics · 10 questions</p>
+  </div>
+  <div class="hl"><a class="home" href="https://school.taneski.com/physics/dp/">← All simulations</a><button class="qbtn" type="button" id="qbtn" aria-haspopup="dialog">✔ Test yourself — topic quizzes</button><div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div></div>
+</header>
+<main>
+  <section id="intro" class="card intro">
+    <h2>Test yourself: Motion graphs</h2>
+    <p>Motion graphs and the equations of motion: gradients and areas of s–t, v–t and a–t graphs, free fall and braking. Practise with the simulations and worksheets first:</p>
+    <ul><li><a href="https://school.taneski.com/physics/dp/10-free-fall/" target="_blank" rel="noopener">Free fall</a></li><li><a href="https://school.taneski.com/physics/dp/13-velocity-components/" target="_blank" rel="noopener">Velocity components</a></li><li><a href="https://school.taneski.com/physics/dp/11-horizontal-launch/" target="_blank" rel="noopener">Horizontal launch</a></li></ul>
+    <p>10 multiple-choice questions. Choose one answer and press <b>Check</b>: you see straight away whether you are
+      right, with a short explanation and a link to the simulation where you can try it. Use g = 9.81 m s⁻².
+      Your score stays on this device only.</p>
+    <p class="best" id="best"></p>
+    <button class="btn primary" id="start">Start the quiz</button>
+  </section>
+  <section id="quiz" class="card" hidden>
+    <div class="topbar"><span class="qno" id="qno"></span><div class="bar"><i id="barfill"></i></div><span class="score" id="score"></span></div>
+    <div class="qgrid" id="qgrid">
+      <div><p class="qtext" id="qtext"></p><div id="fig"></div></div>
+      <div>
+        <div class="opts" id="opts"></div>
+        <div class="fb" id="fb" hidden></div>
+        <div class="actions"><button class="btn primary" id="check" disabled>Check</button><button class="btn primary" id="next" hidden>Next question →</button></div>
+        <div class="hint">Keys: A–D or 1–4 to choose, Enter to check.</div>
+      </div>
+    </div>
+  </section>
+  <section id="result" class="card result" hidden>
+    <p>Your score</p>
+    <p class="big" id="final"></p>
+    <p id="msg"></p>
+    <p class="best" id="best2"></p>
+    <div class="actions" style="justify-content:flex-start">
+      <button class="btn primary" id="retry">↻ Try again (answers shuffled)</button>
+      <a class="btn ghost" href="https://school.taneski.com/physics/dp/" style="text-decoration:none;display:inline-flex;align-items:center">← Back to the simulations</a>
+    </div>
+    <ul class="review" id="review"></ul>
+  </section>
+</main>
+<dialog class="qd" id="qd" aria-labelledby="qd-t"><div class="qd-head"><h2 id="qd-t">Test yourself — topic quizzes</h2><button class="qd-x" type="button" id="qd-x" aria-label="Close">✕</button></div><div class="qd-body"><p>Practised the simulations and worksheets? 10 multiple-choice questions per topic, with instant feedback. Your best scores are saved on this device only.</p><div class="qd-row"><div class="t"><span class="tag">A.1 Kinematics</span><b>Projectile motion</b><span class="sc" data-slug="quiz-projectile-motion">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-projectile-motion/">✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-projectile-motion/quiz.pdf">PDF</a></span></div><div class="qd-row here"><div class="t"><span class="tag">A.1 Kinematics · graphs</span><b>Motion graphs</b><span class=here-tag>● You are here</span><span class="sc" data-slug="quiz-motion-graphs">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-motion-graphs/" data-here=1>✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-motion-graphs/quiz.pdf">PDF</a></span></div><div class="qd-row"><div class="t"><span class="tag">A.2 Forces · Newton&#x27;s laws</span><b>Forces</b><span class="sc" data-slug="quiz-forces">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-forces/">✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-forces/quiz.pdf">PDF</a></span></div><div class="qd-row"><div class="t"><span class="tag">A.2 Circular motion</span><b>Circular motion</b><span class="sc" data-slug="quiz-circular-motion">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-circular-motion/">✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-circular-motion/quiz.pdf">PDF</a></span></div><div class="qd-row"><div class="t"><span class="tag">A.2 Momentum</span><b>Momentum and impulse</b><span class="sc" data-slug="quiz-momentum">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-momentum/">✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-momentum/quiz.pdf">PDF</a></span></div><div class="qd-row"><div class="t"><span class="tag">A.3 Work and energy</span><b>Work and energy</b><span class="sc" data-slug="quiz-work-energy">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-work-energy/">✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-work-energy/quiz.pdf">PDF</a></span></div><div class="qd-row"><div class="t"><span class="tag">A.3 Power and efficiency</span><b>Power and efficiency</b><span class="sc" data-slug="quiz-power-efficiency">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-power-efficiency/">✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-power-efficiency/quiz.pdf">PDF</a></span></div></div></dialog>
+<script>
+const DATA = {"slug": "quiz-motion-graphs", "qs": [{"q": "The graph shows the displacement s of a cyclist against time t. What is the velocity of the cyclist?", "fig": "<svg class=\"fig\" viewBox=\"0 0 420 240\" width=\"420\" height=\"240\" font-family=\"Segoe UI,Calibri,Helvetica,Arial,sans-serif\" font-size=\"13\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"58.0\" y1=\"16\" x2=\"58.0\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"58.0\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">0</text><line x1=\"126.8\" y1=\"16\" x2=\"126.8\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"126.8\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">1</text><line x1=\"195.6\" y1=\"16\" x2=\"195.6\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"195.6\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">2</text><line x1=\"264.4\" y1=\"16\" x2=\"264.4\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"264.4\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">3</text><line x1=\"333.2\" y1=\"16\" x2=\"333.2\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"333.2\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">4</text><line x1=\"402.0\" y1=\"16\" x2=\"402.0\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"402.0\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">5</text><line x1=\"58\" y1=\"196.0\" x2=\"402\" y2=\"196.0\" stroke=\"#E3E8EE\"/><text x=\"52\" y=\"200.0\" text-anchor=\"end\" fill=\"#37474F\">0</text><line x1=\"58\" y1=\"160.0\" x2=\"402\" y2=\"160.0\" stroke=\"#E3E8EE\"/><text x=\"52\" y=\"164.0\" text-anchor=\"end\" fill=\"#37474F\">5</text><line x1=\"58\" y1=\"124.0\" x2=\"402\" y2=\"124.0\" stroke=\"#E3E8EE\"/><text x=\"52\" y=\"128.0\" text-anchor=\"end\" fill=\"#37474F\">10</text><line x1=\"58\" y1=\"88.0\" x2=\"402\" y2=\"88.0\" stroke=\"#E3E8EE\"/><text x=\"52\" y=\"92.0\" text-anchor=\"end\" fill=\"#37474F\">15</text><line x1=\"58\" y1=\"52.0\" x2=\"402\" y2=\"52.0\" stroke=\"#E3E8EE\"/><text x=\"52\" y=\"56.0\" text-anchor=\"end\" fill=\"#37474F\">20</text><line x1=\"58\" y1=\"16.0\" x2=\"402\" y2=\"16.0\" stroke=\"#E3E8EE\"/><text x=\"52\" y=\"20.0\" text-anchor=\"end\" fill=\"#37474F\">25</text><line x1=\"58\" y1=\"196.0\" x2=\"402\" y2=\"196.0\" stroke=\"#263238\" stroke-width=\"1.4\"/><line x1=\"58\" y1=\"16\" x2=\"58\" y2=\"196\" stroke=\"#263238\" stroke-width=\"1.4\"/><path d=\"M58.0,196.0 L333.2,52.0 L402.0,52.0\" fill=\"none\" stroke=\"#2A5D8A\" stroke-width=\"3\" stroke-linejoin=\"round\"/><text x=\"230.0\" y=\"234\" text-anchor=\"middle\" fill=\"#263238\">t / s</text><text transform=\"translate(16,106.0) rotate(-90)\" text-anchor=\"middle\" fill=\"#263238\">s / m</text></svg>", "opts": ["0.20 m s⁻¹", "5.0 m s⁻¹", "20 m s⁻¹", "80 m s⁻¹"], "ans": 1, "exp": "Velocity = gradient of the s–t graph = Δs/Δt = 20 m / 4.0 s = <b>5.0 m s⁻¹</b>. 0.20 is Δt/Δs (upside down); 80 multiplies instead of dividing.", "simUrl": "https://school.taneski.com/physics/dp/13-velocity-components/", "simName": "Velocity components"}, {"q": "What does the gradient of a velocity–time graph represent?", "fig": null, "opts": ["Displacement", "Distance travelled", "Speed", "Acceleration"], "ans": 3, "exp": "Gradient = Δv/Δt, which is the definition of <b>acceleration</b>. The <i>area</i> under a v–t graph is the displacement.", "simUrl": "https://school.taneski.com/physics/dp/10-free-fall/", "simName": "Free fall"}, {"q": "The graph shows the velocity v of a car against time t. What is the displacement of the car in the first 6.0 s?", "fig": "<svg class=\"fig\" viewBox=\"0 0 420 240\" width=\"420\" height=\"240\" font-family=\"Segoe UI,Calibri,Helvetica,Arial,sans-serif\" font-size=\"13\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"58.0\" y1=\"16\" x2=\"58.0\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"58.0\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">0</text><line x1=\"107.1\" y1=\"16\" x2=\"107.1\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"107.1\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">1</text><line x1=\"156.3\" y1=\"16\" x2=\"156.3\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"156.3\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">2</text><line x1=\"205.4\" y1=\"16\" x2=\"205.4\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"205.4\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">3</text><line x1=\"254.6\" y1=\"16\" x2=\"254.6\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"254.6\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">4</text><line x1=\"303.7\" y1=\"16\" x2=\"303.7\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"303.7\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">5</text><line x1=\"352.9\" y1=\"16\" x2=\"352.9\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"352.9\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">6</text><line x1=\"402.0\" y1=\"16\" x2=\"402.0\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"402.0\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">7</text><line x1=\"58\" y1=\"196.0\" x2=\"402\" y2=\"196.0\" stroke=\"#E3E8EE\"/><text x=\"52\" y=\"200.0\" text-anchor=\"end\" fill=\"#37474F\">0</text><line x1=\"58\" y1=\"160.0\" x2=\"402\" y2=\"160.0\" stroke=\"#E3E8EE\"/><text x=\"52\" y=\"164.0\" text-anchor=\"end\" fill=\"#37474F\">3</text><line x1=\"58\" y1=\"124.0\" x2=\"402\" y2=\"124.0\" stroke=\"#E3E8EE\"/><text x=\"52\" y=\"128.0\" text-anchor=\"end\" fill=\"#37474F\">6</text><line x1=\"58\" y1=\"88.0\" x2=\"402\" y2=\"88.0\" stroke=\"#E3E8EE\"/><text x=\"52\" y=\"92.0\" text-anchor=\"end\" fill=\"#37474F\">9</text><line x1=\"58\" y1=\"52.0\" x2=\"402\" y2=\"52.0\" stroke=\"#E3E8EE\"/><text x=\"52\" y=\"56.0\" text-anchor=\"end\" fill=\"#37474F\">12</text><line x1=\"58\" y1=\"16.0\" x2=\"402\" y2=\"16.0\" stroke=\"#E3E8EE\"/><text x=\"52\" y=\"20.0\" text-anchor=\"end\" fill=\"#37474F\">15</text><line x1=\"58\" y1=\"196.0\" x2=\"402\" y2=\"196.0\" stroke=\"#263238\" stroke-width=\"1.4\"/><line x1=\"58\" y1=\"16\" x2=\"58\" y2=\"196\" stroke=\"#263238\" stroke-width=\"1.4\"/><path d=\"M58.0,196.0 L254.6,52.0 L352.9,52.0\" fill=\"none\" stroke=\"#2A5D8A\" stroke-width=\"3\" stroke-linejoin=\"round\"/><text x=\"230.0\" y=\"234\" text-anchor=\"middle\" fill=\"#263238\">t / s</text><text transform=\"translate(16,106.0) rotate(-90)\" text-anchor=\"middle\" fill=\"#263238\">v / m s⁻¹</text></svg>", "opts": ["48 m", "24 m", "36 m", "72 m"], "ans": 0, "exp": "Displacement = area under the v–t graph: triangle ½ × 4.0 × 12 = 24 m plus rectangle 2.0 × 12 = 24 m, total <b>48 m</b>. 72 m treats the whole graph as a 6 × 12 rectangle.", "simUrl": "https://school.taneski.com/physics/dp/10-free-fall/", "simName": "Free fall"}, {"q": "An object moving at 2.0 m s⁻¹ has a constant acceleration of 3.0 m s⁻² for 4.0 s in the direction of motion. What is its velocity at the end?", "fig": null, "opts": ["6.0 m s⁻¹", "12 m s⁻¹", "14 m s⁻¹", "24 m s⁻¹"], "ans": 2, "exp": "The area under an a–t graph is the change in velocity: Δv = 3.0 × 4.0 = 12 m s⁻¹. So v = u + Δv = 2.0 + 12 = <b>14 m s⁻¹</b>. 12 m s⁻¹ forgets the starting velocity.", "simUrl": "https://school.taneski.com/physics/dp/10-free-fall/", "simName": "Free fall"}, {"q": "A car accelerates uniformly from 8.0 m s⁻¹ to 20 m s⁻¹ in 6.0 s. How far does it travel in this time?", "fig": null, "opts": ["60 m", "84 m", "120 m", "168 m"], "ans": 1, "exp": "For uniform acceleration s = ½(u + v)t = ½ × (8.0 + 20) × 6.0 = <b>84 m</b> (the area of the trapezium under the v–t graph). 168 m forgets the ½; 120 m uses only the final speed.", "simUrl": "https://school.taneski.com/physics/dp/10-free-fall/", "simName": "Free fall"}, {"q": "A ball is thrown vertically upwards at 12 m s⁻¹. Air resistance is negligible. What is its maximum height?", "fig": null, "opts": ["1.2 m", "0.61 m", "7.3 m", "14.7 m"], "ans": 2, "exp": "At the top v = 0: v² = u² − 2gh, so h = u²/(2g) = 144 / 19.62 = <b>7.3 m</b>. 14.7 m forgets the 2; 1.2 m is the time to the top (u/g) in seconds, not a height.", "simUrl": "https://school.taneski.com/physics/dp/10-free-fall/", "simName": "Free fall"}, {"q": "The displacement–time graph of an object is a curve that gets steeper as time goes on. What is happening to the object?", "fig": null, "opts": ["It is slowing down", "It is moving at constant velocity", "It is at rest", "It is speeding up"], "ans": 3, "exp": "The gradient of an s–t graph is the velocity. A curve that gets steeper has an increasing gradient, so the velocity is increasing: the object is <b>speeding up</b>.", "simUrl": "https://school.taneski.com/physics/dp/13-velocity-components/", "simName": "Velocity components"}, {"q": "A ball is thrown vertically upwards and caught again at the same height. Up is positive and air resistance is negligible. Which describes its velocity–time graph?", "fig": null, "opts": ["A straight line with a negative gradient that crosses the time axis", "A straight line with a positive gradient starting at zero", "A horizontal line above the time axis", "A V-shape that touches the time axis at the top of the flight"], "ans": 0, "exp": "The acceleration is −g the whole time, so the v–t graph is <b>one straight line with gradient −9.81 m s⁻²</b>. It starts at +u, crosses zero at the top (v = 0) and ends at −u. A V-shape would mean the acceleration changes sign, which it does not.", "simUrl": "https://school.taneski.com/physics/dp/10-free-fall/", "simName": "Free fall"}, {"q": "A cyclist brakes uniformly from 15 m s⁻¹ to rest in a distance of 30 m. What is the magnitude of the deceleration?", "fig": null, "opts": ["0.50 m s⁻²", "2.0 m s⁻²", "3.75 m s⁻²", "7.5 m s⁻²"], "ans": 2, "exp": "v² = u² + 2as with v = 0: a = −u²/(2s) = −225/60 = −3.75 m s⁻², so the deceleration is <b>3.75 m s⁻²</b>. 7.5 forgets the 2; 0.50 divides speed by distance.", "simUrl": "https://school.taneski.com/physics/dp/10-free-fall/", "simName": "Free fall"}, {"q": "The graph shows the velocity of a toy car against time. What is its average speed over the 10 s?", "fig": "<svg class=\"fig\" viewBox=\"0 0 420 240\" width=\"420\" height=\"240\" font-family=\"Segoe UI,Calibri,Helvetica,Arial,sans-serif\" font-size=\"13\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\"><line x1=\"58.0\" y1=\"16\" x2=\"58.0\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"58.0\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">0</text><line x1=\"92.4\" y1=\"16\" x2=\"92.4\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"92.4\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">1</text><line x1=\"126.8\" y1=\"16\" x2=\"126.8\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"126.8\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">2</text><line x1=\"161.2\" y1=\"16\" x2=\"161.2\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"161.2\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">3</text><line x1=\"195.6\" y1=\"16\" x2=\"195.6\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"195.6\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">4</text><line x1=\"230.0\" y1=\"16\" x2=\"230.0\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"230.0\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">5</text><line x1=\"264.4\" y1=\"16\" x2=\"264.4\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"264.4\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">6</text><line x1=\"298.8\" y1=\"16\" x2=\"298.8\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"298.8\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">7</text><line x1=\"333.2\" y1=\"16\" x2=\"333.2\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"333.2\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">8</text><line x1=\"367.6\" y1=\"16\" x2=\"367.6\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"367.6\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">9</text><line x1=\"402.0\" y1=\"16\" x2=\"402.0\" y2=\"196\" stroke=\"#E3E8EE\"/><text x=\"402.0\" y=\"212\" text-anchor=\"middle\" fill=\"#37474F\">10</text><line x1=\"58\" y1=\"196.0\" x2=\"402\" y2=\"196.0\" stroke=\"#E3E8EE\"/><text x=\"52\" y=\"200.0\" text-anchor=\"end\" fill=\"#37474F\">0</text><line x1=\"58\" y1=\"166.0\" x2=\"402\" y2=\"166.0\" stroke=\"#E3E8EE\"/><text x=\"52\" y=\"170.0\" text-anchor=\"end\" fill=\"#37474F\">2</text><line x1=\"58\" y1=\"136.0\" x2=\"402\" y2=\"136.0\" stroke=\"#E3E8EE\"/><text x=\"52\" y=\"140.0\" text-anchor=\"end\" fill=\"#37474F\">4</text><line x1=\"58\" y1=\"106.0\" x2=\"402\" y2=\"106.0\" stroke=\"#E3E8EE\"/><text x=\"52\" y=\"110.0\" text-anchor=\"end\" fill=\"#37474F\">6</text><line x1=\"58\" y1=\"76.0\" x2=\"402\" y2=\"76.0\" stroke=\"#E3E8EE\"/><text x=\"52\" y=\"80.0\" text-anchor=\"end\" fill=\"#37474F\">8</text><line x1=\"58\" y1=\"46.0\" x2=\"402\" y2=\"46.0\" stroke=\"#E3E8EE\"/><text x=\"52\" y=\"50.0\" text-anchor=\"end\" fill=\"#37474F\">10</text><line x1=\"58\" y1=\"16.0\" x2=\"402\" y2=\"16.0\" stroke=\"#E3E8EE\"/><text x=\"52\" y=\"20.0\" text-anchor=\"end\" fill=\"#37474F\">12</text><line x1=\"58\" y1=\"196.0\" x2=\"402\" y2=\"196.0\" stroke=\"#263238\" stroke-width=\"1.4\"/><line x1=\"58\" y1=\"16\" x2=\"58\" y2=\"196\" stroke=\"#263238\" stroke-width=\"1.4\"/><path d=\"M58.0,196.0 L230.0,46.0 L402.0,196.0\" fill=\"none\" stroke=\"#2A5D8A\" stroke-width=\"3\" stroke-linejoin=\"round\"/><text x=\"230.0\" y=\"234\" text-anchor=\"middle\" fill=\"#263238\">t / s</text><text transform=\"translate(16,106.0) rotate(-90)\" text-anchor=\"middle\" fill=\"#263238\">v / m s⁻¹</text></svg>", "opts": ["2.5 m s⁻¹", "5.0 m s⁻¹", "10 m s⁻¹", "50 m s⁻¹"], "ans": 1, "exp": "Distance = area under the graph = ½ × 10 × 10 = 50 m. Average speed = distance / time = 50 / 10 = <b>5.0 m s⁻¹</b>. 10 m s⁻¹ is the maximum speed, and 50 is the distance in metres.", "simUrl": "https://school.taneski.com/physics/dp/10-free-fall/", "simName": "Free fall"}]};
+const KEY = "physics-" + DATA.slug + "-best";
+const $ = id => document.getElementById(id);
+let order, cur, picks, chosen, checked;
+function loadBest(){ try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) { return null; } }
+function saveBest(s){ try { const b = loadBest(); if (b === null || s > b) localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {} }
+function showBest(){ const b = loadBest(), t = b === null ? "" : "Your best score so far: " + b + " / " + DATA.qs.length;
+  $("best").textContent = t; $("best2").textContent = t; }
+function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function start(shuf){
+  // order[q] = option indices in display order (printed order first time, shuffled on retry)
+  order = DATA.qs.map(q => shuf ? shuffle([0, 1, 2, 3]) : [0, 1, 2, 3]);
+  picks = DATA.qs.map(() => null); cur = 0;
+  $("intro").hidden = true; $("result").hidden = true; $("quiz").hidden = false;
+  render();
+}
+function render(){
+  const q = DATA.qs[cur], n = DATA.qs.length;
+  chosen = null; checked = false;
+  $("qno").textContent = "Question " + (cur + 1) + " of " + n;
+  $("barfill").style.width = (100 * cur / n) + "%";
+  $("score").textContent = "Score " + picks.filter((p, i) => p === DATA.qs[i].ans).length + " / " + cur;
+  $("qtext").innerHTML = q.q;
+  $("fig").innerHTML = q.fig || "";
+  $("qgrid").classList.toggle("hasfig", !!q.fig);
+  const box = $("opts"); box.innerHTML = "";
+  order[cur].forEach((oi, k) => {
+    const b = document.createElement("button");
+    b.className = "opt"; b.dataset.oi = oi;
+    b.innerHTML = '<span class="L">' + "ABCD"[k] + '</span><span>' + q.opts[oi] + '</span>';
+    b.onclick = () => pick(oi);
+    box.appendChild(b);
+  });
+  $("fb").hidden = true; $("check").hidden = false; $("check").disabled = true; $("next").hidden = true;
+  $("quiz").scrollIntoView({block: "start"});
+}
+function pick(oi){
+  if (checked) return;
+  chosen = oi;
+  document.querySelectorAll(".opt").forEach(b => b.classList.toggle("sel", +b.dataset.oi === oi));
+  $("check").disabled = false;
+}
+function letterOf(oi){ return "ABCD"[order[cur].indexOf(oi)]; }
+function doCheck(){
+  if (chosen === null || checked) return;
+  checked = true; picks[cur] = chosen;
+  const q = DATA.qs[cur], ok = chosen === q.ans;
+  document.querySelectorAll(".opt").forEach(b => {
+    const oi = +b.dataset.oi; b.disabled = true; b.classList.remove("sel");
+    if (oi === q.ans) b.classList.add("right"); else if (oi === chosen) b.classList.add("wrong");
+  });
+  const fb = $("fb");
+  fb.className = "fb " + (ok ? "ok" : "no");
+  fb.innerHTML = "<h3>" + (ok ? "✔ Correct!" : "✘ Not quite — the answer is " + letterOf(q.ans) + ".") + "</h3>" +
+    '<div class="exp">' + q.exp + '</div>' +
+    '<a href="' + q.simUrl + '" target="_blank" rel="noopener">▶ Try it in the simulation: ' + q.simName + '</a>';
+  fb.hidden = false;
+  $("score").textContent = "Score " + picks.filter((p, i) => p === DATA.qs[i].ans).length + " / " + (cur + 1);
+  $("check").hidden = true; $("next").hidden = false;
+  $("next").textContent = cur + 1 < DATA.qs.length ? "Next question →" : "See my score →";
+  $("next").focus();
+}
+function next(){ if (cur + 1 < DATA.qs.length){ cur++; render(); } else finish(); }
+function finish(){
+  const n = DATA.qs.length, s = picks.filter((p, i) => p === DATA.qs[i].ans).length;
+  saveBest(s);
+  $("barfill").style.width = "100%";
+  $("quiz").hidden = true; $("result").hidden = false;
+  $("final").textContent = s + " / " + n;
+  $("msg").textContent = s === n ? "Perfect — you have mastered this topic!" :
+    s >= 8 ? "Great work! Read the explanations for the ones you missed." :
+    s >= 5 ? "Good start. Go back to the simulations for the questions you missed, then try again." :
+    "Keep practising: work through the simulations and worksheets again, then retry the quiz.";
+  const ul = $("review"); ul.innerHTML = "";
+  DATA.qs.forEach((q, i) => {
+    const ok = picks[i] === q.ans, li = document.createElement("li");
+    const plain = q.q.replace(/<[^>]+>/g, "");
+    li.innerHTML = '<span class="m ' + (ok ? "y" : "n") + '">' + (ok ? "✔" : "✘") + '</span><div><b>Q' + (i + 1) + '.</b> ' +
+      (plain.length > 110 ? plain.slice(0, 107) + "…" : plain) + '<br><small>Your answer: ' + q.opts[picks[i]] +
+      (ok ? "" : ' · Correct: ' + q.opts[q.ans]) + '</small><br><button data-i="' + i + '">Show the explanation</button>' +
+      '<div class="exp" hidden>' + q.exp + ' <a href="' + q.simUrl + '" target="_blank" rel="noopener">▶ ' + q.simName + '</a></div></div>';
+    li.querySelector("button").onclick = e => { const d = li.querySelector(".exp"); d.hidden = !d.hidden;
+      e.target.textContent = d.hidden ? "Show the explanation" : "Hide the explanation"; };
+    ul.appendChild(li);
+  });
+  showBest();
+  $("result").scrollIntoView({block: "start"});
+}
+$("start").onclick = () => start(false);
+$("check").onclick = doCheck;
+$("next").onclick = next;
+$("retry").onclick = () => start(true);
+document.addEventListener("keydown", e => {
+  if ($("quiz").hidden || e.altKey || e.ctrlKey || e.metaKey) return;
+  const k = e.key.toUpperCase(), idx = "ABCD".indexOf(k) >= 0 ? "ABCD".indexOf(k) : "1234".indexOf(k);
+  if (idx >= 0 && !checked){ pick(order[cur][idx]); }
+  else if (e.key === "Enter"){ if (!checked && chosen !== null){ e.preventDefault(); doCheck(); } }
+});
+window.quizInProgress = () => !$("quiz").hidden && (cur > 0 || checked || chosen !== null);
+showBest();
+
+(function(){
+  const d = document.getElementById("qd"), b = document.getElementById("qbtn");
+  function best(slug){ try { return JSON.parse(localStorage.getItem("physics-" + slug + "-best") || "null"); } catch (e) { return null; } }
+  function fill(){ d.querySelectorAll(".sc").forEach(s => { const v = best(s.dataset.slug);
+    s.textContent = v === null ? "Not tried yet" : "Best: " + v + " / 10"; s.classList.toggle("done", v !== null); }); }
+  b.onclick = () => { fill(); d.showModal(); };
+  document.getElementById("qd-x").onclick = () => d.close();
+  d.addEventListener("click", e => { if (e.target === d) d.close(); });   // click on the dimmed backdrop
+  d.querySelectorAll("a.go").forEach(a => a.addEventListener("click", e => {
+    if (a.dataset.here){ e.preventDefault(); d.close(); return; }
+    if (typeof window.quizInProgress === "function" && window.quizInProgress() &&
+        !confirm("Leave this quiz? Your answers so far will be lost.")) e.preventDefault();
+  }));
+})();
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>

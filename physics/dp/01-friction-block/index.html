@@ -1,0 +1,1418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Friction Block Simulation</title>
+<!--
+  IBDP Physics SL · Grade 11 · Topic A.2 Types of forces
+  Simulation 01 — Friction block (pairs with "Lab - Friction coefficients", Block 2)
+  Self-contained: no internet, no external libraries. Open in any modern browser.
+
+  File sections (keep this order when copying the file for a new simulation):
+    1 STYLE     layout, colours (force colours match the slide decks)
+    2 MARKUP    header · scene · FBD + readouts · tabs (graph / data / tasks) · controls
+    3 CONFIG    constants, surfaces, ranges
+    4 PHYSICS   pure functions (no drawing)
+    5 RUN       simulation state + time stepping + sampling
+    6 SCENE     side-view drawing
+    7 FBD       free-body diagram
+    8 GRAPHS    force–time graph, Ff–FN graph
+    9 DATA      recorded trials table
+   10 TASKS     data-driven task list (predict / numeric / do)
+   11 UI        controls, events, storage, main loop
+-->
+<style>
+/* ============================ 1 STYLE ============================ */
+:root{
+  --navy:#1F3A5F; --accent:#E65100; --ink:#263238; --muted:#606A72;
+  --bg:#F2F5F9; --card:#FFFFFF; --line:#DDE6F0; --soft:#FFF3E0; --soft-blue:#E3F2FD;
+  --wood:#FFCC80; --wood-edge:#C68A3A;
+  --cW:#2A5D8A; --cN:#2E7D32; --cF:#C62828; --cP:#6A1B9A;   /* weight, normal, friction, pull */
+  --ok:#2E7D32; --bad:#C62828;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);
+  font:16px/1.4 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;min-height:100dvh}
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);
+  display:flex;align-items:center;gap:16px;padding:8px 16px}
+header h1{font-size:1.25rem;margin:0;font-weight:600}
+header .sub{font-size:.85rem;opacity:.85}
+header .grow{flex:1}
+.btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;
+  min-height:44px;padding:6px 14px;cursor:pointer;touch-action:manipulation}
+.btn:hover{border-color:var(--navy)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.small{min-height:36px;padding:4px 10px;font-size:.9rem}
+header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
+
+/* layout: scene + state | FBD (always visible) | tabs; fills the screen height */
+main{flex:1;min-height:500px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1.3fr);
+  grid-template-rows:minmax(0,1fr) auto;gap:12px;padding:12px 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.card h2{font-size:.95rem;margin:0;padding:6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line);
+  color:var(--navy);font-weight:600}
+.left{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0}
+.scenecard{flex:1 1 0;display:flex;flex-direction:column;min-height:0}
+.fbdcol{display:flex;flex-direction:column;min-width:0;min-height:0}
+#sceneWrap{position:relative;flex:1;min-height:150px}
+#scene{width:100%;height:100%;display:block}
+#fbdWrap{flex:1;min-height:220px}
+#fbd{width:100%;height:100%;display:block}
+.readouts{padding:6px 12px;flex:0 1 auto;min-height:0;overflow:auto}  /* natural height; the scene takes the rest */
+.readouts table{width:100%;border-collapse:collapse;font-size:.9rem}
+.readouts td.v{white-space:nowrap;padding-left:6px}
+.readouts td{padding:4px 2px;border-bottom:1px solid #EEF2F6}
+.readouts td.v{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.pill{display:inline-block;white-space:nowrap;padding:3px 10px;border-radius:99px;font-size:.85rem;font-weight:600}
+.pill.rest{background:var(--soft-blue);color:#0D47A1}
+.pill.slide{background:#FFEBEE;color:#B71C1C}
+.pill.ready{background:#ECEFF1;color:var(--muted)}
+
+.right{display:flex;flex-direction:column;min-width:0;min-height:0}
+.cardhead{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:6px 8px 6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line)}
+.cardhead h2{padding:0;border:none;background:none;flex:1}
+.cardhead .btn{min-height:40px;padding:4px 10px}
+.tabs{display:flex;gap:4px;padding:6px 6px 0;background:#F7F9FC;border-bottom:1px solid var(--line)}
+.tab{font:inherit;border:1px solid transparent;border-bottom:none;background:transparent;padding:8px 14px;
+  min-height:44px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--muted);font-weight:600}
+.tab[aria-selected="true"]{background:#fff;border-color:var(--line);color:var(--navy);margin-bottom:-1px}
+.panel{display:none;padding:10px 12px;flex:1;min-height:0;overflow:hidden}
+.panel.on{display:flex;flex-direction:column;gap:8px}
+#graphWrap{position:relative;flex:1;min-height:200px}
+#graph{width:100%;height:100%;display:block;touch-action:none}
+.hint{font-size:.85rem;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#trials{width:100%;border-collapse:collapse;font-size:.85rem;font-variant-numeric:tabular-nums}
+#trials th,#trials td{border-bottom:1px solid var(--line);padding:4px 4px;text-align:right}
+#trials th{color:var(--navy);font-weight:600;background:#F7F9FC;position:sticky;top:0}
+#trials td:first-child,#trials th:first-child,#trials td:nth-child(2),#trials th:nth-child(2){text-align:left}
+.tableBox{max-height:150px;flex:none;overflow:auto;border:1px solid var(--line);border-radius:8px}
+#ffnWrap{flex:1;min-height:180px}
+#ffn{width:100%;height:100%;display:block}
+.x{border:none;background:none;color:var(--bad);font-size:1.1rem;cursor:pointer;min-width:32px;min-height:32px}
+
+/* tasks */
+#taskSets{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:inherit;font-size:.9rem;border:1px solid var(--line);background:#fff;border-radius:99px;padding:6px 14px;
+  min-height:40px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.chip[aria-pressed="true"] .hint{color:#DDE6F0}
+#taskList{overflow:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding-right:2px}
+.step{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff}
+.step .q{margin:0 0 6px}
+.step .n{display:inline-block;min-width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;
+  text-align:center;line-height:26px;font-size:.85rem;font-weight:700;margin-right:6px}
+.step.done .n{background:var(--ok)}
+.opt{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;
+  margin:4px 0;cursor:pointer;min-height:40px}
+.opt input{width:20px;height:20px}
+.opt.good{border-color:var(--ok);background:#E8F5E9}
+.opt.bad{border-color:var(--bad);background:#FFEBEE}
+.fb{margin-top:6px;padding:6px 10px;border-radius:8px;font-size:.92rem}
+.fb.ok{background:#E8F5E9;border-left:4px solid var(--ok)}
+.fb.no{background:#FFEBEE;border-left:4px solid var(--bad)}
+.fb.info{background:var(--soft-blue);border-left:4px solid #1565C0}
+.num{font:inherit;width:110px;min-height:40px;padding:4px 8px;border:1px solid #B0BEC5;border-radius:8px}
+.tag{font-size:.75rem;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+
+/* controls */
+#controls{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end;padding:10px 14px}
+.ctl{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ctl label,.ctl .lab{font-size:.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.ctl select{font:inherit;min-height:44px;border:1px solid #B0BEC5;border-radius:8px;padding:4px 8px;background:#fff}
+.mu{font-size:.85rem;color:var(--navy);font-weight:600}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper .btn{width:44px;padding:0;font-size:1.3rem}
+.stepper output{min-width:24px;text-align:center;font-weight:700;font-size:1.1rem}
+input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
+.seg{display:flex;border:1px solid #B0BEC5;border-radius:8px;overflow:hidden}
+.seg button{font:inherit;border:none;background:#fff;min-height:42px;padding:4px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--navy);color:#fff}
+.switch{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer}
+.switch input{width:22px;height:22px;accent-color:var(--accent)}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* help overlay */
+#help{position:fixed;inset:0;background:rgba(31,58,95,.55);display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:14px;max-width:720px;width:100%;max-height:90vh;overflow:auto;padding:18px 22px}
+#help h3{margin:.2em 0 .4em;color:var(--navy)}
+#help li{margin:.25em 0}
+.eq{font-family:"Cambria Math",Cambria,"Times New Roman",serif;font-size:1.05rem}
+
+@media (max-width:1300px){
+  .readouts table{font-size:.85rem}
+  .pill{font-size:.78rem;padding:2px 8px}
+}
+/* tablet landscape: scene + state on the left; FBD above the tabs on the right */
+@media (max-width:1099px){
+  main{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr) auto;min-height:640px}
+  .left{grid-row:1/3}
+  .fbdcol{grid-column:2;grid-row:1}
+  .right{grid-column:2;grid-row:2}
+  #fbdWrap{min-height:200px}
+  #pGraph .hint{display:none}
+  #controls{gap:8px 12px;padding:8px 12px}
+  input[type=range]{width:118px}
+  header .sub{font-size:0;opacity:1;line-height:1.2}header .sub a.home{font-size:.75rem}
+}
+/* phone / narrow portrait: one scrolling column */
+@media (max-width:759px){
+  body{height:auto}
+  main{display:flex;flex-direction:column}
+  #sceneWrap{flex:none;height:260px}
+  .readouts{flex:none}
+  #fbdWrap{flex:none;height:320px}
+  .right{height:640px;flex:none}
+}
+/* Author credit (header, far right) */
+.credit{text-align:right;font-size:.74rem;line-height:1.3;opacity:.92;white-space:nowrap}
+.credit a{color:#fff;text-decoration:underline}
+@media (max-width:759px){header{flex-wrap:wrap;row-gap:4px} header .btn{white-space:nowrap}
+  .credit{order:3;flex-basis:100%;text-align:left;font-size:.7rem}
+  .credit br{display:none} .credit a{margin-left:6px}}
+
+/* Number boxes next to the sliders (same as the circular motion simulation): type a value + Enter */
+.rn{display:flex;align-items:center;gap:6px}
+.rn input[type=range]{width:120px}
+.nb{font:inherit;font-size:.95rem;width:76px;min-height:44px;padding:2px 6px;border:1px solid #B0BEC5;border-radius:8px;
+  text-align:right;font-variant-numeric:tabular-nums;background:#fff}
+.nb.clamped{border-color:var(--accent);background:var(--soft)}
+.nb:disabled{opacity:.45}
+.rn .u{font-size:.85rem;color:var(--muted);white-space:nowrap}
+.dup{display:none}
+@media (max-width:1300px){ .rn input[type=range]{width:100px} .nb{width:70px} }
+@media (max-width:1099px){ .rn input[type=range]{width:84px} .nb{width:64px} }
+.sub a.home{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55);white-space:nowrap}.sub a.home:hover{border-bottom-color:#fff}
+/* ==== SHARED-UI CSS START: ▼ [box] ▲ steppers (10 Oct 2026) — the sliders are hidden, the number box is the control ==== */
+.rn input[type=range]{display:none!important}
+#controls{align-items:flex-start!important}   /* all controls top-aligned, notes below a box hang underneath */
+#controls .ctl sub,#controls .ctl sup{line-height:0}   /* subscripts in a label (m_A) do not push its box down */
+.rn{gap:4px!important}
+.fld{display:inline-flex;align-items:center;border:1px solid #B0BEC5;border-radius:8px;background:#fff;min-height:44px;padding-right:6px;box-sizing:border-box}
+.fld .nb{border:0!important;background:transparent!important;min-height:42px;padding-right:2px;width:66px!important}
+.fld .u{margin-left:3px}
+.fld .nb:focus{outline:none}
+.fld:focus-within{outline:2px solid var(--navy);outline-offset:1px}
+.fld:has(.nb.clamped){border-color:var(--accent);background:var(--soft)}
+.fld:has(.nb:disabled){opacity:.5}
+.fld .bw{display:none;color:#B26A00;font-size:.9rem;margin-left:3px}
+.fld.beyond{border-color:#F0A202;background:#FFF8E1;box-shadow:inset 0 0 0 1px #F0A202}
+.fld.beyond .bw{display:inline}
+.stp{font:inherit;font-size:.78rem;line-height:1;min-width:34px;min-height:44px;padding:0 6px;border:1px solid #B0BEC5;border-radius:8px;background:#F3F6FA;
+  color:var(--navy);cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.stp:hover:not(:disabled){border-color:var(--navy);background:#E6EDF5}
+.stp:active:not(:disabled){background:#D3DEEB}
+.stp:disabled{opacity:.35;cursor:default}
+.stp.rs{min-width:26px;padding:0 2px;border-color:transparent;background:transparent;font-size:1.05rem;color:var(--muted)}
+.stp.rs:hover:not(:disabled){background:#EEF2F6;border-color:transparent}
+@media (max-width:1300px){ .stp{min-width:30px;padding:0 4px} .fld .nb{width:58px!important} }
+/* ==== SHARED-UI CSS END ==== */
+/* ==== NEWTON CSS START (law badge · ΣF = ma table · 3rd-law checkbox) ==== */
+.nbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:3px 10px;border-bottom:1px solid #E3E9F0;flex:none;min-height:30px}
+.nlaw{font-size:.84rem;padding:2px 10px;border-radius:999px;border:1.5px solid #90A4AE;color:#37474F;background:#F5F7FA;line-height:1.5}
+.nlaw.l1{border-color:#2E7D32;color:#1B5E20;background:#E8F5E9}
+.nlaw.l2{border-color:#E65100;color:#BF360C;background:#FFF3E0}
+.nbar{flex-wrap:nowrap}
+.nlaw{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.nbar .switch{font-size:.84rem;margin-left:auto;white-space:nowrap;flex:none}
+@media (pointer:fine){ .nbar .switch{min-height:28px;padding-top:0;padding-bottom:0} }
+.ntab{flex:none;max-height:40%;overflow:auto;padding:2px 8px 4px;border-top:1px solid #E3E9F0;font-size:.8rem}
+.ntab .nh{display:flex;align-items:center;gap:8px;min-height:26px}
+.ntab .nfold{font:inherit;font-weight:700;color:#1F3A5F;background:none;border:none;cursor:pointer;padding:2px 0;min-height:26px}
+.ntab .nk{color:#606A72}.ntab .nk.ok{color:#2E7D32;font-weight:600}
+.ntab table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.ntab th,.ntab td{padding:1px 4px;text-align:right;border-bottom:1px solid #EEF2F6;white-space:nowrap}
+.ntab th{color:#1F3A5F;font-weight:600}
+.ntab td:first-child,.ntab th:first-child,.ntab td.by,.ntab th:nth-child(2){text-align:left}
+.ntab td:first-child{font-weight:600}.ntab td.by{color:#606A72}
+.ntab tr.ns td{font-weight:700;border-top:1.5px solid #263238}
+.ntab tr.nm td{color:#E65100;font-weight:600}
+.ntab tr.nb td{font-weight:700;color:#1F3A5F;background:#F5F7FA}
+.ntab .ncap{color:#606A72;font-size:.74rem;margin-top:2px;white-space:normal}
+@media (max-height:800px) and (min-width:1100px){ .ntab{font-size:.74rem} .ntab .ncap{display:none} .nbar{min-height:26px;padding:1px 10px} .nlaw{font-size:.78rem} }
+@media (max-width:1099px) and (min-width:760px){ .ntab{font-size:.72rem;max-height:45%} .ntab .ncap{display:none}
+  .fbdcol #fbdWrap{min-height:0} }
+/* ==== NEWTON CSS END ==== */
+/* ==== PHONE CSS START: phone layout (10 Oct 2026) — only phones (narrow, or held sideways with a touch screen); laptops and tablets unchanged ==== */
+@media (max-width:759px), (max-height:500px) and (pointer:coarse){
+  html,body{height:auto}
+  main{display:flex!important;flex-direction:column;min-height:0!important;gap:10px;padding:8px 8px 16px}
+  .left{display:contents}                                  /* scene and readouts become separate steps of the column */
+  .scenecard{order:1;flex:none!important;min-height:0}
+  #controls{order:2}
+  .readouts{order:3;flex:none}
+  .fbdcol{order:4;flex:none}
+  .right{order:5;flex:none;height:auto!important}
+  #sceneWrap{flex:none!important;height:min(58vh,340px)!important;min-height:200px}
+  #fbdWrap{flex:none!important;height:300px!important}
+  .scenecard .cardhead{position:sticky;top:0;z-index:2}    /* run buttons stay at hand while the scene is on screen */
+  .cardhead .btn{min-height:40px;padding:4px 10px}
+  .panel{overflow:visible}
+  .panel.on{flex:none}
+  #graphWrap,#ffnWrap{flex:none!important;height:300px!important;min-height:0}
+  #taskList{overflow:visible;flex:none}
+  .tableBox{max-height:220px}
+  canvas{touch-action:pan-y!important}                     /* a finger on a graph or diagram still scrolls the page */
+  canvas.drag{touch-action:none!important}                 /* except where the scene has things to drag (pulleys) */
+  #controls{gap:10px 12px;padding:10px}
+  #controls .ctl{max-width:100%}
+  #controls select{max-width:100%}
+  .tabs{overflow-x:auto;scrollbar-width:none}
+  .tab{white-space:nowrap}
+  #help .box{max-height:85dvh;padding:14px 16px}
+}
+/* ==== PHONE CSS END ==== */
+</style>
+</head>
+<body>
+<!-- ============================ 2 MARKUP ============================ -->
+<header>
+  <div>
+    <h1>Friction block — static and dynamic friction</h1>
+    <div class="sub"><a class="home" href="https://school.taneski.com/physics/dp/#A2" title="Back to all A.2 simulations">← All simulations</a> · IBDP Physics SL · A.2 Types of forces · g = 9.81 N kg⁻¹</div>
+  </div>
+  <div class="grow"></div>
+  <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
+  <div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
+</header>
+
+<main>
+  <section class="left">
+    <div class="card scenecard">
+      <div class="cardhead">
+        <h2>Experiment</h2>
+        <div class="actions">
+          <button class="btn primary" id="startBtn">▶ Start pull</button>
+          <button class="btn" id="holdBtn" disabled>⏸ Hold</button>
+          <button class="btn" id="resetBtn">↺ Reset</button>
+          <button class="btn navy" id="recBtn" disabled>● Record trial</button>
+        </div>
+      </div>
+<!-- NEWTON BAR --><div class="nbar"><span class="nlaw" id="nlaw"></span><label class="switch" title="Show every force together with its Newton's 3rd-law partner"><input type="checkbox" id="n3"> 3rd-law pairs</label></div><!-- /NEWTON BAR -->
+      <div id="sceneWrap"><canvas id="scene" aria-label="Side view of block being pulled"></canvas></div>
+    </div>
+    <div class="card readouts">
+        <table>
+          <tr><td>State</td><td class="v"><span id="state" class="pill ready">Ready</span></td></tr>
+          <tr><td>Time <i>t</i></td><td class="v" id="r_t">0.00 s</td></tr>
+          <tr><td>Mass <i>m</i></td><td class="v" id="r_m"></td></tr>
+          <tr><td>Weight <i>W</i> = <i>mg</i></td><td class="v" id="r_W" style="color:var(--cW)"></td></tr>
+          <tr><td>Normal force <i>F</i><sub>N</sub></td><td class="v" id="r_N" style="color:var(--cN)"></td></tr>
+          <tr><td>Pull <i>F</i> (meter reading)</td><td class="v" id="r_F" style="color:var(--cP)"></td></tr>
+          <tr><td>Friction <i>F</i><sub>f</sub></td><td class="v" id="r_f" style="color:var(--cF)"></td></tr>
+        </table>
+      </div>
+  </section>
+
+  <section class="card fbdcol" aria-label="Free-body diagram">
+    <h2>Free-body diagram of the block</h2>
+    <div id="fbdWrap"><canvas id="fbd" aria-label="Free-body diagram"></canvas></div>
+<!-- NEWTON TABLE --><div class="ntab" id="ntab"></div><!-- /NEWTON TABLE -->
+  </section>
+
+  <section class="card right">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-tab="pGraph">Graph F–t</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="pData">Data &amp; F<sub>f</sub>–F<sub>N</sub></button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="pTasks">Tasks</button>
+    </div>
+
+    <div class="panel on" id="pGraph">
+      <div id="graphWrap"><canvas id="graph" aria-label="Force-time graph"></canvas></div>
+      <div class="hint">Move the mouse (or your finger) over the graph to read values. After a run, the peak (maximum static
+        friction) and the sliding value (dynamic friction) are marked. Press <b>● Record trial</b> to save them.</div>
+    </div>
+
+    <div class="panel" id="pData">
+      <div class="row">
+        <button class="btn small" id="clearBtn">Clear all trials</button>
+        <span class="grow" style="flex:1"></span>
+        <label class="switch"><input type="checkbox" id="fitChk"> Show best-fit lines</label>
+        <select id="plotSurf" class="btn small" aria-label="Surface to plot"></select>
+      </div>
+      <div class="tableBox">
+        <table id="trials">
+          <thead><tr><th>#</th><th>Surface</th><th>m / kg</th><th>θ / °</th><th>F<sub>peak</sub> / N</th>
+            <th>F<sub>slide</sub> / N</th><th>F<sub>N</sub> / N</th><th>F<sub>f,max</sub> / N</th><th>F<sub>f,d</sub> / N</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div id="ffnWrap"><canvas id="ffn" aria-label="Friction against normal force graph"></canvas></div>
+    </div>
+
+    <div class="panel" id="pTasks">
+      <div id="taskSets"></div>
+      <div id="taskList"></div>
+    </div>
+  </section>
+
+  <section class="card" id="controls" aria-label="Controls">
+    <div class="ctl">
+      <label for="surf">Surfaces in contact</label>
+      <select id="surf"></select>
+      <span class="mu" id="muLab"></span>
+    </div>
+    <div class="ctl">
+      <span class="lab">Slotted masses (200 g each)</span>
+      <div class="stepper">
+        <button class="btn" id="mMinus" aria-label="Remove a mass">−</button>
+        <output id="nOut">0</output>
+        <button class="btn" id="mPlus" aria-label="Add a mass">+</button>
+      </div>
+      <span class="mu" id="mLab"></span>
+    </div>
+    <div class="ctl">
+      <label for="ang">Pull angle θ<span class="dup"> = <span id="angOut">0</span>°</span></label>
+      <input type="range" id="ang" min="0" max="30" step="1" value="0">
+    </div>
+    <div class="ctl">
+      <label for="rate">Pull rate<span class="dup"> = <span id="rateOut">1.0</span> N s⁻¹</span></label>
+      <input type="range" id="rate" min="0.5" max="3" step="0.5" value="1">
+    </div>
+    <div class="ctl">
+      <span class="lab">Block face down</span>
+      <div class="seg" id="face">
+        <button data-face="large" aria-pressed="true">Large</button>
+        <button data-face="small" aria-pressed="false">Small</button>
+      </div>
+    </div>
+    <div class="ctl">
+      <span class="lab">Real-data noise</span>
+      <label class="switch"><input type="checkbox" id="noise"> ±2 %</label>
+    </div>
+  </section>
+</main>
+
+<div id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="box">
+    <h3 id="helpTitle">How to use this simulation</h3>
+    <ol>
+      <li>Choose the <b>surfaces</b>, the number of <b>slotted masses</b>, the <b>pull angle</b> and the <b>pull rate</b>.</li>
+      <li>Set each value with <b>▼</b> and <b>▲</b> (hold to go faster; the <b>↑ ↓</b> keys or the mouse wheel in the box also work, Shift = ×10), or <b>type a value</b> in the box. <b>↺</b> puts it back to its start value. Outside the classroom range the box turns <b>amber ⚠</b>: fine to explore, but the lab can't do this.</li>
+      <li>Move the pointer over any <b>graph</b> (or tap it): a dashed line shows the values where it cuts each curve, or the values of the nearest data point.</li>
+      <li>Press <b>▶ Start pull</b>. The pull grows steadily, like pulling a newton meter slowly.
+        Press <b>⏸ Hold</b> to keep the pull constant and see what static friction does.</li>
+      <li>When the block starts to slide, the hand keeps it moving at a slow <b>constant speed</b>.</li>
+      <li>Read the <b>peak</b> and the <b>sliding</b> force from the graph, then press <b>● Record trial</b>.</li>
+      <li>Repeat for different loads. The <b>Data</b> tab plots <i>F</i><sub>f</sub> against <i>F</i><sub>N</sub>; the gradient is μ.</li>
+      <li>Work through the <b>Tasks</b> tab. Write explanations on your worksheet.</li>
+    </ol>
+    <h3>The physics</h3>
+    <ul>
+      <li class="eq">Static (at rest): F<sub>f</sub> ≤ μ<sub>s</sub>F<sub>N</sub> — friction matches the pull until it reaches its maximum.</li>
+      <li class="eq">Dynamic (sliding): F<sub>f</sub> = μ<sub>d</sub>F<sub>N</sub></li>
+      <li class="eq">Pull at angle θ: F<sub>N</sub> = mg − F sin θ, and the horizontal part of the pull is F cos θ.</li>
+      <li class="eq">At rest or at constant speed the resultant force is zero (forces balance).</li>
+    </ul>
+    <p class="hint">Model: μ values are typical classroom values. The block face (contact area) does not change friction in this
+      model — that is what experiments show. The noise switch adds ±2 % random scatter, like a real sensor.</p>
+    <!-- NEWTON HELP --><h3>Newton's laws</h3>
+<p>The badge above the scene says which law applies at this moment: <b>1st law</b> — at rest or moving at a constant velocity, the resultant force is zero (Σ<i>F</i> = 0); <b>2nd law</b> — accelerating, Σ<i>F</i> = <i>ma</i>. The table under the free-body diagram adds up the forces (Σ<i>F</i>) and compares them with <i>m a</i> (▾ folds it). Tick <b>3rd-law pairs</b> to see every force with its partner: the same size and type, in the opposite direction, acting on the <b>other</b> body (the Earth, the floor, the string, the fluid…).</p><!-- /NEWTON HELP -->
+<p style="text-align:right"><button class="btn primary" id="helpClose">Close</button></p>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ==== SHARED-UI START: ▼ [box] ▲ steppers + chart probe (10 Oct 2026, the same block in every simulation) ==== */
+// Steppers: every number box gets ▼ and ▲ (hold to repeat), ↑/↓ keys and the mouse wheel in the box (Shift = ×10) and ↺ (start value).
+// Inside the classroom range (the old slider range) a step is the old slider step (or the next value of its list; log quantities move
+// by one unit in the 2nd significant figure). Beyond it the value may go on up to the physical limits in 1-2-5 steps; the box turns amber.
+const STEPPER = (() => {
+  const all = [], r10 = v => +Number(v).toPrecision(10), fmt = v => String(+Number(v).toPrecision(6));
+  const epsOf = (lo, hi) => 1e-9 * Math.max(1, Math.abs(lo), Math.abs(hi));
+  function s125(v, dir){                                  // next value of …, 0.1, 0.2, 0.5, 1, 2, 5, 10, … beyond v (signed)
+    const a = Math.abs(v); if (a < 1e-15) return null;
+    const s = Math.sign(v), e = Math.floor(Math.log10(a)), c = [];
+    for (let k = e - 1; k <= e + 2; k++) for (const m of [1, 2, 5]) c.push(r10(m * Math.pow(10, k)));
+    if (dir === s) return s * Math.min(...c.filter(x => x > a * (1 + 1e-9)));
+    const d = c.filter(x => x < a * (1 - 1e-9)); return d.length ? s * Math.max(...d) : 0;
+  }
+  function grid(o, v, dir, lo, hi){                       // one step inside the classroom range, snapped to the grid
+    const eps = epsOf(lo, hi);
+    if (o.list){ const L = o.list(); const n = dir > 0 ? L.find(x => x > v + eps) : [...L].reverse().find(x => x < v - eps); return n === undefined ? (dir > 0 ? hi : lo) : n; }
+    const st = o.step ? +o.step() : NaN;
+    if (o.log && lo > 0 && hi / lo > 1e5){ const n = s125(v, dir); return n === null ? lo : n; }   // very wide ranges (satellite mass): 1-2-5
+    if (o.log || !(st > 0)){ if (!(v > 0)) return dir > 0 ? lo : lo;
+      const s = Math.pow(10, Math.floor(Math.log10(dir > 0 ? v : v * (1 - 1e-9))) - 1), k = v / s;
+      return r10((dir > 0 ? Math.floor(k + 1e-6) + 1 : Math.ceil(k - 1e-6) - 1) * s); }
+    const b = o.base ? +o.base() : lo, k = (v - b) / st;
+    return r10(b + (dir > 0 ? Math.floor(k + 1e-6) + 1 : Math.ceil(k - 1e-6) - 1) * st);
+  }
+  function next(o, v, dir){
+    const [lo, hi] = o.room(), eps = epsOf(lo, hi), st = o.step ? +o.step() : NaN;
+    let n;
+    if ((dir > 0 && v >= hi - eps) || (dir < 0 && v <= lo + eps)){            // leaving the classroom range (or already beyond it)
+      n = s125(v, dir); if (n === null) n = v + dir * (st > 0 ? st : (hi - lo) / 100);
+      if (dir > 0 && v < lo - eps && n > lo) n = lo; if (dir < 0 && v > hi + eps && n < hi) n = hi;
+    } else if (v > hi + eps || v < lo - eps){                                   // coming back: 1-2-5 until the range edge
+      n = s125(v, dir); if (n === null) n = dir > 0 ? lo : hi;
+      if (dir < 0 && n <= hi) n = hi; if (dir > 0 && n >= lo) n = lo;
+    } else n = Math.min(hi, Math.max(lo, grid(o, v, dir, lo, hi)));
+    const [mn, mx] = o.hard(); return Math.min(mx, Math.max(mn, r10(n)));
+  }
+  function go(o, dir, times = 1){
+    if (o.nb.disabled) return false;
+    const v0 = +o.get(); if (!isFinite(v0)) return false;
+    let v = v0; for (let i = 0; i < times; i++) v = next(o, v, dir);
+    if (Math.abs(v - v0) <= 1e-12 * Math.max(1, Math.abs(v0))) return false;
+    o.apply(v); if (document.activeElement === o.nb) o.nb.value = fmt(o.get());
+    check(o, true); return true;
+  }
+  function beyond(o){ const v = +o.get(), [lo, hi] = o.room(), eps = epsOf(lo, hi); return v < lo - eps || v > hi + eps; }
+  function check(o, user){                                 // amber box + ⚠ outside the classroom range; a message once on crossing
+    const b = beyond(o), [lo, hi] = o.room(), u = o.unit();
+    if (b && !o.was && user) o.toast(`Beyond the classroom range (${fmt(lo)}–${fmt(hi)}${u ? " " + u : ""}): fine to explore, but the lab can't do this.`);
+    o.was = b; o.fld.classList.toggle("beyond", b);
+    o.warn.title = `Outside the classroom range ${fmt(lo)}–${fmt(hi)}${u ? " " + u : ""}`;
+  }
+  function holdBtn(btn, o, dir){
+    let tm = null, t0 = 0;
+    const stop = () => { clearTimeout(tm); tm = null; };
+    const rep = () => { if (!go(o, dir)) return stop(); tm = setTimeout(rep, performance.now() - t0 > 1400 ? 45 : 110); };
+    btn.addEventListener("pointerdown", e => { if (e.button) return; e.preventDefault(); stop(); go(o, dir, e.shiftKey ? 10 : 1); t0 = performance.now(); tm = setTimeout(rep, 420); });
+    ["pointerup", "pointerleave", "pointercancel", "blur"].forEach(k => btn.addEventListener(k, stop));
+    btn.addEventListener("click", e => { if (e.detail === 0) go(o, dir, e.shiftKey ? 10 : 1); });   // keyboard (Enter/Space)
+    btn.addEventListener("contextmenu", e => e.preventDefault());
+  }
+  const mk = (cls, txt, lab) => { const b = document.createElement("button"); b.type = "button"; b.className = "stp " + cls; b.textContent = txt;
+    b.tabIndex = -1; b.setAttribute("aria-label", lab); return b; };
+  // o: {nb, get, apply(v), room() → classroom [lo, hi], hard() → physical [min, max], step() | list() | log, base(), def() | null, unit(), toast(msg)}
+  function attach(nb, o){
+    o.nb = nb; const u = nb.nextElementSibling && nb.nextElementSibling.classList.contains("u") ? nb.nextElementSibling : null;
+    const fld = document.createElement("span"); fld.className = "fld"; nb.before(fld); fld.appendChild(nb); if (u) fld.appendChild(u);
+    const warn = document.createElement("span"); warn.className = "bw"; warn.textContent = "⚠"; fld.appendChild(warn);
+    const dn = mk("dn", "▼", "decrease"), up = mk("up", "▲", "increase"), rs = mk("rs", "↺", "back to the start value");
+    dn.title = "Decrease · hold to repeat · Shift = ×10"; up.title = "Increase · hold to repeat · Shift = ×10";
+    fld.before(dn); fld.after(up); up.after(rs);
+    if (!o.def) rs.style.visibility = "hidden";
+    Object.assign(o, {fld, warn, dn, up, rs, was:false});
+    holdBtn(dn, o, -1); holdBtn(up, o, 1);
+    rs.addEventListener("click", () => { const d = o.def ? o.def() : null; if (d === null || d === undefined || nb.disabled) return; o.apply(d); check(o, true); });
+    // clicking into the box selects the whole value, so typing replaces it (a 2nd click places the cursor as usual)
+    nb.addEventListener("focus", () => { nb.select(); nb._sel = true; });
+    nb.addEventListener("mouseup", e => { if (nb._sel){ e.preventDefault(); nb._sel = false; } });
+    nb.addEventListener("touchend", e => { if (nb._sel){ nb._sel = false; setTimeout(() => nb.select(), 0); } });
+    nb.addEventListener("blur", () => { nb._sel = false; });
+    nb.addEventListener("keydown", e => { if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return; e.preventDefault();
+      clearTimeout(nb._tm); go(o, e.key === "ArrowUp" ? 1 : -1, e.shiftKey ? 10 : 1); nb.select(); });
+    nb.addEventListener("wheel", e => { if (document.activeElement !== nb || !e.deltaY) return; e.preventDefault();
+      clearTimeout(nb._tm); go(o, e.deltaY < 0 ? 1 : -1, e.shiftKey ? 10 : 1); }, {passive:false});
+    nb._st = o; all.push(o); return o;
+  }
+  function tick(){
+    for (const o of all){
+      if (!o.nb.isConnected) continue;
+      const off = o.nb.disabled, v = +o.get(), [mn, mx] = o.hard(), d = o.def ? o.def() : null;
+      o.dn.disabled = off || !(v > mn + 1e-12 * Math.max(1, Math.abs(mn))); o.up.disabled = off || !(v < mx - 1e-12 * Math.max(1, Math.abs(mx)));
+      o.rs.disabled = off || d === null || d === undefined || Math.abs(v - d) <= 1e-9 * Math.max(1, Math.abs(d));
+      if (o.def && d !== null && d !== undefined) o.rs.title = `Back to the start value (${fmt(d)}${o.unit() ? " " + o.unit() : ""})`;
+      check(o, false);
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+  return {attach, check, fmt, all};
+})();
+
+// Chart probe: move the pointer over any graph (or tap it) → a dashed vertical line, a dot where it cuts each curve and the x and y
+// values (as on the Free fall graphs). It reads what each graph draws after its axes (axes/axesR), so every graph gets it.
+// On graphs with only data points the line snaps to the nearest point; near a point its exact values are shown too.
+const PROBE = (() => {
+  const S = new Map();                                   // canvas → {frames, px, py, on, touch, ov}
+  const st = cv => { let s = S.get(cv); if (!s){ s = {frames:[], on:false}; S.set(cv, s); } return s; };
+  let pause = 0;
+  const P = CanvasRenderingContext2D.prototype, orig = {};
+  const rec = ctx => ctx.__pf && !pause;
+  ["beginPath", "moveTo", "lineTo", "closePath", "arc", "quadraticCurveTo", "bezierCurveTo", "stroke", "fill", "clearRect"].forEach(k => orig[k] = P[k]);
+  P.beginPath = function(){ if (rec(this)) this.__pp = {subs:[], arcs:[], cur:null}; return orig.beginPath.apply(this, arguments); };
+  const pp = ctx => ctx.__pp || (ctx.__pp = {subs:[], arcs:[], cur:null});
+  P.moveTo = function(x, y){ if (rec(this)){ const p = pp(this); p.cur = [[x, y]]; p.subs.push(p.cur); } return orig.moveTo.apply(this, arguments); };
+  P.lineTo = function(x, y){ if (rec(this)){ const p = pp(this); if (!p.cur){ p.cur = [[x, y]]; p.subs.push(p.cur); } else p.cur.push([x, y]); } return orig.lineTo.apply(this, arguments); };
+  P.quadraticCurveTo = function(a, b, x, y){ if (rec(this)){ const p = pp(this); if (p.cur) p.cur.push([x, y]); } return orig.quadraticCurveTo.apply(this, arguments); };
+  P.bezierCurveTo = function(a, b, c, d, x, y){ if (rec(this)){ const p = pp(this); if (p.cur) p.cur.push([x, y]); } return orig.bezierCurveTo.apply(this, arguments); };
+  P.closePath = function(){ if (rec(this)){ const p = pp(this); if (p.cur) p.cur.closed = true; p.cur = null; } return orig.closePath.apply(this, arguments); };
+  P.arc = function(x, y, r){ if (rec(this)) pp(this).arcs.push([x, y, r]); return orig.arc.apply(this, arguments); };
+  function toFrame(ctx, f, pts){                         // path points → the frame's coordinates (if the transform has changed)
+    const m = ctx.getTransform(), g = f.m;
+    if (m.a === g.a && m.b === g.b && m.c === g.c && m.d === g.d && m.e === g.e && m.f === g.f) return pts;
+    const gi = g.inverse(); return pts.map(([x, y]) => { const X = m.a * x + m.c * y + m.e, Y = m.b * x + m.d * y + m.f;
+      return [gi.a * X + gi.c * Y + gi.e, gi.b * X + gi.d * Y + gi.f]; });
+  }
+  function commit(ctx, stroke){
+    const f = ctx.__pf, p = ctx.__pp; if (!f || !p) return;
+    const col = stroke ? ctx.strokeStyle : ctx.fillStyle, c = typeof col === "string" ? col : null;
+    for (const [x, y, r] of p.arcs) if (r <= 9 && r >= 1.5 && c){ const [[X, Y]] = toFrame(ctx, f, [[x, y]]);
+      if (X >= f.box.x - 2 && X <= f.box.x + f.box.w + 2 && Y >= f.box.y - 2 && Y <= f.box.y + f.box.h + 2) f.pts.push({x:X, y:Y, col:c}); }
+    if (stroke && c && ctx.globalAlpha > 0.3) for (const s of p.subs) if (!s.closed && s.length >= 2) f.raw.push({pts:toFrame(ctx, f, s), col:c, dash:ctx.getLineDash().length > 0});
+  }
+  P.stroke = function(){ if (rec(this) && !arguments.length) commit(this, true); return orig.stroke.apply(this, arguments); };
+  P.fill = function(){ if (rec(this) && !(arguments[0] instanceof Path2D)) commit(this, false); return orig.fill.apply(this, arguments); };
+  P.clearRect = function(x, y, w, h){ if (x <= 0 && y <= 0 && w * 1.01 >= this.canvas.clientWidth && h * 1.01 >= this.canvas.clientHeight){ st(this.canvas).frames = []; this.__pf = null; }
+    return orig.clearRect.apply(this, arguments); };
+  // the text helpers, arrows, tangents and shaded areas on a graph are not curves
+  const quiet = fn => function(){ pause++; try { return fn.apply(this, arguments); } finally { pause--; } };
+  function newFrame(ctx, box, x0, x1, y0, y1, xl, yl, noX){
+    const cv = ctx.canvas, s = st(cv), f = {box:{...box}, x0, x1, y0, y1, xl, yl, m:ctx.getTransform(), raw:[], pts:[], skip:!!noX || !(x1 > x0) || !(y1 > y0)};
+    s.frames.push(f); if (s.frames.length > 8) s.frames.shift(); bind(cv); return f;
+  }
+  function wrapAxes(fn, ranged){
+    return function(ctx, box){
+      ctx.__pf = null; const r = fn.apply(this, arguments), a = arguments;
+      ctx.__pf = ranged ? newFrame(ctx, box, a[2], a[3], a[4], a[5], a[6], a[7], a[8]) : newFrame(ctx, box, 0, a[2], 0, a[3], a[4], a[5], false);
+      ctx.__pp = null; return r;
+    };
+  }
+  // ---- labels: "time t / s" → symbol t, unit s
+  function split(parts){
+    if (typeof parts === "string") parts = [[parts, "n"]];
+    if (!Array.isArray(parts)) return {sym:[["x", "i"]], unit:""};
+    const flat = parts.map(p => [String(p[0]), p[1] || "n"]), txt = flat.map(p => p[0]).join(""), k = txt.lastIndexOf(" / ");
+    const left = [], unit = [];
+    let pos = 0;
+    for (const [t, sty] of flat){ const a = pos, b = pos + t.length; pos = b;
+      if (k < 0 || b <= k) left.push([t, sty]); else if (a >= k + 3) unit.push([t, sty]);
+      else { if (k > a) left.push([t.slice(0, k - a), sty]); if (b > k + 3) unit.push([t.slice(Math.max(0, k + 3 - a)), sty]); } }
+    // drop a describing word or two in front of the symbol ("time t", "drop height h"), keep "cos θ", "1 − cos θ"
+    let first = left.findIndex(p => p[1] !== "n" && p[0].trim());
+    if (first > 0){ const pre = left.slice(0, first).map(p => p[0]).join(""); if (!/^([A-Za-z]{4,}\s+)+$/.test(pre)) first = 0; }
+    let sym = first < 0 ? [[left.map(p => p[0]).join("").trim(), "n"]] : left.slice(first).map(p => [p[0], p[1]]);
+    let cut = false; sym = sym.filter(p => { if (cut) return false; const i = p[0].indexOf(" = "); if (i >= 0){ p[0] = p[0].slice(0, i); cut = true; } return true; });
+    if (sym.length) sym[sym.length - 1][0] = sym[sym.length - 1][0].replace(/\s+$/, "");
+    if (sym.length && sym[0][0]) sym[0][0] = sym[0][0].replace(/^\s+/, "");
+    let un = unit.map(p => p[1] === "s" ? toSub(p[0]) : p[0]).join("").replace(/\s*\(.*$/, "").trim(); if (un === "1") un = "";
+    return {sym:sym.filter(p => p[0]), unit:un};
+  }
+  const SUBS = {"0":"₀", "1":"₁", "2":"₂", "3":"₃", "4":"₄", "5":"₅", "6":"₆", "7":"₇", "8":"₈", "9":"₉"};
+  const toSub = t => t.replace(/[0-9]/g, d => SUBS[d]);
+  const SUP = {"0":"⁰", "1":"¹", "2":"²", "3":"³", "4":"⁴", "5":"⁵", "6":"⁶", "7":"⁷", "8":"⁸", "9":"⁹", "-":"⁻"};
+  function num(v, span){                                   // enough decimals for the axis, × 10ⁿ for very big or small values
+    if (!isFinite(v)) return "–";
+    const a = Math.abs(v);
+    if (a >= 1e5 || (a > 0 && a < 1e-3 && span < 1e-2)){ const e = Math.floor(Math.log10(a)), m = v / Math.pow(10, e);
+      return `${m.toFixed(2).replace("-", "−")} × 10${String(e).replace(/[0-9-]/g, c => SUP[c])}`; }
+    const d = Math.max(0, Math.min(6, Math.ceil(-Math.log10(span / 400))));
+    let s = v.toFixed(d); if (/^-0\.?0*$/.test(s)) s = s.slice(1); return s.replace("-", "−");
+  }
+  // ---- curves of a frame: join touching pieces of the same colour, drop vertical lines and short legend strokes
+  function curves(f){
+    if (f.lines && f.nraw === f.raw.length) return f.lines;
+    const L = [];
+    for (const r of f.raw){ const last = L[L.length - 1];
+      if (last && last.col === r.col && Math.hypot(last.pts[last.pts.length - 1][0] - r.pts[0][0], last.pts[last.pts.length - 1][1] - r.pts[0][1]) < 0.6) last.pts = last.pts.concat(r.pts.slice(1));
+      else L.push({pts:r.pts.slice(), col:r.col, dash:r.dash}); }
+    f.lines = L.filter(l => { let lo = Infinity, hi = -Infinity; for (const [x] of l.pts){ lo = Math.min(lo, x); hi = Math.max(hi, x); }
+      const span = hi - lo; return span >= 1.5 && !(l.pts.length <= 3 && span < 0.08 * f.box.w) && hi >= f.box.x - 1 && lo <= f.box.x + f.box.w + 1; });
+    f.nraw = f.raw.length; return f.lines;
+  }
+  function cut(l, x){ const out = [];
+    for (let i = 1; i < l.pts.length; i++){ const [xa, ya] = l.pts[i - 1], [xb, yb] = l.pts[i];
+      if (Math.abs(xb - xa) < 1e-6 || (x - xa) * (x - xb) > 0) continue;
+      const y = ya + (yb - ya) * (x - xa) / (xb - xa); if (!out.some(q => Math.abs(q - y) < 2)) out.push(y); }
+    return out; }
+  // ---- drawing on a transparent canvas laid over the graph
+  function overlay(cv, s){
+    if (!s.ov){ const o = document.createElement("canvas"); o.className = "probeOv"; o.setAttribute("aria-hidden", "true");
+      o.style.cssText = "position:absolute;pointer-events:none;z-index:2"; cv.after(o); s.ov = o;
+      const par = cv.parentNode; if (getComputedStyle(par).position === "static") par.style.position = "relative"; }
+    const o = s.ov; o.style.left = cv.offsetLeft + "px"; o.style.top = cv.offsetTop + "px";
+    o.style.width = cv.offsetWidth + "px"; o.style.height = cv.offsetHeight + "px";
+    if (o.width !== cv.width || o.height !== cv.height){ o.width = cv.width; o.height = cv.height; }
+    return o;
+  }
+  const FONT = (sty, z) => sty === "i" ? `italic 600 ${z}px "Segoe UI",Calibri,Arial,sans-serif` : sty === "s" ? `600 ${Math.round(z * .72)}px "Segoe UI",Calibri,Arial,sans-serif` : `600 ${z}px "Segoe UI",Calibri,Arial,sans-serif`;
+  const runW = (ctx, run, z) => run.reduce((w, [t, sty]) => { ctx.font = FONT(sty, z); return w + ctx.measureText(t).width; }, 0);
+  function runDraw(ctx, run, x, y, col, z){ for (const [t, sty] of run){ ctx.font = FONT(sty, z); ctx.fillStyle = col;
+    ctx.fillText(t, x, sty === "s" ? y + z * .3 : y); x += ctx.measureText(t).width; } return x; }
+  function draw(cv, s){
+    const o = overlay(cv, s), ctx = o.getContext("2d");
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, o.width, o.height);
+    if (!s.on || !cv.offsetParent) return;
+    const dpr = cv.width / Math.max(1, cv.getBoundingClientRect().width), dx = s.px * dpr, dy = s.py * dpr;
+    let f = null, lx = 0, ly = 0;
+    for (const g of s.frames){ if (g.skip) continue; const gi = g.m.inverse(), X = gi.a * dx + gi.c * dy + gi.e, Y = gi.b * dx + gi.d * dy + gi.f;
+      if (X >= g.box.x && X <= g.box.x + g.box.w && Y >= g.box.y - 4 && Y <= g.box.y + g.box.h + 4){ f = g; lx = X; ly = Y; break; } }
+    if (!f) return;
+    const b = f.box, xv = px => f.x0 + (px - b.x) / b.w * (f.x1 - f.x0), yv = py => f.y0 + (b.y + b.h - py) / b.h * (f.y1 - f.y0);
+    const lines = curves(f), pts = f.pts.filter(p => p.x >= b.x - 1 && p.x <= b.x + b.w + 1);
+    let hits = [], near = null, x = lx;
+    for (const l of lines) for (const y of cut(l, x)) if (y >= b.y - 1 && y <= b.y + b.h + 1) hits.push({y, col:l.col, dash:l.dash ? 1 : 0});
+    if (pts.length){ const n = pts.reduce((m, p) => { const d = Math.hypot(p.x - lx, p.y - ly); return d < m.d ? {p, d} : m; }, {p:null, d:Infinity});
+      if (n.d <= 12) near = n.p; }
+    if (!lines.length && pts.length){                    // only data points: snap to the nearest one along x
+      near = pts.reduce((m, p) => Math.abs(p.x - lx) + 1e-3 * Math.abs(p.y - ly) < Math.abs(m.x - lx) + 1e-3 * Math.abs(m.y - ly) ? p : m, pts[0]); x = near.x; }
+    if (!hits.length && !near) return;
+    hits.sort((p, q) => p.y - q.y || p.dash - q.dash);    // curves on top of each other: one row (the solid one)
+    hits = hits.filter((h, i) => !hits.slice(0, i).some(q => Math.abs(q.y - h.y) < 1.5)).slice(0, 6);
+    ctx.setTransform(f.m);
+    ctx.save(); ctx.strokeStyle = "rgba(38,50,56,.55)"; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+    orig.beginPath.call(ctx); orig.moveTo.call(ctx, x, b.y); orig.lineTo.call(ctx, x, b.y + b.h); orig.stroke.call(ctx); ctx.restore();
+    const dot = (X, Y, c, r) => { ctx.save(); ctx.fillStyle = c; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; orig.beginPath.call(ctx); orig.arc.call(ctx, X, Y, r, 0, 7); orig.stroke.call(ctx); orig.fill.call(ctx); ctx.restore(); };
+    for (const h of hits) dot(x, h.y, shade(h.col), 4.5);
+    if (near){ ctx.save(); ctx.strokeStyle = "#263238"; ctx.lineWidth = 2; orig.beginPath.call(ctx); orig.arc.call(ctx, near.x, near.y, 8, 0, 7); orig.stroke.call(ctx); ctx.restore(); }
+    const X = split(f.xl), Y = split(f.yl), xs = f.x1 - f.x0, ys = f.y1 - f.y0, z = 13.5, rows = [];
+    const eq = (sym, v, span, unit) => [...sym, [` = ${num(v, span)}${unit ? (unit === "°" ? "" : " ") + unit : ""}`, "n"]];
+    if (!near || lines.length) rows.push({run:eq(X.sym, xv(x), xs, X.unit), col:"#263238"});
+    if (lines.length) for (const h of hits) rows.push({run:eq(Y.sym, yv(h.y), ys, Y.unit), col:h.col, mark:hits.length > 1});
+    if (near){ rows.push({run:[["point:  ", "n"], ...eq(X.sym, xv(near.x), xs, X.unit)], col:near.col, mark:true});
+      rows.push({run:[["point:  ", "n"], ...eq(Y.sym, yv(near.y), ys, Y.unit)], col:near.col, mark:true, hide:true}); }
+    if (!rows.length) return;
+    ctx.save(); ctx.textBaseline = "middle"; ctx.textAlign = "left";
+    const rh = z + 6, mw = Math.max(...rows.map(r => runW(ctx, r.run, z) + (r.mark ? 14 : 0))), bw = mw + 16, bh = rows.length * rh + 8;
+    const right = x + 10 + bw > b.x + b.w; let bx = right ? x - 10 - bw : x + 10;
+    const cw = o.width / dpr; bx = Math.max(b.x + 2, Math.min(bx, b.x + b.w - bw - 2)); bx = Math.max(2, Math.min(bx, cw - bw - 2));
+    let by = ly - bh / 2;
+    if (near && near.x + 10 > bx && near.x - 10 < bx + bw){ by = near.y + 14; if (by + bh > b.y + b.h - 2) by = near.y - 14 - bh; }   // keep the point visible
+    by = Math.max(b.y + 2, Math.min(by, b.y + b.h - bh - 2));
+    ctx.fillStyle = "rgba(255,255,255,.94)"; ctx.strokeStyle = "rgba(38,50,56,.35)"; ctx.lineWidth = 1;
+    orig.beginPath.call(ctx); ctx.roundRect ? ctx.roundRect(bx, by, bw, bh, 6) : ctx.rect(bx, by, bw, bh); orig.fill.call(ctx); orig.stroke.call(ctx);
+    rows.forEach((r, i) => { const yy = by + 4 + rh * i + rh / 2; let xx = bx + 8;
+      if (r.mark && !r.hide){ ctx.fillStyle = shade(r.col); orig.beginPath.call(ctx); orig.arc.call(ctx, xx + 4, yy, 4, 0, 7); orig.fill.call(ctx); }
+      if (r.mark) xx += 14;
+      let run = r.run; if (r.hide){ ctx.font = FONT("n", z); xx += ctx.measureText(run[0][0]).width; run = run.slice(1); }   // 2nd point row lines up under the 1st
+      runDraw(ctx, run, xx, yy, r.col === "#263238" ? r.col : shade(r.col), z); });
+    ctx.restore();
+  }
+  function shade(c){                                      // pale curve colours (e.g. dashed grey) are darkened for text
+    let r, g, bb; const m = /^#([0-9a-f]{6})$/i.exec(c), q = /^rgba?\(\s*(\d+)[ ,]+(\d+)[ ,]+(\d+)/i.exec(c);
+    if (m){ const n = parseInt(m[1], 16); r = n >> 16; g = (n >> 8) & 255; bb = n & 255; } else if (q){ r = +q[1]; g = +q[2]; bb = +q[3]; } else return c;
+    c = `rgb(${r},${g},${bb})`; const L = 0.299 * r + 0.587 * g + 0.114 * bb;
+    if (L < 150) return c; const k = 150 / L; return `rgb(${Math.round(r * k)},${Math.round(g * k)},${Math.round(bb * k)})`;
+  }
+  function bind(cv){
+    const s = st(cv); if (s.bound) return; s.bound = true;
+    const at = e => { const r = cv.getBoundingClientRect(); s.px = e.clientX - r.left; s.py = e.clientY - r.top; s.on = true; };
+    cv.addEventListener("pointermove", e => { if (e.pointerType === "touch" && !s.touch) return; at(e); });
+    cv.addEventListener("pointerdown", e => { s.touch = e.pointerType === "touch"; at(e); });
+    cv.addEventListener("pointerup", e => { if (e.pointerType === "touch") s.touch = false; });
+    cv.addEventListener("pointercancel", () => { s.touch = false; });   // a finger that scrolls the page lets go of the probe
+    cv.addEventListener("pointerleave", e => { if (e.pointerType !== "touch") s.on = false; });
+    document.addEventListener("pointerdown", e => { if (e.target !== cv) s.on = false; });
+  }
+  function tick(){ for (const [cv, s] of S) if (s.ov || s.on) draw(cv, s); requestAnimationFrame(tick); }
+  requestAnimationFrame(tick);
+  return {wrapAxes, quiet, S};
+})();
+if (typeof axesR === "function") axesR = PROBE.wrapAxes(axesR, true);
+if (typeof axes === "function") axes = PROBE.wrapAxes(axes, false);
+if (typeof drawTangent === "function") drawTangent = PROBE.quiet(drawTangent);
+if (typeof shadeArea === "function") shadeArea = PROBE.quiet(shadeArea);
+if (typeof areaName === "function") areaName = PROBE.quiet(areaName);
+if (typeof toolLabels === "function") toolLabels = PROBE.quiet(toolLabels);
+if (typeof arrow === "function") arrow = PROBE.quiet(arrow);
+if (typeof fArrow === "function") fArrow = PROBE.quiet(fArrow);
+if (typeof label === "function") label = PROBE.quiet(label);
+if (typeof rich === "function") rich = PROBE.quiet(rich);
+if (typeof subLabel === "function") subLabel = PROBE.quiet(subLabel);
+if (typeof note === "function") note = PROBE.quiet(note);
+if (typeof pill === "function") pill = PROBE.quiet(pill);
+/* ==== SHARED-UI END ==== */
+/* ==== NEWTON START — Newton's-law panel (shared by all simulations; source ~/.cache/sharedui-build/newton/) ====
+   The FBD code of each simulation reports what it draws: NF.body(name, m, ax, ay, {v, axes}) and NF.force(label, Fx, Fy, colour, by, kind).
+   Fx, Fy are in N along the body's two axes (default → right, ↑ up); ax, ay the body's acceleration along the same axes.
+   kind: grav · normal · friction · tension · push · pull · spring · drag · buoy · impact · contact (decides the words for the 3rd-law partner).
+   NEWTON then shows: the law badge above the scene (1st law ΣF = 0 / 2nd law ΣF = ma), the ΣF = ma table under the FBD (foldable),
+   and, with "3rd-law pairs" ticked, every force with its partner on the other body (same size, opposite direction). */
+const NF = (() => {
+  let bodies = [], cur = null, msg = "";
+  return {
+    reset(){ bodies = []; cur = null; msg = ""; },
+    body(name, m, ax, ay, o = {}){ cur = {name, m, ax:ax || 0, ay:ay || 0, v:o.v, axes:o.axes || ["→", "↑"], forces:[], law:o.law, pre:o.pre || ""}; bodies.push(cur); return cur; },
+    force(lab, fx, fy, col, by, kind = "contact"){ if (!cur || !isFinite(fx) || !isFinite(fy)) return;
+      if (Math.hypot(fx, fy) < 1e-9) return; cur.forces.push({lab, fx, fy, col, by, kind}); },
+    none(t){ bodies = []; cur = null; msg = t || ""; },
+    get bodies(){ return bodies; }, get msg(){ return msg; },
+  };
+})();
+const NEWTON = (() => {
+  const VERB = {grav:"gravitational pull", normal:"normal force (push)", friction:"friction", tension:"pull (tension)", push:"push", pull:"pull",
+    spring:"spring force", drag:"drag", buoy:"buoyancy (push of the fluid)", impact:"contact force", contact:"contact force"};
+  const fmtN = v => { const a = Math.abs(v); return a >= 1e4 ? `${(v / 1000).toPrecision(3)} kN` : a < 1e-3 && a > 0 ? `${v.toExponential(2)} N` : `${+v.toPrecision(3)} N`; };
+  const z = v => Math.abs(v) < 5e-4 ? "0" : String(+v.toPrecision(3)).replace("-", "−");
+  const dirGlyph = (x, y) => { const a = Math.atan2(y, x) * 180 / Math.PI; return ["→", "↗", "↑", "↖", "←", "↙", "↓", "↘"][((Math.round(a / 45) % 8) + 8) % 8]; };
+  const plain = s => String(s).replace(/<sub>(.*?)<\/sub>/g, "$1").replace(/<[^>]+>/g, "");
+  let fold = false, last = "";
+  try { const v = localStorage.getItem("newton-fold"); fold = v === null ? innerWidth >= 760 && innerWidth < 1100 : v === "1"; } catch (e) {}   // tablets start folded
+  const lawOf = b => b.law || (Math.hypot(b.ax, b.ay) < 1e-6 ? "1st" : "2nd");
+  function badge(){
+    const el = document.getElementById("nlaw"); if (!el) return;
+    const B = NF.bodies; let html, cls;
+    if (!B.length){ html = NF.msg || "No forces to show here"; cls = "none"; }
+    else {
+      const laws = B.map(lawOf), all1 = laws.every(l => l === "1st"), all2 = laws.every(l => l === "2nd");
+      const who = l => B.length > 1 ? ` (${B.filter((b, i) => laws[i] === l).map(b => b.name).join(", ")})` : "";
+      const rest = B.every(b => b.v !== undefined && Math.abs(b.v) < 1e-6);
+      if (all1){ cls = "l1"; html = `<b>1st law</b> · ${rest ? "at rest" : B.some(b => b.v === undefined) ? "at rest or constant velocity" : "constant velocity"} · Σ<i>F</i> = 0`; }
+      else if (all2){ cls = "l2"; html = `<b>2nd law</b> · accelerating · Σ<i>F</i> = <i>ma</i>`; }
+      else { cls = "l2"; html = `<b>2nd law</b>${who("2nd")} · <b>1st law</b>${who("1st")}`; }
+    }
+    if (B.length && B[0].pre) html = B[0].pre + html;
+    if (el.dataset.h !== html + cls){ el.innerHTML = html; el.className = "nlaw " + cls; el.dataset.h = html + cls; }
+  }
+  function table(){
+    const el = document.getElementById("ntab"); if (!el) return;
+    const B = NF.bodies; let html = "";
+    if (!B.length) html = `<div class="nh"><button class="nfold" data-nfold aria-expanded="${!fold}">${fold ? "▸" : "▾"} Σ<i>F</i> = <i>ma</i> check</button><span class="nk">${NF.msg || "no forces here"}</span></div>`;
+    else {
+      const twoD = B.some(b => b.forces.some(f => Math.abs(f.fy) > 1e-9) && b.forces.some(f => Math.abs(f.fx) > 1e-9) || Math.abs(b.ay) > 1e-9 && Math.abs(b.ax) > 1e-9);
+      const sums = B.map(b => [b.forces.reduce((s, f) => s + f.fx, 0), b.forces.reduce((s, f) => s + f.fy, 0)]);
+      const ok = B.every((b, i) => Math.abs(sums[i][0] - b.m * b.ax) <= 0.01 * (1 + Math.abs(b.m * b.ax)) && Math.abs(sums[i][1] - b.m * b.ay) <= 0.01 * (1 + Math.abs(b.m * b.ay)));
+      html += `<div class="nh"><button class="nfold" data-nfold aria-expanded="${!fold}">${fold ? "▸" : "▾"} Σ<i>F</i> = <i>ma</i> check</button><span class="nk ${ok ? "ok" : ""}">${ok ? "✔ Σ<i>F</i> = <i>ma</i> for every body" : ""}</span></div>`;
+      if (!fold){
+        const vert = !twoD && !B.some(bb => bb.forces.some(f => Math.abs(f.fx) > 1e-9));
+        html += `<table><tr><th>force</th><th>by</th><th>${twoD ? B[0].axes[0] : vert ? B[0].axes[1] : B[0].axes[0]} / N</th>${twoD ? `<th>${B[0].axes[1]} / N</th>` : ""}</tr>`;
+        B.forEach((b, i) => {
+          const comp = (f, k) => k ? f.fy : f.fx, one = !twoD && !B.some(bb => bb.forces.some(f => Math.abs(f.fx) > 1e-9)) ? 1 : 0;   // 1-D vertical: show the y value
+          if (B.length > 1) html += `<tr class="nb"><td colspan="${twoD ? 4 : 3}">on ${b.name}${b.m ? ` (${+b.m.toPrecision(3)} kg)` : ""}</td></tr>`;
+          b.forces.forEach(f => { html += `<tr><td style="color:${f.col}">${f.lab}</td><td class="by">${f.by}</td><td>${z(twoD ? f.fx : comp(f, one))}</td>${twoD ? `<td>${z(f.fy)}</td>` : ""}</tr>`; });
+          html += `<tr class="ns"><td>Σ<i>F</i></td><td></td><td>${z(twoD ? sums[i][0] : sums[i][one])}</td>${twoD ? `<td>${z(sums[i][1])}</td>` : ""}</tr>`;
+          html += `<tr class="nm"><td><i>m a</i></td><td class="by">${b.m ? `${+b.m.toPrecision(3)} kg` : ""}</td><td>${z(b.m * (twoD ? b.ax : (one ? b.ay : b.ax)))}</td>${twoD ? `<td>${z(b.m * b.ay)}</td>` : ""}</tr>`;
+        });
+        html += `</table><div class="ncap">3rd law: each force has a partner of the same size and type, in the opposite direction, on the other body — tick <b>3rd-law pairs</b>.</div>`;
+      }
+    }
+    if (html !== last){ el.innerHTML = html; last = html; }
+  }
+  // 3rd-law pairs: drawn over the scene as a card, one row per force (the force on the body · its partner on the other body)
+  function pairs(){
+    const cb = document.getElementById("n3"); if (!cb || !cb.checked) return;
+    const cv = document.getElementById("scene"); if (!cv) return;
+    const ctx = cv.getContext("2d"), r = cv.getBoundingClientRect(), w = r.width, h = r.height;
+    const rows = NF.bodies.flatMap(b => b.forces.map(f => ({b, f}))).slice(0, 8);
+    const txt = rows.map(({b, f}) => { const M = Math.hypot(f.fx, f.fy), by = plain(f.by), nm = plain(b.name);
+      return [`${plain(f.lab)}: ${by} on ${nm} ${fmtN(M)}`, `${nm} on ${by} ${fmtN(M)}`]; });
+    const title = "3rd-law pairs: same size · same type · opposite direction · on different bodies";
+    ctx.save(); ctx.setTransform(window.devicePixelRatio || 1, 0, 0, window.devicePixelRatio || 1, 0, 0);
+    ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.setLineDash([]); ctx.globalAlpha = 1;
+    const pw = Math.min(w - 16, 600); let fs = 12.5;
+    const fits = () => { ctx.font = `${fs}px "Segoe UI",Calibri,Arial,sans-serif`;
+      const c1 = Math.max(0, ...txt.map(t => ctx.measureText(t[0]).width)), c2 = Math.max(0, ...txt.map(t => ctx.measureText(t[1]).width));
+      ctx.font = `700 ${fs}px "Segoe UI",Calibri,Arial,sans-serif`; return Math.max(ctx.measureText(title).width + 20, c1 + c2 + 90) <= pw ? c1 : -1; };
+    let c1 = fits(); while (c1 < 0 && fs > 8.5){ fs -= 0.5; c1 = fits(); } if (c1 < 0) c1 = pw / 2 - 60;
+    const rh = fs + 8, ph = 24 + rh * Math.max(1, rows.length), x0 = 8, y0 = h - ph - 8;
+    ctx.fillStyle = "rgba(255,255,255,.96)"; ctx.strokeStyle = "#1F3A5F"; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x0, y0, pw, ph, 8) : ctx.rect(x0, y0, pw, ph); ctx.fill(); ctx.stroke();
+    ctx.font = `700 ${fs}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = "#1F3A5F"; ctx.fillText(title, x0 + 10, y0 + 12);
+    if (!rows.length){ ctx.font = `${fs}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillText(NF.msg || "No forces in this example.", x0 + 10, y0 + 12 + rh); }
+    const arr = (x, y, ux, uy, L, c, dash) => { ctx.save(); ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineWidth = 2.5; if (dash) ctx.setLineDash([4, 3]);
+      const x1 = x - ux * L / 2, y1 = y + uy * L / 2, x2 = x + ux * L / 2, y2 = y - uy * L / 2;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - ux * 5, y2 + uy * 5); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x2 - ux * 7 - uy * 4, y2 + uy * 7 - ux * 4); ctx.lineTo(x2 - ux * 7 + uy * 4, y2 + uy * 7 + ux * 4); ctx.closePath(); ctx.fill(); ctx.restore(); };
+    const col2 = x0 + 34 + c1 + 22;
+    rows.forEach(({b, f}, i) => {
+      const y = y0 + 12 + rh * (i + 1), M = Math.hypot(f.fx, f.fy), ux = f.fx / M, uy = f.fy / M;
+      ctx.font = `${fs}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = f.col;
+      arr(x0 + 19, y, ux, uy, 15, f.col, false); ctx.fillText(txt[i][0], x0 + 34, y);
+      ctx.fillStyle = "#90A4AE"; ctx.fillText("⇄", col2 - 16, y); ctx.fillStyle = f.col;
+      arr(col2 + 9, y, -ux, -uy, 15, f.col, true); ctx.fillText(txt[i][1], col2 + 24, y);
+    });
+    ctx.restore();
+  }
+  function frame(){ try { badge(); table(); pairs(); } catch (e) { console.error(e); } }
+  function hook(){
+    const o = drawFBD;
+    drawFBD = function(){ NF.reset(); const r = o.apply(this, arguments); frame(); return r; };
+    document.addEventListener("click", e => { const b = e.target.closest("[data-nfold]"); if (!b) return; fold = !fold;
+      try { localStorage.setItem("newton-fold", fold ? "1" : "0"); } catch (er) {} last = ""; table(); });
+  }
+  return {hook, frame, lawOf};
+})();
+/* ==== NEWTON END ==== */
+/* ============================ 3 CONFIG ============================ */
+const G = 9.81;                 // N kg⁻¹ (IB data booklet)
+const BLOCK_M = 0.250;          // kg, wooden block (lab)
+const SLOT_M = 0.200;           // kg per slotted mass
+const MAX_SLOTS = 5;
+const SLIDE_TIME = 3.0;         // s of constant-speed sliding after breakaway
+const SLIDE_SPEED_PX = 26;      // scene px per second while sliding
+const DROP_TAU = 0.06;          // s, how fast the reading falls from peak to sliding value
+const SAMPLE_HZ = 50;           // like a Capstone sensor
+const NOISE = 0.02;             // ±2 % when noise is on
+const SURFACES = [
+  {id:"wood",   name:"Wood on bench",        ms:0.41, md:0.30, top:"#E8DCC4", bottom:null},
+  {id:"rubber", name:"Rubber sole on bench", ms:0.66, md:0.51, top:"#E8DCC4", bottom:"#37474F"},
+  {id:"felt",   name:"Felt pad on bench",    ms:0.30, md:0.22, top:"#E8DCC4", bottom:"#689F38"},
+  {id:"sand",   name:"Wood on sandpaper",    ms:0.80, md:0.65, top:"#A1784A", bottom:null, rough:true},
+  {id:"ice",    name:"Wood on ice",          ms:0.10, md:0.05, top:"#CDEFFB", bottom:null, ice:true},
+];
+const COL = {W:"#2A5D8A", N:"#2E7D32", F:"#C62828", P:"#6A1B9A", navy:"#1F3A5F", accent:"#E65100",
+             ink:"#263238", muted:"#606A72", grid:"#E3E9F0", wood:"#FFCC80", woodEdge:"#C68A3A",
+             stat:"#E65100", dyn:"#1565C0"};
+const surfById = id => SURFACES.find(s => s.id === id);
+
+/* ============================ 4 PHYSICS ============================ */
+// Pull F at angle θ: horizontal part F cosθ, vertical part F sinθ lifts the block a little.
+const rad = d => d * Math.PI / 180;
+const mass = n => BLOCK_M + n * SLOT_M;
+const normalForce = (m, F, deg) => m * G - F * Math.sin(rad(deg));
+// Pull needed to reach the friction limit μFN:  F cosθ = μ(mg − F sinθ)  ⇒  F = μmg / (cosθ + μ sinθ)
+const pullAtLimit = (mu, m, deg) => mu * m * G / (Math.cos(rad(deg)) + mu * Math.sin(rad(deg)));
+const r2 = x => Math.round(x * 100) / 100;
+const f2 = x => (Math.round(x * 100) / 100).toFixed(2);
+
+/* ============================ 5 RUN ============================ */
+const set = {surf:"wood", n:0, angle:0, rate:1, face:"large", noise:false};
+let run;
+function newRun(){
+  const s = surfById(set.surf), m = mass(set.n);
+  const Fpk = pullAtLimit(s.ms, m, set.angle), Fsl = pullAtLimit(s.md, m, set.angle);
+  run = {phase:"ready", t:0, F:0, x:0, hold:false, tSlip:null, Fpk, Fsl, m, s,
+         samples:[], nextSample:0, tMax:Math.max(6, niceCeil(Fpk / set.rate + SLIDE_TIME + 0.8)),
+         fMax:niceCeil(Math.max(1, Fpk * 1.2))};
+}
+function noisy(F){ return set.noise ? F * (1 + NOISE * (2 * Math.random() - 1)) : F; }
+function pushSample(){ run.samples.push({t:run.t, F:Math.max(0, noisy(run.F))}); }
+function step(dt){
+  if (run.phase === "static"){
+    if (!run.hold) run.F += set.rate * dt;
+    if (run.F >= run.Fpk){                        // breakaway: static friction has reached μs FN
+      run.F = run.Fpk; run.phase = "sliding"; run.tSlip = run.t;
+      run.samples.push({t:run.t, F:noisy(run.Fpk)}); // make sure the true peak is sampled
+    }
+  } else if (run.phase === "sliding"){
+    const ts = run.t - run.tSlip;
+    run.F = run.Fsl + (run.Fpk - run.Fsl) * Math.exp(-ts / DROP_TAU);
+    run.x += SLIDE_SPEED_PX * dt;
+    if (ts >= SLIDE_TIME){ run.phase = "done"; finishRun(); }
+  }
+  if (run.phase === "static" || run.phase === "sliding"){
+    run.t += dt;
+    while (run.nextSample <= run.t){ pushSample(); run.nextSample += 1 / SAMPLE_HZ; }
+    if (run.t > run.tMax) run.tMax = niceCeil(run.t * 1.25);
+  }
+}
+// Results "measured" from the sampled graph, like reading a real data set
+function measured(){
+  if (run.tSlip === null) return null;
+  const peak = Math.max(...run.samples.map(p => p.F));
+  const sl = run.samples.filter(p => p.t >= run.tSlip + 0.5);
+  if (!sl.length) return null;
+  const slide = sl.reduce((a, p) => a + p.F, 0) / sl.length;
+  return {peak, slide};
+}
+function forcesNow(){
+  const m = mass(set.n), W = m * G, N = normalForce(m, run.F, set.angle);
+  return {m, W, N, F:run.F, Ff:run.F * Math.cos(rad(set.angle))};
+}
+
+/* ============================ 6 SCENE ============================ */
+function fitCanvas(cv){
+  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+  if (cv.width !== w || cv.height !== h){ cv.width = w; cv.height = h; }
+  const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return {ctx, w:r.width, h:r.height};
+}
+function arrow(ctx, x1, y1, x2, y2, color, width = 4, dashed = false){
+  const L = Math.hypot(x2 - x1, y2 - y1); if (L < 2) return;
+  const ux = (x2 - x1) / L, uy = (y2 - y1) / L, hs = Math.min(13, 6 + width * 1.6);
+  ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width; ctx.lineCap = "round";
+  if (dashed) ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - ux * hs * 0.8, y2 - uy * hs * 0.8); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - ux * hs - uy * hs * 0.5, y2 - uy * hs + ux * hs * 0.5);
+  ctx.lineTo(x2 - ux * hs + uy * hs * 0.5, y2 - uy * hs - ux * hs * 0.5); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function label(ctx, txt, x, y, color, align = "center", size = 15, base = "middle"){
+  ctx.save(); ctx.font = `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = color;
+  ctx.textAlign = align; ctx.textBaseline = base;
+  // white halo so labels stay readable over lines
+  ctx.lineWidth = 4; ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.strokeText(txt, x, y); ctx.fillText(txt, x, y);
+  ctx.restore();
+}
+// Labels with a subscript, e.g. sub(ctx,"F","N"," = 2.45 N",…)
+function subLabel(ctx, main, sub, rest, x, y, color, align = "center", size = 15){
+  ctx.save(); const f1 = `italic 600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`,
+    f2 = `600 ${Math.round(size * .72)}px "Segoe UI",Calibri,Arial,sans-serif`, f3 = `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`;
+  ctx.font = f1; const w1 = ctx.measureText(main).width; ctx.font = f2; const w2 = sub ? ctx.measureText(sub).width : 0;
+  ctx.font = f3; const w3 = ctx.measureText(rest).width; const W = w1 + w2 + w3;
+  let x0 = align === "center" ? x - W / 2 : align === "right" ? x - W : x;
+  ctx.textBaseline = "middle"; ctx.lineWidth = 4; ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.fillStyle = color;
+  ctx.font = f1; ctx.strokeText(main, x0, y); ctx.fillText(main, x0, y);
+  if (sub){ ctx.font = f2; ctx.strokeText(sub, x0 + w1, y + size * .3); ctx.fillText(sub, x0 + w1, y + size * .3); }
+  ctx.font = f3; ctx.strokeText(rest, x0 + w1 + w2, y); ctx.fillText(rest, x0 + w1 + w2, y);
+  ctx.restore();
+}
+// Mixed text: parts = [[text, "n" normal | "i" italic | "s" subscript], …], centred on (x, y)
+function rich(ctx, parts, x, y, color, size = 14){
+  const font = st => st === "i" ? `italic 600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`
+    : st === "s" ? `600 ${Math.round(size * .72)}px "Segoe UI",Calibri,Arial,sans-serif` : `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`;
+  ctx.save(); ctx.fillStyle = color; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+  const ws = parts.map(([t, st]) => { ctx.font = font(st); return ctx.measureText(t).width; });
+  let cx = x - ws.reduce((a, b) => a + b, 0) / 2;
+  parts.forEach(([t, st], i) => { ctx.font = font(st); ctx.fillText(t, cx, st === "s" ? y + size * .3 : y); cx += ws[i]; });
+  ctx.restore();
+}
+const speckle = Array.from({length:260}, () => [Math.random(), Math.random(), Math.random()]);
+function drawScene(){
+  const {ctx, w, h} = fitCanvas(document.getElementById("scene"));
+  const s = surfById(set.surf), k = Math.min(1, w / 640, h / 290);
+  ctx.clearRect(0, 0, w, h);
+  // wall / sky
+  const g = ctx.createLinearGradient(0, 0, 0, h); g.addColorStop(0, "#FAFCFF"); g.addColorStop(1, "#EEF3F8");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  const benchY = h * 0.8;
+  // bench body + legs
+  ctx.fillStyle = "#8D6E63"; ctx.fillRect(0, benchY + 8, w, 18);
+  ctx.fillStyle = "#6D4C41"; ctx.fillRect(w * 0.06, benchY + 26, 14, h); ctx.fillRect(w * 0.9, benchY + 26, 14, h);
+  // surface layer
+  ctx.fillStyle = s.top; ctx.fillRect(0, benchY, w, 9);
+  if (s.rough){ ctx.fillStyle = "#6B4F2A"; for (const [a, b] of speckle) ctx.fillRect(a * w, benchY + b * 8, 1.6, 1.6); }
+  if (s.ice){ ctx.strokeStyle = "rgba(255,255,255,.95)"; ctx.lineWidth = 2;
+    for (let i = 0; i < 12; i++){ const x = (i * 97) % w; ctx.beginPath(); ctx.moveTo(x, benchY + 3); ctx.lineTo(x + 26, benchY + 3); ctx.stroke(); } }
+  // block
+  const bw = (set.face === "large" ? 130 : 66) * k, bh = (set.face === "large" ? 52 : 100) * k;
+  const bx = w * 0.1 + run.x * k, by = benchY - bh;
+  ctx.fillStyle = COL.wood; ctx.strokeStyle = COL.woodEdge; ctx.lineWidth = 2;
+  ctx.fillRect(bx, by, bw, bh); ctx.strokeRect(bx, by, bw, bh);
+  ctx.strokeStyle = "rgba(198,138,58,.45)"; ctx.lineWidth = 1;          // wood grain
+  for (let i = 1; i < 4; i++){ ctx.beginPath(); ctx.moveTo(bx + 4, by + bh * i / 4); ctx.bezierCurveTo(bx + bw * .3, by + bh * i / 4 - 4, bx + bw * .7, by + bh * i / 4 + 4, bx + bw - 4, by + bh * i / 4); ctx.stroke(); }
+  if (s.bottom){ ctx.fillStyle = s.bottom; ctx.fillRect(bx, benchY - 6 * k, bw, 6 * k); }
+  // slotted masses
+  const mw = Math.min(bw - 8, 56 * k), mh = 11 * k;
+  for (let i = 0; i < set.n; i++){
+    const my = by - (i + 1) * mh, mx = bx + (bw - mw) / 2;
+    ctx.fillStyle = i % 2 ? "#90A4AE" : "#A7B6BE"; ctx.strokeStyle = "#546E7A"; ctx.lineWidth = 1.2;
+    ctx.fillRect(mx, my, mw, mh - 1); ctx.strokeRect(mx, my, mw, mh - 1);
+  }
+  if (set.n){ label(ctx, `${set.n} × 200 g`, bx + (bw + mw) / 2 + 6, by - set.n * mh / 2, COL.muted, "left", 12); }
+  // string, newton meter, hand (rotated by θ)
+  const hx = bx + bw, hy = benchY - Math.min(bh * 0.5, 26 * k);
+  ctx.save(); ctx.translate(hx, hy); ctx.rotate(-rad(set.angle));
+  ctx.fillStyle = "#555"; ctx.beginPath(); ctx.arc(2, 0, 3, 0, 7); ctx.fill();         // hook
+  ctx.strokeStyle = "#444"; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(55 * k, 0); ctx.stroke();
+  const mx0 = 55 * k, ml = 135 * k, mr = 12 * k;
+  ctx.fillStyle = "#ECEFF1"; ctx.strokeStyle = "#78909C"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(mx0, -mr, ml, 2 * mr, 5) : ctx.rect(mx0, -mr, ml, 2 * mr); ctx.fill(); ctx.stroke();
+  const s0 = mx0 + 14 * k, s1 = mx0 + ml - 14 * k;                    // 0–10 N scale
+  ctx.strokeStyle = "#90A4AE"; ctx.lineWidth = 1;
+  for (let i = 0; i <= 10; i++){ const x = s1 - (s1 - s0) * i / 10; ctx.beginPath(); ctx.moveTo(x, -mr); ctx.lineTo(x, -mr + (i % 5 ? 4 : 8)); ctx.stroke(); }
+  const reading = run.samples.length && run.phase !== "ready" ? run.samples[run.samples.length - 1].F : 0;
+  const ix = s1 - (s1 - s0) * Math.min(reading, 10) / 10;
+  ctx.strokeStyle = COL.F; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(ix, -mr + 2); ctx.lineTo(ix, mr - 2); ctx.stroke();
+  ctx.fillStyle = "#F1C27D"; ctx.strokeStyle = "#C99A5B"; ctx.lineWidth = 1.5;              // hand
+  ctx.beginPath(); ctx.ellipse(mx0 + ml + 16 * k, 0, 18 * k, 13 * k, 0, 0, 7); ctx.fill(); ctx.stroke();
+  ctx.restore();
+  // big digital reading + state
+  label(ctx, `Newton meter: ${f2(reading)} N`, w - 12, 20, COL.P, "right", 18);
+  const st = run.phase === "sliding" || run.phase === "done" ? (run.phase === "done" ? "Run finished" : "Sliding at constant speed")
+           : run.phase === "static" ? (run.hold ? "At rest — pull held constant" : "At rest — pull increasing") : "Ready";
+  label(ctx, st, 12, 20, COL.navy, "left", 16);
+  if (set.angle) label(ctx, `θ = ${set.angle}°`, hx + 70 * k, hy + 16, COL.P, "center", 13);
+}
+
+/* ============================ 7 FBD ============================ */
+// Drawn to scale (slide rule 4: arrow length ∝ force). W has a fixed length; the rest follow.
+function drawFBD(){
+  const {ctx, w, h} = fitCanvas(document.getElementById("fbd"));
+  ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  // to scale; the horizontal arrows can never be longer than the peak pull, so size them to fit half the width
+  const f = forcesNow(), cx = w * 0.5, cy = h * 0.52;
+  const scale = Math.min(h * 0.36 / f.W, (w * 0.5 - 18) / Math.max(run.Fpk, 0.01)), L = F => F * scale;
+/*NF*/  { const th = rad(set.angle); NF.body("the block", f.m, 0, 0, {v:run.phase === "sliding" ? 1 : 0});
+    NF.force("W", 0, -f.W, COL.W, "the Earth", "grav"); NF.force("F<sub>N</sub>", 0, f.N, COL.N, "the bench", "normal");
+    NF.force("F", f.F * Math.cos(th), f.F * Math.sin(th), COL.P, "the spring scale", "pull"); NF.force("F<sub>f</sub>", -f.Ff, 0, COL.F, "the bench", "friction"); }/*/NF*/
+  const bs = 26;
+  ctx.fillStyle = COL.wood; ctx.strokeStyle = COL.woodEdge; ctx.lineWidth = 2;
+  ctx.fillRect(cx - bs / 2, cy - bs / 2, bs, bs); ctx.strokeRect(cx - bs / 2, cy - bs / 2, bs, bs);
+  arrow(ctx, cx, cy, cx, cy + L(f.W), COL.W, 4);
+  arrow(ctx, cx, cy, cx, cy - L(f.N), COL.N, 4);
+  subLabel(ctx, "W", "", ` = ${f2(f.W)} N`, cx + 10, cy + L(f.W) - 6, COL.W, "left");
+  subLabel(ctx, "F", "N", ` = ${f2(f.N)} N`, cx + 10, cy - L(f.N) + 8, COL.N, "left");
+  if (f.F > 0.005){
+    const a = rad(set.angle), lp = L(f.F), px = cx + lp * Math.cos(a), py = cy - lp * Math.sin(a);
+    if (set.angle){                                   // components as dashed construction lines
+      ctx.save(); ctx.strokeStyle = COL.P; ctx.globalAlpha = .55; ctx.setLineDash([5, 4]); ctx.lineWidth = 1.6;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, cy); ctx.lineTo(px, py); ctx.stroke(); ctx.restore();
+      if (lp > 60){
+        label(ctx, "F cos θ", (cx + bs / 2 + px) / 2 + 4, cy + 12, COL.P, "center", 12);
+        label(ctx, "F sin θ", px + 5, (cy + py) / 2 + 2, COL.P, "left", 12);
+      }
+    }
+    arrow(ctx, cx, cy, px, py, COL.P, 4);
+    if (set.angle < 5) subLabel(ctx, "F", "", ` = ${f2(f.F)} N`, cx + bs / 2 + 6, cy + 22, COL.P, "left");   // below the arrow
+    else { const lx = Math.max(px, cx + bs / 2) + 6, fits = lx + 105 < w;
+      subLabel(ctx, "F", "", ` = ${f2(f.F)} N`, fits ? lx : w - 6, py - 14, COL.P, fits ? "left" : "right"); }
+    arrow(ctx, cx, cy, cx - L(f.Ff), cy, COL.F, 4);
+    subLabel(ctx, "F", "f", ` = ${f2(f.Ff)} N`, cx - bs / 2 - 6, cy + 22, COL.F, "right");                  // below the arrow
+  } else {
+    label(ctx, "No pull → no friction", 10, h - 14, COL.muted, "left", 13);
+  }
+  const msg = run.phase === "sliding" || run.phase === "done" ? "Constant velocity → resultant force = 0"
+            : "At rest → resultant force = 0";
+  label(ctx, msg, w / 2, 13, COL.navy, "center", 13);
+}
+
+/* ============================ 8 GRAPHS ============================ */
+function niceUp(x){ const p = Math.pow(10, Math.floor(Math.log10(x))), m = x / p;
+  return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p; }
+function niceStep(range, n){ return niceUp(range / n); }
+function niceCeil(x, n = 5){ const st = niceUp(x / n); return Math.ceil(x / st - 1e-9) * st; }  // e.g. 11.4 → 12.5
+// axis numbers: enough decimals for small steps, × 10ⁿ form for very big values (typed values can be far outside the sliders)
+const tickTxt = (v, st, d0) => { if (Math.abs(v) >= 1e6){ const e = Math.floor(Math.log10(Math.abs(v)) + 1e-9);
+    return `${+(v / 10 ** e).toPrecision(3)}×10${[...String(e)].map(c => "⁰¹²³⁴⁵⁶⁷⁸⁹"[c]).join("")}`; }
+  return String(+v.toFixed(Math.min(12, Math.max(d0, Math.ceil(-Math.log10(st)) + 1)))); };
+function axes(ctx, box, xMax, yMax, xLab, yLab){
+  const {x, y, w, h} = box;
+  ctx.save(); ctx.font = `13px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = COL.muted;
+  ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
+  const xs = niceStep(xMax, 8), ys = niceStep(yMax, 6);
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  for (let v = 0; v <= xMax + xs * 1e-6; v += xs){ const X = x + w * v / xMax; ctx.beginPath(); ctx.moveTo(X, y); ctx.lineTo(X, y + h); ctx.stroke(); ctx.fillText(tickTxt(v, xs, 2), X, y + h + 4); }
+  ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  for (let v = 0; v <= yMax + ys * 1e-6; v += ys){ const Y = y + h - h * v / yMax; ctx.beginPath(); ctx.moveTo(x, Y); ctx.lineTo(x + w, Y); ctx.stroke(); ctx.fillText(tickTxt(v, ys, 2), x - 5, Y); }
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + h); ctx.lineTo(x + w, y + h); ctx.stroke();
+  ctx.restore();
+  rich(ctx, xLab, x + w / 2, y + h + 30, COL.ink);
+  ctx.save(); ctx.translate(x - 44, y + h / 2); ctx.rotate(-Math.PI / 2); rich(ctx, yLab, 0, 0, COL.ink); ctx.restore();
+}
+let cursorT = null;
+function drawGraph(){
+  const cv = document.getElementById("graph"); if (!cv.offsetParent) return;
+  const {ctx, w, h} = fitCanvas(cv);
+  ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  const box = {x:58, y:16, w:w - 74, h:h - 66};
+  axes(ctx, box, run.tMax, run.fMax, [["time ","n"],["t","i"],[" / s","n"]], [["pull ","n"],["F","i"],[" / N","n"]]);
+  const X = t => box.x + box.w * t / run.tMax, Y = F => box.y + box.h - box.h * Math.min(F, run.fMax) / run.fMax;
+  if (!run.samples.length){
+    label(ctx, "Press ▶ Start pull", box.x + box.w / 2, box.y + box.h / 2, COL.muted, "center", 16); return;
+  }
+  ctx.save(); ctx.strokeStyle = COL.P; ctx.lineWidth = 2.2; ctx.lineJoin = "round"; ctx.beginPath();
+  run.samples.forEach((p, i) => i ? ctx.lineTo(X(p.t), Y(p.F)) : ctx.moveTo(X(p.t), Y(p.F))); ctx.stroke(); ctx.restore();
+  const res = run.phase === "done" ? measured() : null;
+  if (res){
+    const pk = run.samples.reduce((a, p) => p.F > a.F ? p : a);
+    ctx.fillStyle = COL.stat; ctx.beginPath(); ctx.arc(X(pk.t), Y(pk.F), 5, 0, 7); ctx.fill();
+    const roomLeft = X(pk.t) > box.x + 230;
+    label(ctx, `peak = ${f2(res.peak)} N (max static)`, X(pk.t) + (roomLeft ? -8 : 10), Y(pk.F) - 14, COL.stat, roomLeft ? "right" : "left", 14);
+    ctx.save(); ctx.strokeStyle = COL.dyn; ctx.setLineDash([7, 5]); ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(X(run.tSlip + 0.5), Y(res.slide)); ctx.lineTo(X(run.t), Y(res.slide)); ctx.stroke(); ctx.restore();
+    label(ctx, `sliding ≈ ${f2(res.slide)} N`, X(run.t), Y(res.slide) + 16, COL.dyn, "right", 14);
+  }
+  if (cursorT !== null){
+    let best = run.samples[0];
+    for (const p of run.samples) if (Math.abs(p.t - cursorT) < Math.abs(best.t - cursorT)) best = p;
+    if (Math.abs(best.t - cursorT) < run.tMax * 0.05){
+      ctx.save(); ctx.strokeStyle = "rgba(38,50,56,.5)"; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(X(best.t), box.y); ctx.lineTo(X(best.t), box.y + box.h); ctx.stroke(); ctx.restore();
+      ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(X(best.t), Y(best.F), 4, 0, 7); ctx.fill();
+      const right = X(best.t) > box.x + box.w * 0.6;
+      label(ctx, `t = ${best.t.toFixed(2)} s   F = ${f2(best.F)} N`, X(best.t) + (right ? -8 : 8), box.y + 12, COL.ink, right ? "right" : "left", 14);
+    }
+  }
+}
+function fitThroughOrigin(pts){ const sxy = pts.reduce((a, p) => a + p[0] * p[1], 0), sxx = pts.reduce((a, p) => a + p[0] * p[0], 0); return sxx ? sxy / sxx : 0; }
+function drawFFN(){
+  const cv = document.getElementById("ffn"); if (!cv.offsetParent) return;
+  const {ctx, w, h} = fitCanvas(cv);
+  ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  const sid = document.getElementById("plotSurf").value;
+  const tr = trials.filter(t => t.surf === sid);
+  const xMax = niceCeil(Math.max(3, ...tr.map(t => Math.max(t.Ns, t.Nd))) * 1.08);
+  const yMax = niceCeil(Math.max(1, ...tr.map(t => t.Ffs)) * 1.15);
+  const box = {x:58, y:50, w:w - 74, h:h - 100};
+  axes(ctx, box, xMax, yMax, [["normal force ","n"],["F","i"],["N","s"],[" / N","n"]], [["friction ","n"],["F","i"],["f","s"],[" / N","n"]]);
+  const X = v => box.x + box.w * v / xMax, Y = v => box.y + box.h - box.h * v / yMax;
+  label(ctx, "● static (peak)", box.x + 8, 12, COL.stat, "left", 13);
+  label(ctx, "▲ dynamic (sliding)", box.x + 130, 12, COL.dyn, "left", 13);
+  if (!tr.length){ label(ctx, "Record trials to plot them here", box.x + box.w / 2, box.y + box.h / 2, COL.muted, "center", 15); return; }
+  for (const t of tr){
+    ctx.fillStyle = COL.stat; ctx.beginPath(); ctx.arc(X(t.Ns), Y(t.Ffs), 5, 0, 7); ctx.fill();
+    ctx.fillStyle = COL.dyn; ctx.beginPath(); const x = X(t.Nd), y = Y(t.Ffd);
+    ctx.moveTo(x, y - 6); ctx.lineTo(x + 6, y + 5); ctx.lineTo(x - 6, y + 5); ctx.closePath(); ctx.fill();
+  }
+  if (document.getElementById("fitChk").checked && tr.length >= 2){
+    const ks = fitThroughOrigin(tr.map(t => [t.Ns, t.Ffs])), kd = fitThroughOrigin(tr.map(t => [t.Nd, t.Ffd]));
+    for (const [k, c, name] of [[ks, COL.stat, "s"], [kd, COL.dyn, "d"]]){
+      const xe = Math.min(xMax, yMax / k);
+      ctx.save(); ctx.strokeStyle = c; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(xe), Y(k * xe)); ctx.stroke(); ctx.restore();
+      subLabel(ctx, "gradient = μ", name, ` ≈ ${k.toFixed(3)}`, box.x + (name === "s" ? 8 : 200), 32, c, "left", 14);
+    }
+  } else if (tr.length < 2 && document.getElementById("fitChk").checked){
+    label(ctx, "Need at least 2 trials for a best-fit line", box.x + 8, 32, COL.muted, "left", 13);
+  }
+}
+
+/* ============================ 9 DATA ============================ */
+let trials = [];
+function recordTrial(){
+  const res = measured(); if (!res) return;
+  const a = rad(set.angle), m = mass(set.n);
+  trials.push({surf:set.surf, m, angle:set.angle, face:set.face,
+    Fpk:r2(res.peak), Fsl:r2(res.slide),
+    Ns:r2(m * G - res.peak * Math.sin(a)), Nd:r2(m * G - res.slide * Math.sin(a)),
+    Ffs:r2(res.peak * Math.cos(a)), Ffd:r2(res.slide * Math.cos(a))});
+  save(); renderTrials(); document.getElementById("recBtn").disabled = true;
+  document.getElementById("recBtn").textContent = "✔ Recorded";
+}
+function renderTrials(){
+  const tb = document.querySelector("#trials tbody"); tb.innerHTML = "";
+  trials.forEach((t, i) => {
+    const N = t.Ns === t.Nd ? f2(t.Ns) : `${f2(t.Ns)} / ${f2(t.Nd)}`;
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${i + 1}</td><td>${surfById(t.surf).name}${t.face === "small" ? " (small face)" : ""}</td><td>${t.m.toFixed(3)}</td><td>${t.angle}</td>
+      <td>${f2(t.Fpk)}</td><td>${f2(t.Fsl)}</td><td title="static / sliding">${N}</td><td>${f2(t.Ffs)}</td><td>${f2(t.Ffd)}</td>
+      <td><button class="x" aria-label="Delete trial ${i + 1}" data-del="${i}">×</button></td>`;
+    tb.appendChild(tr);
+  });
+  const sel = document.getElementById("plotSurf"), cur = sel.value || set.surf;
+  const ids = [...new Set([set.surf, ...trials.map(t => t.surf)])];
+  sel.innerHTML = ids.map(id => `<option value="${id}">Plot: ${surfById(id).name}</option>`).join("");
+  sel.value = ids.includes(cur) ? cur : set.surf;
+}
+
+/* ============================ 10 TASKS ============================ */
+// Step types: "do" (instruction + done tick), "predict" (lock in a choice, then check),
+// "num" (numeric answer checked within tol, default 5 %). "setup" applies sim settings for the student.
+const ans = {
+  peak:   (id, n, deg = 0) => pullAtLimit(surfById(id).ms, mass(n), deg),
+  slide:  (id, n, deg = 0) => pullAtLimit(surfById(id).md, mass(n), deg),
+};
+const TASKS = [
+ {id:"pre", title:"1 · Pre-lab: predict", time:"≈ 15 min", steps:[
+  {type:"do", setup:{surf:"wood", n:0, angle:0, rate:1, face:"large", noise:false},
+   text:"Set up: wood on bench, no slotted masses, θ = 0°, rate 1.0 N s⁻¹. Press ▶ Start pull and watch the graph and the free-body diagram."},
+  {type:"predict", setup:{surf:"wood", n:0, angle:0, rate:0.5, face:"large", noise:false},
+   text:"Pull rate 0.5 N s⁻¹. Press ▶ Start pull, then ⏸ Hold when the pull is about 0.5 N. The block does not move. What is the friction force now?",
+   opts:["0 N — it isn't moving", "The same as the pull (≈ 0.5 N)", "μsFN = 1.01 N", "μdFN = 0.74 N"], correct:1,
+   why:"Static friction only matches the pull. While the block is at rest the forces balance, so Ff = F ≈ 0.5 N (check the FBD). μsFN is the <b>maximum</b> static friction, reached only at the moment of slipping."},
+  {type:"predict", text:"Predict: what happens to the newton-meter reading at the moment the block starts to slide?",
+   opts:["It keeps increasing", "It drops, then stays roughly constant", "It drops to zero", "It stays exactly at the peak"], correct:1,
+   why:"Once sliding, friction is dynamic: Ff = μdFN, which is smaller than μsFN. At constant speed the pull equals this smaller friction, so the graph shows a peak and then a lower plateau."},
+  {type:"predict", text:"Predict: you add slotted masses so the normal force is about twice as large (1 mass → 3 masses). The peak force…",
+   opts:["stays the same", "increases by about the same factor as FN", "halves", "increases about 4 times"], correct:1,
+   why:"Ff,max = μsFN, so friction is proportional to FN. With 1 mass FN = 4.41 N, with 3 masses FN = 8.34 N (× 1.89); the peak goes from 1.81 N to 3.42 N (× 1.89)."},
+  {type:"predict", text:"Predict: you turn the block onto its small face (smaller contact area), same masses. The peak force…",
+   opts:["increases", "decreases", "stays the same", "drops to zero"], correct:2,
+   why:"Friction does not depend on the apparent contact area. With a smaller area the pressure is larger, so the microscopic contact points are pressed together harder — the real contact area (which depends on FN) stays about the same."},
+  {type:"predict", text:"Predict: you change the pull rate from 1.0 N s⁻¹ to 3.0 N s⁻¹. What changes?",
+   opts:["The peak force gets bigger", "Only how quickly the peak is reached", "The sliding force gets bigger", "Nothing at all"], correct:1,
+   why:"The friction limit μsFN does not depend on how fast you increase the pull, so the same peak is reached sooner. (In real labs a very jerky pull makes the peak harder to read — that's why we pull slowly.)"},
+  {type:"num", setup:{surf:"wood", n:0, angle:0, face:"large", noise:false},
+   text:"Calculate the peak pull for the 0.250 kg wood block (μs = 0.41, θ = 0°): F = μs m g. Then check with the sim.",
+   answer:() => ans.peak("wood", 0), unit:"N", hint:"F = 0.41 × 0.250 kg × 9.81 N kg⁻¹"},
+ ]},
+ {id:"lab", title:"2 · During the lab: compare", time:"≈ 10 min", steps:[
+  {type:"do", setup:{surf:"wood", n:2, angle:0, rate:1, face:"large", noise:true},
+   text:"Set up: wood on bench, 2 slotted masses (m = 0.650 kg), θ = 0°, noise ON — real data is never perfectly smooth. Run it once."},
+  {type:"num", text:"Read the peak force from the graph (move the cursor over the peak).", answer:() => ans.peak("wood", 2), unit:"N",
+   hint:"The orange dot marks the highest point of the graph."},
+  {type:"num", text:"Read the sliding (plateau) force.", answer:() => ans.slide("wood", 2), unit:"N",
+   hint:"The dashed blue line is the average of the plateau."},
+  {type:"num", text:"Use the sim values to calculate μd = Ff / FN for this load (FN = mg).", answer:() => surfById("wood").md, unit:"",
+   hint:"FN = 0.650 kg × 9.81 N kg⁻¹ = 6.38 N. Divide the sliding force by FN."},
+  {type:"do", text:"Compare with your group's newton-meter reading for the same load. Write both values on your worksheet and give one reason why they differ."},
+ ]},
+ {id:"hw", title:"3 · Homework: analyse", time:"≈ 30 min", steps:[
+  {type:"do", setup:{surf:"rubber", n:0, angle:0, rate:1, face:"large", noise:true},
+   text:"Rubber sole on bench, θ = 0°, noise ON. For 0, 1, 2, 3, 4 and 5 slotted masses: run, then ● Record trial (6 trials). Copy the table onto your worksheet."},
+  {type:"do", text:"Plot static Ff and dynamic Ff against FN on your worksheet grid. Draw best-fit lines through the origin. Then open the Data tab and switch on 'Show best-fit lines' to check."},
+  {type:"num", text:"Gradient of the static line = μs. Enter your value.", answer:() => surfById("rubber").ms, unit:"",
+   hint:"Gradient = Ff ÷ FN for a point on your best-fit line, e.g. read Ff at FN = 10 N and divide by 10 N."},
+  {type:"num", text:"Gradient of the dynamic line = μd. Enter your value.", answer:() => surfById("rubber").md, unit:""},
+  {type:"num", setup:{surf:"wood", n:2, angle:20, rate:1, face:"large", noise:false},
+   text:"Angled pull: wood on bench, m = 0.650 kg, θ = 20°. Calculate the pull F needed to start the block sliding. Then check with the sim.",
+   answer:() => ans.peak("wood", 2, 20), unit:"N",
+   hint:"Vertical: FN = mg − F sin θ. Horizontal (at the limit): F cos θ = μs FN. Substitute FN and solve for F."},
+  {type:"num", text:"What is the normal force at the moment the block starts to slide?",
+   answer:() => normalForce(mass(2), ans.peak("wood", 2, 20), 20), unit:"N", hint:"FN = mg − F sin θ with your F from the last step."},
+  {type:"predict", text:"Why is FN smaller than mg when you pull at 20°?",
+   opts:["The upward part of the pull, F sin θ, supports part of the weight", "Friction acts upwards", "The weight gets smaller", "FN is always smaller than W"], correct:0,
+   why:"Vertically the block is in equilibrium: FN + F sin θ = mg. Part of the weight is held up by the string, so the bench pushes up less. Smaller FN ⇒ smaller maximum friction, which is why pulling slightly upwards makes a heavy box easier to drag."},
+ ]},
+];
+let taskState = {}, curSet = "pre";
+function renderTaskSets(){
+  document.getElementById("taskSets").innerHTML = TASKS.map(s =>
+    `<button class="chip" data-set="${s.id}" aria-pressed="${s.id === curSet}">${s.title} <span class="hint">${s.time}</span></button>`).join("");
+}
+function renderTasks(){
+  const ts = TASKS.find(s => s.id === curSet), box = document.getElementById("taskList"); box.innerHTML = "";
+  ts.steps.forEach((st, i) => {
+    const key = `${ts.id}.${i}`, S = taskState[key] || (taskState[key] = {});
+    const d = document.createElement("div"); d.className = "step" + (S.done ? " done" : "");
+    let html = `<p class="q"><span class="n">${i + 1}</span>${st.type === "predict" ? '<span class="tag">Predict · </span>' : ""}${st.text}</p>`;
+    if (st.setup) html += `<button class="btn small" data-setup="${key}">⚙ Set up the sim for me</button> `;
+    if (st.type === "do"){
+      html += `<label class="switch"><input type="checkbox" data-done="${key}" ${S.done ? "checked" : ""}> Done</label>`;
+    } else if (st.type === "predict"){
+      st.opts.forEach((o, j) => {
+        const cls = S.checked ? (j === st.correct ? " good" : j === S.choice ? " bad" : "") : "";
+        html += `<label class="opt${cls}"><input type="radio" name="r${key}" value="${j}" data-choice="${key}" ${S.choice === j ? "checked" : ""} ${S.locked ? "disabled" : ""}> ${o}</label>`;
+      });
+      if (!S.locked) html += `<button class="btn small primary" data-lock="${key}" ${S.choice === undefined ? "disabled" : ""}>🔒 Lock in my prediction</button>`;
+      else if (!S.checked) html += `<div class="fb info">Prediction locked. Now test it in the sim, then press Check.</div><button class="btn small navy" data-check="${key}">Check</button>`;
+      else html += `<div class="fb ${S.choice === st.correct ? "ok" : "no"}">${S.choice === st.correct ? "✔ Your prediction was right. " : "✘ Not what happens. "}${st.why}</div>`;
+    } else if (st.type === "num"){
+      const a = st.answer(), shown = st.unit ? `${f2(a)} ${st.unit}` : a.toFixed(2);
+      html += `<div class="row"><input class="num" inputmode="decimal" data-num="${key}" value="${S.value ?? ""}" aria-label="answer"> ${st.unit}
+               <button class="btn small navy" data-chknum="${key}">Check</button>
+               ${st.hint ? `<button class="btn small" data-hint="${key}">💡 Hint</button>` : ""}</div>`;
+      if (S.showHint && st.hint) html += `<div class="fb info">${st.hint}</div>`;
+      if (S.status === "ok") html += `<div class="fb ok">✔ Correct (within 5 %). Model answer: ${shown}.</div>`;
+      else if (S.status) html += `<div class="fb no">✘ ${S.status === "high" ? "Too high" : S.status === "low" ? "Too low" : "Enter a number"}. ${S.tries >= 2 ? `Model answer: ${shown}.` : "Try again or use the hint."}</div>`;
+    }
+    d.innerHTML = html; box.appendChild(d);
+  });
+}
+function taskClick(e){
+  const t = e.target.closest("[data-setup],[data-lock],[data-check],[data-chknum],[data-hint],[data-set]"); if (!t) return;
+  if (t.dataset.set){ curSet = t.dataset.set; renderTaskSets(); renderTasks(); save(); return; }
+  const key = t.dataset.setup || t.dataset.lock || t.dataset.check || t.dataset.chknum || t.dataset.hint;
+  const [sid, idx] = key.split("."), st = TASKS.find(s => s.id === sid).steps[+idx], S = taskState[key];
+  if (t.dataset.setup){ Object.assign(set, st.setup); syncControls(); resetRun(); }
+  if (t.dataset.lock){ S.locked = true; }
+  if (t.dataset.check){ S.checked = true; S.done = true; }
+  if (t.dataset.hint){ S.showHint = true; }
+  if (t.dataset.chknum){
+    const raw = document.querySelector(`[data-num="${key}"]`).value.replace(",", "."), v = parseFloat(raw), a = st.answer();
+    S.value = raw; S.tries = (S.tries || 0) + 1;
+    if (!isFinite(v)) S.status = "nan";
+    else if (Math.abs(v - a) <= (st.tol ?? 0.05) * Math.abs(a)) { S.status = "ok"; S.done = true; }
+    else S.status = v > a ? "high" : "low";
+  }
+  save(); renderTasks();
+}
+function taskChange(e){
+  const t = e.target;
+  if (t.dataset.choice){ taskState[t.dataset.choice].choice = +t.value; renderTasks(); save(); }
+  if (t.dataset.done){ taskState[t.dataset.done].done = t.checked; renderTasks(); save(); }
+}
+
+/* ============================ 11 UI ============================ */
+const $ = id => document.getElementById(id);
+function save(){ try { localStorage.setItem("sim01-friction", JSON.stringify({trials, taskState, curSet})); } catch (e) {} }
+function load(){ try { const d = JSON.parse(localStorage.getItem("sim01-friction") || "{}");
+  trials = d.trials || []; taskState = d.taskState || {}; curSet = d.curSet || "pre"; } catch (e) {} }
+function syncControls(){
+  $("surf").value = set.surf; const s = surfById(set.surf);
+  $("muLab").innerHTML = `μ<sub>s</sub> = ${s.ms.toFixed(2)} · μ<sub>d</sub> = ${s.md.toFixed(2)}`;
+  $("nOut").textContent = set.n; $("mLab").textContent = `m = ${mass(set.n).toFixed(3)} kg`;
+  $("ang").value = set.angle; $("angOut").textContent = set.angle;
+  $("rate").value = set.rate; $("rateOut").textContent = (+set.rate).toFixed(1);
+  document.querySelectorAll("#face button").forEach(b => b.setAttribute("aria-pressed", b.dataset.face === set.face));
+  $("noise").checked = set.noise;
+  $("mMinus").disabled = set.n <= 0; $("mPlus").disabled = set.n >= MAX_SLOTS;
+}
+function resetRun(){ newRun(); updateButtons(); cursorT = null; }
+function updateButtons(){
+  const p = run.phase;
+  $("startBtn").disabled = p === "static" || p === "sliding";
+  $("startBtn").textContent = p === "done" ? "▶ Pull again" : "▶ Start pull";
+  $("holdBtn").disabled = p !== "static";
+  $("holdBtn").textContent = run.hold ? "▶ Resume" : "⏸ Hold";
+  $("recBtn").disabled = p !== "done"; $("recBtn").textContent = "● Record trial";
+}
+function finishRun(){ updateButtons(); }
+function updateReadouts(){
+  const f = forcesNow();
+  $("r_t").textContent = `${run.t.toFixed(2)} s`; $("r_m").textContent = `${f.m.toFixed(3)} kg`;
+  $("r_W").textContent = `${f2(f.W)} N`; $("r_N").textContent = `${f2(f.N)} N`;
+  $("r_F").textContent = `${f2(f.F)} N`; $("r_f").textContent = `${f2(f.Ff)} N`;
+  const el = $("state");
+  if (run.phase === "static"){ el.className = "pill rest"; el.textContent = "At rest · static"; }
+  else if (run.phase === "sliding" || run.phase === "done"){ el.className = "pill slide"; el.textContent = run.phase === "done" ? "Finished · dynamic" : "Sliding · dynamic"; }
+  else { el.className = "pill ready"; el.textContent = "Ready"; }
+}
+
+$("surf").innerHTML = SURFACES.map(s => `<option value="${s.id}">${s.name}</option>`).join("");
+$("surf").addEventListener("change", e => { set.surf = e.target.value; syncControls(); resetRun(); renderTrials(); });
+$("mMinus").addEventListener("click", () => { set.n = Math.max(0, set.n - 1); syncControls(); resetRun(); });
+$("mPlus").addEventListener("click", () => { set.n = Math.min(MAX_SLOTS, set.n + 1); syncControls(); resetRun(); });
+$("ang").addEventListener("input", e => { set.angle = +e.target.value; syncControls(); resetRun(); });
+$("rate").addEventListener("input", e => { set.rate = +e.target.value; syncControls(); resetRun(); });
+$("face").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; set.face = b.dataset.face; syncControls(); resetRun(); });
+$("noise").addEventListener("change", e => { set.noise = e.target.checked; resetRun(); });
+$("startBtn").addEventListener("click", () => { if (run.phase === "done") newRun(); run.phase = "static"; pushSample(); run.nextSample = 1 / SAMPLE_HZ; updateButtons(); });
+$("holdBtn").addEventListener("click", () => { run.hold = !run.hold; updateButtons(); });
+$("resetBtn").addEventListener("click", resetRun);
+$("recBtn").addEventListener("click", recordTrial);
+$("clearBtn").addEventListener("click", () => { if (confirm("Delete all recorded trials?")){ trials = []; save(); renderTrials(); } });
+$("trials").addEventListener("click", e => { const b = e.target.closest("[data-del]"); if (b){ trials.splice(+b.dataset.del, 1); save(); renderTrials(); } });
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x === t));
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("on", p.id === t.dataset.tab));
+}));
+$("pTasks").addEventListener("click", taskClick);
+$("pTasks").addEventListener("change", taskChange);
+$("helpBtn").addEventListener("click", () => $("help").classList.add("on"));
+$("helpClose").addEventListener("click", () => $("help").classList.remove("on"));
+$("help").addEventListener("click", e => { if (e.target.id === "help") $("help").classList.remove("on"); });
+const gcv = $("graph");
+// hover line on the graphs: the shared chart probe (PROBE, top of the script)
+
+load(); syncControls(); newRun(); updateButtons(); renderTrials(); renderTaskSets(); renderTasks();
+let last = performance.now();
+function frame(now){
+  let dt = Math.min(0.05, (now - last) / 1000); last = now;
+  while (dt > 1e-6){ const h = Math.min(0.005, dt); step(h); dt -= h; }
+  drawScene(); drawFBD(); drawGraph(); drawFFN(); updateReadouts();
+  requestAnimationFrame(frame);
+}
+
+// Number boxes (same as the circular motion simulation): every slider has a box next to it. Type a value and press
+// Enter (or leave the box): it is kept to the allowed range and keeps the precision you typed; the slider follows.
+const nbFmt = v => String(+Number(v).toPrecision(5));
+function nbToast(msg){
+  let el = document.getElementById("nbToast");
+  if (!el){ el = document.createElement("div"); el.id = "nbToast"; el.setAttribute("role", "status");
+    el.style.cssText = "position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:#1F3A5F;color:#fff;padding:10px 16px;border-radius:10px;z-index:20;max-width:90vw;font-size:.95rem";
+    document.body.appendChild(el); }
+  el.textContent = msg; el.style.display = "block"; clearTimeout(nbToast.tm); nbToast.tm = setTimeout(() => el.style.display = "none", 3200);
+}
+function numBoxes(list){
+  for (const c of list){
+    const sl = document.getElementById(c.id), rn = document.createElement("div"); rn.className = "rn";
+    sl.parentNode.insertBefore(rn, sl); rn.appendChild(sl);
+    const nb = document.createElement("input"); nb.className = "nb"; nb.type = "text"; nb.id = c.id + "N";
+    nb.inputMode = "decimal"; nb.setAttribute("aria-label", "type a value");
+    const u = document.createElement("span"); u.className = "u"; rn.append(nb, u);
+    const unit = () => typeof c.unit === "function" ? c.unit() : c.unit;
+    const lim = () => c.lim ? c.lim() : c.type ? c.type : c.list ? [c.list[0], c.list[c.list.length - 1]] : [+sl.min, +sl.max];   // type: typed range, wider than the slider
+    let last = null;
+    const commit = () => {
+      const raw = nb.value.trim().replace(",", "."), v = Number(raw);
+      if (raw === last) return;
+      if (!raw || !isFinite(v)){ nb.value = nbFmt(c.get()); return; }
+      last = raw; const [mn, mx] = lim(), cv = Math.min(mx, Math.max(mn, v));
+      nb.classList.toggle("clamped", cv !== v);
+      if (cv !== v){ nbToast(`Allowed range: ${nbFmt(mn)} to ${nbFmt(mx)} ${unit()}. Set to ${nbFmt(cv)}.`); setTimeout(() => nb.classList.remove("clamped"), 1800); }
+      if (c.put) c.put(cv);
+      else { const st = sl.getAttribute("step"), s0 = sl.min, s1 = sl.max;      // pass the exact value to the slider's own handler,
+        sl.step = "any"; sl.min = Math.min(+s0, cv); sl.max = Math.max(+s1, cv); sl.value = cv;   // even outside the slider's range
+        sl.dispatchEvent(new Event("input", {bubbles:true})); sl.setAttribute("step", st); sl.min = s0; sl.max = s1; }
+      if (nb._st) STEPPER.check(nb._st, cv === v);
+    };
+    nb.addEventListener("focus", () => { last = null; });
+    nb.addEventListener("input", () => { clearTimeout(nb._tm); nb._tm = setTimeout(() => {   // apply by itself once typing pauses (no Enter needed)
+      const raw = nb.value.trim().replace(",", "."); if (raw && isFinite(Number(raw)) && !/[.eE+-]$/.test(raw)){ nb._auto = raw; commit(); } }, 600); });
+    nb.addEventListener("change", () => { clearTimeout(nb._tm); commit(); });
+    nb.addEventListener("keydown", e => { if (e.key === "Enter"){ clearTimeout(nb._tm); commit(); nb._auto = null; nb.select(); } });
+    let d0;   // ▼ [box] ▲ ↺ (shared stepper): start value = the value when the page has loaded
+    STEPPER.attach(nb, {get:() => +c.get(), unit, toast:nbToast, hard:lim,
+      room:() => c.lim ? c.lim() : c.list ? [c.list[0], c.list[c.list.length - 1]] : [+sl.min, +sl.max],
+      list:c.list ? () => c.list : null, step:() => c.step ?? sl.getAttribute("step"), base:() => c.step ? 0 : sl.min,
+      def:c.lim ? null : () => d0 === undefined ? (d0 = +c.get()) : d0,
+      apply:v => { nb.value = STEPPER.fmt(v); last = null; commit(); }});
+    c.show = () => { const t = unit(); if (u.textContent !== t) u.textContent = t; nb.disabled = sl.disabled || (c.off ? c.off() : false);
+      const [mn, mx] = lim(); nb.title = `Type a value (${nbFmt(mn)}–${nbFmt(mx)} ${t}) and press Enter`;
+      if (document.activeElement !== nb){ const s = nbFmt(c.get()); if (nb.value !== s) nb.value = s; } };
+  }
+  const tick = () => { for (const c of list) c.show(); requestAnimationFrame(tick); };
+  tick();
+}
+numBoxes([{id:"ang", unit:"°", get:() => set.angle, type:[0, 80]}, {id:"rate", unit:"N s⁻¹", get:() => set.rate, type:[0.1, 20]}]);
+requestAnimationFrame(frame);
+/* NEWTON HOOK */ NEWTON.hook();
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>

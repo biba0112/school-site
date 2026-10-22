@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grade 9 Science · MYP 4</title>
+<style>
+:root{--navy:#1F3A5F;--accent:#E65100;--ink:#263238;--muted:#606A72;--bg:#F2F5F9;--line:#DDE6F0}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif}
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);padding:18px 16px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+header h1{margin:0;font-size:1.5rem}
+header p{margin:4px 0 0;opacity:.85}
+header a{color:#fff}
+.credit{text-align:right;font-size:.85rem;line-height:1.35;opacity:.92}
+@media (max-width:600px){.credit{text-align:left}}
+main{max-width:1100px;margin:0 auto;padding:20px 16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.block{grid-column:1/-1;margin:18px 0 0;padding:10px 14px;background:var(--navy);color:#fff;border-radius:10px;font-size:1.25rem;
+  border-bottom:4px solid var(--accent)}
+.block:first-child{margin-top:0}
+.block.subj{background:#fff;color:var(--sc);border:1px solid var(--line);border-left:6px solid var(--sc);border-bottom:1px solid var(--line)}
+.lead{grid-column:1/-1;margin:0;color:var(--muted)}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;
+  border-left:5px solid var(--sc,var(--navy))}
+.card h2{margin:0 0 4px;color:var(--navy);font-size:1.2rem}
+.card p{margin:4px 0 0}
+.tag{display:inline-block;font-size:.8rem;font-weight:700;color:var(--sc,var(--accent));text-transform:uppercase;letter-spacing:.04em}
+.muted{color:var(--muted);font-size:.92rem}
+.soon{display:inline-block;margin-top:10px;padding:4px 10px;border-radius:999px;background:#EEF2F6;color:var(--muted);font-size:.85rem;font-weight:600;align-self:flex-start}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:auto;padding-top:12px}
+a.btn{display:inline-block;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600;min-height:44px}
+a.primary{background:var(--accent);color:#fff}
+a.card-link{text-decoration:none;color:inherit}
+a.card-link:hover .card,a.card-link:focus .card{border-color:var(--accent);box-shadow:0 2px 10px rgba(31,58,95,.12)}
+a.card-link .card{height:100%}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{font-size:.8rem;font-weight:600;padding:2px 9px;border-radius:999px;color:#fff;background:var(--c)}
+footer{max-width:1100px;margin:0 auto;padding:4px 16px 28px;color:var(--muted);font-size:.85rem}
+@media (max-width:759px){header{padding:12px 16px}header h1{font-size:1.25rem}main{grid-template-columns:1fr;padding:14px 16px}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Grade 9 Science</h1>
+    <p><a href="../../">← All grades</a> · IB MYP 4 · Physics</p>
+  </div>
+  <div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
+</header>
+<main>
+  <h2 class="block subj" style="--sc:#2055A3">Physics</h2>
+  <div class="card" style="--sc:#2055A3">
+    <span class="tag">Physics</span>
+    <h2>Power up! From Atoms to Amps</h2>
+    <p class="muted">Measurement and uncertainty, atomic and nuclear physics, electricity</p>
+    <span class="soon">Simulations, worksheets and quizzes coming soon</span>
+  </div>
+</main>
+<footer>Works in any modern browser on laptops, Chromebooks, tablets and phones.</footer>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>

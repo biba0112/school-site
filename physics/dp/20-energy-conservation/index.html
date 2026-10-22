@@ -1,0 +1,1900 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Energy Conservation Simulation</title>
+<!--
+  IBDP Physics SL · Grade 11 · Topic A.3 Work, energy and power (energy and its conservation, Block 10)
+  Simulation 20 — Energy conservation: kinetic, gravitational and elastic potential energy; mechanical energy is conserved
+  without friction; with friction the total stays the same and the "lost" energy is thermal.
+    Ramp & track (PASCO lab 06 Smart Cart ramp, curved drop, roller coaster, half-pipe) · Pendulum to the nose ·
+    Flying spring (Oxford Course Companion A.3 practical) · Drop
+  Self-contained: no internet, no external libraries. Open in any modern browser.
+
+  File sections (same order as Simulation 01):
+    1 STYLE     layout, colours (energy colours shared by sims 19–22)
+    2 MARKUP    header with the four examples · scene + readouts · FBD + energy column · tabs (graphs / data / tasks) · controls
+    3 CONFIG    examples (presets), track shapes, objects
+    4 PHYSICS   pure functions + the whole run (build): motion along a track, pendulum, flying spring, drop
+    5 RUN       run state; at(t) interpolates the worked-out run
+    6 SCENE     side view
+    7 FBD       free-body diagram + energy bars or Sankey diagram
+    8 GRAPHS    E–t, E–h, v–t (h–t for the spring)
+    9 DATA      recorded trials and analysis graphs with best-fit lines
+   10 TASKS     data-driven task list (predict / numeric / do)
+   11 UI        controls, events, storage, main loop
+-->
+<style>
+/* ============================ 1 STYLE ============================ */
+/* Simulation 01 style (approved template), as in Simulations 16–19 */
+:root{
+  --navy:#1F3A5F; --accent:#E65100; --ink:#263238; --muted:#606A72;
+  --bg:#F2F5F9; --card:#FFFFFF; --line:#DDE6F0; --soft:#FFF3E0; --soft-blue:#E3F2FD;
+  --wood:#FFCC80; --wood-edge:#C68A3A;
+  --cW:#2A5D8A; --cN:#2E7D32; --cF:#C62828; --cP:#6A1B9A;   /* weight, normal, friction, pull */
+  --ok:#2E7D32; --bad:#C62828;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);
+  font:16px/1.4 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;min-height:100dvh}
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);
+  display:flex;align-items:center;gap:16px;padding:8px 16px}
+header h1{font-size:1.25rem;margin:0;font-weight:600}
+header .sub{font-size:.85rem;opacity:.85}
+header .grow{flex:1}
+.btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;
+  min-height:44px;padding:6px 14px;cursor:pointer;touch-action:manipulation}
+.btn:hover{border-color:var(--navy)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.small{min-height:36px;padding:4px 10px;font-size:.9rem}
+header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
+
+/* layout: scene + state | FBD (always visible) | tabs; fills the screen height */
+main{flex:1;min-height:500px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1.3fr);
+  grid-template-rows:minmax(0,1fr) auto;gap:12px;padding:12px 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.card h2{font-size:.95rem;margin:0;padding:6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line);
+  color:var(--navy);font-weight:600}
+.left{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0}
+.scenecard{flex:1 1 0;display:flex;flex-direction:column;min-height:0}
+.fbdcol{display:flex;flex-direction:column;min-width:0;min-height:0}
+#sceneWrap{position:relative;flex:1;min-height:150px}
+#scene{width:100%;height:100%;display:block}
+#fbdWrap{flex:1;min-height:220px}
+#fbd{width:100%;height:100%;display:block}
+.readouts{padding:6px 12px;flex:0 1 auto;min-height:0;overflow:auto}  /* natural height; the scene takes the rest */
+.readouts table{width:100%;border-collapse:collapse;font-size:.9rem}
+.readouts td.v{white-space:nowrap;padding-left:6px}
+.readouts td{padding:4px 2px;border-bottom:1px solid #EEF2F6}
+.readouts td.v{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.pill{display:inline-block;white-space:nowrap;padding:3px 10px;border-radius:99px;font-size:.85rem;font-weight:600}
+.pill.rest{background:var(--soft-blue);color:#0D47A1}
+.pill.slide{background:#FFEBEE;color:#B71C1C}
+.pill.ready{background:#ECEFF1;color:var(--muted)}
+
+.right{display:flex;flex-direction:column;min-width:0;min-height:0}
+.cardhead{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:6px 8px 6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line)}
+.cardhead h2{padding:0;border:none;background:none;flex:1}
+.cardhead .btn{min-height:40px;padding:4px 10px}
+.tabs{display:flex;gap:4px;padding:6px 6px 0;background:#F7F9FC;border-bottom:1px solid var(--line)}
+.tab{font:inherit;border:1px solid transparent;border-bottom:none;background:transparent;padding:8px 14px;
+  min-height:44px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--muted);font-weight:600}
+.tab[aria-selected="true"]{background:#fff;border-color:var(--line);color:var(--navy);margin-bottom:-1px}
+.panel{display:none;padding:10px 12px;flex:1;min-height:0;overflow:hidden}
+.panel.on{display:flex;flex-direction:column;gap:8px}
+#graphWrap{position:relative;flex:1;min-height:200px}
+#graph{width:100%;height:100%;display:block;touch-action:none}
+.hint{font-size:.85rem;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#trials{width:100%;border-collapse:collapse;font-size:.85rem;font-variant-numeric:tabular-nums}
+#trials th,#trials td{border-bottom:1px solid var(--line);padding:4px 4px;text-align:right}
+#trials th{color:var(--navy);font-weight:600;background:#F7F9FC;position:sticky;top:0}
+#trials td:first-child,#trials th:first-child,#trials td:nth-child(2),#trials th:nth-child(2){text-align:left}
+.tableBox{max-height:150px;flex:none;overflow:auto;border:1px solid var(--line);border-radius:8px}
+#ffnWrap{flex:1;min-height:180px}
+#ffn{width:100%;height:100%;display:block}
+.x{border:none;background:none;color:var(--bad);font-size:1.1rem;cursor:pointer;min-width:32px;min-height:32px}
+
+/* tasks */
+#taskSets{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:inherit;font-size:.9rem;border:1px solid var(--line);background:#fff;border-radius:99px;padding:6px 14px;
+  min-height:40px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.chip[aria-pressed="true"] .hint{color:#DDE6F0}
+#taskList{overflow:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding-right:2px}
+.step{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff}
+.step .q{margin:0 0 6px}
+.step .n{display:inline-block;min-width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;
+  text-align:center;line-height:26px;font-size:.85rem;font-weight:700;margin-right:6px}
+.step.done .n{background:var(--ok)}
+.opt{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;
+  margin:4px 0;cursor:pointer;min-height:40px}
+.opt input{width:20px;height:20px}
+.opt.good{border-color:var(--ok);background:#E8F5E9}
+.opt.bad{border-color:var(--bad);background:#FFEBEE}
+.fb{margin-top:6px;padding:6px 10px;border-radius:8px;font-size:.92rem}
+.fb.ok{background:#E8F5E9;border-left:4px solid var(--ok)}
+.fb.no{background:#FFEBEE;border-left:4px solid var(--bad)}
+.fb.info{background:var(--soft-blue);border-left:4px solid #1565C0}
+.num{font:inherit;width:110px;min-height:40px;padding:4px 8px;border:1px solid #B0BEC5;border-radius:8px}
+.tag{font-size:.75rem;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+
+/* controls */
+#controls{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end;padding:10px 14px}
+.ctl{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ctl label,.ctl .lab{font-size:.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.ctl select{font:inherit;min-height:44px;border:1px solid #B0BEC5;border-radius:8px;padding:4px 8px;background:#fff}
+.mu{font-size:.85rem;color:var(--navy);font-weight:600}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper .btn{width:44px;padding:0;font-size:1.3rem}
+.stepper output{min-width:24px;text-align:center;font-weight:700;font-size:1.1rem}
+input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
+.seg{display:flex;border:1px solid #B0BEC5;border-radius:8px;overflow:hidden}
+.seg button{font:inherit;border:none;background:#fff;min-height:42px;padding:4px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--navy);color:#fff}
+.switch{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer}
+.switch input{width:22px;height:22px;accent-color:var(--accent)}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* help overlay */
+#help{position:fixed;inset:0;background:rgba(31,58,95,.55);display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:14px;max-width:720px;width:100%;max-height:90vh;overflow:auto;padding:18px 22px}
+#help h3{margin:.2em 0 .4em;color:var(--navy)}
+#help li{margin:.25em 0}
+.eq{font-family:"Cambria Math",Cambria,"Times New Roman",serif;font-size:1.05rem}
+
+@media (max-width:1300px){
+  .readouts table{font-size:.85rem}
+  .pill{font-size:.78rem;padding:2px 8px}
+}
+/* tablet landscape: scene + state on the left; FBD above the tabs on the right */
+@media (max-width:1099px){
+  main{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr) auto;min-height:640px}
+  .left{grid-row:1/3}
+  .fbdcol{grid-column:2;grid-row:1}
+  .right{grid-column:2;grid-row:2}
+  #fbdWrap{min-height:200px}
+  #pGraph .hint{display:none}
+  #controls{gap:8px 12px;padding:8px 12px}
+  input[type=range]{width:118px}
+  header .sub{font-size:0;opacity:1;line-height:1.2}header .sub a.home{font-size:.75rem}
+}
+/* phone / narrow portrait: one scrolling column */
+@media (max-width:759px){
+  body{height:auto}
+  main{display:flex;flex-direction:column}
+  #sceneWrap{flex:none;height:260px}
+  .readouts{flex:none}
+  #fbdWrap{flex:none;height:320px}
+  .right{height:640px;flex:none}
+}
+
+/* Simulation 10–13 additions */
+:root{--cD:#AD1457;--cV:#1565C0;--cA:#E65100}
+#anaWrap{flex:1;min-height:170px}
+#ana{width:100%;height:100%;display:block}
+.seg.small button{min-height:38px;padding:2px 10px;font-size:.92rem}
+.readouts .ev{color:var(--muted);font-weight:600}
+#controls .pair{display:flex;gap:4px 12px;flex-wrap:wrap}
+#controls .pair label{text-transform:none;letter-spacing:0;font-size:.92rem;color:var(--ink);font-weight:400}
+.ctl label i,.ctl label .nt{text-transform:none}
+#controls{gap:10px 14px}
+#controls input[type=range]{width:140px}
+#controls input#tp{width:190px}
+#controls select{max-width:145px}
+.readouts td.gap{width:14px;border-bottom:none}
+@media (max-width:1300px){ #controls input[type=range]{width:118px} #controls input#tp{width:150px} #controls select{max-width:130px} }
+@media (max-width:1099px){ #controls input[type=range]{width:105px} #controls input#tp{width:130px} #controls select{max-width:120px} }
+
+.btn.step{padding:4px 9px;font-variant-numeric:tabular-nums}
+.tools{display:flex;gap:2px 10px;align-items:center;flex-wrap:wrap}
+.tools .switch{min-height:36px;font-size:.9rem}
+.tools .switch input{width:18px;height:18px}
+
+.cardhead .actions{gap:5px}
+.btn.icon{min-width:44px;padding:4px 8px}
+.cardhead .actions .btn{padding-left:10px;padding-right:10px}
+.cardhead .actions .btn.step{padding-left:7px;padding-right:7px}
+/* Author credit (header, far right) */
+.credit{text-align:right;font-size:.74rem;line-height:1.3;opacity:.92;white-space:nowrap}
+.credit a{color:#fff;text-decoration:underline}
+@media (max-width:759px){header{flex-wrap:wrap;row-gap:4px} header .btn{white-space:nowrap}
+  .credit{order:3;flex-basis:100%;text-align:left;font-size:.7rem}
+  .credit br{display:none} .credit a{margin-left:6px}}
+
+/* Simulation 16 additions: four examples in the header, number boxes next to the sliders */
+.scen{display:flex;gap:4px;flex-wrap:wrap}
+.scen button{font:inherit;font-size:.92rem;border:1px solid rgba(255,255,255,.45);background:transparent;color:#fff;border-radius:99px;
+  min-height:40px;padding:4px 14px;cursor:pointer;white-space:nowrap}
+.scen button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);font-weight:600}
+.rn{display:flex;align-items:center;gap:6px}
+.nb{font:inherit;font-size:.95rem;width:80px;min-height:44px;padding:2px 6px;border:1px solid #B0BEC5;border-radius:8px;
+  text-align:right;font-variant-numeric:tabular-nums;background:#fff;-moz-appearance:textfield}
+.nb::-webkit-outer-spin-button,.nb::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.nb.clamped{border-color:var(--accent);background:var(--soft)}
+.nb:disabled{opacity:.45}
+.rn .u{font-size:.85rem;color:var(--muted);white-space:nowrap}
+#controls .rn input[type=range]{width:120px}
+#controls .ctl.hide{display:none}
+.ctl .lab i,.ctl .lab sub,.ctl .lab .badge{text-transform:none}
+#controls .btn.go{min-width:120px}
+.sh{display:none}
+.badge{display:inline-block;font-size:.72rem;font-weight:700;color:#fff;background:#8E24AA;border-radius:99px;padding:1px 8px;
+  text-transform:none;letter-spacing:0;vertical-align:1px}
+.readouts th{font-size:.8rem;color:var(--navy);text-align:right;font-weight:600;padding:2px 2px 2px 6px;border-bottom:1px solid var(--line)}
+.readouts th:first-child{text-align:left}
+#anaSel{margin-right:auto}
+@media (max-width:1300px){ #controls .rn input[type=range]{width:100px} .nb{width:72px} .scen button{padding:4px 10px} }
+@media (max-width:1099px){ #controls .rn input[type=range]{width:84px} .nb{width:66px} .scen button{font-size:.85rem;padding:3px 9px}
+  .lg{display:none} .sh{display:inline} header h1{font-size:1.05rem} header{gap:10px} }
+@media (max-width:759px){ .scen{order:4;flex-basis:100%} }
+/* Simulation 18 additions */
+@media (min-width:1100px){ main{grid-template-columns:minmax(0,1.25fr) minmax(0,0.85fr) minmax(0,1.25fr)} }
+.readouts table.ab td.v,.readouts table.ab th{text-align:right}
+.readouts table.ab{margin-bottom:2px}
+#controls .rn input[type=range]{width:96px} #controls .nb{width:68px} #controls select{max-width:150px}
+@media (max-width:1300px){ #controls .rn input[type=range]{width:80px} #controls .nb{width:62px} #controls select{max-width:128px} }
+.plusTag{display:inline-block;font-weight:700;color:var(--navy);background:var(--soft-blue);border-radius:6px;padding:0 6px}
+.a3{display:inline-block;font-size:.7rem;font-weight:700;color:#fff;background:#00838F;border-radius:99px;padding:0 7px;vertical-align:1px}
+/* A.3 additions (simulations 19–22): energy colours, energy column, scenario-specific graph buttons */
+:root{--eK:#EF6C00;--eP:#00897B;--eH:#8E24AA;--eT:#C62828;--eIn:#5D4037}
+.fbdcol h2 .hint{font-weight:400}
+.readouts .e{font-weight:700}
+#gsel{flex-wrap:wrap}
+.readouts td.k{color:var(--muted)}
+.big{font-size:1.05rem}
+.sub a.home{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55);white-space:nowrap}.sub a.home:hover{border-bottom-color:#fff}
+/* ==== SHARED-UI CSS START: ▼ [box] ▲ steppers (10 Oct 2026) — the sliders are hidden, the number box is the control ==== */
+.rn input[type=range]{display:none!important}
+#controls{align-items:flex-start!important}   /* all controls top-aligned, notes below a box hang underneath */
+#controls .ctl sub,#controls .ctl sup{line-height:0}   /* subscripts in a label (m_A) do not push its box down */
+.rn{gap:4px!important}
+.fld{display:inline-flex;align-items:center;border:1px solid #B0BEC5;border-radius:8px;background:#fff;min-height:44px;padding-right:6px;box-sizing:border-box}
+.fld .nb{border:0!important;background:transparent!important;min-height:42px;padding-right:2px;width:66px!important}
+.fld .u{margin-left:3px}
+.fld .nb:focus{outline:none}
+.fld:focus-within{outline:2px solid var(--navy);outline-offset:1px}
+.fld:has(.nb.clamped){border-color:var(--accent);background:var(--soft)}
+.fld:has(.nb:disabled){opacity:.5}
+.fld .bw{display:none;color:#B26A00;font-size:.9rem;margin-left:3px}
+.fld.beyond{border-color:#F0A202;background:#FFF8E1;box-shadow:inset 0 0 0 1px #F0A202}
+.fld.beyond .bw{display:inline}
+.stp{font:inherit;font-size:.78rem;line-height:1;min-width:34px;min-height:44px;padding:0 6px;border:1px solid #B0BEC5;border-radius:8px;background:#F3F6FA;
+  color:var(--navy);cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.stp:hover:not(:disabled){border-color:var(--navy);background:#E6EDF5}
+.stp:active:not(:disabled){background:#D3DEEB}
+.stp:disabled{opacity:.35;cursor:default}
+.stp.rs{min-width:26px;padding:0 2px;border-color:transparent;background:transparent;font-size:1.05rem;color:var(--muted)}
+.stp.rs:hover:not(:disabled){background:#EEF2F6;border-color:transparent}
+@media (max-width:1300px){ .stp{min-width:30px;padding:0 4px} .fld .nb{width:58px!important} }
+/* ==== SHARED-UI CSS END ==== */
+/* ==== NEWTON CSS START (law badge · ΣF = ma table · 3rd-law checkbox) ==== */
+.nbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:3px 10px;border-bottom:1px solid #E3E9F0;flex:none;min-height:30px}
+.nlaw{font-size:.84rem;padding:2px 10px;border-radius:999px;border:1.5px solid #90A4AE;color:#37474F;background:#F5F7FA;line-height:1.5}
+.nlaw.l1{border-color:#2E7D32;color:#1B5E20;background:#E8F5E9}
+.nlaw.l2{border-color:#E65100;color:#BF360C;background:#FFF3E0}
+.nbar{flex-wrap:nowrap}
+.nlaw{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.nbar .switch{font-size:.84rem;margin-left:auto;white-space:nowrap;flex:none}
+@media (pointer:fine){ .nbar .switch{min-height:28px;padding-top:0;padding-bottom:0} }
+.ntab{flex:none;max-height:40%;overflow:auto;padding:2px 8px 4px;border-top:1px solid #E3E9F0;font-size:.8rem}
+.ntab .nh{display:flex;align-items:center;gap:8px;min-height:26px}
+.ntab .nfold{font:inherit;font-weight:700;color:#1F3A5F;background:none;border:none;cursor:pointer;padding:2px 0;min-height:26px}
+.ntab .nk{color:#606A72}.ntab .nk.ok{color:#2E7D32;font-weight:600}
+.ntab table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+.ntab th,.ntab td{padding:1px 4px;text-align:right;border-bottom:1px solid #EEF2F6;white-space:nowrap}
+.ntab th{color:#1F3A5F;font-weight:600}
+.ntab td:first-child,.ntab th:first-child,.ntab td.by,.ntab th:nth-child(2){text-align:left}
+.ntab td:first-child{font-weight:600}.ntab td.by{color:#606A72}
+.ntab tr.ns td{font-weight:700;border-top:1.5px solid #263238}
+.ntab tr.nm td{color:#E65100;font-weight:600}
+.ntab tr.nb td{font-weight:700;color:#1F3A5F;background:#F5F7FA}
+.ntab .ncap{color:#606A72;font-size:.74rem;margin-top:2px;white-space:normal}
+@media (max-height:800px) and (min-width:1100px){ .ntab{font-size:.74rem} .ntab .ncap{display:none} .nbar{min-height:26px;padding:1px 10px} .nlaw{font-size:.78rem} }
+@media (max-width:1099px) and (min-width:760px){ .ntab{font-size:.72rem;max-height:45%} .ntab .ncap{display:none}
+  .fbdcol #fbdWrap{min-height:0} }
+/* ==== NEWTON CSS END ==== */
+/* ==== PHONE CSS START: phone layout (10 Oct 2026) — only phones (narrow, or held sideways with a touch screen); laptops and tablets unchanged ==== */
+@media (max-width:759px), (max-height:500px) and (pointer:coarse){
+  html,body{height:auto}
+  main{display:flex!important;flex-direction:column;min-height:0!important;gap:10px;padding:8px 8px 16px}
+  .left{display:contents}                                  /* scene and readouts become separate steps of the column */
+  .scenecard{order:1;flex:none!important;min-height:0}
+  #controls{order:2}
+  .readouts{order:3;flex:none}
+  .fbdcol{order:4;flex:none}
+  .right{order:5;flex:none;height:auto!important}
+  #sceneWrap{flex:none!important;height:min(58vh,340px)!important;min-height:200px}
+  #fbdWrap{flex:none!important;height:300px!important}
+  .scenecard .cardhead{position:sticky;top:0;z-index:2}    /* run buttons stay at hand while the scene is on screen */
+  .cardhead .btn{min-height:40px;padding:4px 10px}
+  .panel{overflow:visible}
+  .panel.on{flex:none}
+  #graphWrap,#ffnWrap{flex:none!important;height:300px!important;min-height:0}
+  #taskList{overflow:visible;flex:none}
+  .tableBox{max-height:220px}
+  canvas{touch-action:pan-y!important}                     /* a finger on a graph or diagram still scrolls the page */
+  canvas.drag{touch-action:none!important}                 /* except where the scene has things to drag (pulleys) */
+  #controls{gap:10px 12px;padding:10px}
+  #controls .ctl{max-width:100%}
+  #controls select{max-width:100%}
+  .tabs{overflow-x:auto;scrollbar-width:none}
+  .tab{white-space:nowrap}
+  #help .box{max-height:85dvh;padding:14px 16px}
+}
+/* ==== PHONE CSS END ==== */
+</style>
+</head>
+<body>
+<!-- ============================ 2 MARKUP ============================ -->
+<header>
+  <div>
+    <h1>Energy conservation</h1>
+    <div class="sub"><a class="home" href="https://school.taneski.com/physics/dp/#A3" title="Back to all A.3 simulations">← All simulations</a> · IBDP Physics SL · A.3 Work, energy and power</div>
+  </div>
+  <div class="grow"></div>
+  <div class="scen" id="scen" role="group" aria-label="Example">
+    <button data-sc="track" aria-pressed="true">🎢 <span class="lg">Ramp &amp; track</span><span class="sh">Track</span></button>
+    <button data-sc="pend" aria-pressed="false">🎳 Pendulum</button>
+    <button data-sc="spring" aria-pressed="false">🌀 <span class="lg">Flying spring</span><span class="sh">Spring</span></button>
+    <button data-sc="drop" aria-pressed="false">⬇️ Drop</button>
+  </div>
+  <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
+  <div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
+</header>
+
+<main>
+  <section class="left">
+    <div class="card scenecard">
+      <div class="cardhead">
+        <div class="actions">
+          <button class="btn primary" id="startBtn">▶ Start</button>
+          <button class="btn icon" id="pauseBtn" disabled title="Pause / resume" aria-label="Pause">⏸</button>
+          <button class="btn step" id="backBtn" title="Step back (← key)" aria-label="Step back">◂</button>
+          <button class="btn step" id="fwdBtn" title="Step forward (→ key)" aria-label="Step forward">▸</button>
+          <button class="btn icon" id="resetBtn" title="Reset" aria-label="Reset">↺</button>
+          <button class="btn navy" id="recBtn" title="Record this trial in the Data tab">● Record</button>
+        </div>
+      </div>
+<!-- NEWTON BAR --><div class="nbar"><span class="nlaw" id="nlaw"></span><label class="switch" title="Show every force together with its Newton's 3rd-law partner"><input type="checkbox" id="n3"> 3rd-law pairs</label></div><!-- /NEWTON BAR -->
+      <div id="sceneWrap"><canvas id="scene" aria-label="Side view of the experiment"></canvas></div>
+    </div>
+    <div class="card readouts" id="readouts"></div>
+  </section>
+
+  <section class="card fbdcol" aria-label="Free-body diagram and energy">
+    <h2 id="fbdTitle">Free-body diagram · energy</h2>
+    <div id="fbdWrap"><canvas id="fbd" aria-label="Free-body diagram, energy bar chart and Sankey diagram"></canvas></div>
+<!-- NEWTON TABLE --><div class="ntab" id="ntab"></div><!-- /NEWTON TABLE -->
+  </section>
+
+  <section class="card right">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-tab="pGraph">Graphs</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="pData">Data &amp; analysis</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="pTasks">Tasks</button>
+    </div>
+    <div class="panel on" id="pGraph">
+      <div class="row">
+        <div class="seg small" id="gsel"></div>
+        <span class="tools"><span class="hint">Graph tools:</span>
+          <label class="switch"><input type="checkbox" id="areaChk"> Area</label>
+          <label class="switch"><input type="checkbox" id="tanChk"> Tangent</label></span>
+      </div>
+      <div id="graphWrap"><canvas id="graph" aria-label="Graph"></canvas></div>
+      <div class="hint" id="graphHint"></div>
+    </div>
+
+    <div class="panel" id="pData">
+      <div class="row">
+        <div class="seg small" id="anaSel"></div>
+        <label class="switch"><input type="checkbox" id="noiseChk"> ±2 % noise</label>
+        <label class="switch"><input type="checkbox" id="fitChk" checked> Best-fit line</label>
+        <button class="btn small" id="clearBtn">Clear</button>
+      </div>
+      <div class="tableBox">
+        <table id="trials"><thead></thead><tbody></tbody></table>
+      </div>
+      <div id="anaWrap"><canvas id="ana" aria-label="Analysis graph of the recorded trials"></canvas></div>
+    </div>
+
+    <div class="panel" id="pTasks">
+      <div id="taskSets"></div>
+      <div id="taskList"></div>
+    </div>
+  </section>
+
+  <section class="card" id="controls" aria-label="Controls"></section>
+</main>
+
+<div id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="box">
+    <h3 id="helpTitle">How to use this simulation</h3>
+    <ol>
+      <li>Choose an <b>example</b> at the top: 🎢 a cart on a ramp or a track (Smart Cart demo, roller coaster, half-pipe) · 🎳 the pendulum to the nose ·
+        🌀 the flying spring practical · ⬇️ a falling ball.</li>
+      <li>Pick a <b>preset</b> or set the values yourself (with <b>▼ ▲</b> or by typing in the box). Switch friction or air
+        resistance on and off.</li>
+      <li>Set each value with <b>▼</b> and <b>▲</b> (hold to go faster; the <b>↑ ↓</b> keys or the mouse wheel in the box also work, Shift = ×10), or <b>type a value</b> in the box. <b>↺</b> puts it back to its start value. Outside the classroom range the box turns <b>amber ⚠</b>: fine to explore, but the lab can't do this.</li>
+      <li>Move the pointer over any <b>graph</b> (or tap it): a dashed line shows the values where it cuts each curve, or the values of the nearest data point.</li>
+      <li>Press <b>▶ Start</b>. <b>◂ / ▸</b> (or the <b>← →</b> keys) step through the motion and pause.</li>
+      <li>The middle column shows the <b>free-body diagram</b> and the <b>energy stores</b> as bars — or, with <i>Energy chart: Sankey</i>, a Sankey
+        diagram of where the starting energy has gone so far.</li>
+      <li><b>Graphs</b>: <i>E</i>–<i>t</i> and <i>E</i>–<i>h</i> show the energy moving between the stores; the dashed total line stays flat.
+        The <i>Tangent</i> tool on <i>E</i>–<i>t</i> gives the rate of energy transfer (power).</li>
+      <li><b>● Record</b> saves a trial; the <b>Data</b> tab plots <i>v</i>² against <i>h</i> (gradient 2<i>g</i>), or <i>h</i> against <i>x</i>² for the
+        spring (gradient <i>k</i>/2<i>mg</i>).</li>
+      <li>Work through the <b>Tasks</b> tab. Write explanations on your worksheet.</li>
+    </ol>
+    <h3>The physics</h3>
+    <ul>
+      <li class="eq">E<sub>k</sub> = ½mv² = p²/2m · ΔE<sub>p</sub> = mgΔh · E<sub>H</sub> = ½kΔx²</li>
+      <li>Conservation of energy: <span class="eq">E<sub>start</sub> + W<sub>applied</sub> = E<sub>end</sub> + E<sub>dissipated</sub></span>.
+        Without friction or air resistance the <b>mechanical energy</b> (E<sub>k</sub> + E<sub>p</sub> + E<sub>H</sub>) stays the same.</li>
+      <li>From rest: <span class="eq">mgh = ½mv² ⇒ v = √(2gh)</span>. The mass cancels, and the path does not matter (no friction).</li>
+      <li>With friction or air resistance the total energy is still conserved: the "lost" mechanical energy becomes thermal energy.
+        Average friction force = energy lost ÷ distance.</li>
+      <li>Flying spring: <span class="eq">½kx² = mgh ⇒ h = (k/2mg) x²</span>, so <i>h</i> against <i>x</i>² is a straight line.</li>
+    </ul>
+    <p class="hint">Model: g = 9.81 N kg⁻¹; heights are measured from the lowest point (track, pendulum, drop) or from the release level (spring).
+      Track friction F<sub>f</sub> = μF<sub>N</sub>; air resistance F<sub>d</sub> = ½ρC<sub>d</sub>Av² (ρ = 1.2 kg m⁻³, C<sub>d</sub> = 0.47). The Smart Cart ramp
+      is fitted to the PASCO lab 06 sample data (0.500 kg, 6°, 1.00 m: GPE 0.513 J, KE at the bottom 0.483 J). The spring is released in
+      about 0.03 s, so gravity during the launch is ignored; "energy lost on release" models the spring's vibration and sound.</p>
+    <!-- NEWTON HELP --><h3>Newton's laws</h3>
+<p>The badge above the scene says which law applies at this moment: <b>1st law</b> — at rest or moving at a constant velocity, the resultant force is zero (Σ<i>F</i> = 0); <b>2nd law</b> — accelerating, Σ<i>F</i> = <i>ma</i>. The table under the free-body diagram adds up the forces (Σ<i>F</i>) and compares them with <i>m a</i> (▾ folds it). Tick <b>3rd-law pairs</b> to see every force with its partner: the same size and type, in the opposite direction, acting on the <b>other</b> body (the Earth, the floor, the string, the fluid…).</p><!-- /NEWTON HELP -->
+<p style="text-align:right"><button class="btn primary" id="helpClose">Close</button></p>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ==== SHARED-UI START: ▼ [box] ▲ steppers + chart probe (10 Oct 2026, the same block in every simulation) ==== */
+// Steppers: every number box gets ▼ and ▲ (hold to repeat), ↑/↓ keys and the mouse wheel in the box (Shift = ×10) and ↺ (start value).
+// Inside the classroom range (the old slider range) a step is the old slider step (or the next value of its list; log quantities move
+// by one unit in the 2nd significant figure). Beyond it the value may go on up to the physical limits in 1-2-5 steps; the box turns amber.
+const STEPPER = (() => {
+  const all = [], r10 = v => +Number(v).toPrecision(10), fmt = v => String(+Number(v).toPrecision(6));
+  const epsOf = (lo, hi) => 1e-9 * Math.max(1, Math.abs(lo), Math.abs(hi));
+  function s125(v, dir){                                  // next value of …, 0.1, 0.2, 0.5, 1, 2, 5, 10, … beyond v (signed)
+    const a = Math.abs(v); if (a < 1e-15) return null;
+    const s = Math.sign(v), e = Math.floor(Math.log10(a)), c = [];
+    for (let k = e - 1; k <= e + 2; k++) for (const m of [1, 2, 5]) c.push(r10(m * Math.pow(10, k)));
+    if (dir === s) return s * Math.min(...c.filter(x => x > a * (1 + 1e-9)));
+    const d = c.filter(x => x < a * (1 - 1e-9)); return d.length ? s * Math.max(...d) : 0;
+  }
+  function grid(o, v, dir, lo, hi){                       // one step inside the classroom range, snapped to the grid
+    const eps = epsOf(lo, hi);
+    if (o.list){ const L = o.list(); const n = dir > 0 ? L.find(x => x > v + eps) : [...L].reverse().find(x => x < v - eps); return n === undefined ? (dir > 0 ? hi : lo) : n; }
+    const st = o.step ? +o.step() : NaN;
+    if (o.log && lo > 0 && hi / lo > 1e5){ const n = s125(v, dir); return n === null ? lo : n; }   // very wide ranges (satellite mass): 1-2-5
+    if (o.log || !(st > 0)){ if (!(v > 0)) return dir > 0 ? lo : lo;
+      const s = Math.pow(10, Math.floor(Math.log10(dir > 0 ? v : v * (1 - 1e-9))) - 1), k = v / s;
+      return r10((dir > 0 ? Math.floor(k + 1e-6) + 1 : Math.ceil(k - 1e-6) - 1) * s); }
+    const b = o.base ? +o.base() : lo, k = (v - b) / st;
+    return r10(b + (dir > 0 ? Math.floor(k + 1e-6) + 1 : Math.ceil(k - 1e-6) - 1) * st);
+  }
+  function next(o, v, dir){
+    const [lo, hi] = o.room(), eps = epsOf(lo, hi), st = o.step ? +o.step() : NaN;
+    let n;
+    if ((dir > 0 && v >= hi - eps) || (dir < 0 && v <= lo + eps)){            // leaving the classroom range (or already beyond it)
+      n = s125(v, dir); if (n === null) n = v + dir * (st > 0 ? st : (hi - lo) / 100);
+      if (dir > 0 && v < lo - eps && n > lo) n = lo; if (dir < 0 && v > hi + eps && n < hi) n = hi;
+    } else if (v > hi + eps || v < lo - eps){                                   // coming back: 1-2-5 until the range edge
+      n = s125(v, dir); if (n === null) n = dir > 0 ? lo : hi;
+      if (dir < 0 && n <= hi) n = hi; if (dir > 0 && n >= lo) n = lo;
+    } else n = Math.min(hi, Math.max(lo, grid(o, v, dir, lo, hi)));
+    const [mn, mx] = o.hard(); return Math.min(mx, Math.max(mn, r10(n)));
+  }
+  function go(o, dir, times = 1){
+    if (o.nb.disabled) return false;
+    const v0 = +o.get(); if (!isFinite(v0)) return false;
+    let v = v0; for (let i = 0; i < times; i++) v = next(o, v, dir);
+    if (Math.abs(v - v0) <= 1e-12 * Math.max(1, Math.abs(v0))) return false;
+    o.apply(v); if (document.activeElement === o.nb) o.nb.value = fmt(o.get());
+    check(o, true); return true;
+  }
+  function beyond(o){ const v = +o.get(), [lo, hi] = o.room(), eps = epsOf(lo, hi); return v < lo - eps || v > hi + eps; }
+  function check(o, user){                                 // amber box + ⚠ outside the classroom range; a message once on crossing
+    const b = beyond(o), [lo, hi] = o.room(), u = o.unit();
+    if (b && !o.was && user) o.toast(`Beyond the classroom range (${fmt(lo)}–${fmt(hi)}${u ? " " + u : ""}): fine to explore, but the lab can't do this.`);
+    o.was = b; o.fld.classList.toggle("beyond", b);
+    o.warn.title = `Outside the classroom range ${fmt(lo)}–${fmt(hi)}${u ? " " + u : ""}`;
+  }
+  function holdBtn(btn, o, dir){
+    let tm = null, t0 = 0;
+    const stop = () => { clearTimeout(tm); tm = null; };
+    const rep = () => { if (!go(o, dir)) return stop(); tm = setTimeout(rep, performance.now() - t0 > 1400 ? 45 : 110); };
+    btn.addEventListener("pointerdown", e => { if (e.button) return; e.preventDefault(); stop(); go(o, dir, e.shiftKey ? 10 : 1); t0 = performance.now(); tm = setTimeout(rep, 420); });
+    ["pointerup", "pointerleave", "pointercancel", "blur"].forEach(k => btn.addEventListener(k, stop));
+    btn.addEventListener("click", e => { if (e.detail === 0) go(o, dir, e.shiftKey ? 10 : 1); });   // keyboard (Enter/Space)
+    btn.addEventListener("contextmenu", e => e.preventDefault());
+  }
+  const mk = (cls, txt, lab) => { const b = document.createElement("button"); b.type = "button"; b.className = "stp " + cls; b.textContent = txt;
+    b.tabIndex = -1; b.setAttribute("aria-label", lab); return b; };
+  // o: {nb, get, apply(v), room() → classroom [lo, hi], hard() → physical [min, max], step() | list() | log, base(), def() | null, unit(), toast(msg)}
+  function attach(nb, o){
+    o.nb = nb; const u = nb.nextElementSibling && nb.nextElementSibling.classList.contains("u") ? nb.nextElementSibling : null;
+    const fld = document.createElement("span"); fld.className = "fld"; nb.before(fld); fld.appendChild(nb); if (u) fld.appendChild(u);
+    const warn = document.createElement("span"); warn.className = "bw"; warn.textContent = "⚠"; fld.appendChild(warn);
+    const dn = mk("dn", "▼", "decrease"), up = mk("up", "▲", "increase"), rs = mk("rs", "↺", "back to the start value");
+    dn.title = "Decrease · hold to repeat · Shift = ×10"; up.title = "Increase · hold to repeat · Shift = ×10";
+    fld.before(dn); fld.after(up); up.after(rs);
+    if (!o.def) rs.style.visibility = "hidden";
+    Object.assign(o, {fld, warn, dn, up, rs, was:false});
+    holdBtn(dn, o, -1); holdBtn(up, o, 1);
+    rs.addEventListener("click", () => { const d = o.def ? o.def() : null; if (d === null || d === undefined || nb.disabled) return; o.apply(d); check(o, true); });
+    // clicking into the box selects the whole value, so typing replaces it (a 2nd click places the cursor as usual)
+    nb.addEventListener("focus", () => { nb.select(); nb._sel = true; });
+    nb.addEventListener("mouseup", e => { if (nb._sel){ e.preventDefault(); nb._sel = false; } });
+    nb.addEventListener("touchend", e => { if (nb._sel){ nb._sel = false; setTimeout(() => nb.select(), 0); } });
+    nb.addEventListener("blur", () => { nb._sel = false; });
+    nb.addEventListener("keydown", e => { if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return; e.preventDefault();
+      clearTimeout(nb._tm); go(o, e.key === "ArrowUp" ? 1 : -1, e.shiftKey ? 10 : 1); nb.select(); });
+    nb.addEventListener("wheel", e => { if (document.activeElement !== nb || !e.deltaY) return; e.preventDefault();
+      clearTimeout(nb._tm); go(o, e.deltaY < 0 ? 1 : -1, e.shiftKey ? 10 : 1); }, {passive:false});
+    nb._st = o; all.push(o); return o;
+  }
+  function tick(){
+    for (const o of all){
+      if (!o.nb.isConnected) continue;
+      const off = o.nb.disabled, v = +o.get(), [mn, mx] = o.hard(), d = o.def ? o.def() : null;
+      o.dn.disabled = off || !(v > mn + 1e-12 * Math.max(1, Math.abs(mn))); o.up.disabled = off || !(v < mx - 1e-12 * Math.max(1, Math.abs(mx)));
+      o.rs.disabled = off || d === null || d === undefined || Math.abs(v - d) <= 1e-9 * Math.max(1, Math.abs(d));
+      if (o.def && d !== null && d !== undefined) o.rs.title = `Back to the start value (${fmt(d)}${o.unit() ? " " + o.unit() : ""})`;
+      check(o, false);
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+  return {attach, check, fmt, all};
+})();
+
+// Chart probe: move the pointer over any graph (or tap it) → a dashed vertical line, a dot where it cuts each curve and the x and y
+// values (as on the Free fall graphs). It reads what each graph draws after its axes (axes/axesR), so every graph gets it.
+// On graphs with only data points the line snaps to the nearest point; near a point its exact values are shown too.
+const PROBE = (() => {
+  const S = new Map();                                   // canvas → {frames, px, py, on, touch, ov}
+  const st = cv => { let s = S.get(cv); if (!s){ s = {frames:[], on:false}; S.set(cv, s); } return s; };
+  let pause = 0;
+  const P = CanvasRenderingContext2D.prototype, orig = {};
+  const rec = ctx => ctx.__pf && !pause;
+  ["beginPath", "moveTo", "lineTo", "closePath", "arc", "quadraticCurveTo", "bezierCurveTo", "stroke", "fill", "clearRect"].forEach(k => orig[k] = P[k]);
+  P.beginPath = function(){ if (rec(this)) this.__pp = {subs:[], arcs:[], cur:null}; return orig.beginPath.apply(this, arguments); };
+  const pp = ctx => ctx.__pp || (ctx.__pp = {subs:[], arcs:[], cur:null});
+  P.moveTo = function(x, y){ if (rec(this)){ const p = pp(this); p.cur = [[x, y]]; p.subs.push(p.cur); } return orig.moveTo.apply(this, arguments); };
+  P.lineTo = function(x, y){ if (rec(this)){ const p = pp(this); if (!p.cur){ p.cur = [[x, y]]; p.subs.push(p.cur); } else p.cur.push([x, y]); } return orig.lineTo.apply(this, arguments); };
+  P.quadraticCurveTo = function(a, b, x, y){ if (rec(this)){ const p = pp(this); if (p.cur) p.cur.push([x, y]); } return orig.quadraticCurveTo.apply(this, arguments); };
+  P.bezierCurveTo = function(a, b, c, d, x, y){ if (rec(this)){ const p = pp(this); if (p.cur) p.cur.push([x, y]); } return orig.bezierCurveTo.apply(this, arguments); };
+  P.closePath = function(){ if (rec(this)){ const p = pp(this); if (p.cur) p.cur.closed = true; p.cur = null; } return orig.closePath.apply(this, arguments); };
+  P.arc = function(x, y, r){ if (rec(this)) pp(this).arcs.push([x, y, r]); return orig.arc.apply(this, arguments); };
+  function toFrame(ctx, f, pts){                         // path points → the frame's coordinates (if the transform has changed)
+    const m = ctx.getTransform(), g = f.m;
+    if (m.a === g.a && m.b === g.b && m.c === g.c && m.d === g.d && m.e === g.e && m.f === g.f) return pts;
+    const gi = g.inverse(); return pts.map(([x, y]) => { const X = m.a * x + m.c * y + m.e, Y = m.b * x + m.d * y + m.f;
+      return [gi.a * X + gi.c * Y + gi.e, gi.b * X + gi.d * Y + gi.f]; });
+  }
+  function commit(ctx, stroke){
+    const f = ctx.__pf, p = ctx.__pp; if (!f || !p) return;
+    const col = stroke ? ctx.strokeStyle : ctx.fillStyle, c = typeof col === "string" ? col : null;
+    for (const [x, y, r] of p.arcs) if (r <= 9 && r >= 1.5 && c){ const [[X, Y]] = toFrame(ctx, f, [[x, y]]);
+      if (X >= f.box.x - 2 && X <= f.box.x + f.box.w + 2 && Y >= f.box.y - 2 && Y <= f.box.y + f.box.h + 2) f.pts.push({x:X, y:Y, col:c}); }
+    if (stroke && c && ctx.globalAlpha > 0.3) for (const s of p.subs) if (!s.closed && s.length >= 2) f.raw.push({pts:toFrame(ctx, f, s), col:c, dash:ctx.getLineDash().length > 0});
+  }
+  P.stroke = function(){ if (rec(this) && !arguments.length) commit(this, true); return orig.stroke.apply(this, arguments); };
+  P.fill = function(){ if (rec(this) && !(arguments[0] instanceof Path2D)) commit(this, false); return orig.fill.apply(this, arguments); };
+  P.clearRect = function(x, y, w, h){ if (x <= 0 && y <= 0 && w * 1.01 >= this.canvas.clientWidth && h * 1.01 >= this.canvas.clientHeight){ st(this.canvas).frames = []; this.__pf = null; }
+    return orig.clearRect.apply(this, arguments); };
+  // the text helpers, arrows, tangents and shaded areas on a graph are not curves
+  const quiet = fn => function(){ pause++; try { return fn.apply(this, arguments); } finally { pause--; } };
+  function newFrame(ctx, box, x0, x1, y0, y1, xl, yl, noX){
+    const cv = ctx.canvas, s = st(cv), f = {box:{...box}, x0, x1, y0, y1, xl, yl, m:ctx.getTransform(), raw:[], pts:[], skip:!!noX || !(x1 > x0) || !(y1 > y0)};
+    s.frames.push(f); if (s.frames.length > 8) s.frames.shift(); bind(cv); return f;
+  }
+  function wrapAxes(fn, ranged){
+    return function(ctx, box){
+      ctx.__pf = null; const r = fn.apply(this, arguments), a = arguments;
+      ctx.__pf = ranged ? newFrame(ctx, box, a[2], a[3], a[4], a[5], a[6], a[7], a[8]) : newFrame(ctx, box, 0, a[2], 0, a[3], a[4], a[5], false);
+      ctx.__pp = null; return r;
+    };
+  }
+  // ---- labels: "time t / s" → symbol t, unit s
+  function split(parts){
+    if (typeof parts === "string") parts = [[parts, "n"]];
+    if (!Array.isArray(parts)) return {sym:[["x", "i"]], unit:""};
+    const flat = parts.map(p => [String(p[0]), p[1] || "n"]), txt = flat.map(p => p[0]).join(""), k = txt.lastIndexOf(" / ");
+    const left = [], unit = [];
+    let pos = 0;
+    for (const [t, sty] of flat){ const a = pos, b = pos + t.length; pos = b;
+      if (k < 0 || b <= k) left.push([t, sty]); else if (a >= k + 3) unit.push([t, sty]);
+      else { if (k > a) left.push([t.slice(0, k - a), sty]); if (b > k + 3) unit.push([t.slice(Math.max(0, k + 3 - a)), sty]); } }
+    // drop a describing word or two in front of the symbol ("time t", "drop height h"), keep "cos θ", "1 − cos θ"
+    let first = left.findIndex(p => p[1] !== "n" && p[0].trim());
+    if (first > 0){ const pre = left.slice(0, first).map(p => p[0]).join(""); if (!/^([A-Za-z]{4,}\s+)+$/.test(pre)) first = 0; }
+    let sym = first < 0 ? [[left.map(p => p[0]).join("").trim(), "n"]] : left.slice(first).map(p => [p[0], p[1]]);
+    let cut = false; sym = sym.filter(p => { if (cut) return false; const i = p[0].indexOf(" = "); if (i >= 0){ p[0] = p[0].slice(0, i); cut = true; } return true; });
+    if (sym.length) sym[sym.length - 1][0] = sym[sym.length - 1][0].replace(/\s+$/, "");
+    if (sym.length && sym[0][0]) sym[0][0] = sym[0][0].replace(/^\s+/, "");
+    let un = unit.map(p => p[1] === "s" ? toSub(p[0]) : p[0]).join("").replace(/\s*\(.*$/, "").trim(); if (un === "1") un = "";
+    return {sym:sym.filter(p => p[0]), unit:un};
+  }
+  const SUBS = {"0":"₀", "1":"₁", "2":"₂", "3":"₃", "4":"₄", "5":"₅", "6":"₆", "7":"₇", "8":"₈", "9":"₉"};
+  const toSub = t => t.replace(/[0-9]/g, d => SUBS[d]);
+  const SUP = {"0":"⁰", "1":"¹", "2":"²", "3":"³", "4":"⁴", "5":"⁵", "6":"⁶", "7":"⁷", "8":"⁸", "9":"⁹", "-":"⁻"};
+  function num(v, span){                                   // enough decimals for the axis, × 10ⁿ for very big or small values
+    if (!isFinite(v)) return "–";
+    const a = Math.abs(v);
+    if (a >= 1e5 || (a > 0 && a < 1e-3 && span < 1e-2)){ const e = Math.floor(Math.log10(a)), m = v / Math.pow(10, e);
+      return `${m.toFixed(2).replace("-", "−")} × 10${String(e).replace(/[0-9-]/g, c => SUP[c])}`; }
+    const d = Math.max(0, Math.min(6, Math.ceil(-Math.log10(span / 400))));
+    let s = v.toFixed(d); if (/^-0\.?0*$/.test(s)) s = s.slice(1); return s.replace("-", "−");
+  }
+  // ---- curves of a frame: join touching pieces of the same colour, drop vertical lines and short legend strokes
+  function curves(f){
+    if (f.lines && f.nraw === f.raw.length) return f.lines;
+    const L = [];
+    for (const r of f.raw){ const last = L[L.length - 1];
+      if (last && last.col === r.col && Math.hypot(last.pts[last.pts.length - 1][0] - r.pts[0][0], last.pts[last.pts.length - 1][1] - r.pts[0][1]) < 0.6) last.pts = last.pts.concat(r.pts.slice(1));
+      else L.push({pts:r.pts.slice(), col:r.col, dash:r.dash}); }
+    f.lines = L.filter(l => { let lo = Infinity, hi = -Infinity; for (const [x] of l.pts){ lo = Math.min(lo, x); hi = Math.max(hi, x); }
+      const span = hi - lo; return span >= 1.5 && !(l.pts.length <= 3 && span < 0.08 * f.box.w) && hi >= f.box.x - 1 && lo <= f.box.x + f.box.w + 1; });
+    f.nraw = f.raw.length; return f.lines;
+  }
+  function cut(l, x){ const out = [];
+    for (let i = 1; i < l.pts.length; i++){ const [xa, ya] = l.pts[i - 1], [xb, yb] = l.pts[i];
+      if (Math.abs(xb - xa) < 1e-6 || (x - xa) * (x - xb) > 0) continue;
+      const y = ya + (yb - ya) * (x - xa) / (xb - xa); if (!out.some(q => Math.abs(q - y) < 2)) out.push(y); }
+    return out; }
+  // ---- drawing on a transparent canvas laid over the graph
+  function overlay(cv, s){
+    if (!s.ov){ const o = document.createElement("canvas"); o.className = "probeOv"; o.setAttribute("aria-hidden", "true");
+      o.style.cssText = "position:absolute;pointer-events:none;z-index:2"; cv.after(o); s.ov = o;
+      const par = cv.parentNode; if (getComputedStyle(par).position === "static") par.style.position = "relative"; }
+    const o = s.ov; o.style.left = cv.offsetLeft + "px"; o.style.top = cv.offsetTop + "px";
+    o.style.width = cv.offsetWidth + "px"; o.style.height = cv.offsetHeight + "px";
+    if (o.width !== cv.width || o.height !== cv.height){ o.width = cv.width; o.height = cv.height; }
+    return o;
+  }
+  const FONT = (sty, z) => sty === "i" ? `italic 600 ${z}px "Segoe UI",Calibri,Arial,sans-serif` : sty === "s" ? `600 ${Math.round(z * .72)}px "Segoe UI",Calibri,Arial,sans-serif` : `600 ${z}px "Segoe UI",Calibri,Arial,sans-serif`;
+  const runW = (ctx, run, z) => run.reduce((w, [t, sty]) => { ctx.font = FONT(sty, z); return w + ctx.measureText(t).width; }, 0);
+  function runDraw(ctx, run, x, y, col, z){ for (const [t, sty] of run){ ctx.font = FONT(sty, z); ctx.fillStyle = col;
+    ctx.fillText(t, x, sty === "s" ? y + z * .3 : y); x += ctx.measureText(t).width; } return x; }
+  function draw(cv, s){
+    const o = overlay(cv, s), ctx = o.getContext("2d");
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, o.width, o.height);
+    if (!s.on || !cv.offsetParent) return;
+    const dpr = cv.width / Math.max(1, cv.getBoundingClientRect().width), dx = s.px * dpr, dy = s.py * dpr;
+    let f = null, lx = 0, ly = 0;
+    for (const g of s.frames){ if (g.skip) continue; const gi = g.m.inverse(), X = gi.a * dx + gi.c * dy + gi.e, Y = gi.b * dx + gi.d * dy + gi.f;
+      if (X >= g.box.x && X <= g.box.x + g.box.w && Y >= g.box.y - 4 && Y <= g.box.y + g.box.h + 4){ f = g; lx = X; ly = Y; break; } }
+    if (!f) return;
+    const b = f.box, xv = px => f.x0 + (px - b.x) / b.w * (f.x1 - f.x0), yv = py => f.y0 + (b.y + b.h - py) / b.h * (f.y1 - f.y0);
+    const lines = curves(f), pts = f.pts.filter(p => p.x >= b.x - 1 && p.x <= b.x + b.w + 1);
+    let hits = [], near = null, x = lx;
+    for (const l of lines) for (const y of cut(l, x)) if (y >= b.y - 1 && y <= b.y + b.h + 1) hits.push({y, col:l.col, dash:l.dash ? 1 : 0});
+    if (pts.length){ const n = pts.reduce((m, p) => { const d = Math.hypot(p.x - lx, p.y - ly); return d < m.d ? {p, d} : m; }, {p:null, d:Infinity});
+      if (n.d <= 12) near = n.p; }
+    if (!lines.length && pts.length){                    // only data points: snap to the nearest one along x
+      near = pts.reduce((m, p) => Math.abs(p.x - lx) + 1e-3 * Math.abs(p.y - ly) < Math.abs(m.x - lx) + 1e-3 * Math.abs(m.y - ly) ? p : m, pts[0]); x = near.x; }
+    if (!hits.length && !near) return;
+    hits.sort((p, q) => p.y - q.y || p.dash - q.dash);    // curves on top of each other: one row (the solid one)
+    hits = hits.filter((h, i) => !hits.slice(0, i).some(q => Math.abs(q.y - h.y) < 1.5)).slice(0, 6);
+    ctx.setTransform(f.m);
+    ctx.save(); ctx.strokeStyle = "rgba(38,50,56,.55)"; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+    orig.beginPath.call(ctx); orig.moveTo.call(ctx, x, b.y); orig.lineTo.call(ctx, x, b.y + b.h); orig.stroke.call(ctx); ctx.restore();
+    const dot = (X, Y, c, r) => { ctx.save(); ctx.fillStyle = c; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; orig.beginPath.call(ctx); orig.arc.call(ctx, X, Y, r, 0, 7); orig.stroke.call(ctx); orig.fill.call(ctx); ctx.restore(); };
+    for (const h of hits) dot(x, h.y, shade(h.col), 4.5);
+    if (near){ ctx.save(); ctx.strokeStyle = "#263238"; ctx.lineWidth = 2; orig.beginPath.call(ctx); orig.arc.call(ctx, near.x, near.y, 8, 0, 7); orig.stroke.call(ctx); ctx.restore(); }
+    const X = split(f.xl), Y = split(f.yl), xs = f.x1 - f.x0, ys = f.y1 - f.y0, z = 13.5, rows = [];
+    const eq = (sym, v, span, unit) => [...sym, [` = ${num(v, span)}${unit ? (unit === "°" ? "" : " ") + unit : ""}`, "n"]];
+    if (!near || lines.length) rows.push({run:eq(X.sym, xv(x), xs, X.unit), col:"#263238"});
+    if (lines.length) for (const h of hits) rows.push({run:eq(Y.sym, yv(h.y), ys, Y.unit), col:h.col, mark:hits.length > 1});
+    if (near){ rows.push({run:[["point:  ", "n"], ...eq(X.sym, xv(near.x), xs, X.unit)], col:near.col, mark:true});
+      rows.push({run:[["point:  ", "n"], ...eq(Y.sym, yv(near.y), ys, Y.unit)], col:near.col, mark:true, hide:true}); }
+    if (!rows.length) return;
+    ctx.save(); ctx.textBaseline = "middle"; ctx.textAlign = "left";
+    const rh = z + 6, mw = Math.max(...rows.map(r => runW(ctx, r.run, z) + (r.mark ? 14 : 0))), bw = mw + 16, bh = rows.length * rh + 8;
+    const right = x + 10 + bw > b.x + b.w; let bx = right ? x - 10 - bw : x + 10;
+    const cw = o.width / dpr; bx = Math.max(b.x + 2, Math.min(bx, b.x + b.w - bw - 2)); bx = Math.max(2, Math.min(bx, cw - bw - 2));
+    let by = ly - bh / 2;
+    if (near && near.x + 10 > bx && near.x - 10 < bx + bw){ by = near.y + 14; if (by + bh > b.y + b.h - 2) by = near.y - 14 - bh; }   // keep the point visible
+    by = Math.max(b.y + 2, Math.min(by, b.y + b.h - bh - 2));
+    ctx.fillStyle = "rgba(255,255,255,.94)"; ctx.strokeStyle = "rgba(38,50,56,.35)"; ctx.lineWidth = 1;
+    orig.beginPath.call(ctx); ctx.roundRect ? ctx.roundRect(bx, by, bw, bh, 6) : ctx.rect(bx, by, bw, bh); orig.fill.call(ctx); orig.stroke.call(ctx);
+    rows.forEach((r, i) => { const yy = by + 4 + rh * i + rh / 2; let xx = bx + 8;
+      if (r.mark && !r.hide){ ctx.fillStyle = shade(r.col); orig.beginPath.call(ctx); orig.arc.call(ctx, xx + 4, yy, 4, 0, 7); orig.fill.call(ctx); }
+      if (r.mark) xx += 14;
+      let run = r.run; if (r.hide){ ctx.font = FONT("n", z); xx += ctx.measureText(run[0][0]).width; run = run.slice(1); }   // 2nd point row lines up under the 1st
+      runDraw(ctx, run, xx, yy, r.col === "#263238" ? r.col : shade(r.col), z); });
+    ctx.restore();
+  }
+  function shade(c){                                      // pale curve colours (e.g. dashed grey) are darkened for text
+    let r, g, bb; const m = /^#([0-9a-f]{6})$/i.exec(c), q = /^rgba?\(\s*(\d+)[ ,]+(\d+)[ ,]+(\d+)/i.exec(c);
+    if (m){ const n = parseInt(m[1], 16); r = n >> 16; g = (n >> 8) & 255; bb = n & 255; } else if (q){ r = +q[1]; g = +q[2]; bb = +q[3]; } else return c;
+    c = `rgb(${r},${g},${bb})`; const L = 0.299 * r + 0.587 * g + 0.114 * bb;
+    if (L < 150) return c; const k = 150 / L; return `rgb(${Math.round(r * k)},${Math.round(g * k)},${Math.round(bb * k)})`;
+  }
+  function bind(cv){
+    const s = st(cv); if (s.bound) return; s.bound = true;
+    const at = e => { const r = cv.getBoundingClientRect(); s.px = e.clientX - r.left; s.py = e.clientY - r.top; s.on = true; };
+    cv.addEventListener("pointermove", e => { if (e.pointerType === "touch" && !s.touch) return; at(e); });
+    cv.addEventListener("pointerdown", e => { s.touch = e.pointerType === "touch"; at(e); });
+    cv.addEventListener("pointerup", e => { if (e.pointerType === "touch") s.touch = false; });
+    cv.addEventListener("pointercancel", () => { s.touch = false; });   // a finger that scrolls the page lets go of the probe
+    cv.addEventListener("pointerleave", e => { if (e.pointerType !== "touch") s.on = false; });
+    document.addEventListener("pointerdown", e => { if (e.target !== cv) s.on = false; });
+  }
+  function tick(){ for (const [cv, s] of S) if (s.ov || s.on) draw(cv, s); requestAnimationFrame(tick); }
+  requestAnimationFrame(tick);
+  return {wrapAxes, quiet, S};
+})();
+if (typeof axesR === "function") axesR = PROBE.wrapAxes(axesR, true);
+if (typeof axes === "function") axes = PROBE.wrapAxes(axes, false);
+if (typeof drawTangent === "function") drawTangent = PROBE.quiet(drawTangent);
+if (typeof shadeArea === "function") shadeArea = PROBE.quiet(shadeArea);
+if (typeof areaName === "function") areaName = PROBE.quiet(areaName);
+if (typeof toolLabels === "function") toolLabels = PROBE.quiet(toolLabels);
+if (typeof arrow === "function") arrow = PROBE.quiet(arrow);
+if (typeof fArrow === "function") fArrow = PROBE.quiet(fArrow);
+if (typeof label === "function") label = PROBE.quiet(label);
+if (typeof rich === "function") rich = PROBE.quiet(rich);
+if (typeof subLabel === "function") subLabel = PROBE.quiet(subLabel);
+if (typeof note === "function") note = PROBE.quiet(note);
+if (typeof pill === "function") pill = PROBE.quiet(pill);
+/* ==== SHARED-UI END ==== */
+/* ==== NEWTON START — Newton's-law panel (shared by all simulations; source ~/.cache/sharedui-build/newton/) ====
+   The FBD code of each simulation reports what it draws: NF.body(name, m, ax, ay, {v, axes}) and NF.force(label, Fx, Fy, colour, by, kind).
+   Fx, Fy are in N along the body's two axes (default → right, ↑ up); ax, ay the body's acceleration along the same axes.
+   kind: grav · normal · friction · tension · push · pull · spring · drag · buoy · impact · contact (decides the words for the 3rd-law partner).
+   NEWTON then shows: the law badge above the scene (1st law ΣF = 0 / 2nd law ΣF = ma), the ΣF = ma table under the FBD (foldable),
+   and, with "3rd-law pairs" ticked, every force with its partner on the other body (same size, opposite direction). */
+const NF = (() => {
+  let bodies = [], cur = null, msg = "", cap = null;
+  return {
+    reset(){ bodies = []; cur = null; msg = ""; cap = null; },
+    body(name, m, ax, ay, o = {}){ cur = {name, m, ax:ax || 0, ay:ay || 0, v:o.v, axes:o.axes || ["→", "↑"], forces:[], law:o.law, pre:o.pre || "", auto:!!o.auto}; bodies.push(cur); return cur; },
+    force(lab, fx, fy, col, by, kind = "contact"){ if (!cur || !isFinite(fx) || !isFinite(fy)) return;
+      if (Math.hypot(fx, fy) < 1e-9) return; cur.forces.push({lab, fx, fy, col, by, kind}); },
+    none(t){ bodies = []; cur = null; msg = t || ""; cap = null; },
+    // capture: while a map is set, every fArrow(…) the FBD draws is also reported (key "W", "F_N", "T"… → [by, kind]); ΣF arrows are skipped
+    cap(map){ cap = map; }, get capturing(){ return !!cap; },
+    capF(main, sub, fx, fy, col){ if (!cap || String(main).startsWith("Σ")) return; const k = main + (sub ? "_" + sub : ""), b = cap[k] || cap[main] || ["", "contact"];
+      NF.force(main + (sub ? `<sub>${sub}</sub>` : ""), fx, fy, col, b[0], b[1]); },
+    // auto: the acceleration is not stored by the simulation → a = ΣF/m from the forces drawn (zero below rounding)
+    finish(){ cap = null; for (const b of bodies) if (b.auto){ const sx = b.forces.reduce((t, f) => t + f.fx, 0), sy = b.forces.reduce((t, f) => t + f.fy, 0),
+      big = 1e-6 * (1 + Math.max(0, ...b.forces.map(f => Math.hypot(f.fx, f.fy)))); b.ax = b.m && Math.abs(sx) > big ? sx / b.m : 0; b.ay = b.m && Math.abs(sy) > big ? sy / b.m : 0; } },
+    get bodies(){ return bodies; }, get msg(){ return msg; },
+  };
+})();
+const NEWTON = (() => {
+  const VERB = {grav:"gravitational pull", normal:"normal force (push)", friction:"friction", tension:"pull (tension)", push:"push", pull:"pull",
+    spring:"spring force", drag:"drag", buoy:"buoyancy (push of the fluid)", impact:"contact force", contact:"contact force"};
+  const fmtN = v => { const a = Math.abs(v); return a >= 1e4 ? `${(v / 1000).toPrecision(3)} kN` : a < 1e-3 && a > 0 ? `${v.toExponential(2)} N` : `${+v.toPrecision(3)} N`; };
+  const z = v => Math.abs(v) < 5e-4 ? "0" : String(+v.toPrecision(3)).replace("-", "−");
+  const dirGlyph = (x, y) => { const a = Math.atan2(y, x) * 180 / Math.PI; return ["→", "↗", "↑", "↖", "←", "↙", "↓", "↘"][((Math.round(a / 45) % 8) + 8) % 8]; };
+  const plain = s => String(s).replace(/<sub>(.*?)<\/sub>/g, "$1").replace(/<[^>]+>/g, "");
+  let fold = false, last = "";
+  try { const v = localStorage.getItem("newton-fold"); fold = v === null ? innerWidth >= 760 && innerWidth < 1100 : v === "1"; } catch (e) {}   // tablets start folded
+  const lawOf = b => b.law || (Math.hypot(b.ax, b.ay) < 1e-6 ? "1st" : "2nd");
+  function badge(){
+    const el = document.getElementById("nlaw"); if (!el) return;
+    const B = NF.bodies; let html, cls;
+    if (!B.length){ html = NF.msg || "No forces to show here"; cls = "none"; }
+    else {
+      const laws = B.map(lawOf), all1 = laws.every(l => l === "1st"), all2 = laws.every(l => l === "2nd");
+      const who = l => B.length > 1 ? ` (${B.filter((b, i) => laws[i] === l).map(b => b.name).join(", ")})` : "";
+      const rest = B.every(b => b.v !== undefined && Math.abs(b.v) < 1e-6);
+      if (all1){ cls = "l1"; html = `<b>1st law</b> · ${rest ? "at rest" : B.some(b => b.v === undefined) ? "at rest or constant velocity" : "constant velocity"} · Σ<i>F</i> = 0`; }
+      else if (all2){ cls = "l2"; html = `<b>2nd law</b> · accelerating · Σ<i>F</i> = <i>ma</i>`; }
+      else { cls = "l2"; html = `<b>2nd law</b>${who("2nd")} · <b>1st law</b>${who("1st")}`; }
+    }
+    if (B.length && B[0].pre) html = B[0].pre + html;
+    if (el.dataset.h !== html + cls){ el.innerHTML = html; el.className = "nlaw " + cls; el.dataset.h = html + cls; }
+  }
+  function table(){
+    const el = document.getElementById("ntab"); if (!el) return;
+    const B = NF.bodies; let html = "";
+    if (!B.length) html = `<div class="nh"><button class="nfold" data-nfold aria-expanded="${!fold}">${fold ? "▸" : "▾"} Σ<i>F</i> = <i>ma</i> check</button><span class="nk">${NF.msg || "no forces here"}</span></div>`;
+    else {
+      const twoD = B.some(b => b.forces.some(f => Math.abs(f.fy) > 1e-9) && b.forces.some(f => Math.abs(f.fx) > 1e-9) || Math.abs(b.ay) > 1e-9 && Math.abs(b.ax) > 1e-9);
+      const sums = B.map(b => [b.forces.reduce((s, f) => s + f.fx, 0), b.forces.reduce((s, f) => s + f.fy, 0)]);
+      const ok = B.every((b, i) => Math.abs(sums[i][0] - b.m * b.ax) <= 0.01 * (1 + Math.abs(b.m * b.ax)) && Math.abs(sums[i][1] - b.m * b.ay) <= 0.01 * (1 + Math.abs(b.m * b.ay)));
+      html += `<div class="nh"><button class="nfold" data-nfold aria-expanded="${!fold}">${fold ? "▸" : "▾"} Σ<i>F</i> = <i>ma</i> check</button><span class="nk ${ok ? "ok" : ""}">${ok ? "✔ Σ<i>F</i> = <i>ma</i> for every body" : ""}</span></div>`;
+      if (!fold){
+        const vert = !twoD && !B.some(bb => bb.forces.some(f => Math.abs(f.fx) > 1e-9));
+        html += `<table><tr><th>force</th><th>by</th><th>${twoD ? B[0].axes[0] : vert ? B[0].axes[1] : B[0].axes[0]} / N</th>${twoD ? `<th>${B[0].axes[1]} / N</th>` : ""}</tr>`;
+        B.forEach((b, i) => {
+          const comp = (f, k) => k ? f.fy : f.fx, one = !twoD && !B.some(bb => bb.forces.some(f => Math.abs(f.fx) > 1e-9)) ? 1 : 0;   // 1-D vertical: show the y value
+          if (B.length > 1) html += `<tr class="nb"><td colspan="${twoD ? 4 : 3}">on ${b.name}${b.m ? ` (${+b.m.toPrecision(3)} kg)` : ""}</td></tr>`;
+          b.forces.forEach(f => { html += `<tr><td style="color:${f.col}">${f.lab}</td><td class="by">${f.by}</td><td>${z(twoD ? f.fx : comp(f, one))}</td>${twoD ? `<td>${z(f.fy)}</td>` : ""}</tr>`; });
+          html += `<tr class="ns"><td>Σ<i>F</i></td><td></td><td>${z(twoD ? sums[i][0] : sums[i][one])}</td>${twoD ? `<td>${z(sums[i][1])}</td>` : ""}</tr>`;
+          html += `<tr class="nm"><td><i>m a</i></td><td class="by">${b.m ? `${+b.m.toPrecision(3)} kg` : ""}</td><td>${z(b.m * (twoD ? b.ax : (one ? b.ay : b.ax)))}</td>${twoD ? `<td>${z(b.m * b.ay)}</td>` : ""}</tr>`;
+        });
+        html += `</table><div class="ncap">3rd law: each force has a partner of the same size and type, in the opposite direction, on the other body — tick <b>3rd-law pairs</b>.</div>`;
+      }
+    }
+    if (html !== last){ el.innerHTML = html; last = html; }
+  }
+  // 3rd-law pairs: drawn over the scene as a card, one row per force (the force on the body · its partner on the other body)
+  function pairs(){
+    const cb = document.getElementById("n3"); if (!cb || !cb.checked) return;
+    const cv = document.getElementById("scene"); if (!cv) return;
+    const ctx = cv.getContext("2d"), r = cv.getBoundingClientRect(), w = r.width, h = r.height;
+    const rows = NF.bodies.flatMap(b => b.forces.map(f => ({b, f}))).slice(0, 8);
+    const txt = rows.map(({b, f}) => { const M = Math.hypot(f.fx, f.fy), by = plain(f.by), nm = plain(b.name);
+      return [`${plain(f.lab)}: ${by} on ${nm} ${fmtN(M)}`, `${nm} on ${by} ${fmtN(M)}`]; });
+    const title = "3rd-law pairs: same size · same type · opposite direction · on different bodies";
+    ctx.save(); ctx.setTransform(window.devicePixelRatio || 1, 0, 0, window.devicePixelRatio || 1, 0, 0);
+    ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.setLineDash([]); ctx.globalAlpha = 1;
+    const pw = Math.min(w - 16, 600); let fs = 12.5;
+    const fits = () => { ctx.font = `${fs}px "Segoe UI",Calibri,Arial,sans-serif`;
+      const c1 = Math.max(0, ...txt.map(t => ctx.measureText(t[0]).width)), c2 = Math.max(0, ...txt.map(t => ctx.measureText(t[1]).width));
+      ctx.font = `700 ${fs}px "Segoe UI",Calibri,Arial,sans-serif`; return Math.max(ctx.measureText(title).width + 20, c1 + c2 + 90) <= pw ? c1 : -1; };
+    let c1 = fits(); while (c1 < 0 && fs > 8.5){ fs -= 0.5; c1 = fits(); } if (c1 < 0) c1 = pw / 2 - 60;
+    const rh = fs + 8, ph = 24 + rh * Math.max(1, rows.length), x0 = 8, y0 = h - ph - 8;
+    ctx.fillStyle = "rgba(255,255,255,.96)"; ctx.strokeStyle = "#1F3A5F"; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x0, y0, pw, ph, 8) : ctx.rect(x0, y0, pw, ph); ctx.fill(); ctx.stroke();
+    ctx.font = `700 ${fs}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = "#1F3A5F"; ctx.fillText(title, x0 + 10, y0 + 12);
+    if (!rows.length){ ctx.font = `${fs}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillText(NF.msg || "No forces in this example.", x0 + 10, y0 + 12 + rh); }
+    const arr = (x, y, ux, uy, L, c, dash) => { ctx.save(); ctx.strokeStyle = c; ctx.fillStyle = c; ctx.lineWidth = 2.5; if (dash) ctx.setLineDash([4, 3]);
+      const x1 = x - ux * L / 2, y1 = y + uy * L / 2, x2 = x + ux * L / 2, y2 = y - uy * L / 2;
+      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - ux * 5, y2 + uy * 5); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(x2, y2); ctx.lineTo(x2 - ux * 7 - uy * 4, y2 + uy * 7 - ux * 4); ctx.lineTo(x2 - ux * 7 + uy * 4, y2 + uy * 7 + ux * 4); ctx.closePath(); ctx.fill(); ctx.restore(); };
+    const col2 = x0 + 34 + c1 + 22;
+    rows.forEach(({b, f}, i) => {
+      const y = y0 + 12 + rh * (i + 1), M = Math.hypot(f.fx, f.fy), ux = f.fx / M, uy = f.fy / M;
+      ctx.font = `${fs}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = f.col;
+      arr(x0 + 19, y, ux, uy, 15, f.col, false); ctx.fillText(txt[i][0], x0 + 34, y);
+      ctx.fillStyle = "#90A4AE"; ctx.fillText("⇄", col2 - 16, y); ctx.fillStyle = f.col;
+      arr(col2 + 9, y, -ux, -uy, 15, f.col, true); ctx.fillText(txt[i][1], col2 + 24, y);
+    });
+    ctx.restore();
+  }
+  function frame(){ try { NF.finish(); badge(); table(); pairs(); } catch (e) { console.error(e); } }
+  function hook(){
+    const o = drawFBD;
+    drawFBD = function(){ NF.reset(); const r = o.apply(this, arguments); frame(); return r; };
+    if (typeof fArrow === "function"){ const fa = fArrow;
+      fArrow = function(ctx, x, y, Fx, Fy, k, col, main, sub){ if (NF.capturing) NF.capF(main, sub, Fx, Fy, col); return fa.apply(this, arguments); }; }
+    document.addEventListener("click", e => { const b = e.target.closest("[data-nfold]"); if (!b) return; fold = !fold;
+      try { localStorage.setItem("newton-fold", fold ? "1" : "0"); } catch (er) {} last = ""; table(); });
+  }
+  return {hook, frame, lawOf};
+})();
+/* ==== NEWTON END ==== */
+/* ============================ 3 CONFIG ============================ */
+const STORE = "sim20-energy";
+const COL = {W:"#2A5D8A", N:"#2E7D32", F:"#C62828", P:"#6A1B9A", v:"#1565C0", a:"#E65100",
+             navy:"#1F3A5F", accent:"#E65100", ink:"#263238", muted:"#606A72", grid:"#E3E9F0", grey:"#90A4AE"};
+// track shapes: Hermite key points [x, y, slope] in units of the start height h (the straight ramp uses θ and L instead)
+const SHAPES = [["ramp", "Straight ramp"], ["drop", "Curved drop"], ["coaster", "Roller coaster"], ["pipe", "Half-pipe"]];
+const KEYS = {drop:[[0, 1, -2], [1.4, 0, 0], [2.4, 0, 0]],
+  coaster:[[0, 1, -1.2], [1.0, 0, 0], [1.8, 0.6, 0], [2.6, 0.05, 0], [3.2, 0.35, 0], [3.8, 0, 0], [4.6, 0, 0]],
+  pipe:[[0, 1, -2.5], [1, 0, 0], [2, 1, 2.5]]};
+const RHO = 1.2, CD = 0.47;
+const BALLS = [["bowl", "Bowling ball (5.0 kg)", 5.0, 0.109], ["foot", "Football (0.43 kg)", 0.43, 0.11], ["beach", "Beach ball (0.15 kg)", 0.15, 0.25],
+               ["tennis", "Tennis ball (58 g)", 0.058, 0.033], ["steel", "Steel ball (0.50 kg)", 0.50, 0.025], ["pp", "Ping-pong ball (2.7 g)", 0.0027, 0.020]];
+const ball = id => BALLS.find(b => b[0] === id);
+const PRESETS = [
+  {id:"custom", name:"my own values"},
+  {id:"cart",   sc:"track", name:"Class demo (PASCO lab 06): Smart Cart, 6°", shape:"ramp", th:6, L:1.0, m:0.500, mu:0.00615, u:0},
+  {id:"cart10", sc:"track", name:"Smart Cart, steeper ramp (10°)", shape:"ramp", th:10, L:1.0, m:0.500, mu:0.00615, u:0},
+  {id:"curve",  sc:"track", name:"Same 2.0 m drop: curved path", shape:"drop", h:2.0, m:1.0, mu:0, u:0},
+  {id:"line",   sc:"track", name:"Same 2.0 m drop: straight ramp", shape:"ramp", th:30, L:4.0, m:1.0, mu:0, u:0},
+  {id:"coast",  sc:"track", name:"Roller coaster: 20 m drop, no friction", shape:"coaster", h:20, m:500, mu:0, u:0},
+  {id:"coastf", sc:"track", name:"Roller coaster with friction (μ = 0.02)", shape:"coaster", h:20, m:500, mu:0.02, u:0},
+  {id:"pipe",   sc:"track", name:"Skater in a half-pipe (μ = 0.03)", shape:"pipe", h:3.0, m:60, mu:0.03, u:0},
+  {id:"nose",   sc:"pend", name:"Hook: bowling ball to the nose", obj:"bowl", mp:5.0, Lp:3.0, th0:25, air:true},
+  {id:"noair",  sc:"pend", name:"The same pendulum in a vacuum", obj:"bowl", mp:5.0, Lp:3.0, th0:25, air:false},
+  {id:"beach",  sc:"pend", name:"Beach ball pendulum (lots of air resistance)", obj:"beach", mp:0.15, Lp:3.0, th0:25, air:true},
+  {id:"p2",     sc:"pend", name:"Homework: 2.0 m pendulum at 30°", obj:"foot", mp:0.43, Lp:2.0, th0:30, air:false},
+  {id:"sp2",    sc:"spring", name:"Practical: stretch 2.0 cm", ms:10, k:25, x:2.0, loss:0},
+  {id:"sp4",    sc:"spring", name:"Practical: stretch 4.0 cm", ms:10, k:25, x:4.0, loss:0},
+  {id:"sp6",    sc:"spring", name:"Practical: stretch 6.0 cm", ms:10, k:25, x:6.0, loss:0},
+  {id:"spreal", sc:"spring", name:"Real spring: 30 % lost to vibration", ms:10, k:25, x:4.0, loss:30},
+  {id:"exit",   sc:"drop", name:"Exit question: dropped from 5.0 m", obj:"steel", md:0.50, hd:5.0, air:false},
+  {id:"bag",    sc:"drop", name:"Retrieval: 3.0 kg bag from 2.0 m", obj:"steel", md:3.0, hd:2.0, air:false},
+  {id:"tennis", sc:"drop", name:"Tennis ball from 20 m, with air", obj:"tennis", md:0.058, hd:20, air:true},
+  {id:"pp",     sc:"drop", name:"Ping-pong ball from 10 m, with air", obj:"pp", md:0.0027, hd:10, air:true},
+];
+const SCN = {
+  track:{pre:"cart", mid:"Free-body diagram · energy stores",
+    hint:"<i>E</i>–<i>t</i>: kinetic and gravitational energy swap; the dashed total stays flat without friction. With friction the thermal line grows."},
+  pend:{pre:"nose", mid:"Free-body diagram · energy stores",
+    hint:"<i>E</i>–<i>t</i>: E<sub>k</sub> and E<sub>p</sub> swap twice per swing. With air on, the thermal line grows and the bob comes back just short of the nose."},
+  spring:{pre:"sp4", mid:"Free-body diagram · energy stores",
+    hint:"<i>E</i>–<i>t</i>: the elastic energy becomes kinetic energy in about 0.03 s, then gravitational energy on the way up. Record 5 stretches for the Data tab."},
+  drop:{pre:"exit", mid:"Free-body diagram · energy stores",
+    hint:"<i>E</i>–<i>h</i>: falling, E<sub>p</sub> goes down by <i>mg</i> per metre and E<sub>k</sub> goes up by the same amount (no air)."},
+};
+
+/* ============================ 4 PHYSICS ============================ */
+// shared number helpers (as in Simulations 16–18)
+const g = 9.81, TWO_PI = 2 * Math.PI;
+const f0 = x => String(Math.round(x));
+const f1 = x => (Math.round(x * 10) / 10).toFixed(1);
+const f2 = x => (Math.round(x * 100) / 100).toFixed(2);
+const f3 = x => (Math.round(x * 1000) / 1000).toFixed(3);
+const sig = (x, n = 3) => { const a = Math.abs(x); return a >= 1e6 || (a > 0 && a < 1e-4) ? sci(x, n) : String(+Number(x).toPrecision(n)); };   // very big/small typed values in × 10ⁿ form
+const SUP = {"0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹","-":"⁻"};
+const sup = n => String(n).split("").map(c => SUP[c] ?? c).join("");
+function sci(x, n = 3){ if (!x) return "0"; let e = Math.floor(Math.log10(Math.abs(x)));
+  if (e >= -2 && e <= 4) return sig(x, n);
+  let m = x / Math.pow(10, e); if (Math.abs(+m.toFixed(n - 1)) >= 10){ e += 1; m = x / Math.pow(10, e); }   // 9.999… rounds up to 1.00 × 10^(e+1)
+  return `${m.toFixed(n - 1)} × 10${sup(e)}`; }
+const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const mn = x => String(x).replace(/^-/, "−");
+// value + unit with SI prefixes for big numbers: 30500 W → "30.5 kW"
+function fmtU(x, u, n = 3){
+  const a = Math.abs(x);
+  if (a > 0 && a < 1e-3) return `${mn(sci(x, n))} ${u}`;
+  if (a >= 1e9) return `${mn(sig(x / 1e9, n))} G${u}`;
+  if (a >= 1e6) return `${mn(sig(x / 1e6, n))} M${u}`;
+  if (a >= 1e4) return `${mn(sig(x / 1e3, n))} k${u}`;
+  return `${mn(sig(x, n))} ${u}`;
+}
+const fmtF = F => fmtU(F, "N"), fmtE = E => fmtU(E, "J"), fmtP = P => fmtU(P, "W");
+function originFit(pts){ const sxx = pts.reduce((a, p) => a + p[0] * p[0], 0);
+  return sxx && pts.length >= 2 ? {k:pts.reduce((a, p) => a + p[0] * p[1], 0) / sxx, b:0} : null; }
+function linFit(pts){
+  const n = pts.length; if (n < 2) return null;
+  const sx = pts.reduce((a, p) => a + p[0], 0), sy = pts.reduce((a, p) => a + p[1], 0);
+  const sxx = pts.reduce((a, p) => a + p[0] * p[0], 0), sxy = pts.reduce((a, p) => a + p[0] * p[1], 0), d = n * sxx - sx * sx;
+  if (Math.abs(d) < 1e-15) return null;
+  const k = (n * sxy - sx * sy) / d; return {k, b:(sy - k * sx) / n};
+}
+// energy colours (the same in every A.3 simulation)
+const EC = {K:"#EF6C00", P:"#00897B", H:"#8E24AA", T:"#C62828", In:"#5D4037", tot:"#37474F", S:"#6D4C41", L:"#F9A825"};
+const dragK = id => 0.5 * RHO * CD * Math.PI * ball(id)[3] ** 2;       // F_d = k v²
+const vFall = h => Math.sqrt(2 * g * h);                                 // from rest, no friction
+const hSpring = (k, x, m, loss = 0) => (1 - loss) * k * x * x / (2 * m * g);   // flying spring: SI units
+// Track: dense polyline (x, y), arc length s, slope angle α and curvature κ = dα/ds
+function trackGeom(shape, h, th, L){
+  const X = [], Y = [];
+  if (shape === "ramp"){ const Lx = L * Math.cos(rad(th)), hh = L * Math.sin(rad(th));
+    for (let i = 0; i <= 400; i++){ X.push(Lx * i / 400); Y.push(hh * (1 - i / 400)); } }
+  else { const K = KEYS[shape];
+    for (let j = 0; j < K.length - 1; j++){ const [x0, y0, m0] = K[j], [x1, y1, m1] = K[j + 1], dx = x1 - x0;
+      for (let i = j ? 1 : 0; i <= 300; i++){ const t = i / 300, t2 = t * t, t3 = t2 * t;
+        X.push((x0 + dx * t) * h); Y.push((( 2 * t3 - 3 * t2 + 1) * y0 + (t3 - 2 * t2 + t) * dx * m0 + (-2 * t3 + 3 * t2) * y1 + (t3 - t2) * dx * m1) * h); } } }
+  const n = X.length, S = [0], A = [], Kc = [];
+  for (let i = 1; i < n; i++) S.push(S[i - 1] + Math.hypot(X[i] - X[i - 1], Y[i] - Y[i - 1]));
+  for (let i = 0; i < n; i++){ const a = Math.max(0, i - 1), b = Math.min(n - 1, i + 1); A.push(Math.atan2(Y[b] - Y[a], X[b] - X[a])); }
+  for (let i = 0; i < n; i++){ const a = Math.max(0, i - 2), b = Math.min(n - 1, i + 2); Kc.push((A[b] - A[a]) / ((S[b] - S[a]) || 1)); }
+  return {X, Y, S, A, Kc, len:S[n - 1], ymin:Math.min(...Y), y0:Y[0]};
+}
+function trackAt(G, s){
+  const S = G.S, n = S.length; s = clamp(s, 0, G.len);
+  let lo = 0, hi = n - 1; while (hi - lo > 1){ const mid = (lo + hi) >> 1; if (S[mid] <= s) lo = mid; else hi = mid; }
+  const u = (s - S[lo]) / ((S[hi] - S[lo]) || 1), L = (a) => a[lo] + (a[hi] - a[lo]) * u;
+  return {x:L(G.X), y:L(G.Y), al:L(G.A), ka:L(G.Kc)};
+}
+function trackRun(){
+  const G = trackGeom(set.shape, set.h, set.th, set.L), m = set.m, mu = set.mu;
+  let stopWhy = "";
+  const p0 = trackAt(G, 0), y0 = p0.y - G.ymin, E0 = m * set.u * set.u / 2 + m * g * y0;
+  const S = integrate({s:0, v:set.u, x:p0.x, y:y0, al:p0.al, N:m * g * Math.cos(p0.al), Ff:0, Q:0, Ek:m * set.u * set.u / 2, Ep:m * g * y0, vb:-1, ph:"moving"}, (st, h) => {
+    const p = trackAt(G, st.s), Nm = Math.max(0, g * Math.cos(p.al) + st.v * st.v * p.ka), fr = mu * Nm, ag = -g * Math.sin(p.al);
+    let a;
+    if (Math.abs(st.v) < 1e-9){ if (Math.abs(ag) <= fr + 1e-12){ st.ph = "stopped"; return; } a = ag - Math.sign(ag) * fr; }
+    else a = ag - Math.sign(st.v) * fr;
+    let v1 = st.v + a * h; if (st.v !== 0 && Math.sign(v1) !== Math.sign(st.v) && Math.abs(ag) <= fr) v1 = 0;
+    const ds = (st.v + v1) / 2 * h; st.s += ds; st.v = v1; st.Q += fr * m * Math.abs(ds);
+    const q = trackAt(G, st.s); st.x = q.x; st.y = q.y - G.ymin; st.al = q.al; st.N = m * Nm; st.Ff = st.v === 0 ? 0 : m * fr * Math.sign(st.v);
+    st.Ek = m * st.v * st.v / 2; st.Ep = m * g * st.y; st.Q = mu > 0 ? Math.max(0, E0 - st.Ek - st.Ep) : 0;   // thermal = what the mechanical energy lost
+    if (st.vb < 0 && st.y <= 1e-3 * y0 + 1e-5) st.vb = Math.abs(st.v);
+  }, {dt:0.01, h:0.0005, tMax:30, stop:st => {
+    if (st.s >= G.len - 1e-6){ stopWhy = set.shape === "ramp" ? "foam stop at the bottom" : "end of the track"; return true; }
+    if (st.s <= 0 && st.v < 0){ stopWhy = "back at the start"; return true; }
+    if (st.ph === "stopped"){ stopWhy = "stopped: friction holds it"; return true; } return false; }});
+  const last = S[S.length - 1]; if (last.vb < 0 && set.shape === "ramp") last.vb = Math.abs(last.v);
+  const vb = S.find(s => s.vb >= 0)?.vb ?? Math.max(...S.map(s => Math.abs(s.v)));
+  return {S, dt:0.01, G, vb, h0:y0, stopWhy, E0:S[0].Ek + S[0].Ep};
+}
+function pendRun(){
+  const m = set.mp, L = set.Lp, k = set.air ? dragK(set.obj) : 0, th0 = rad(set.th0);
+  const T0 = 2 * Math.PI * Math.sqrt(L / g) * (1 + th0 * th0 / 16), tMax = 2.1 * T0;
+  const st0 = {th:th0, om:0, y:L * (1 - Math.cos(th0)), v:0, Ek:0, Ep:m * g * L * (1 - Math.cos(th0)), Q:0, T:m * g * Math.cos(th0), Fd:0};
+  const E0 = st0.Ep;
+  const S = integrate(st0, (s, h) => {
+    const f = (th, om) => -(g / L) * Math.sin(th) - (k / m) * L * om * Math.abs(om);
+    const k1 = f(s.th, s.om), k2 = f(s.th + s.om * h / 2, s.om + k1 * h / 2), k3 = f(s.th + (s.om + k1 * h / 2) * h / 2, s.om + k2 * h / 2), k4 = f(s.th + (s.om + k2 * h / 2) * h, s.om + k3 * h);
+    s.th += h * (s.om + h / 6 * (k1 + k2 + k3)); s.om += h / 6 * (k1 + 2 * k2 + 2 * k3 + k4);
+    s.v = L * s.om; s.y = L * (1 - Math.cos(s.th)); s.Ek = m * s.v * s.v / 2; s.Ep = m * g * s.y; s.Q = k > 0 ? Math.max(0, E0 - s.Ek - s.Ep) : 0;
+    s.T = m * g * Math.cos(s.th) + m * s.v * s.v / L; s.Fd = k * s.v * Math.abs(s.v);
+  }, {dt:0.01, h:0.001, tMax});
+  // back at the nose side after one period: highest angle in the second half of the first period
+  const sec = S.filter(s => s.t > 0.6 * T0 && s.t < 1.4 * T0), thR = Math.max(...sec.map(s => s.th));
+  const first = S.find(s => s.t > 0.1 && s.th <= 0) || S[0];
+  return {S, dt:0.01, T0, thR, gap:L * (th0 - thR), vb:Math.abs(first.v), h0:L * (1 - Math.cos(th0)), E0};
+}
+function springRun(){
+  const m = set.ms / 1000, k = set.k, x = set.x / 100, loss = set.loss / 100, w = Math.sqrt(k / m), tau = Math.PI / 2 / w;
+  const E0 = k * x * x / 2, v0 = Math.sqrt((1 - loss) * k * x * x / m), hmax = v0 * v0 / (2 * g), Tf = 2 * v0 / g, dt = 0.002, S = [];
+  for (let t = 0; t <= tau + Tf + 1e-9; t += dt){
+    if (t < tau){ const y = -x * Math.cos(w * t), EH = k * y * y / 2, used = E0 - EH, Ek = (1 - loss) * used;
+      S.push({t, y, v:Math.sqrt(2 * Ek / m), EH, Ek, Ep:0, Q:loss * used, ph:"launch", Fs:k * Math.abs(y)}); }
+    else { const tt = t - tau, y = Math.max(0, v0 * tt - g * tt * tt / 2), v = v0 - g * tt, Ep = m * g * y;
+      S.push({t, y, v, EH:0, Ek:m * v * v / 2, Ep, Q:loss * E0, ph:"flight", Fs:0}); }
+  }
+  return {S, dt, speed:pace(S[S.length - 1].t), stepDt:0.05, tau, v0, hmax, E0};
+}
+function dropRun(){
+  const m = set.md, H = set.hd, k = set.air ? dragK(set.obj) : 0;
+  const S = integrate({y:H, v:0, Ek:0, Ep:m * g * H, Q:0, Fd:0}, (s, h) => {
+    const a = -g + (k / m) * s.v * s.v; const v1 = s.v - a * h; s.y -= (s.v + v1) / 2 * h; s.v = v1;
+    s.y = Math.max(0, s.y); s.Ek = m * s.v * s.v / 2; s.Ep = m * g * s.y; s.Q = k > 0 ? Math.max(0, m * g * H - s.Ek - s.Ep) : 0; s.Fd = k * s.v * s.v;
+  }, {dt:0.005, h:0.0005, tMax:60, stop:s => s.y <= 0});
+  const last = S[S.length - 1];
+  return {S, dt:0.005, speed:pace(last.t), stepDt:niceUp(last.t / 12), vb:last.v, h0:H, E0:m * g * H};
+}
+const pace = T => T < 2 ? T / 2 : T > 10 ? T / 10 : 1;
+function build(){
+  const M_ = set.sc === "track" ? trackRun() : set.sc === "pend" ? pendRun() : set.sc === "spring" ? springRun() : dropRun();
+  if (set.sc === "track" || set.sc === "pend"){ const T = M_.S[M_.S.length - 1].t; M_.speed = T > 12 ? T / 12 : 1; M_.stepDt = 0.1; }
+  return M_;
+}
+
+/* ============================ 5 RUN ============================ */
+const presetById = id => PRESETS.find(p => p.id === id);
+const P = id => { const p = presetById(id), o = {pre:id}; for (const k in p) if (k !== "id" && k !== "name") o[k] = p[k]; return o; };
+// The whole run is worked out when a setting changes (build() in PHYSICS gives states every M.dt seconds);
+// at(t) interpolates between them, so ▶, ⏸, the ◂ ▸ steps and the graph probe all show the same numbers.
+const R = {playing:false, paused:false, t:0};
+let M = null;
+const tEnd = () => M.S[M.S.length - 1].t;
+function at(t){
+  const S = M.S, n = S.length; if (n === 1 || t <= S[0].t) return S[0]; if (t >= S[n - 1].t) return S[n - 1];
+  const i = Math.min(n - 2, Math.max(0, Math.floor((t - S[0].t) / M.dt)));
+  const a = S[i], b = S[i + 1], u = clamp((t - a.t) / ((b.t - a.t) || 1), 0, 1), o = {};
+  for (const k in a){ const va = a[k], vb = b[k]; o[k] = typeof va === "number" && typeof vb === "number" ? va + (vb - va) * u : va; }
+  o.t = t; return o;
+}
+function reset(){
+  M = build(); R.t = 0; R.playing = false; R.paused = false;
+  updateButtons(); updateStepLabels();
+}
+function stepDt(){ return M.stepDt || 0.1; }
+function start(){ if (tEnd() <= 0){ flash(M.still || "Nothing moves here: change the values and watch the diagrams."); return; }
+  R.t = 0; R.playing = true; R.paused = false; updateButtons(); }
+function stepBy(d){
+  R.t = Math.min(tEnd(), Math.max(0, R.t + d));
+  R.playing = R.t < tEnd(); R.paused = R.playing; updateButtons();
+}
+function step(dt){
+  if (!R.playing || R.paused) return;
+  R.t += dt * (M.speed || 1);
+  if (R.t >= tEnd()){ R.t = tEnd(); R.playing = false; updateButtons(); }
+}
+// fixed-step integrator helper: calls f(state, h) every h seconds and records a copy every dt seconds
+function integrate(s0, f, {dt = 0.01, h = 0.001, tMax = 30, stop = () => false} = {}){
+  const S = [{...s0, t:0}]; let s = {...s0, t:0}; const per = Math.max(1, Math.round(dt / h));
+  for (let i = 1; i <= Math.ceil(tMax / h); i++){
+    f(s, h); s.t = i * h;
+    if (i % per === 0) S.push({...s});
+    if (stop(s)){ if (i % per) { s.t = S[S.length - 1].t + dt; S.push({...s}); } break; }
+  }
+  return S;
+}
+const set = {sc:"track", pre:"cart", shape:"ramp", h:2.0, th:6, L:1.0, m:0.5, mu:0.00615, u:0,
+             obj:"bowl", mp:5.0, Lp:3.0, th0:25, air:true, ms:10, k:25, x:4.0, loss:0, md:0.5, hd:5.0, chart:"bars"};
+
+/* ============================ 6 SCENE ============================ */
+function fitCanvas(cv){
+  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+  if (cv.width !== w || cv.height !== h){ cv.width = w; cv.height = h; }
+  const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return {ctx, w:r.width, h:r.height};
+}
+function arrow(ctx, x1, y1, x2, y2, color, width = 4, dashed = false){
+  const L = Math.hypot(x2 - x1, y2 - y1); if (L < 2) return;
+  const ux = (x2 - x1) / L, uy = (y2 - y1) / L, hs = Math.min(13, 6 + width * 1.6, L * 0.6);
+  ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width; ctx.lineCap = "round";
+  if (dashed) ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - ux * hs * 0.8, y2 - uy * hs * 0.8); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - ux * hs - uy * hs * 0.5, y2 - uy * hs + ux * hs * 0.5);
+  ctx.lineTo(x2 - ux * hs + uy * hs * 0.5, y2 - uy * hs - ux * hs * 0.5); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function label(ctx, txt, x, y, color, align = "center", size = 15, base = "middle"){
+  ctx.save(); ctx.font = `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = color;
+  ctx.textAlign = align; ctx.textBaseline = base;
+  ctx.lineWidth = 4; ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.strokeText(txt, x, y); ctx.fillText(txt, x, y);
+  ctx.restore();
+}
+function subLabel(ctx, main, sub, rest, x, y, color, align = "center", size = 15){
+  ctx.save(); const f1 = `italic 600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`,
+    f2 = `600 ${Math.round(size * .72)}px "Segoe UI",Calibri,Arial,sans-serif`, f3 = `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`;
+  ctx.font = f1; const w1 = ctx.measureText(main).width; ctx.font = f2; const w2 = sub ? ctx.measureText(sub).width : 0;
+  ctx.font = f3; const w3 = ctx.measureText(rest).width; const W = w1 + w2 + w3;
+  let x0 = align === "center" ? x - W / 2 : align === "right" ? x - W : x;
+  ctx.textBaseline = "middle"; ctx.lineWidth = 4; ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.fillStyle = color;
+  ctx.font = f1; ctx.strokeText(main, x0, y); ctx.fillText(main, x0, y);
+  if (sub){ ctx.font = f2; ctx.strokeText(sub, x0 + w1, y + size * .3); ctx.fillText(sub, x0 + w1, y + size * .3); }
+  ctx.font = f3; ctx.strokeText(rest, x0 + w1 + w2, y); ctx.fillText(rest, x0 + w1 + w2, y);
+  ctx.restore(); return W;
+}
+function rich(ctx, parts, x, y, color, size = 14){
+  const font = st => st === "i" ? `italic 600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`
+    : st === "s" ? `600 ${Math.round(size * .72)}px "Segoe UI",Calibri,Arial,sans-serif` : `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`;
+  ctx.save(); ctx.fillStyle = color; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+  const ws = parts.map(([t, st]) => { ctx.font = font(st); return ctx.measureText(t).width; });
+  let cx = x - ws.reduce((a, b) => a + b, 0) / 2;
+  parts.forEach(([t, st], i) => { ctx.font = font(st); ctx.fillText(t, cx, st === "s" ? y + size * .3 : y); cx += ws[i]; });
+  ctx.restore();
+}
+function bg(ctx, w, h, c0 = "#FAFCFF", c1 = "#EEF3F8"){ const gr = ctx.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, c0); gr.addColorStop(1, c1);
+  ctx.fillStyle = gr; ctx.fillRect(0, 0, w, h); }
+function wrap(ctx, text, maxW, size){
+  ctx.save(); ctx.font = `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`;
+  const out = []; let line = "";
+  for (const wd of text.split(" ")){ const tryL = line ? line + " " + wd : wd; if (ctx.measureText(tryL).width > maxW && line){ out.push(line); line = wd; } else line = tryL; }
+  if (line) out.push(line); ctx.restore(); return out;
+}
+function note(ctx, text, x, y, maxW, color = "#606A72", size = 11.5, align = "center"){   // wrapped grey note, bottom line at y
+  const nl = wrap(ctx, text, maxW, size); nl.forEach((L, i) => label(ctx, L, x, y - (nl.length - 1 - i) * (size + 2.5), color, align, size)); return nl.length;
+}
+function rrect(ctx, x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+// force arrow on a free-body diagram: from (x, y), components in N, k px per N; label just beyond the tip
+function fArrow(ctx, x, y, Fx, Fy, k, col, main, sub, rest = "", size = 13, dashed = false){
+  const L = Math.hypot(Fx, Fy) * k; if (L < 2) return;
+  const ux = Fx / Math.hypot(Fx, Fy), uy = -Fy / Math.hypot(Fx, Fy), x2 = x + ux * L, y2 = y + uy * L;
+  arrow(ctx, x, y, x2, y2, col, 4, dashed);
+  const lx = x2 + ux * 14, ly = y2 + uy * 12, al = Math.abs(ux) < 0.35 ? "center" : ux > 0 ? "left" : "right";
+  subLabel(ctx, main, sub, rest, al === "center" ? lx : lx + (ux > 0 ? -6 : 6), ly, col, al, size);
+}
+// energy (or work) bar chart: bars = [{nm:[main, sub, rest], v, col}]; negative values go below the zero line;
+// optional dashed "total" line
+function energyBars(ctx, box, bars, {title = "Energy / J", total = null, max = null, fmt = v => mn(sci(v, 3))} = {}){
+  const {x, y, w, h} = box;
+  label(ctx, title, x, y + 8, "#1F3A5F", "left", 12.5);
+  const vals = bars.map(b => b.v).concat(total ?? 0), vmax = Math.max(0, ...vals, max ?? 0), vmin = Math.min(0, ...vals);
+  const span = Math.max(1e-12, vmax - vmin), yT = y + 36, yB = y + h - 36, kk = (yB - yT) / span, yz = yT + vmax * kk;
+  const n = bars.length, gap = Math.min(16, w / n * 0.25), bw = Math.min(56, (w - 10 - gap * (n - 1)) / n), x0 = x + (w - (bw * n + gap * (n - 1))) / 2;
+  bars.forEach((b, i) => {
+    const bx = x0 + i * (bw + gap), H = b.v * kk;
+    ctx.save(); ctx.fillStyle = b.col; ctx.globalAlpha = .85; ctx.fillRect(bx, H >= 0 ? yz - H : yz, bw, Math.abs(H)); ctx.restore();
+    label(ctx, Math.abs(b.v) < 1e-3 * span ? "0" : fmt(b.v), bx + bw / 2, H >= 0 ? yz - H - 9 : yz - H + 10, b.col, "center", 11.5);
+    subLabel(ctx, b.nm[0], b.nm[1], b.nm[2] || "", bx + bw / 2, y + h - 12, b.col, "center", 12.5);
+  });
+  ctx.save(); ctx.strokeStyle = "#263238"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x + 2, yz); ctx.lineTo(x + w - 2, yz); ctx.stroke(); ctx.restore();
+  if (total !== null){ const yt = yz - total * kk;
+    ctx.save(); ctx.strokeStyle = EC.tot; ctx.setLineDash([6, 4]); ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(x + 2, yt); ctx.lineTo(x + w - 2, yt); ctx.stroke(); ctx.restore();
+    label(ctx, `total ${fmt(total)}`, x + w - 4, yt - 9, EC.tot, "right", 11.5); }
+}
+// Sankey diagram, arrow widths to scale. inp = {nm, v}; outs = [{nm, v, col, useful}]. Useful outputs go straight on (top),
+// wasted outputs bend down, one after the other. unitFmt(v) gives the value text.
+function sankey(ctx, box, inp, outs, unitFmt, {title = "", inCol = EC.In, maxW = null, exact = false} = {}){
+  const {x, y, w, h} = box;
+  if (title) label(ctx, title, x, y + 8, "#1F3A5F", "left", 12.5);
+  const tot = inp.v;
+  if (!(tot > 1e-12)){ label(ctx, "No energy transferred yet", x + w / 2, y + h / 2, "#606A72", "center", 13); return; }
+  const use = outs.filter(o => o.useful && o.v > tot * 1e-4), was = outs.filter(o => !o.useful && o.v > tot * 1e-4);
+  const nW = was.length, nU = use.length, labH = 34, top = y + (title ? 40 : 22) + 15 * nU;
+  const xs = x + Math.min(110, w * 0.26), xe = x + w - 6, legGap = nW ? (xe - 40 - xs) / nW : 0;
+  let W = Math.max(8, Math.min(maxW ?? 90, (h - (top - y) - labH - 30) * 0.55, w * 0.22)); if (exact && maxW) W = maxW; if (nW > 1) W = Math.min(W, legGap - 16);
+  const k = W / tot;
+  // input band
+  ctx.save(); ctx.fillStyle = inCol; ctx.globalAlpha = .85; ctx.fillRect(x + 4, top, xs - x - 4, W); ctx.restore();
+  label(ctx, `${inp.nm}: ${unitFmt(tot)}`, x + 6, top - 9, inCol, "left", 12);
+  // stack: useful on top, wasted below (the bottom one peels off first)
+  let yc = top; const pct = v => `${f0(v / tot * 100)} %`;
+  use.forEach((o, i) => { const ww = Math.max(1.5, o.v * k), ah = Math.min(16, Math.max(8, ww * 0.6));
+    ctx.save(); ctx.fillStyle = o.col; ctx.globalAlpha = .85; ctx.beginPath();
+    ctx.moveTo(xs, yc); ctx.lineTo(xe - ah, yc); ctx.lineTo(xe - ah, yc - Math.min(6, ww * .3)); ctx.lineTo(xe, yc + ww / 2);
+    ctx.lineTo(xe - ah, yc + ww + Math.min(6, ww * .3)); ctx.lineTo(xe - ah, yc + ww); ctx.lineTo(xs, yc + ww); ctx.closePath(); ctx.fill(); ctx.restore();
+    label(ctx, `→ ${o.nm}: ${unitFmt(o.v)} (${pct(o.v)})`, xe - 2, top - 9 - 15 * (nU - i), o.col, "right", 12);
+    yc += ww; });
+  const ybot = y + h - labH;
+  // wasted bands from the bottom of the stack
+  let yb = top + Math.max(0, use.reduce((a, o) => a + Math.max(1.5, o.v * k), 0)) + was.reduce((a, o) => a + Math.max(1.5, o.v * k), 0);
+  was.slice().reverse().forEach((o, i) => {
+    const ww = Math.max(1.5, o.v * k), xt = xs + i * legGap, rin = 10, cx = xt, cy = yb + rin, ah = Math.min(14, Math.max(8, ww * 0.6));
+    const yTop = yb - ww, legL = cx + rin, legR = cx + rin + ww;
+    ctx.save(); ctx.fillStyle = o.col; ctx.globalAlpha = .85; ctx.beginPath();
+    ctx.moveTo(xs, yTop); ctx.lineTo(xt, yTop); ctx.arc(cx, cy, rin + ww, -Math.PI / 2, 0); ctx.lineTo(legR, ybot - ah);
+    ctx.lineTo(legR + Math.min(6, ww * .3), ybot - ah); ctx.lineTo((legL + legR) / 2, ybot); ctx.lineTo(legL - Math.min(6, ww * .3), ybot - ah);
+    ctx.lineTo(legL, ybot - ah); ctx.lineTo(legL, cy); ctx.arc(cx, cy, rin, 0, -Math.PI / 2, true); ctx.lineTo(xs, yb); ctx.closePath(); ctx.fill(); ctx.restore();
+    const lx = clamp((legL + legR) / 2, x + 40, x + w - 40);
+    label(ctx, o.nm, lx, ybot + 11, o.col, "center", 11.5); label(ctx, `${unitFmt(o.v)} (${pct(o.v)})`, lx, ybot + 25, o.col, "center", 11);
+    yb = yTop;
+  });
+}
+// middle column: FBD on top and the energy chart below; side by side when the column is short and wide (tablet layout)
+function midBoxes(w, h){
+  if (h < 400 && w > h * 1.4){ const a = Math.round(w * 0.44); return {fb:{x:0, y:0, w:a, h}, lo:{x:a + 6, y:4, w:w - a - 14, h:h - 8}}; }
+  const top = Math.round(h * 0.5); return {fb:{x:0, y:0, w, h:top}, lo:{x:8, y:top + 4, w:w - 16, h:h - top - 8}};
+}
+function plain(ctx, txt, x, y, col, size = 12, align = "center"){ ctx.save(); ctx.fillStyle = col; ctx.font = `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`;
+  ctx.textAlign = align; ctx.textBaseline = "middle"; ctx.fillText(txt, x, y); ctx.restore(); }
+function scaleBar(ctx, k, h, y = null){
+  const sb = niceUp(Math.max(1e-3, 60 / k)), t = sb < 1 ? `${sig(sb * 100)} cm` : `${sig(sb)} m`, yy = y ?? h - 14;
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(12, yy); ctx.lineTo(12 + sb * k, yy); ctx.stroke();
+  label(ctx, t, 12 + sb * k / 2, yy - 12, COL.ink, "center", 11.5);
+}
+function hMark(ctx, x, y0, y1, txt, col = COL.ink){
+  ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x - 5, y0); ctx.lineTo(x + 5, y0); ctx.moveTo(x - 5, y1); ctx.lineTo(x + 5, y1); ctx.stroke(); ctx.restore();
+  label(ctx, txt, x + 7, (y0 + y1) / 2, col, "left", 12.5);
+}
+function ballDraw(ctx, x, y, r, id){
+  const c = {bowl:"#263238", foot:"#FAFAFA", beach:"#FFEB3B", tennis:"#C6FF00", steel:"#B0BEC5", pp:"#FFF8E1"}[id] || "#B0BEC5";
+  ctx.save(); ctx.fillStyle = c; ctx.strokeStyle = "#37474F"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, r, 0, TWO_PI); ctx.fill(); ctx.stroke();
+  if (id === "beach"){ ctx.fillStyle = "#E53935"; ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, r, -0.6, 0.4); ctx.fill(); ctx.fillStyle = "#1E88E5"; ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, r, 1.5, 2.5); ctx.fill(); }
+  ctx.restore();
+}
+function sceneMain(ctx, w, h, s){
+  bg(ctx, w, h);
+  const sc = set.sc;
+  if (sc === "track"){
+    const G = M.G, xmax = Math.max(...G.X), ymax = Math.max(...G.Y) - G.ymin, pad = 34;
+    const k = Math.min((w - 2 * pad - 30) / xmax, (h - 96) / Math.max(ymax, 1e-6)), X0 = pad, Yb = h - 30;
+    const PX = x => X0 + x * k, PY = y => Yb - (y - G.ymin) * k;
+    ctx.fillStyle = "#D7CCC8"; ctx.fillRect(0, Yb, w, h - Yb);
+    // track as a filled profile
+    ctx.beginPath(); ctx.moveTo(PX(G.X[0]), Yb); G.X.forEach((x, i) => ctx.lineTo(PX(x), PY(G.Y[i]))); ctx.lineTo(PX(G.X[G.X.length - 1]), Yb); ctx.closePath();
+    ctx.fillStyle = set.shape === "ramp" ? "#BCAAA4" : "#CFD8DC"; ctx.fill();
+    ctx.beginPath(); G.X.forEach((x, i) => i ? ctx.lineTo(PX(x), PY(G.Y[i])) : ctx.moveTo(PX(x), PY(G.Y[i]))); ctx.strokeStyle = "#455A64"; ctx.lineWidth = 3; ctx.stroke();
+    if (set.shape === "ramp"){ ctx.fillStyle = "#FFE082"; ctx.fillRect(PX(xmax) + 2, Yb - 30, 12, 30); }
+    // body: a cart (ramp), otherwise a car on the track
+    const bx = PX(s.x), by = PY(s.y + G.ymin), al = s.al, bw = set.shape === "ramp" ? 46 : 34, bh = set.shape === "ramp" ? 20 : 18;
+    ctx.save(); ctx.translate(bx, by); ctx.rotate(-al); ctx.fillStyle = set.shape === "ramp" ? "#E53935" : set.shape === "pipe" ? "#5E35B1" : "#1565C0";
+    ctx.strokeStyle = "#263238"; ctx.lineWidth = 1.5; rrect(ctx, -bw / 2, -bh - 6, bw, bh, 4); ctx.fill(); ctx.stroke();
+    ctx.fillStyle = "#212121"; for (const fx of [-0.3, 0.3]){ ctx.beginPath(); ctx.arc(fx * bw, -5, 5, 0, TWO_PI); ctx.fill(); } ctx.restore();
+    hMark(ctx, PX(0) - 18 < 6 ? PX(0) + 4 : PX(0) - 18, PY(G.y0), Yb, `h = ${sig(s0h())} m`);
+    if (Math.abs(s.v) > 0.01){ const ux = Math.cos(al) * Math.sign(s.v), uy = Math.sin(al) * Math.sign(s.v), L = Math.min(70, 14 + Math.abs(s.v) * 60 / Math.max(M.vb, 0.5));
+      arrow(ctx, bx - Math.sin(al) * 34, by - Math.cos(al) * 34, bx - Math.sin(al) * 34 + ux * L, by - Math.cos(al) * 34 - uy * L, COL.v, 3); }
+    scaleBar(ctx, k, h, h - 10);
+    label(ctx, `${SHAPES.find(x => x[0] === set.shape)[1]} · ${sig(set.m)} kg · μ = ${sig(set.mu, 2)}`, 10, 14, COL.navy, "left", 13);
+    if (!R.playing && R.t >= tEnd() && tEnd() > 0) label(ctx, M.stopWhy, w - 10, 32, COL.muted, "right", 12);
+    return;
+  }
+  if (sc === "pend"){
+    const L = set.Lp, k = Math.min((h - 70) / L, (w - 60) / (2 * L * Math.sin(rad(Math.max(set.th0, 20))) + 0.4)), px = w / 2, py = 40, r = clamp(ball(set.obj)[3] * k, 7, 24);
+    ctx.fillStyle = "#78909C"; ctx.fillRect(px - 50, py - 8, 100, 8);
+    // the nose (wall) at the release point
+    const nx = px + L * Math.sin(rad(set.th0)) * k + r + 2, ny = py + L * Math.cos(rad(set.th0)) * k;
+    ctx.fillStyle = "#F1C27D"; ctx.beginPath(); ctx.moveTo(nx, ny - 14); ctx.lineTo(nx - 2, ny - 2); ctx.lineTo(nx + 10, ny + 4); ctx.lineTo(nx + 10, ny - 22); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#F1C27D"; ctx.beginPath(); ctx.arc(nx + 30, ny - 14, 22, 0, TWO_PI); ctx.fill(); label(ctx, "😐", nx + 30, ny - 14, COL.ink, "center", 22);
+    const bx = px + L * Math.sin(s.th) * k, by = py + L * Math.cos(s.th) * k;
+    ctx.save(); ctx.setLineDash([3, 4]); ctx.strokeStyle = COL.grey; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px, py + L * k + r); ctx.stroke(); ctx.restore();
+    ctx.strokeStyle = "#455A64"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(bx, by); ctx.stroke();
+    ballDraw(ctx, bx, by, r, set.obj);
+    hMark(ctx, px + L * Math.sin(rad(set.th0)) * k, py + L * Math.cos(rad(set.th0)) * k + r + 4, py + L * k, `h = ${sig(M.h0)} m`);
+    ctx.save(); ctx.strokeStyle = COL.grey; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(px - 30, py + L * k); ctx.lineTo(px + L * Math.sin(rad(set.th0)) * k + 10, py + L * k); ctx.stroke(); ctx.restore();
+    if (Math.abs(s.v) > 0.02){ const ux = Math.cos(s.th) * Math.sign(s.v), uy = -Math.sin(s.th) * Math.sign(s.v), Lv = Math.min(60, 10 + Math.abs(s.v) * 50 / Math.max(M.vb, 0.3));
+      arrow(ctx, bx, by + r + 10, bx + ux * Lv, by + r + 10 - uy * Lv, COL.v, 3); }
+    label(ctx, `${ball(set.obj)[1]} on a ${sig(L)} m rope · released at ${sig(set.th0)}` + "°" + (set.air ? " · air resistance on" : " · no air"), 10, 14, COL.navy, "left", 13);
+    if (R.t > 0.8 * M.T0) label(ctx, M.gap > 0.002 ? `came back ${sig(M.gap * 100, 2)} cm short of the nose` : "came back exactly to the nose (no losses)", 10, h - 40, COL.F, "left", 13);
+    scaleBar(ctx, k, h, h - 10);
+    return;
+  }
+  if (sc === "spring"){
+    const Hm = Math.max(M.hmax, 0.05) * 1.15, k = (h - 110) / Hm, Yr = h - 50, xr = w * 0.42;
+    // wooden ruler (launcher) and a metre stick
+    ctx.fillStyle = "#FFCC80"; ctx.fillRect(xr - 6, Yr, 12, h - Yr); ctx.strokeStyle = "#C68A3A"; ctx.strokeRect(xr - 6, Yr, 12, h - Yr);
+    const xs = w * 0.72; ctx.fillStyle = "#FFF8E1"; ctx.fillRect(xs, Yr - Hm * k, 22, Hm * k); ctx.strokeStyle = "#8D6E63"; ctx.strokeRect(xs, Yr - Hm * k, 22, Hm * k);
+    const st = niceUp(Hm / 10); for (let v = 0; v <= Hm + 1e-9; v += st){ const yy = Yr - v * k; ctx.beginPath(); ctx.moveTo(xs, yy); ctx.lineTo(xs + 8, yy); ctx.stroke();
+      label(ctx, `${sig(v * 100)}`, xs + 26, yy, COL.muted, "left", 10.5); }
+    label(ctx, "cm", xs + 11, Yr - Hm * k - 10, COL.muted, "center", 11);
+    // spring: coil from the bottom (y) to the top
+    const yb = Yr - s.y * k, len = s.ph === "launch" ? 30 + Math.abs(s.y) * k : 30, top = yb - len;
+    ctx.strokeStyle = "#78909C"; ctx.lineWidth = 2; ctx.beginPath(); for (let i = 0; i <= 14; i++){ const yy = yb - len * i / 14; i ? ctx.lineTo(xr + (i % 2 ? 9 : -9), yy) : ctx.moveTo(xr, yy); } ctx.stroke();
+    if (s.ph === "launch" && s.t === 0) label(ctx, `stretched x = ${sig(set.x)} cm`, xr - 14, yb - len / 2, COL.P, "right", 12.5);
+    // highest point reached so far
+    const ymax = Math.max(...M.S.filter(q => q.t <= R.t).map(q => q.y));
+    if (ymax > 0.001){ ctx.save(); ctx.strokeStyle = COL.accent; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(xr - 30, Yr - ymax * k); ctx.lineTo(xs, Yr - ymax * k); ctx.stroke(); ctx.restore();
+      label(ctx, `h = ${sig(ymax * 100)} cm`, xr - 34, Yr - ymax * k, COL.accent, "right", 12.5); }
+    if (Math.abs(s.v) > 0.02) arrow(ctx, xr + 24, top + 10, xr + 24, top + 10 - Math.sign(s.v) * Math.min(60, 10 + Math.abs(s.v) * 50 / M.v0), COL.v, 3);
+    label(ctx, `Flying spring: ${sig(set.ms)} g, k = ${sig(set.k)} N m⁻¹, stretched ${sig(set.x)} cm`, 10, 14, COL.navy, "left", 13);
+    label(ctx, "⚠ safety glasses on", 10, 32, COL.F, "left", 12);
+    return;
+  }
+  // drop
+  const H = set.hd, k = (h - 70) / H, Y0 = h - 30, xb = w * 0.4, r = clamp(ball(set.obj)[3] * k * 4, 6, 16);
+  ctx.fillStyle = "#C5E1A5"; ctx.fillRect(0, Y0, w, h - Y0);
+  ctx.fillStyle = "#90A4AE"; ctx.fillRect(xb - 40, Y0 - H * k - 4, 60, 4);
+  hMark(ctx, xb + 60, Y0 - H * k, Y0, `h = ${sig(H)} m`);
+  const by = Y0 - s.y * k - r; ballDraw(ctx, xb, by, r, set.obj);
+  if (s.v > 0.02) arrow(ctx, xb - 30, by - 10, xb - 30, by - 10 + Math.min(70, 10 + s.v * 60 / Math.max(M.vb, 0.5)), COL.v, 3);
+  label(ctx, `${ball(set.obj)[1].replace(/ \(.*/, "")} · ${sig(set.md)} kg · ${set.air ? "with air resistance" : "no air resistance"}`, 10, 14, COL.navy, "left", 13);
+  label(ctx, `v = ${f2(s.v)} m s⁻¹`, xb - 40, by + 2, COL.v, "right", 12.5);
+  scaleBar(ctx, k, h, h - 10);
+}
+const s0h = () => M.h0;
+
+/* ============================ 7 FBD ============================ */
+function midMain(ctx, w, h, s){
+/*NF*/  { const sc = set.sc, E = ["the Earth", "grav"];
+    if (sc === "track"){ NF.body("the cart", set.m, 0, 0, {auto:true}); NF.cap({W:E, F_N:["the track", "normal"], F_f:["the track", "friction"]}); }
+    else if (sc === "pend"){ NF.body("the ball", set.mp, 0, 0, {auto:true}); NF.cap({W:E, T:["the rope", "tension"], F_d:["the air", "drag"]}); }
+    else if (sc === "spring"){ NF.body("the jumping toy", set.ms / 1000, 0, 0, {auto:true}); NF.cap({W:E, F_H:["the spring (the table under it)", "spring"]}); }
+    else { NF.body("the ball", set.md, 0, 0, {auto:true}); NF.cap({W:E, F_d:["the air", "drag"]}); } }/*/NF*/
+  const sc = set.sc, B = midBoxes(w, h), fb = B.fb, cx = fb.x + fb.w / 2, cy = fb.y + fb.h * 0.46, room = Math.max(20, Math.min(cy - fb.y - 36, fb.y + fb.h - 64 - cy, fb.w * 0.3));
+  let txt = "";
+  if (sc === "track"){
+    const Wt = set.m * g, k = room / Math.max(Wt, s.N, Math.abs(s.Ff), 1e-9), al = s.al, ux = Math.cos(al), uy = Math.sin(al);
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(-al); ctx.globalAlpha = .5; ctx.fillStyle = "#E53935"; ctx.fillRect(-24, -14, 48, 28); ctx.restore();
+    fArrow(ctx, cx, cy, 0, -Wt, k, COL.W, "W", "", ` = ${fmtF(Wt)}`);
+    fArrow(ctx, cx, cy, -uy * s.N, ux * s.N, k, COL.N, "F", "N", ` = ${fmtF(s.N)}`);
+    if (Math.abs(s.Ff) > 1e-9) fArrow(ctx, cx, cy, -ux * s.Ff, -uy * s.Ff, k, COL.F, "F", "f", ` = ${fmtF(Math.abs(s.Ff))}`, 12);
+    txt = set.mu > 0 ? "F_N does no work (90° to the motion). Gravity transfers GPE to KE; friction transfers energy to thermal." : "F_N does no work. Only gravity does work: mechanical energy is conserved.";
+  } else if (sc === "pend"){
+    const Wt = set.mp * g, k = room / Math.max(Wt, s.T, 1e-9);
+    ctx.save(); ctx.globalAlpha = .5; ctx.fillStyle = "#455A64"; ctx.beginPath(); ctx.arc(cx, cy, 14, 0, TWO_PI); ctx.fill(); ctx.restore();
+    fArrow(ctx, cx, cy, 0, -Wt, k, COL.W, "W", "", ` = ${fmtF(Wt)}`);
+    fArrow(ctx, cx, cy, -Math.sin(s.th) * s.T, Math.cos(s.th) * s.T, k, COL.P, "T", "", ` = ${fmtF(s.T)}`);
+    if (s.Fd > 1e-6){ const sg = -Math.sign(s.v); fArrow(ctx, cx, cy, sg * Math.cos(s.th) * s.Fd, -sg * Math.sin(s.th) * s.Fd, k, COL.F, "F", "d", ` = ${fmtF(s.Fd)}`, 12); }
+    txt = "The tension is always at 90° to the motion: it does no work. Gravity swaps GPE and KE; air resistance makes thermal energy.";
+  } else if (sc === "spring"){
+    const m = set.ms / 1000, Wt = m * g, k = room / Math.max(Wt, s.Fs, 1e-9);
+    ctx.save(); ctx.globalAlpha = .5; ctx.fillStyle = "#78909C"; ctx.fillRect(cx - 12, cy - 18, 24, 36); ctx.restore();
+    fArrow(ctx, cx, cy, 0, -Wt, Math.max(k, s.Fs > Wt ? k : k), COL.W, "W", "", ` = ${fmtF(Wt)}`);
+    if (s.Fs > 0) fArrow(ctx, cx, cy, 0, s.Fs, k, COL.P, "F", "H", ` = ${fmtF(s.Fs)}`);
+    txt = s.ph === "launch" ? "Launch: the spring's own tension (far bigger than W) pulls it back to its natural length: E_H → E_k." : "In flight only the weight acts: E_k → E_p on the way up, back to E_k on the way down.";
+  } else {
+    const Wt = set.md * g, k = room / Wt;
+    ctx.save(); ctx.globalAlpha = .5; ctx.fillStyle = "#90A4AE"; ctx.beginPath(); ctx.arc(cx, cy, 14, 0, TWO_PI); ctx.fill(); ctx.restore();
+    fArrow(ctx, cx, cy, 0, -Wt, k, COL.W, "W", "", ` = ${fmtF(Wt)}`);
+    if (s.Fd > 1e-9) fArrow(ctx, cx, cy, 0, s.Fd, k, COL.F, "F", "d", ` = ${fmtF(s.Fd)}`);
+    txt = set.air ? "Air resistance acts up, against the motion: negative work, so some GPE becomes thermal energy." : "Only the weight acts: it does work mgh, so the GPE lost = KE gained.";
+  }
+  note(ctx, txt, cx, fb.y + fb.h - 8, fb.w - 20);
+  const EH = s.EH || 0, tot = s.Ek + s.Ep + EH + s.Q, E0 = M.E0;
+  if (set.chart === "sankey"){
+    const outs = [{nm:"Kinetic", v:s.Ek, col:EC.K, useful:true}, {nm:"Gravitational PE", v:s.Ep, col:EC.P, useful:true}];
+    if (sc === "spring") outs.push({nm:"Elastic PE", v:EH, col:EC.H, useful:true});
+    outs.push({nm:sc === "spring" ? "Vibration, sound, thermal" : "Thermal", v:s.Q, col:EC.T});
+    sankey(ctx, B.lo, {nm:"Energy at the start", v:E0}, outs, v => fmtE(v), {title:"Where the starting energy is now (Sankey)"});
+  } else {
+    const bars = [{nm:["E", "k", ""], v:s.Ek, col:EC.K}, {nm:["E", "p", ""], v:s.Ep, col:EC.P}];
+    if (sc === "spring") bars.push({nm:["E", "H", ""], v:EH, col:EC.H});
+    bars.push({nm:["thermal", "", ""], v:s.Q, col:EC.T});
+    const big = E0 >= 1e4;
+    energyBars(ctx, B.lo, bars, {title:`Energy stores / ${big ? "kJ" : "J"}`, total:tot, max:E0, fmt:v => mn(sig(big ? v / 1000 : v, 3))});
+  }
+}
+
+/* ============================ 8 GRAPHS ============================ */
+function niceUp(x){ const p = Math.pow(10, Math.floor(Math.log10(x))), m = x / p;
+  return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p; }
+function niceStep(range, n){ return niceUp(range / n); }
+function niceCeil(x, n = 5){ const st = niceUp(x / n); return Math.ceil(x / st - 1e-9) * st; }
+// axis numbers: enough decimals for small steps, × 10ⁿ form for very big values (typed values can be far outside the sliders)
+const tickTxt = (v, st, d0) => { if (Math.abs(v) >= 1e6){ const e = Math.floor(Math.log10(Math.abs(v)) + 1e-9);
+    return `${+(v / 10 ** e).toPrecision(3)}×10${[...String(e)].map(c => "⁰¹²³⁴⁵⁶⁷⁸⁹"[c]).join("")}`; }
+  return String(+v.toFixed(Math.min(12, Math.max(d0, Math.ceil(-Math.log10(st)) + 1)))); };
+function axesR(ctx, box, x0, x1, y0, y1, xLab, yLab, noX = false){
+  const {x, y, w, h} = box, X = v => x + w * (v - x0) / (x1 - x0), Y = v => y + h - h * (v - y0) / (y1 - y0);
+  ctx.save(); ctx.font = `13px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = COL.muted; ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
+  const xs = niceStep(x1 - x0, 8), ys = niceStep(y1 - y0, 6);
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  if (!noX) for (let v = Math.ceil(x0 / xs - 1e-9) * xs; v <= x1 + xs * 1e-6; v += xs){ ctx.beginPath(); ctx.moveTo(X(v), y); ctx.lineTo(X(v), y + h); ctx.stroke(); ctx.fillText(tickTxt(v, xs, 3), X(v), y + h + 4); }
+  ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  for (let v = Math.ceil(y0 / ys - 1e-9) * ys; v <= y1 + ys * 1e-6; v += ys){ ctx.beginPath(); ctx.moveTo(x, Y(v)); ctx.lineTo(x + w, Y(v)); ctx.stroke(); ctx.fillText(tickTxt(v, ys, 3), x - 5, Y(v)); }
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.5; ctx.beginPath();
+  const zx = x0 <= 0 && x1 >= 0 ? X(0) : x, zy = y0 <= 0 && y1 >= 0 ? Y(0) : y + h;
+  ctx.moveTo(zx, y); ctx.lineTo(zx, y + h); ctx.moveTo(x, zy); ctx.lineTo(x + w, zy); ctx.stroke();
+  ctx.restore();
+  rich(ctx, xLab, x + w / 2, y + h + 30, COL.ink);
+  ctx.save(); ctx.translate(x - 46, y + h / 2); ctx.rotate(-Math.PI / 2); rich(ctx, yLab, 0, 0, COL.ink); ctx.restore();
+  return {X, Y};
+}
+function shadeArea(ctx, X, Y, f, t1, n = 240){
+  if (!(t1 > 0)) return 0;
+  let A = 0, ta = 0, fa = f(0); ctx.save();
+  for (let i = 1; i <= n; i++){
+    const tb = t1 * i / n, fb = f(tb); A += (fa + fb) / 2 * (tb - ta);
+    ctx.fillStyle = fa + fb >= 0 ? "rgba(21,101,192,.22)" : "rgba(198,40,40,.22)";
+    ctx.beginPath(); ctx.moveTo(X(ta), Y(0)); ctx.lineTo(X(ta), Y(fa)); ctx.lineTo(X(tb), Y(fb)); ctx.lineTo(X(tb), Y(0)); ctx.closePath(); ctx.fill();
+    ta = tb; fa = fb;
+  }
+  ctx.restore(); return A;
+}
+// Name + value of the shaded area, written inside it (beside it with a leader line when it does not fit) — as in sims 10–15
+function areaName(ctx, box, L){
+  const {X, Y, f, t1, nm, val} = L; if (!(t1 > 0)) return;
+  const l1 = nm[0], l2 = `${nm[1]} = ${mn(sci(val))} ${nm[2]}`, col = val >= 0 ? "#0D47A1" : "#B71C1C", fs = 13;
+  ctx.save(); ctx.font = `700 ${fs}px "Segoe UI",Calibri,Arial,sans-serif`;
+  const w = Math.max(ctx.measureText(l1).width, ctx.measureText(l2).width) + 14, h = 2 * fs + 14;
+  const xa = X(0), xb = X(t1), wt = w / ((xb - xa) / t1 || 1);
+  let best = {d:-1, t:t1 / 2, s:1};
+  if (wt < t1) for (let i = 0; i <= 40; i++){
+    const t = wt / 2 + (t1 - wt) * i / 40, s = f(t) >= 0 ? 1 : -1; let d = Infinity;
+    for (let j = 0; j <= 6; j++){ const tj = t - wt / 2 + wt * j / 6, dp = (Y(0) - Y(f(tj))) * s; d = Math.min(d, dp); }
+    if (d > best.d) best = {d, t, s};
+  }
+  let cx, cy; const beside = best.d < h + 8;
+  const tm = beside ? (best.d > 0 ? best.t : t1 / 2) : best.t, yc = Y(f(tm) / 2);
+  if (!beside){ cx = X(best.t); cy = Y(0) - best.s * best.d / 2; }
+  else {
+    const iX = x => (x - xa) / ((xb - xa) / t1 || 1), clash = (x0, y0) => {
+      for (let j = 0; j <= 12; j++){ const t = iX(x0 - w / 2 - 4 + (w + 8) * j / 12); if (t < 0) continue;
+        if (t > t1){ if (Math.abs(Y(f(t)) - y0) < h / 2 + 4) return true; continue; }
+        const ya = Y(0), yf = Y(f(t)); if (Math.max(ya, yf) + 4 > y0 - h / 2 && Math.min(ya, yf) - 4 < y0 + h / 2) return true; }
+      return false; };
+    let bd = Infinity;
+    for (let x0 = box.x + w / 2 + 4; x0 <= box.x + box.w - w / 2 - 4; x0 += 8)
+      for (let y0 = box.y + 46 + h / 2; y0 <= box.y + box.h - 30 - h / 2; y0 += 6){
+        const dd = Math.hypot(x0 - X(tm), y0 - yc); if (dd < bd && !clash(x0, y0)){ bd = dd; cx = x0; cy = y0; } }
+    if (cx === undefined){ cx = X(tm); cy = yc; }
+  }
+  cx = Math.min(Math.max(cx, box.x + w / 2 + 2), box.x + box.w - w / 2 - 2);
+  cy = Math.min(Math.max(cy, box.y + h / 2 + 2), box.y + box.h - h / 2 - 4);
+  if (beside){ ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(X(tm), yc); ctx.lineTo(cx, cy); ctx.stroke(); ctx.setLineDash([]); }
+  const x0 = cx - w / 2, y0 = cy - h / 2, r = 6;
+  ctx.fillStyle = "rgba(255,255,255,.88)"; ctx.strokeStyle = col; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(x0 + r, y0); ctx.arcTo(x0 + w, y0, x0 + w, y0 + h, r); ctx.arcTo(x0 + w, y0 + h, x0, y0 + h, r);
+  ctx.arcTo(x0, y0 + h, x0, y0, r); ctx.arcTo(x0, y0, x0 + w, y0, r); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = col; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(l1, cx, cy - fs / 2 - 1); ctx.font = `600 ${fs}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillText(l2, cx, cy + fs / 2 + 2);
+  ctx.restore();
+}
+const toolOn = id => !!document.getElementById(id)?.checked;
+// Generic graph. Spec (GQ[key]): {btn, sym, un, s:[[name, f(state), colour, dashed?]], x?:{f, sym, un} (default: time),
+//   area?:{nm:[line 1, symbol, unit], i?:series index}, tan?:{nm, un}, extra?(ctx, X, Y, box)}. The curve is drawn up to now.
+let gq = null;
+function gSpec(){ const keys = graphsFor(); if (!keys.includes(gq)) gq = keys[0]; return GQ[gq]; }
+function drawGraph(){
+  const cv = document.getElementById("graph"); if (!cv.offsetParent) return;
+  const {ctx, w, h} = fitCanvas(cv);
+  ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  const q = gSpec(); if (q.custom){ q.custom(ctx, w, h); return; }
+  const box = {x:66, y:16, w:w - 82, h:h - 66}, T = tEnd(), tu = M.tu || 1, N = 500;
+  const tNow = clamp(R.t, 0, T), ts = [];
+  for (let i = 0; i <= N; i++) ts.push(T * i / N);
+  const st = ts.map(t => at(t)), xf = q.x ? q.x.f : (s => s.t / tu);
+  const xs = st.map(xf), ser = q.s.map(([nm, f, col, dash]) => ({nm, f, col, dash, ys:st.map(f)}));
+  let x0 = Math.min(0, ...xs), x1 = Math.max(...xs); if (x1 - x0 < 1e-9) x1 = x0 + 1;
+  if (!q.x) { x0 = 0; x1 = Math.max(T / tu, 1e-6); }
+  if (q.xMax) x1 = Math.max(x1, q.xMax());
+  let lo = Math.min(0, ...ser.flatMap(s => s.ys)), hi = Math.max(0, ...ser.flatMap(s => s.ys)); const span = hi - lo || 1;
+  if (q.yMax) hi = Math.max(hi, q.yMax());
+  hi = hi > 0 ? niceCeil(hi + span * 0.1) : niceUp(span * 0.1); lo = lo < 0 ? -niceCeil(-lo + span * 0.08) : 0;
+  const {X, Y} = axesR(ctx, box, x0, x1, lo, hi, q.x ? [...q.x.sym, [` / ${q.x.un}`,"n"]] : [["time ","n"],["t","i"],[` / ${M.tn || "s"}`,"n"]], [...q.sym, [` / ${q.un}`,"n"]]);
+  if (q.extra) q.extra(ctx, X, Y, box);
+  const sNow = at(tNow), xNow = xf(sNow), nNow = Math.round(tNow / T * N) || 0, tl = [];
+  // points up to now (with the exact current state at the end)
+  const upTo = arr => arr.slice(0, Math.min(nNow, N) + 1);
+  if (toolOn("areaChk")){
+    if (!q.area) tl.push(M.noArea || "Area: not used on this graph");
+    else { const S = ser[q.area.i || 0], px = [...upTo(xs), xNow], py = [...upTo(S.ys), S.f(sNow)];
+      let mono = true; for (let i = 1; i < px.length; i++) if (px[i] < px[i - 1] - 1e-9) mono = false;
+      if (!mono) tl.push("Area: the quantity on the x-axis must keep increasing");
+      else if (xNow > px[0] + 1e-12){
+        let A = 0; ctx.save(); ctx.globalAlpha = .2;
+        for (let i = 1; i < px.length; i++){ A += (py[i] + py[i - 1]) / 2 * (px[i] - px[i - 1]);
+          ctx.fillStyle = py[i] + py[i - 1] >= 0 ? "#1565C0" : "#C62828";
+          ctx.beginPath(); ctx.moveTo(X(px[i - 1]), Y(0)); ctx.lineTo(X(px[i - 1]), Y(py[i - 1])); ctx.lineTo(X(px[i]), Y(py[i])); ctx.lineTo(X(px[i]), Y(0)); ctx.closePath(); ctx.fill(); }
+        ctx.restore();
+        const fI = xx => { let j = 1; while (j < px.length - 1 && px[j] < xx) j++; const u = (xx - px[j - 1]) / ((px[j] - px[j - 1]) || 1); return py[j - 1] + (py[j] - py[j - 1]) * clamp(u, 0, 1); };
+        const sh = px[0];
+        areaName(ctx, box, {X:xx => X(xx + sh), Y, f:xx => fI(xx + sh), t1:xNow - sh, nm:q.area.nm, val:A * (q.area.k || 1)});
+      }
+    }
+  }
+  ser.forEach(S => { const px = [...upTo(xs), xNow], py = [...upTo(S.ys), S.f(sNow)];
+    ctx.save(); ctx.strokeStyle = S.col; ctx.lineWidth = S.dash ? 2.6 : 2.4; if (S.dash) ctx.setLineDash([8, 4]); ctx.beginPath();
+    px.forEach((xx, i) => i ? ctx.lineTo(X(xx), Y(py[i])) : ctx.moveTo(X(xx), Y(py[i]))); ctx.stroke(); ctx.restore(); });
+  if (!q.x){ ctx.save(); ctx.strokeStyle = COL.accent; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(X(xNow), box.y); ctx.lineTo(X(xNow), box.y + box.h); ctx.stroke(); ctx.restore(); }
+  if (toolOn("tanChk")){
+    if (!q.tan) tl.push(M.noTan || "Tangent: not used on this graph");
+    else { const S = ser[q.tan.i || 0], d = Math.max(T * 2e-3, 1e-6), sa = at(clamp(tNow - d, 0, T)), sb = at(clamp(tNow + d, 0, T));
+      const dx = xf(sb) - xf(sa);
+      if (Math.abs(dx) < 1e-12 || tNow <= 0) tl.push("Tangent: move the time on (▶ or ▸) first");
+      else { const kk = (S.f(sb) - S.f(sa)) / dx, y0 = S.f(sNow), sp = (x1 - x0) * 0.14;
+        ctx.save(); ctx.beginPath(); ctx.rect(box.x, box.y, box.w, box.h); ctx.clip();
+        ctx.strokeStyle = COL.accent; ctx.lineWidth = 2; ctx.setLineDash([8, 4]);
+        ctx.beginPath(); ctx.moveTo(X(xNow - sp), Y(y0 - kk * sp)); ctx.lineTo(X(xNow + sp), Y(y0 + kk * sp)); ctx.stroke(); ctx.restore();
+        tl.push(`gradient = ${q.tan.nm} = ${mn(sci(kk * (q.tan.k || 1)))} ${q.tan.un}`); }
+    }
+  }
+  ser.forEach((S, i) => { const v = S.f(sNow); ctx.fillStyle = S.col; ctx.beginPath(); ctx.arc(X(xNow), Y(v), 4.5, 0, 7); ctx.fill();
+    label(ctx, `${S.nm}: ${mn(sci(v))} ${q.un}`, box.x + 8, box.y + 12 + 17 * i, S.col, "left", 13); });
+  tl.forEach((t, i) => label(ctx, t, box.x + box.w - 6, box.y + 12 + 17 * i, COL.accent, "right", 13));
+  if (!q.x){ const rt = X(xNow) > box.x + box.w * 0.7;
+    label(ctx, `t = ${sig(tNow / tu, 3)} ${M.tn || "s"}`, X(xNow) + (rt ? -6 : 6), box.y + box.h - 12, COL.accent, rt ? "right" : "left", 12.5); }
+}
+function renderGsel(){
+  const keys = graphsFor(); gSpec();
+  document.getElementById("gsel").innerHTML = keys.map(k => `<button data-g="${k}" aria-pressed="${k === gq}">${GQ[k].btn}</button>`).join("");
+}
+const Esc = () => M.E0 >= 1e4 ? 1000 : 1, Eun = () => M.E0 >= 1e4 ? "kJ" : "J";
+const eSer = () => { const k = Esc(), L = [["E_k", s => s.Ek / k, EC.K], ["E_p", s => s.Ep / k, EC.P]];
+  if (set.sc === "spring") L.push(["E_H", s => s.EH / k, EC.H]);
+  L.push(["thermal", s => s.Q / k, EC.T], ["total", s => (s.Ek + s.Ep + (s.EH || 0) + s.Q) / k, EC.tot, true]); return L; };
+const GQ = {
+  Et:{btn:"<i>E</i>–<i>t</i>", sym:[["E","i"]], get un(){ return Eun(); }, get s(){ return eSer(); }, tan:{nm:"rate of change of E_k (power)", get un(){ return Esc() > 1 ? "kW" : "W"; }}},
+  Eh:{btn:"<i>E</i>–<i>h</i>", x:{f:s => s.y, sym:[["height ","n"],["h","i"]], un:"m"}, sym:[["E","i"]], get un(){ return Eun(); }, get s(){ return eSer().filter(q => q[0] !== "thermal"); },
+      tan:{nm:"dE/dh", get un(){ return Esc() > 1 ? "kN" : "N"; }, i:1}},
+  vt:{btn:"<i>v</i>–<i>t</i>", sym:[["speed ","n"],["v","i"]], un:"m s⁻¹", s:[["speed", s => Math.abs(s.v), COL.v]], area:{nm:["Distance travelled", "d", "m"]}, tan:{nm:"a", un:"m s⁻²"}},
+  ht:{btn:"<i>h</i>–<i>t</i>", sym:[["h","i"]], un:"cm", s:[["height", s => s.y * 100, COL.P]], tan:{nm:"v", un:"cm s⁻¹"}},
+};
+const graphsFor = () => set.sc === "spring" ? ["Et", "ht", "Eh"] : ["Et", "Eh", "vt"];
+
+/* ============================ 9 DATA ============================ */
+// Recorded trials are kept per example (scenario). DCOLS[sc] = table columns; ANA = analysis graphs
+// {id, sc:[...], name, x(t), y(t), xs, xu, ys, yu, fit:"origin"|"line", g(fit) → text, hint}.
+let trials = [], anaId = {};
+const noisy = x => document.getElementById("noiseChk").checked ? x * (1 + 0.02 * (2 * Math.random() - 1)) : x;
+function recordTrial(){
+  const d = trialData(); if (typeof d === "string"){ flash(d); return; }
+  trials.push({sc:set.sc, ...d}); save(); renderTrials(); flash("Trial recorded: see the Data & analysis tab.");
+}
+const anaFor = () => ANA.filter(a => a.sc.includes(set.sc));
+function curAna(){ const L = anaFor(); return L.find(a => a.id === anaId[set.sc]) || L[0]; }
+function renderTrials(){
+  const cols = DCOLS[set.sc] || [], list = trials.map((t, i) => [t, i]).filter(([t]) => t.sc === set.sc);
+  document.querySelector("#trials thead").innerHTML = `<tr><th>#</th>${cols.map(c => `<th>${c[0]}</th>`).join("")}<th></th></tr>`;
+  document.querySelector("#trials tbody").innerHTML = list.map(([t, i], n) =>
+    `<tr><td>${n + 1}</td>${cols.map(c => `<td>${c[1](t)}</td>`).join("")}<td><button class="x" aria-label="Delete trial ${n + 1}" data-del="${i}">×</button></td></tr>`).join("");
+  const A = curAna();
+  document.getElementById("anaSel").innerHTML = anaFor().map(a => `<button data-a="${a.id}" aria-pressed="${A && a.id === A.id}">${a.name}</button>`).join("");
+}
+function drawAna(){
+  const cv = document.getElementById("ana"); if (!cv.offsetParent) return;
+  const {ctx, w, h} = fitCanvas(cv);
+  ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  const A = curAna(); if (!A){ label(ctx, "No analysis graph for this example", w / 2, h / 2, COL.muted, "center", 14); return; }
+  const tr = trials.filter(t => t.sc === set.sc && (!A.filter || A.filter(t)));
+  const pts = tr.map(t => [A.x(t), A.y(t)]).filter(p => isFinite(p[0]) && isFinite(p[1]));
+  const xm = niceCeil(Math.max(1e-12, ...pts.map(p => p[0])) * 1.1), ym = niceCeil(Math.max(1e-12, ...pts.map(p => p[1])) * 1.15);
+  const box = {x:68, y:44, w:w - 84, h:h - 94};
+  const {X, Y} = axesR(ctx, box, 0, pts.length ? xm : 1, 0, pts.length ? ym : 1, [...A.xs, [` / ${A.xu}`, "n"]], [...A.ys, [` / ${A.yu}`, "n"]]);
+  label(ctx, `Recorded trials · ${A.hint}`, box.x, 14, COL.muted, "left", 12.5);
+  if (!pts.length){ label(ctx, "Press ● Record to add trials", box.x + box.w / 2, box.y + box.h / 2, COL.muted, "center", 15); return; }
+  for (const p of pts){ ctx.fillStyle = COL.navy; ctx.beginPath(); ctx.arc(X(p[0]), Y(p[1]), 5, 0, 7); ctx.fill(); }
+  if (document.getElementById("fitChk").checked){
+    const fit = A.fit === "line" ? linFit(pts) : originFit(pts);
+    if (!fit){ label(ctx, "Need at least 2 trials (with different values)", box.x, 30, COL.muted, "left", 13); return; }
+    const xa = 0, xb = xm;
+    ctx.save(); ctx.beginPath(); ctx.rect(box.x, box.y, box.w, box.h); ctx.clip(); ctx.strokeStyle = COL.accent; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(X(xa), Y(fit.k * xa + fit.b)); ctx.lineTo(X(xb), Y(fit.k * xb + fit.b)); ctx.stroke(); ctx.restore();
+    label(ctx, A.g(fit), box.x, 30, COL.accent, "left", 13.5);
+  }
+}
+function trialData(){
+  const sc = set.sc;
+  if (sc === "track"){ if (M.vb <= 0) return "The cart did not reach the lowest point."; const vb = noisy(M.vb);
+    return {shape:set.shape, m:set.m, mu:set.mu, h0:M.h0, vb, Ep0:M.E0, Ekb:set.m * vb * vb / 2}; }
+  if (sc === "pend"){ const vb = noisy(M.vb); return {m:set.mp, L:set.Lp, th0:set.th0, air:set.air, h0:M.h0, vb, gap:M.gap}; }
+  if (sc === "spring") return {m:set.ms, k:set.k, x:set.x, loss:set.loss, hm:noisy(M.hmax)};
+  return {m:set.md, h0:set.hd, air:set.air, vb:noisy(M.vb)};
+}
+const DCOLS = {
+  track:[["track", t => SHAPES.find(x => x[0] === t.shape)[1]], ["<i>m</i> / kg", t => sig(t.m)], ["μ", t => sig(t.mu, 2)], ["<i>h</i> / m", t => sig(t.h0)],
+         ["<i>v</i> bottom / m s⁻¹", t => sig(t.vb)], ["<i>v</i>² / m² s⁻²", t => sig(t.vb * t.vb)], ["GPE / J", t => sig(t.Ep0)], ["KE bottom / J", t => sig(t.Ekb)]],
+  pend:[["<i>m</i> / kg", t => sig(t.m)], ["<i>L</i> / m", t => sig(t.L)], ["<i>θ</i>₀ / °", t => sig(t.th0)], ["air", t => t.air ? "on" : "off"], ["<i>h</i> / m", t => sig(t.h0)],
+        ["<i>v</i> bottom / m s⁻¹", t => sig(t.vb)], ["<i>v</i>² / m² s⁻²", t => sig(t.vb * t.vb)], ["short of nose / cm", t => sig(t.gap * 100, 2)]],
+  spring:[["<i>m</i> / g", t => sig(t.m)], ["<i>k</i> / N m⁻¹", t => sig(t.k)], ["<i>x</i> / cm", t => sig(t.x)], ["<i>x</i>² / cm²", t => sig(t.x * t.x)], ["lost / %", t => sig(t.loss)], ["<i>h</i> / cm", t => sig(t.hm * 100)]],
+  drop:[["<i>m</i> / kg", t => sig(t.m)], ["air", t => t.air ? "on" : "off"], ["<i>h</i> / m", t => sig(t.h0)], ["<i>v</i> / m s⁻¹", t => sig(t.vb)], ["<i>v</i>² / m² s⁻²", t => sig(t.vb * t.vb)]],
+};
+const ANA = [
+  {id:"v2h", sc:["track", "pend", "drop"], name:"<i>v</i>²–<i>h</i>", x:t => t.h0, y:t => t.vb * t.vb, xs:[["h","i"]], xu:"m", ys:[["v","i"],["²","n"]], yu:"m² s⁻²",
+   g:f => `gradient = ${sig(f.k)} m s⁻² (2g = 19.6 m s⁻²) → g = ${sig(f.k / 2)} m s⁻²`, hint:"speed at the lowest point, different heights"},
+  {id:"eff", sc:["track"], name:"KE–GPE", x:t => t.Ep0, y:t => t.Ekb, xs:[["E","i"],["p","s"],[" at the start","n"]], xu:"J", ys:[["E","i"],["k","s"],[" at the bottom","n"]], yu:"J",
+   g:f => `gradient = ${f3(f.k)} → ${f1(f.k * 100)} % kept as KE`, hint:"same track and μ, different heights or masses"},
+  {id:"hx2", sc:["spring"], name:"<i>h</i>–<i>x</i>²", x:t => t.x * t.x, y:t => t.hm * 100, xs:[["x","i"],["²","n"]], xu:"cm²", ys:[["h","i"]], yu:"cm",
+   g:f => `gradient = ${sig(f.k)} cm⁻¹ → k = 2mg × gradient × 100 = ${sig(2 * set.ms / 1000 * g * f.k * 100)} N m⁻¹`, hint:"same spring, five stretches"},
+];
+
+/* ============================ 10 TASKS ============================ */
+const TASKS = [
+ {id:"pre", title:"1 · Pre-lab: predict", time:"≈ 15 min", steps:[
+  {type:"predict", setup:P("nose"), text:"🎳 Hook: a heavy ball on a rope is held against the teacher's nose and released (not pushed). On the way back it will…",
+   opts:["hit the nose harder", "hit the nose just as hard", "stop just short of the nose", "swing much further than the nose"], correct:2,
+   why:"It cannot come back higher than it started: that would need more energy than the GPE it had. Air resistance turns a little of the energy into thermal energy, so it stops just short. Press ▶ Start and watch the gap."},
+  {type:"num", text:"Retrieval: calculate the kinetic energy of a 0.50 kg ball moving at 4.0 m s⁻¹.", answer:() => 0.5 * 0.5 * 16, unit:"J", hint:"E_k = ½mv²."},
+  {type:"num", text:"Retrieval: calculate the work needed to stretch a spring (k = 100 N m⁻¹) by 0.20 m.", answer:() => 0.5 * 100 * 0.04, unit:"J", hint:"E_H = ½kx²."},
+  {type:"num", setup:P("bag"), text:"Retrieval: calculate the GPE gained by a 3.0 kg bag lifted 2.0 m.", answer:() => 3 * g * 2, unit:"J", hint:"ΔE_p = mgΔh. The ⬇️ Drop example is set up with this bag: check E_p at the start."},
+  {type:"predict", setup:P("curve"), text:"Two smooth tracks drop 2.0 m: a steep curved one and a straight ramp. Which gives the higher speed at the bottom?",
+   opts:["the curved one: it is steeper", "the straight ramp: it is shorter", "the same speed", "it depends on the mass"], correct:2,
+   why:"Without friction mgh = ½mv² ⇒ v = √(2gh) = 6.26 m s⁻¹ for any path. The curved one gets there sooner, but not faster. Try both presets."},
+  {type:"predict", setup:P("exit"), text:"A 0.50 kg and a 3.0 kg ball are dropped from the same height (no air). Which hits the ground faster?",
+   opts:["the 3.0 kg ball", "the 0.50 kg ball", "the same speed"], correct:2,
+   why:"mgh = ½mv²: the mass cancels. The heavier ball has more GPE, but it needs more KE for the same speed."},
+  {type:"num", setup:P("exit"), text:"Exit question 1: a ball is dropped from 5.0 m. Use energy conservation to find its speed at the ground.", answer:() => vFall(5), unit:"m s⁻¹", hint:"v = √(2gh)."},
+ ]},
+ {id:"lab", title:"2 · During the lab: compare", time:"≈ 20 min", steps:[
+  {type:"do", setup:P("cart"), text:"🛒 Smart Cart demo (PASCO lab 06): 0.500 kg released from rest, 1.00 m along a 6° ramp. Press ▶ Start and watch the E–t graph, then ● Record."},
+  {type:"num", setup:P("cart"), text:"Calculate the GPE of the cart at the release line (h = 1.00 × sin 6°).", answer:() => 0.5 * g * Math.sin(rad(6)), unit:"J", hint:"h = 0.1045 m; E_p = mgh."},
+  {type:"num", setup:P("cart"), text:"Read the kinetic energy at the bottom.", answer:() => P_cartKE(), unit:"J", hint:"Readouts (or the end of the E_k line). The class data gave 0.483 J."},
+  {type:"num", setup:P("cart"), text:"What percentage of the GPE was 'lost'?", answer:() => (1 - P_cartKE() / (0.5 * g * Math.sin(rad(6)))) * 100, unit:"%", tol:0.1,
+   hint:"(GPE − KE)/GPE × 100."},
+  {type:"num", setup:P("cart"), text:"Calculate the average friction force on the cart: energy lost ÷ distance.", answer:() => (0.5 * g * Math.sin(rad(6)) - P_cartKE()) / 1.0, unit:"N", tol:0.1,
+   hint:"Work done against friction = F_f × L, and L = 1.00 m."},
+  {type:"predict", setup:P("cart"), text:"Where did the 'lost' energy go?", opts:["it was destroyed", "into thermal energy (wheels, axles, air)", "into extra GPE", "into the cart's momentum"], correct:1,
+   why:"Energy is conserved. Friction does negative work on the cart and the energy is dissipated as thermal energy. Switch the Energy chart to Sankey."},
+  {type:"do", setup:P("nose"), text:"🎳 Pendulum to the nose: run it with air resistance on, then with 'The same pendulum in a vacuum'. Compare the gap."},
+  {type:"do", setup:P("sp2"), text:"🌀 Flying spring (Oxford practical): run the 2.0, 4.0 and 6.0 cm presets and ● Record each. Add 1.0, 3.0 and 5.0 cm yourself."},
+ ]},
+ {id:"hw", title:"3 · Homework: analyse", time:"≈ 30 min", steps:[
+  {type:"num", setup:P("coast"), text:"Retrieval: a frictionless roller coaster drops 20 m from rest. Calculate its speed at the bottom.", answer:() => vFall(20), unit:"m s⁻¹", hint:"v = √(2gh)."},
+  {type:"num", setup:P("p2"), text:"A pendulum 2.0 m long is released from 30° to the vertical. Calculate the height it falls through to the bottom.", answer:() => 2 * (1 - Math.cos(rad(30))), unit:"m",
+   hint:"h = L − L cos θ."},
+  {type:"num", setup:P("p2"), text:"Calculate its speed at the bottom (no air resistance).", answer:() => vFall(2 * (1 - Math.cos(rad(30)))), unit:"m s⁻¹", hint:"v = √(2gh)."},
+  {type:"num", setup:P("sp4"), text:"Flying spring: 10 g, k = 25 N m⁻¹, stretched 4.0 cm. Calculate the height it reaches (no losses).", answer:() => hSpring(25, 0.04, 0.010) * 100, unit:"cm",
+   hint:"½kx² = mgh ⇒ h = kx²/(2mg). Give the answer in cm."},
+  {type:"do", setup:P("sp2"), text:"Record at least 5 stretches (1.0–6.0 cm) of the same spring. Data tab → <b>h–x²</b>."},
+  {type:"num", text:"Use the gradient of your h–x² line to find the spring constant k (m = 10 g).", answer:() => 25, unit:"N m⁻¹",
+   hint:"gradient = k/(2mg) in cm⁻¹ (×100 for m⁻¹). The data tab also shows the result."},
+  {type:"predict", setup:P("spreal"), text:"With a real spring, 30 % of the elastic energy goes into vibration and sound. The value of k from the gradient will be…",
+   opts:["correct", "too small", "too big"], correct:1,
+   why:"The spring only rises to 70 % of the height, so the gradient (and k = 2mg × gradient) comes out 30 % too small. Compare with k from Hooke's law (Spring force simulation)."},
+  {type:"num", text:"A 0.50 kg cart is released from 0.30 m and reaches the bottom at 2.2 m s⁻¹. What percentage of its GPE was dissipated?",
+   answer:() => (1 - 0.5 * 0.5 * 2.2 * 2.2 / (0.5 * g * 0.3)) * 100, unit:"%", hint:"GPE = mgh; KE = ½mv²; lost = (GPE − KE)/GPE."},
+ ]},
+];
+function P_cartKE(){ const s0 = {...set}; Object.assign(set, P("cart")); const r = trackRun(); Object.assign(set, s0); return r.S[r.S.length - 1].Ek; }
+// Step types: "do" (instruction + done tick), "predict" (lock in a choice, then check),
+// "num" (numeric answer checked within tol, default 5 %). "setup" applies sim settings for the student.
+let taskState = {}, curSet = "pre";
+function renderTaskSets(){
+  document.getElementById("taskSets").innerHTML = TASKS.map(s =>
+    `<button class="chip" data-set="${s.id}" aria-pressed="${s.id === curSet}">${s.title} <span class="hint">${s.time}</span></button>`).join("");
+}
+function renderTasks(){
+  const ts = TASKS.find(s => s.id === curSet), box = document.getElementById("taskList"); box.innerHTML = "";
+  ts.steps.forEach((st, i) => {
+    const key = `${ts.id}.${i}`, S = taskState[key] || (taskState[key] = {});
+    const d = document.createElement("div"); d.className = "step" + (S.done ? " done" : "");
+    let html = `<p class="q"><span class="n">${i + 1}</span>${st.type === "predict" ? '<span class="tag">Predict · </span>' : ""}${st.text}</p>`;
+    if (st.setup) html += `<button class="btn small" data-setup="${key}">⚙ Set up the sim for me</button> `;
+    if (st.type === "do"){
+      html += `<label class="switch"><input type="checkbox" data-done="${key}" ${S.done ? "checked" : ""}> Done</label>`;
+    } else if (st.type === "predict"){
+      st.opts.forEach((o, j) => {
+        const cls = S.checked ? (j === st.correct ? " good" : j === S.choice ? " bad" : "") : "";
+        html += `<label class="opt${cls}"><input type="radio" name="r${key}" value="${j}" data-choice="${key}" ${S.choice === j ? "checked" : ""} ${S.locked ? "disabled" : ""}> ${o}</label>`;
+      });
+      if (!S.locked) html += `<button class="btn small primary" data-lock="${key}" ${S.choice === undefined ? "disabled" : ""}>🔒 Lock in my prediction</button>`;
+      else if (!S.checked) html += `<div class="fb info">Prediction locked. Now test it in the sim, then press Check.</div><button class="btn small navy" data-check="${key}">Check</button>`;
+      else html += `<div class="fb ${S.choice === st.correct ? "ok" : "no"}">${S.choice === st.correct ? "✔ Your prediction was right. " : "✘ Not what happens. "}${st.why}</div>`;
+    } else if (st.type === "num"){
+      const a = st.answer(), shown = st.unit ? `${mn(sci(a))} ${st.unit}` : mn(sci(a));
+      html += `<div class="row"><input class="num" inputmode="decimal" data-num="${key}" value="${S.value ?? ""}" aria-label="answer"> ${st.unit}
+               <button class="btn small navy" data-chknum="${key}">Check</button>
+               ${st.hint ? `<button class="btn small" data-hint="${key}">💡 Hint</button>` : ""}</div>`;
+      if (S.showHint && st.hint) html += `<div class="fb info">${st.hint}</div>`;
+      if (S.status === "ok") html += `<div class="fb ok">✔ Correct (within ${Math.round((st.tol ?? 0.05) * 100)} %). Model answer: ${shown}.</div>`;
+      else if (S.status) html += `<div class="fb no">✘ ${S.status === "high" ? "Too high" : S.status === "low" ? "Too low" : "Enter a number"}. ${S.tries >= 2 ? `Model answer: ${shown}.` : "Try again or use the hint."}</div>`;
+    }
+    d.innerHTML = html; box.appendChild(d);
+  });
+}
+function applySetup(su){
+  const c = JSON.parse(JSON.stringify(su)); if (c.pre && presetById(c.pre)) Object.assign(set, P(c.pre));
+  Object.assign(set, c); setScenarioUI(); syncControls(); reset(); renderTrials(); renderGsel();
+}
+function taskClick(e){
+  const t = e.target.closest("[data-setup],[data-lock],[data-check],[data-chknum],[data-hint],[data-set]"); if (!t) return;
+  if (t.dataset.set){ curSet = t.dataset.set; renderTaskSets(); renderTasks(); save(); return; }
+  const key = t.dataset.setup || t.dataset.lock || t.dataset.check || t.dataset.chknum || t.dataset.hint;
+  const [sid, idx] = key.split("."), st = TASKS.find(s => s.id === sid).steps[+idx], S = taskState[key];
+  if (t.dataset.setup) applySetup(st.setup);
+  if (t.dataset.lock){ S.locked = true; }
+  if (t.dataset.check){ S.checked = true; S.done = true; }
+  if (t.dataset.hint){ S.showHint = true; }
+  if (t.dataset.chknum){
+    const raw = document.querySelector(`[data-num="${key}"]`).value.replace(",", "."), v = parseFloat(raw), a = st.answer();
+    S.value = raw; S.tries = (S.tries || 0) + 1;
+    if (!isFinite(v)) S.status = "nan";
+    else if (Math.abs(v - a) <= Math.max((st.tol ?? 0.05) * Math.abs(a), st.abs ?? 1e-9)) { S.status = "ok"; S.done = true; }
+    else S.status = v > a ? "high" : "low";
+  }
+  save(); renderTasks();
+}
+function taskChange(e){
+  const t = e.target;
+  if (t.dataset.choice){ taskState[t.dataset.choice].choice = +t.value; renderTasks(); save(); }
+  if (t.dataset.done){ taskState[t.dataset.done].done = t.checked; renderTasks(); save(); }
+}
+
+/* ============================ 11 UI ============================ */
+const CTL = [
+  {id:"pre", kind:"select", lab:"Example", opts:() => PRESETS.filter(p => p.id === "custom" || p.sc === set.sc).map(p => [p.id, p.name]), keepPre:true},
+  {id:"shape", sc:["track"], kind:"select", lab:"Track", opts:SHAPES},
+  {id:"h", sc:["track"], kind:"range", lab:"Start height <i>h</i>", unit:"m", min:0.1, max:40, tmin:0.01, tmax:1000, step:0.1, show:() => set.shape !== "ramp"},
+  {id:"th", sc:["track"], kind:"range", lab:"Ramp angle <i>θ</i>", unit:"°", min:2, max:60, tmin:0.5, tmax:89, step:0.5, show:() => set.shape === "ramp"},
+  {id:"L", sc:["track"], kind:"range", lab:"Ramp length <i>L</i>", unit:"m", min:0.3, max:10, tmin:0.05, tmax:1000, step:0.05, show:() => set.shape === "ramp"},
+  {id:"m", sc:["track"], kind:"range", log:true, lab:"Mass <i>m</i>", unit:"kg", min:0.1, max:1000, tmin:0.001, tmax:100000},
+  {id:"mu", sc:["track"], kind:"range", lab:"Friction <i>μ</i>", unit:"", min:0, max:0.2, tmin:0, tmax:1, step:0.00005, bstep:0.001},   // bstep: ▼ ▲ step (the hidden slider keeps the fine step)
+  {id:"obj", sc:["pend", "drop"], kind:"select", lab:"Object", opts:() => BALLS.filter(b => set.sc === "pend" ? ["bowl", "foot", "beach"].includes(b[0]) : !["bowl", "beach"].includes(b[0])).map(b => [b[0], b[1]])},
+  {id:"mp", sc:["pend"], kind:"range", log:true, lab:"Mass <i>m</i>", unit:"kg", min:0.05, max:20, tmin:0.001, tmax:1000},
+  {id:"Lp", sc:["pend"], kind:"range", lab:"Length <i>L</i>", unit:"m", min:0.5, max:5, tmin:0.05, tmax:100, step:0.05},
+  {id:"th0", sc:["pend"], kind:"range", lab:"Release angle", unit:"°", min:5, max:80, tmin:1, tmax:90, step:1},
+  {id:"ms", sc:["spring"], kind:"range", lab:"Spring mass <i>m</i>", unit:"g", min:2, max:50, tmin:0.1, tmax:5000, step:0.5},
+  {id:"k", sc:["spring"], kind:"range", lab:"Spring constant <i>k</i>", unit:"N m⁻¹", min:5, max:100, tmin:0.1, tmax:10000, step:0.5},
+  {id:"x", sc:["spring"], kind:"range", lab:"Stretch <i>x</i>", unit:"cm", min:0.5, max:8, tmin:0.05, tmax:100, step:0.1},
+  {id:"loss", sc:["spring"], kind:"range", lab:"Energy lost on release", unit:"%", min:0, max:60, tmin:0, tmax:100, step:1},
+  {id:"md", sc:["drop"], kind:"range", log:true, lab:"Mass <i>m</i>", unit:"kg", min:0.002, max:10, tmin:0.0001, tmax:10000.0},
+  {id:"hd", sc:["drop"], kind:"range", lab:"Height <i>h</i>", unit:"m", min:0.2, max:50, tmin:0.01, tmax:10000, step:0.1},
+  {id:"air", sc:["pend", "drop"], kind:"check", lab:"Air resistance", text:"on"},
+  {id:"chart", kind:"seg", lab:"Energy chart", opts:[["bars", "Bars"], ["sankey", "Sankey"]], keepPre:true},
+];
+function onChanged(c, v){
+  if (c.id === "obj"){ const b = ball(v); if (set.sc === "pend") set.mp = b[2]; else set.md = b[2]; }
+}
+function readouts(s){
+  const sc = set.sc, EH = s.EH || 0, tot = s.Ek + s.Ep + EH + s.Q, mech = s.Ek + s.Ep + EH, fE = v => fmtE(v);
+  let html = `<table>${row("<i>E</i><sub>k</sub>", fE(s.Ek), "<i>E</i><sub>p</sub>", fE(s.Ep), EC.K, EC.P)}
+    ${sc === "spring" ? row("<i>E</i><sub>H</sub>", fE(EH), "lost (vibration…)", fE(s.Q), EC.H, EC.T) : row("thermal", fE(s.Q), "mechanical", fE(mech), EC.T)}
+    ${row("total", fE(tot), "speed", `${f2(Math.abs(s.v))} m s⁻¹`, EC.tot, COL.v)}`;
+  if (sc === "track") html += `${row("height", `${f3(s.y)} m`, "<i>v</i> bottom", `${f2(M.vb)} m s⁻¹`, "", COL.v)}
+    <tr><td colspan="5" class="ev">no friction: <i>v</i> = √(2<i>gh</i>) = ${f2(vFall(M.h0))} m s⁻¹ · ${pill(set.mu === 0, "mechanical energy conserved", `${f1(M.S[M.S.length - 1].Q / M.E0 * 100)} % → thermal by the end`)}</td></tr>`;
+  if (sc === "pend") html += `${row("tension <i>T</i>", fmtF(s.T), "<i>v</i> bottom", `${f2(M.vb)} m s⁻¹`, COL.P, COL.v)}
+    <tr><td colspan="5" class="ev">h = <i>L</i>(1 − cos <i>θ</i>₀) = ${f3(M.h0)} m · √(2<i>gh</i>) = ${f2(vFall(M.h0))} m s⁻¹ · ${pill(M.gap < 0.002, "back to the nose", `${sig(M.gap * 100, 2)} cm short`)}</td></tr>`;
+  if (sc === "spring") html += `${row("height", `${f1(s.y * 100)} cm`, "<i>h</i><sub>max</sub>", `${f1(M.hmax * 100)} cm`, "", COL.accent)}
+    <tr><td colspan="5" class="ev">½<i>kx</i>² = ${sci(M.E0)} J · <i>h</i> = <i>kx</i>²/2<i>mg</i> = ${f1(hSpring(set.k, set.x / 100, set.ms / 1000) * 100)} cm (no losses)</td></tr>`;
+  if (sc === "drop") html += `${row("height", `${f2(s.y)} m`, "<i>v</i> at the ground", `${f2(M.vb)} m s⁻¹`, "", COL.v)}
+    <tr><td colspan="5" class="ev">no air: <i>v</i> = √(2<i>gh</i>) = ${f2(vFall(set.hd))} m s⁻¹ · GPE at the top = ${fmtE(set.md * g * set.hd)}</td></tr>`;
+  return html + "</table>";
+}
+const $ = id => document.getElementById(id);
+function save(){ try { localStorage.setItem(STORE, JSON.stringify({trials, taskState, curSet, anaId})); } catch (e) {} }
+function load(){ try { const d = JSON.parse(localStorage.getItem(STORE) || "{}");
+  trials = d.trials || []; taskState = d.taskState || {}; curSet = d.curSet || "pre"; anaId = {...anaId, ...(d.anaId || {})}; } catch (e) {} }
+function flash(msg){ let el = $("toast");
+  if (!el){ el = document.createElement("div"); el.id = "toast"; el.setAttribute("role", "status");
+    el.style.cssText = "position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:#1F3A5F;color:#fff;padding:10px 16px;border-radius:10px;z-index:20;max-width:90vw;font-size:.95rem";
+    document.body.appendChild(el); }
+  el.textContent = msg; el.style.display = "block"; clearTimeout(flash.tm); flash.tm = setTimeout(() => el.style.display = "none", 3200); }
+
+// Controls: every slider has a number box next to it. Type a value and press Enter (or leave the box):
+// it is kept to the allowed range and keeps the precision you typed; the slider follows.
+// CTL entries: {id, kind:"range"|"select"|"seg"|"check", lab, unit, min, max, step | log, opts, sc:[scenarios], show()}
+const getV = id => set[id];
+function putV(id, v){ set[id] = v; }
+const fmtBox = v => String(+Number(v).toPrecision(5));
+const txt = x => typeof x === "function" ? x() : x;
+const ctlOn = c => (!c.sc || c.sc.includes(set.sc)) && (!c.show || c.show());
+const optsOf = c => typeof c.opts === "function" ? c.opts() : c.opts;
+function buildControls(){
+  $("controls").innerHTML = CTL.map(c => {
+    const lab = `<span class="lab" id="${c.id}Lab">${txt(c.lab)}</span>`;
+    if (c.kind === "range"){
+      const mn = c.log ? Math.log10(c.min) : c.min, mx = c.log ? Math.log10(c.max) : c.max, st = c.log ? 0.001 : c.step;
+      return `<div class="ctl" id="${c.id}C">${lab}<div class="rn">
+        <input type="range" id="${c.id}" min="${mn}" max="${mx}" step="${st}" aria-labelledby="${c.id}Lab">
+        <input class="nb" type="text" inputmode="decimal" id="${c.id}N" aria-label="type a value" title="Type a value (${fmtBox(c.tmin ?? c.min)}–${fmtBox(c.tmax ?? c.max)} ${c.unit}) and press Enter">
+        <span class="u">${c.unit}</span></div></div>`;
+    }
+    if (c.kind === "seg") return `<div class="ctl" id="${c.id}C">${lab}<div class="seg" id="${c.id}">${c.opts.map(o => `<button data-v="${o[0]}">${o[1]}</button>`).join("")}</div></div>`;
+    if (c.kind === "select") return `<div class="ctl" id="${c.id}C">${lab}<select id="${c.id}" aria-labelledby="${c.id}Lab"></select></div>`;
+    return `<div class="ctl" id="${c.id}C">${lab}<label class="switch"><input type="checkbox" id="${c.id}"> ${c.text}</label></div>`;
+  }).join("");
+  for (const c of CTL){
+    const el = $(c.id);
+    if (c.kind === "range"){
+      el.addEventListener("input", () => { let v = c.log ? +Number(Math.pow(10, +el.value)).toPrecision(3) : +el.value; changed(c, v); });
+      const nb = $(c.id + "N");
+      const commit = () => { const raw = nb.value.trim().replace(",", "."), v = Number(raw);
+        if (!raw || !isFinite(v)){ nb.value = fmtBox(getV(c.id)); return; }
+        const cv = clamp(v, c.tmin ?? c.min, c.tmax ?? c.max); nb.classList.toggle("clamped", cv !== v);   // typed range (tmin/tmax) can be wider than the slider
+        if (cv !== v){ flash(`Allowed range: ${fmtBox(c.tmin ?? c.min)} to ${fmtBox(c.tmax ?? c.max)} ${c.unit}. Set to ${fmtBox(cv)}.`); setTimeout(() => nb.classList.remove("clamped"), 1800); }
+        changed(c, cv); if (nb._st) STEPPER.check(nb._st, cv === v); };
+      nb.addEventListener("input", () => { clearTimeout(nb._tm); nb._tm = setTimeout(() => {   // apply by itself once typing pauses (no Enter needed)
+        const raw = nb.value.trim().replace(",", "."); if (raw && isFinite(Number(raw)) && !/[.eE+-]$/.test(raw)){ nb._auto = raw; commit(); } }, 600); });
+      nb.addEventListener("change", () => { clearTimeout(nb._tm); if (nb.value.trim().replace(",", ".") !== nb._auto) commit(); nb._auto = null; });
+      nb.addEventListener("keydown", e => { if (e.key === "Enter"){ clearTimeout(nb._tm); commit(); nb._auto = null; nb.select(); } });
+      let d0;   // ▼ [box] ▲ ↺ (shared stepper): start value = the value when the page has loaded
+      STEPPER.attach(nb, {get:() => +getV(c.id), unit:() => c.unit, toast:flash, room:() => [c.min, c.max], hard:() => [c.tmin ?? c.min, c.tmax ?? c.max],
+        log:!!c.log, step:() => c.bstep ?? c.step, base:() => c.min,
+        def:() => { if (d0 === undefined) d0 = JSON.parse(JSON.stringify(set)); const d = d0[c.id]; return Array.isArray(d) ? d[set.kSel] : d; },
+        apply:v => { nb.value = STEPPER.fmt(v); nb._auto = null; commit(); }});
+    } else if (c.kind === "seg") el.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return;
+      changed(c, typeof c.opts[0][0] === "number" ? +b.dataset.v : b.dataset.v); });
+    else if (c.kind === "select") el.addEventListener("change", () => changed(c, el.value));
+    else el.addEventListener("change", () => changed(c, el.checked));
+  }
+}
+function changed(c, v){
+  putV(c.id, v);
+  if (c.id === "pre"){ if (presetById(v) && v !== "custom") Object.assign(set, P(v)); }
+  else if (!c.keepPre) set.pre = "custom";
+  if (typeof onChanged === "function") onChanged(c, v);
+  syncControls(); reset(); renderTrials();
+}
+function syncControls(){
+  for (const c of CTL){
+    const on = ctlOn(c), box = $(c.id + "C"); box.classList.toggle("hide", !on);
+    if (!on) continue;
+    $(c.id + "Lab").innerHTML = txt(c.lab);
+    const el = $(c.id), v = getV(c.id);
+    if (c.kind === "range"){
+      el.value = c.log ? Math.log10(v) : v; const nb = $(c.id + "N");
+      if (document.activeElement !== nb) nb.value = fmtBox(v);
+    } else if (c.kind === "seg") el.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v) === String(v)));
+    else if (c.kind === "select"){ const html = optsOf(c).map(o => `<option value="${o[0]}">${o[1]}</option>`).join("");
+      if (el.dataset.h !== html){ el.innerHTML = html; el.dataset.h = html; } el.value = v; }
+    else el.checked = !!v;
+  }
+}
+function setScenarioUI(){
+  document.querySelectorAll("#scen button").forEach(b => b.setAttribute("aria-pressed", b.dataset.sc === set.sc));
+  $("graphHint").innerHTML = txt(SCN[set.sc].hint);
+  $("fbdTitle").innerHTML = txt(SCN[set.sc].mid);
+}
+function updateButtons(){
+  $("startBtn").disabled = R.playing && !R.paused;
+  $("pauseBtn").disabled = !R.playing; $("pauseBtn").textContent = R.paused ? "▶" : "⏸"; $("pauseBtn").setAttribute("aria-label", R.paused ? "Resume" : "Pause");
+}
+const fmtDur = s => s >= 3600 ? `${+(s / 3600).toPrecision(2)} h` : s >= 60 ? `${+(s / 60).toPrecision(2)} min` : s < 0.1 ? `${+(s * 1000).toPrecision(2)} ms` : `${+s.toPrecision(2)} s`;
+function updateStepLabels(){ const d = fmtDur(stepDt()); $("backBtn").textContent = `◂ ${d}`; $("fwdBtn").textContent = `${d} ▸`; }
+
+// readouts helpers
+let lastRO = "";
+const row = (a, b, c = "", d = "", col1 = "", col2 = "") => `<tr><td>${a}</td><td class="v"${col1 ? ` style="color:${col1}"` : ""}>${b}</td><td class="gap"></td><td>${c}</td><td class="v"${col2 ? ` style="color:${col2}"` : ""}>${d}</td></tr>`;
+function pill(ok, yes, no){ return `<span class="pill ${ok ? "rest" : "slide"}">${ok ? yes : no}</span>`; }
+function showReadouts(){ const html = readouts(at(R.t)); if (html !== lastRO){ $("readouts").innerHTML = html; lastRO = html; } }
+function drawScene(){
+  const {ctx, w, h} = fitCanvas($("scene")); ctx.clearRect(0, 0, w, h);
+  const s = at(R.t); sceneMain(ctx, w, h, s);
+  if (tEnd() > 0) label(ctx, `t = ${M.tu ? sig(R.t / M.tu, 3) + " " + M.tn : f2(R.t) + " s"}`, w - 10, h - 12, COL.P, "right", 14);
+  const sp = M.speed || 1; if (tEnd() > 0 && Math.abs(sp - 1) > 0.05) label(ctx, sp < 1 ? `slow motion ×${sig(1 / sp, 2)}` : `speeded up ×${sig(sp, 2)}`, w - 10, h - 30, COL.muted, "right", 12);
+}
+function drawFBD(){
+  const {ctx, w, h} = fitCanvas($("fbd")); ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  midMain(ctx, w, h, at(R.t));
+}
+
+$("scen").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return;
+  set.sc = b.dataset.sc; Object.assign(set, P(SCN[set.sc].pre));
+  setScenarioUI(); syncControls(); reset(); renderTrials(); renderGsel(); });
+$("startBtn").addEventListener("click", start);
+$("pauseBtn").addEventListener("click", () => { R.paused = !R.paused; updateButtons(); });
+$("resetBtn").addEventListener("click", () => { reset(); });
+$("recBtn").addEventListener("click", recordTrial);
+$("gsel").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; gq = b.dataset.g; renderGsel(); });
+$("anaSel").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; anaId[set.sc] = b.dataset.a; save(); renderTrials(); });
+$("clearBtn").addEventListener("click", () => { if (confirm("Delete the recorded trials of this example?")){ trials = trials.filter(t => t.sc !== set.sc); save(); renderTrials(); } });
+$("trials").addEventListener("click", e => { const b = e.target.closest("[data-del]"); if (b){ trials.splice(+b.dataset.del, 1); save(); renderTrials(); } });
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x === t));
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("on", p.id === t.dataset.tab));
+}));
+$("pTasks").addEventListener("click", taskClick);
+$("pTasks").addEventListener("change", taskChange);
+$("helpBtn").addEventListener("click", () => $("help").classList.add("on"));
+$("helpClose").addEventListener("click", () => $("help").classList.remove("on"));
+$("help").addEventListener("click", e => { if (e.target.id === "help") $("help").classList.remove("on"); });
+const gcv = $("graph");
+const probeFromGraph = e => { if (e.buttons !== 1 && e.type !== "pointerdown") return; if (GQ[gq] && GQ[gq].x) return;
+  const r = gcv.getBoundingClientRect(), bw = r.width - 82;
+  R.t = clamp((e.clientX - r.left - 66) / bw * tEnd(), 0, tEnd());
+  R.playing = R.t < tEnd(); R.paused = R.playing; updateButtons(); };
+gcv.addEventListener("pointerdown", probeFromGraph); gcv.addEventListener("pointermove", probeFromGraph);
+$("backBtn").addEventListener("click", () => stepBy(-stepDt()));
+$("fwdBtn").addEventListener("click", () => stepBy(stepDt()));
+document.addEventListener("keydown", e => {
+  const t = e.target; if (t.tagName === "SELECT" || t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && t.type !== "checkbox")) return;
+  if ($("help").classList.contains("on")) return;
+  if (e.key === "ArrowLeft"){ stepBy(-stepDt()); e.preventDefault(); }
+  else if (e.key === "ArrowRight"){ stepBy(stepDt()); e.preventDefault(); }
+});
+
+load(); Object.assign(set, P(SCN[set.sc].pre)); buildControls(); setScenarioUI(); syncControls(); reset(); renderTrials(); renderGsel(); renderTaskSets(); renderTasks();
+let last = performance.now();
+function frame(now){
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  step(dt);
+  drawScene(); drawFBD(); drawGraph(); drawAna(); showReadouts();
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+/* NEWTON HOOK */ NEWTON.hook();
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>

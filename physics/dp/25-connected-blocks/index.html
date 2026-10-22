@@ -1,0 +1,2255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connected Blocks Simulation</title>
+<!--
+  IBDP Physics SL · Grade 11 · Topic A.2 Forces (Newton's laws, Block 4)
+  Connected blocks — two or three blocks on a surface with an applied force: touching (pushed), joined by strings (pulled),
+  joined by a tow bar / rod, or mixed (string A–B, B touches C, push on the middle block).
+    Whole system: a = ΣF_external / m_total; each force between two blocks from the FBD of the blocks beyond it.
+    Newton's 3rd law: F(A on B) = −F(B on A) at every instant — accelerating, at constant velocity, slowing down or at rest.
+    Friction: none · same μ (μs, μd) · μ per block · fixed resistive forces; force at an angle θ; push or pull from either end.
+    ✋ Let go and ◀ Brake during a run: strings go slack, touching blocks separate, a tow bar is pushed (compression).
+  Self-contained: no internet, no external libraries. Open in any modern browser.
+
+  File sections (same order as Simulation 01):
+    1 STYLE     layout, colours (as Simulations 16–24)
+    2 MARKUP    header with the connection buttons · scene + readouts · FBD column (+ forces table) · tabs · controls
+    3 CONFIG    examples (presets), connection types
+    4 PHYSICS   groups of blocks that move together, static/sliding friction, one-way links (touch / string), collisions
+    5 RUN       run state; at(t) interpolates the worked-out run; let go / brake join a new run on
+    6 SCENE     side view (boxes, carts, sleds, car + trailer, truck + car) with the 3rd-law pairs
+    7 FBD       FBD of every block + whole system (internal forces cancel)
+    8 GRAPHS    v–t, a–t, forces–t
+    9 DATA      recorded trials and analysis graphs (a–F → total mass; force between blocks–F → mass fraction)
+   10 TASKS     data-driven task list (predict / numeric / do)
+   11 UI        controls, events, storage, main loop
+-->
+<style>
+/* ============================ 1 STYLE ============================ */
+/* Simulation 01 style (approved template), as in Simulations 16–24 */
+:root{
+  --navy:#1F3A5F; --accent:#E65100; --ink:#263238; --muted:#606A72;
+  --bg:#F2F5F9; --card:#FFFFFF; --line:#DDE6F0; --soft:#FFF3E0; --soft-blue:#E3F2FD;
+  --wood:#FFCC80; --wood-edge:#C68A3A;
+  --cW:#2A5D8A; --cN:#2E7D32; --cF:#C62828; --cP:#6A1B9A;   /* weight, normal, friction, pull */
+  --ok:#2E7D32; --bad:#C62828;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);
+  font:16px/1.4 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;min-height:100dvh}
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);
+  display:flex;align-items:center;gap:16px;padding:8px 16px}
+header h1{font-size:1.25rem;margin:0;font-weight:600}
+header .sub{font-size:.85rem;opacity:.85}
+header .grow{flex:1}
+.btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;
+  min-height:44px;padding:6px 14px;cursor:pointer;touch-action:manipulation}
+.btn:hover{border-color:var(--navy)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.small{min-height:36px;padding:4px 10px;font-size:.9rem}
+header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
+
+/* layout: scene + state | FBD (always visible) | tabs; fills the screen height */
+main{flex:1;min-height:500px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1.3fr);
+  grid-template-rows:minmax(0,1fr) auto;gap:12px;padding:12px 16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.card h2{font-size:.95rem;margin:0;padding:6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line);
+  color:var(--navy);font-weight:600}
+.left{display:flex;flex-direction:column;gap:12px;min-width:0;min-height:0}
+.scenecard{flex:1 1 0;display:flex;flex-direction:column;min-height:0}
+.fbdcol{display:flex;flex-direction:column;min-width:0;min-height:0}
+#sceneWrap{position:relative;flex:1;min-height:150px}
+#scene{width:100%;height:100%;display:block}
+#fbdWrap{flex:1;min-height:220px}
+#fbd{width:100%;height:100%;display:block}
+.readouts{padding:6px 12px;flex:0 1 auto;min-height:0;overflow:auto}  /* natural height; the scene takes the rest */
+.readouts table{width:100%;border-collapse:collapse;font-size:.9rem}
+.readouts td.v{white-space:nowrap;padding-left:6px}
+.readouts td{padding:4px 2px;border-bottom:1px solid #EEF2F6}
+.readouts td.v{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.pill{display:inline-block;white-space:nowrap;padding:3px 10px;border-radius:99px;font-size:.85rem;font-weight:600}
+.pill.rest{background:var(--soft-blue);color:#0D47A1}
+.pill.slide{background:#FFEBEE;color:#B71C1C}
+.pill.ready{background:#ECEFF1;color:var(--muted)}
+
+.right{display:flex;flex-direction:column;min-width:0;min-height:0}
+.cardhead{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;padding:6px 8px 6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line)}
+.cardhead h2{padding:0;border:none;background:none;flex:1}
+.cardhead .btn{min-height:40px;padding:4px 10px}
+.tabs{display:flex;gap:4px;padding:6px 6px 0;background:#F7F9FC;border-bottom:1px solid var(--line)}
+.tab{font:inherit;border:1px solid transparent;border-bottom:none;background:transparent;padding:8px 14px;
+  min-height:44px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--muted);font-weight:600}
+.tab[aria-selected="true"]{background:#fff;border-color:var(--line);color:var(--navy);margin-bottom:-1px}
+.panel{display:none;padding:10px 12px;flex:1;min-height:0;overflow:hidden}
+.panel.on{display:flex;flex-direction:column;gap:8px}
+#graphWrap{position:relative;flex:1;min-height:200px}
+#graph{width:100%;height:100%;display:block;touch-action:none}
+.hint{font-size:.85rem;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+#trials{width:100%;border-collapse:collapse;font-size:.85rem;font-variant-numeric:tabular-nums}
+#trials th,#trials td{border-bottom:1px solid var(--line);padding:4px 4px;text-align:right}
+#trials th{color:var(--navy);font-weight:600;background:#F7F9FC;position:sticky;top:0}
+#trials td:first-child,#trials th:first-child,#trials td:nth-child(2),#trials th:nth-child(2){text-align:left}
+.tableBox{max-height:150px;flex:none;overflow:auto;border:1px solid var(--line);border-radius:8px}
+#ffnWrap{flex:1;min-height:180px}
+#ffn{width:100%;height:100%;display:block}
+.x{border:none;background:none;color:var(--bad);font-size:1.1rem;cursor:pointer;min-width:32px;min-height:32px}
+
+/* tasks */
+#taskSets{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:inherit;font-size:.9rem;border:1px solid var(--line);background:#fff;border-radius:99px;padding:6px 14px;
+  min-height:40px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--navy);color:#fff;border-color:var(--navy)}
+.chip[aria-pressed="true"] .hint{color:#DDE6F0}
+#taskList{overflow:auto;flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;padding-right:2px}
+.step{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff}
+.step .q{margin:0 0 6px}
+.step .n{display:inline-block;min-width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;
+  text-align:center;line-height:26px;font-size:.85rem;font-weight:700;margin-right:6px}
+.step.done .n{background:var(--ok)}
+.opt{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;
+  margin:4px 0;cursor:pointer;min-height:40px}
+.opt input{width:20px;height:20px}
+.opt.good{border-color:var(--ok);background:#E8F5E9}
+.opt.bad{border-color:var(--bad);background:#FFEBEE}
+.fb{margin-top:6px;padding:6px 10px;border-radius:8px;font-size:.92rem}
+.fb.ok{background:#E8F5E9;border-left:4px solid var(--ok)}
+.fb.no{background:#FFEBEE;border-left:4px solid var(--bad)}
+.fb.info{background:var(--soft-blue);border-left:4px solid #1565C0}
+.num{font:inherit;width:110px;min-height:40px;padding:4px 8px;border:1px solid #B0BEC5;border-radius:8px}
+.tag{font-size:.75rem;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+
+/* controls */
+#controls{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:flex-end;padding:10px 14px}
+.ctl{display:flex;flex-direction:column;gap:4px;min-width:0}
+.ctl label,.ctl .lab{font-size:.8rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+.ctl select{font:inherit;min-height:44px;border:1px solid #B0BEC5;border-radius:8px;padding:4px 8px;background:#fff}
+.mu{font-size:.85rem;color:var(--navy);font-weight:600}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper .btn{width:44px;padding:0;font-size:1.3rem}
+.stepper output{min-width:24px;text-align:center;font-weight:700;font-size:1.1rem}
+input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
+.seg{display:flex;border:1px solid #B0BEC5;border-radius:8px;overflow:hidden}
+.seg button{font:inherit;border:none;background:#fff;min-height:42px;padding:4px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--navy);color:#fff}
+.switch{display:flex;align-items:center;gap:8px;min-height:44px;cursor:pointer}
+.switch input{width:22px;height:22px;accent-color:var(--accent)}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* help overlay */
+#help{position:fixed;inset:0;background:rgba(31,58,95,.55);display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
+#help.on{display:flex}
+#help .box{background:#fff;border-radius:14px;max-width:720px;width:100%;max-height:90vh;overflow:auto;padding:18px 22px}
+#help h3{margin:.2em 0 .4em;color:var(--navy)}
+#help li{margin:.25em 0}
+.eq{font-family:"Cambria Math",Cambria,"Times New Roman",serif;font-size:1.05rem}
+
+@media (max-width:1300px){
+  .readouts table{font-size:.85rem}
+  .pill{font-size:.78rem;padding:2px 8px}
+}
+/* tablet landscape: scene + state on the left; FBD above the tabs on the right */
+@media (max-width:1099px){
+  main{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);grid-template-rows:minmax(0,1fr) minmax(0,1fr) auto;min-height:640px}
+  .left{grid-row:1/3}
+  .fbdcol{grid-column:2;grid-row:1}
+  .right{grid-column:2;grid-row:2}
+  #fbdWrap{min-height:200px}
+  #pGraph .hint{display:none}
+  #controls{gap:8px 12px;padding:8px 12px}
+  input[type=range]{width:118px}
+  header .sub{font-size:0;opacity:1;line-height:1.2}header .sub a.home{font-size:.75rem}
+}
+/* phone / narrow portrait: one scrolling column */
+@media (max-width:759px){
+  body{height:auto}
+  main{display:flex;flex-direction:column}
+  #sceneWrap{flex:none;height:260px}
+  .readouts{flex:none}
+  #fbdWrap{flex:none;height:320px}
+  .right{height:640px;flex:none}
+}
+
+/* Simulation 10–13 additions */
+:root{--cD:#AD1457;--cV:#1565C0;--cA:#E65100}
+#anaWrap{flex:1;min-height:170px}
+#ana{width:100%;height:100%;display:block}
+.seg.small button{min-height:38px;padding:2px 10px;font-size:.92rem}
+.readouts .ev{color:var(--muted);font-weight:600}
+#controls .pair{display:flex;gap:4px 12px;flex-wrap:wrap}
+#controls .pair label{text-transform:none;letter-spacing:0;font-size:.92rem;color:var(--ink);font-weight:400}
+.ctl label i,.ctl label .nt{text-transform:none}
+#controls{gap:10px 14px}
+#controls input[type=range]{width:140px}
+#controls input#tp{width:190px}
+#controls select{max-width:145px}
+.readouts td.gap{width:14px;border-bottom:none}
+@media (max-width:1300px){ #controls input[type=range]{width:118px} #controls input#tp{width:150px} #controls select{max-width:130px} }
+@media (max-width:1099px){ #controls input[type=range]{width:105px} #controls input#tp{width:130px} #controls select{max-width:120px} }
+
+.btn.step{padding:4px 9px;font-variant-numeric:tabular-nums}
+.tools{display:flex;gap:2px 10px;align-items:center;flex-wrap:wrap}
+.tools .switch{min-height:36px;font-size:.9rem}
+.tools .switch input{width:18px;height:18px}
+
+.cardhead .actions{gap:5px}
+.btn.icon{min-width:44px;padding:4px 8px}
+.cardhead .actions .btn{padding-left:10px;padding-right:10px}
+.cardhead .actions .btn.step{padding-left:7px;padding-right:7px}
+/* Author credit (header, far right) */
+.credit{text-align:right;font-size:.74rem;line-height:1.3;opacity:.92;white-space:nowrap}
+.credit a{color:#fff;text-decoration:underline}
+@media (max-width:759px){header{flex-wrap:wrap;row-gap:4px} header .btn{white-space:nowrap}
+  .credit{order:3;flex-basis:100%;text-align:left;font-size:.7rem}
+  .credit br{display:none} .credit a{margin-left:6px}}
+
+/* Simulation 16 additions: four examples in the header, number boxes next to the sliders */
+.scen{display:flex;gap:4px;flex-wrap:wrap}
+.scen button{font:inherit;font-size:.92rem;border:1px solid rgba(255,255,255,.45);background:transparent;color:#fff;border-radius:99px;
+  min-height:40px;padding:4px 14px;cursor:pointer;white-space:nowrap}
+.scen button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);font-weight:600}
+.rn{display:flex;align-items:center;gap:6px}
+.nb{font:inherit;font-size:.95rem;width:80px;min-height:44px;padding:2px 6px;border:1px solid #B0BEC5;border-radius:8px;
+  text-align:right;font-variant-numeric:tabular-nums;background:#fff;-moz-appearance:textfield}
+.nb::-webkit-outer-spin-button,.nb::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.nb.clamped{border-color:var(--accent);background:var(--soft)}
+.nb:disabled{opacity:.45}
+.rn .u{font-size:.85rem;color:var(--muted);white-space:nowrap}
+#controls .rn input[type=range]{width:120px}
+#controls .ctl.hide{display:none}
+.ctl .lab i,.ctl .lab sub,.ctl .lab .badge{text-transform:none}
+#controls .btn.go{min-width:120px}
+.sh{display:none}
+.badge{display:inline-block;font-size:.72rem;font-weight:700;color:#fff;background:#8E24AA;border-radius:99px;padding:1px 8px;
+  text-transform:none;letter-spacing:0;vertical-align:1px}
+.readouts th{font-size:.8rem;color:var(--navy);text-align:right;font-weight:600;padding:2px 2px 2px 6px;border-bottom:1px solid var(--line)}
+.readouts th:first-child{text-align:left}
+#anaSel{margin-right:auto}
+@media (max-width:1300px){ #controls .rn input[type=range]{width:100px} .nb{width:72px} .scen button{padding:4px 10px} }
+@media (max-width:1099px){ #controls .rn input[type=range]{width:84px} .nb{width:66px} .scen button{font-size:.85rem;padding:3px 9px}
+  .lg{display:none} .sh{display:inline} header h1{font-size:1.05rem} header{gap:10px} }
+@media (max-width:759px){ .scen{order:4;flex-basis:100%} }
+/* Simulation 18 additions */
+@media (min-width:1100px){ main{grid-template-columns:minmax(0,1.25fr) minmax(0,0.85fr) minmax(0,1.25fr)} }
+.readouts table.ab td.v,.readouts table.ab th{text-align:right}
+.readouts table.ab{margin-bottom:2px}
+#controls .rn input[type=range]{width:96px} #controls .nb{width:68px} #controls select{max-width:150px}
+@media (max-width:1300px){ #controls .rn input[type=range]{width:80px} #controls .nb{width:62px} #controls select{max-width:128px} }
+.plusTag{display:inline-block;font-weight:700;color:var(--navy);background:var(--soft-blue);border-radius:6px;padding:0 6px}
+.a3{display:inline-block;font-size:.7rem;font-weight:700;color:#fff;background:#00838F;border-radius:99px;padding:0 7px;vertical-align:1px}
+/* A.3 additions (simulations 19–22): energy colours, energy column, scenario-specific graph buttons */
+:root{--eK:#EF6C00;--eP:#00897B;--eH:#8E24AA;--eT:#C62828;--eIn:#5D4037}
+.fbdcol h2 .hint{font-weight:400}
+.readouts .e{font-weight:700}
+#gsel{flex-wrap:wrap}
+.readouts td.k{color:var(--muted)}
+.big{font-size:1.05rem}
+.sub a.home{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55);white-space:nowrap}.sub a.home:hover{border-bottom-color:#fff}
+/* Connected blocks additions: forces table in the FBD column */
+.ktab{flex:none;padding:4px 8px 6px;border-top:1px solid var(--line)}
+.ktab table{width:100%;border-collapse:collapse;font-size:.84rem;font-variant-numeric:tabular-nums}
+.ktab th,.ktab td{padding:2px 4px;text-align:right;border-bottom:1px solid #EEF2F6;white-space:nowrap}
+.ktab th{color:var(--navy);font-weight:600}
+.ktab td:first-child,.ktab th:first-child{text-align:left}
+.ktab tr.sum td{font-weight:700;border-top:1.5px solid var(--ink);border-bottom:none}
+.ktab .cap{font-size:.78rem;color:var(--muted);margin-top:2px}
+#fd{min-width:205px}
+.scenecard .actions{gap:6px}.scenecard .actions .btn{padding-left:9px;padding-right:9px}
+.readouts .k{font-size:.8em;color:var(--muted);font-weight:500}
+@media (max-width:1300px){ .ktab table{font-size:.78rem} }
+@media (max-height:800px) and (min-width:1100px){ .ktab table{font-size:.76rem} .ktab th,.ktab td{padding:1px 3px} .ktab .cap{display:none} }
+@media (max-width:1099px) and (min-width:760px){ .ktab{display:none} .ktab .cap{display:none} .ktab table{font-size:.74rem;line-height:1.25} .ktab th,.ktab td{padding:0 4px}
+  .ktab{padding:2px 8px} #fbdWrap{min-height:120px} main{grid-template-rows:minmax(0,1.12fr) minmax(0,1fr) auto} }
+/* ==== SHARED-UI CSS START: ▼ [box] ▲ steppers (10 Oct 2026) — the sliders are hidden, the number box is the control ==== */
+.rn input[type=range]{display:none!important}
+#controls{align-items:flex-start!important}   /* all controls top-aligned, notes below a box hang underneath */
+#controls .ctl sub,#controls .ctl sup{line-height:0}   /* subscripts in a label (m_A) do not push its box down */
+.rn{gap:4px!important}
+.fld{display:inline-flex;align-items:center;border:1px solid #B0BEC5;border-radius:8px;background:#fff;min-height:44px;padding-right:6px;box-sizing:border-box}
+.fld .nb{border:0!important;background:transparent!important;min-height:42px;padding-right:2px;width:66px!important}
+.fld .u{margin-left:3px}
+.fld .nb:focus{outline:none}
+.fld:focus-within{outline:2px solid var(--navy);outline-offset:1px}
+.fld:has(.nb.clamped){border-color:var(--accent);background:var(--soft)}
+.fld:has(.nb:disabled){opacity:.5}
+.fld .bw{display:none;color:#B26A00;font-size:.9rem;margin-left:3px}
+.fld.beyond{border-color:#F0A202;background:#FFF8E1;box-shadow:inset 0 0 0 1px #F0A202}
+.fld.beyond .bw{display:inline}
+.stp{font:inherit;font-size:.78rem;line-height:1;min-width:34px;min-height:44px;padding:0 6px;border:1px solid #B0BEC5;border-radius:8px;background:#F3F6FA;
+  color:var(--navy);cursor:pointer;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.stp:hover:not(:disabled){border-color:var(--navy);background:#E6EDF5}
+.stp:active:not(:disabled){background:#D3DEEB}
+.stp:disabled{opacity:.35;cursor:default}
+.stp.rs{min-width:26px;padding:0 2px;border-color:transparent;background:transparent;font-size:1.05rem;color:var(--muted)}
+.stp.rs:hover:not(:disabled){background:#EEF2F6;border-color:transparent}
+@media (max-width:1300px){ .stp{min-width:30px;padding:0 4px} .fld .nb{width:58px!important} }
+/* ==== SHARED-UI CSS END ==== */
+/* ==== PHONE CSS START: phone layout (10 Oct 2026) — only phones (narrow, or held sideways with a touch screen); laptops and tablets unchanged ==== */
+@media (max-width:759px), (max-height:500px) and (pointer:coarse){
+  html,body{height:auto}
+  main{display:flex!important;flex-direction:column;min-height:0!important;gap:10px;padding:8px 8px 16px}
+  .left{display:contents}                                  /* scene and readouts become separate steps of the column */
+  .scenecard{order:1;flex:none!important;min-height:0}
+  #controls{order:2}
+  .readouts{order:3;flex:none}
+  .fbdcol{order:4;flex:none}
+  .right{order:5;flex:none;height:auto!important}
+  #sceneWrap{flex:none!important;height:min(58vh,340px)!important;min-height:200px}
+  #fbdWrap{flex:none!important;height:300px!important}
+  .scenecard .cardhead{position:sticky;top:0;z-index:2}    /* run buttons stay at hand while the scene is on screen */
+  .cardhead .btn{min-height:40px;padding:4px 10px}
+  .panel{overflow:visible}
+  .panel.on{flex:none}
+  #graphWrap,#ffnWrap{flex:none!important;height:300px!important;min-height:0}
+  #taskList{overflow:visible;flex:none}
+  .tableBox{max-height:220px}
+  canvas{touch-action:pan-y!important}                     /* a finger on a graph or diagram still scrolls the page */
+  canvas.drag{touch-action:none!important}                 /* except where the scene has things to drag (pulleys) */
+  #controls{gap:10px 12px;padding:10px}
+  #controls .ctl{max-width:100%}
+  #controls select{max-width:100%}
+  .tabs{overflow-x:auto;scrollbar-width:none}
+  .tab{white-space:nowrap}
+  #help .box{max-height:85dvh;padding:14px 16px}
+}
+/* ==== PHONE CSS END ==== */
+</style>
+</head>
+<body>
+<!-- ============================ 2 MARKUP ============================ -->
+<header>
+  <div>
+    <h1>Connected blocks</h1>
+    <div class="sub"><a class="home" href="https://school.taneski.com/physics/dp/#A2" title="Back to all A.2 simulations">← All simulations</a> · IBDP Physics SL · A.2 Forces and Newton's laws</div>
+  </div>
+  <div class="grow"></div>
+  <div class="scen" id="scen" role="group" aria-label="How the blocks are joined">
+    <button data-sc="push" aria-pressed="true">① <span class="lg">Touching</span><span class="sh">Touching</span></button>
+    <button data-sc="pull" aria-pressed="false">② <span class="lg">Strings</span><span class="sh">Strings</span></button>
+    <button data-sc="bar" aria-pressed="false">③ <span class="lg">Tow bar</span><span class="sh">Tow bar</span></button>
+    <button data-sc="mix" aria-pressed="false">④ <span class="lg">Mixed</span><span class="sh">Mixed</span></button>
+    <button data-sc="stack" aria-pressed="false">⑤ <span class="lg">Stacked</span><span class="sh">Stacked</span></button>
+  </div>
+  <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
+  <div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
+</header>
+
+<main>
+  <section class="left">
+    <div class="card scenecard">
+      <div class="cardhead">
+        <div class="actions">
+          <button class="btn primary" id="startBtn" title="Start the run">▶ Go</button>
+          <button class="btn icon" id="pauseBtn" disabled title="Pause / resume" aria-label="Pause">⏸</button>
+          <button class="btn step" id="backBtn" title="Step back (← key)" aria-label="Step back">◂</button>
+          <button class="btn step" id="fwdBtn" title="Step forward (→ key)" aria-label="Step forward">▸</button>
+          <button class="btn icon" id="resetBtn" title="Reset" aria-label="Reset">↺</button>
+          <button class="btn" id="offBtn" title="Stop pushing / pulling now: only friction acts">✋ Let go</button>
+          <button class="btn" id="brakeBtn" title="A braking force of size F acts on the block that was pushed or pulled">◀ Brake</button>
+        </div>
+      </div>
+      <div id="sceneWrap"><canvas id="scene" aria-label="Side view of the connected blocks"></canvas></div>
+    </div>
+    <div class="card readouts" id="readouts"></div>
+  </section>
+
+  <section class="card fbdcol" aria-label="Free-body diagrams">
+    <h2 id="fbdTitle">Free-body diagrams</h2>
+    <div id="fbdWrap"><canvas id="fbd" aria-label="Free-body diagrams of every block and of the whole system"></canvas></div>
+    <div class="ktab" id="ktab"></div>
+  </section>
+
+  <section class="card right">
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" aria-selected="true" data-tab="pGraph">Graphs</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="pData">Data &amp; analysis</button>
+      <button class="tab" role="tab" aria-selected="false" data-tab="pTasks">Tasks</button>
+    </div>
+    <div class="panel on" id="pGraph">
+      <div class="row">
+        <div class="seg small" id="gsel"></div>
+        <span class="tools"><span class="hint">Graph tools:</span>
+          <label class="switch"><input type="checkbox" id="areaChk"> Area</label>
+          <label class="switch"><input type="checkbox" id="tanChk"> Tangent</label></span>
+      </div>
+      <div id="graphWrap"><canvas id="graph" aria-label="Graph"></canvas></div>
+      <div class="hint" id="graphHint"></div>
+    </div>
+
+    <div class="panel" id="pData">
+      <div class="row">
+        <div class="seg small" id="anaSel"></div>
+        <label class="switch" id="noiseLab"><input type="checkbox" id="noiseChk"> ±2 % sensor noise</label>
+        <label class="switch"><input type="checkbox" id="fitChk" checked> Best-fit line</label>
+        <button class="btn small navy" id="recBtn" title="Record the values at this instant">● Record</button>
+        <button class="btn small" id="clearBtn">Clear</button>
+      </div>
+      <div class="tableBox">
+        <table id="trials"><thead></thead><tbody></tbody></table>
+      </div>
+      <div id="anaWrap"><canvas id="ana" aria-label="Analysis graph of the recorded trials"></canvas></div>
+    </div>
+
+    <div class="panel" id="pTasks">
+      <div id="taskSets"></div>
+      <div id="taskList"></div>
+    </div>
+  </section>
+
+  <section class="card" id="controls" aria-label="Controls"></section>
+</main>
+
+<div id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="box">
+    <h3 id="helpTitle">How to use this simulation</h3>
+    <ol>
+      <li>Choose how the blocks are joined at the top: ① <b>touching</b> (pushed) · ② <b>strings</b> (pulled) · ③ a <b>tow bar</b> (it can pull
+        and push) · ④ <b>mixed</b>: a string from A to B, and B touches C · ⑤ <b>stacked</b>: B on top of A (and C on top of B).</li>
+      <li>Pick an <b>example</b> (cards, problem set, slides, Smart Cart demo) or set your own: 2 or 3 blocks, the masses, the force <i>F</i>, its
+        angle θ, where it acts (push or pull, left or right end, or the middle block) and the surface. Use ▼ ▲ next to a box or type a value.</li>
+      <li>Press <b>▶ Go</b>. <b>◂ / ▸</b> (or the <b>← →</b> keys) step through the motion. While the blocks move, press <b>✋ Let go</b> (only friction
+        acts) or <b>◀ Brake</b> (a braking force of size <i>F</i> on the block you pushed or pulled).</li>
+      <li><b>= const. <i>v</i></b> sets the force that keeps the blocks moving at a constant velocity: the resultant force on every block is zero —
+        but the forces between the blocks are still there.</li>
+      <li>In the scene, each <b>3rd-law pair</b> has its own colour: the force of A on B and the force of B on A are drawn on the two different blocks,
+        equal in size and opposite in direction.</li>
+      <li>The middle column shows the <b>free-body diagram of every block</b> (to scale) and of the <b>whole system</b>, where the forces between the
+        blocks cancel. The table lists every horizontal force and checks Σ<i>F</i> = <i>ma</i> for each block.</li>
+      <li><b>● Record</b> (Data tab) saves the values at this instant. The <b>Data</b> tab plots <i>a</i> against <i>F</i> (gradient = 1 / total mass) and the force
+        between two blocks against <i>F</i> (gradient = the fraction of the mass that it moves).</li>
+      <li>Work through the <b>Tasks</b> tab. Write explanations on your worksheet.</li>
+    </ol>
+    <h3>The physics</h3>
+    <ul>
+      <li><b>Newton's 3rd law:</b> if A pushes (or pulls) B, then B pushes (or pulls) A with a force of the same size, in the opposite direction,
+        of the same type. The two forces act on <b>different</b> bodies, so they never cancel on one body. This is true at every instant —
+        accelerating, at constant velocity, slowing down or at rest.</li>
+      <li class="eq">Whole system: a = (F cos θ − ΣF<sub>f</sub>) / (m<sub>A</sub> + m<sub>B</sub> + …)</li>
+      <li>The forces between the blocks are <b>internal</b>: they come in 3rd-law pairs and cancel for the whole system. To find one, draw the FBD of
+        the blocks <b>beyond</b> it: e.g. pushing A, the contact force on B is <span class="eq">F<sub>A on B</sub> = m<sub>B</sub>a + F<sub>f,B</sub></span>.</li>
+      <li>Without friction (or with the same μ for every block) the force between two blocks is the fraction of <i>F</i> that matches the mass it
+        has to move: <span class="eq">F<sub>A on B</sub> = F × m<sub>B</sub> / (m<sub>A</sub> + m<sub>B</sub>)</span>. Push the other end and it changes.</li>
+      <li>A <b>string</b> can only pull (it goes slack if the blocks move closer). Touching blocks can only <b>push</b> (they separate if the front one is
+        faster). A tow bar or rod can pull (tension) and push (compression).</li>
+      <li><b>Stacked blocks:</b> friction is the only horizontal force between them. Pull the bottom block and friction from A drags B forwards — and
+        B pulls A back with the same friction (a 3rd-law pair). B moves with A as long as it needs less than μ<sub>s</sub>F<sub>N</sub>, so a<sub>max</sub> = μ<sub>s</sub>g;
+        pull harder and B slides back on A. Vertically, B pushes down on A with the same normal force with which A pushes B up. Each lower block has a
+        raised stop at both ends (the truck's cab).</li>
+      <li>A force at an angle θ: only <i>F</i> cos θ acts along the floor. Pulling up (sin θ) makes <i>F</i><sub>N</sub> and friction smaller on that block;
+        pushing down makes them bigger.</li>
+    </ul>
+    <p class="hint">Model: g = 9.81 N kg⁻¹; light, inextensible strings; rigid blocks; sliding friction μ<sub>d</sub>F<sub>N</sub> (or a fixed resistive force)
+      against the motion, static friction up to μ<sub>s</sub>F<sub>N</sub> (μ per block: μ<sub>s</sub> = μ<sub>d</sub>). At rest, static friction is taken up first by the
+      block nearest to the force. When blocks hit or a string jerks tight they move on together (momentum is conserved). The braking force is horizontal; with stacked blocks it acts on the bottom block.</p>
+    <p style="text-align:right"><button class="btn primary" id="helpClose">Close</button></p>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ==== SHARED-UI START: ▼ [box] ▲ steppers + chart probe (10 Oct 2026, the same block in every simulation) ==== */
+// Steppers: every number box gets ▼ and ▲ (hold to repeat), ↑/↓ keys and the mouse wheel in the box (Shift = ×10) and ↺ (start value).
+// Inside the classroom range (the old slider range) a step is the old slider step (or the next value of its list; log quantities move
+// by one unit in the 2nd significant figure). Beyond it the value may go on up to the physical limits in 1-2-5 steps; the box turns amber.
+const STEPPER = (() => {
+  const all = [], r10 = v => +Number(v).toPrecision(10), fmt = v => String(+Number(v).toPrecision(6));
+  const epsOf = (lo, hi) => 1e-9 * Math.max(1, Math.abs(lo), Math.abs(hi));
+  function s125(v, dir){                                  // next value of …, 0.1, 0.2, 0.5, 1, 2, 5, 10, … beyond v (signed)
+    const a = Math.abs(v); if (a < 1e-15) return null;
+    const s = Math.sign(v), e = Math.floor(Math.log10(a)), c = [];
+    for (let k = e - 1; k <= e + 2; k++) for (const m of [1, 2, 5]) c.push(r10(m * Math.pow(10, k)));
+    if (dir === s) return s * Math.min(...c.filter(x => x > a * (1 + 1e-9)));
+    const d = c.filter(x => x < a * (1 - 1e-9)); return d.length ? s * Math.max(...d) : 0;
+  }
+  function grid(o, v, dir, lo, hi){                       // one step inside the classroom range, snapped to the grid
+    const eps = epsOf(lo, hi);
+    if (o.list){ const L = o.list(); const n = dir > 0 ? L.find(x => x > v + eps) : [...L].reverse().find(x => x < v - eps); return n === undefined ? (dir > 0 ? hi : lo) : n; }
+    const st = o.step ? +o.step() : NaN;
+    if (o.log && lo > 0 && hi / lo > 1e5){ const n = s125(v, dir); return n === null ? lo : n; }   // very wide ranges (satellite mass): 1-2-5
+    if (o.log || !(st > 0)){ if (!(v > 0)) return dir > 0 ? lo : lo;
+      const s = Math.pow(10, Math.floor(Math.log10(dir > 0 ? v : v * (1 - 1e-9))) - 1), k = v / s;
+      return r10((dir > 0 ? Math.floor(k + 1e-6) + 1 : Math.ceil(k - 1e-6) - 1) * s); }
+    const b = o.base ? +o.base() : lo, k = (v - b) / st;
+    return r10(b + (dir > 0 ? Math.floor(k + 1e-6) + 1 : Math.ceil(k - 1e-6) - 1) * st);
+  }
+  function next(o, v, dir){
+    const [lo, hi] = o.room(), eps = epsOf(lo, hi), st = o.step ? +o.step() : NaN;
+    let n;
+    if ((dir > 0 && v >= hi - eps) || (dir < 0 && v <= lo + eps)){            // leaving the classroom range (or already beyond it)
+      n = s125(v, dir); if (n === null) n = v + dir * (st > 0 ? st : (hi - lo) / 100);
+      if (dir > 0 && v < lo - eps && n > lo) n = lo; if (dir < 0 && v > hi + eps && n < hi) n = hi;
+    } else if (v > hi + eps || v < lo - eps){                                   // coming back: 1-2-5 until the range edge
+      n = s125(v, dir); if (n === null) n = dir > 0 ? lo : hi;
+      if (dir < 0 && n <= hi) n = hi; if (dir > 0 && n >= lo) n = lo;
+    } else n = Math.min(hi, Math.max(lo, grid(o, v, dir, lo, hi)));
+    const [mn, mx] = o.hard(); return Math.min(mx, Math.max(mn, r10(n)));
+  }
+  function go(o, dir, times = 1){
+    if (o.nb.disabled) return false;
+    const v0 = +o.get(); if (!isFinite(v0)) return false;
+    let v = v0; for (let i = 0; i < times; i++) v = next(o, v, dir);
+    if (Math.abs(v - v0) <= 1e-12 * Math.max(1, Math.abs(v0))) return false;
+    o.apply(v); if (document.activeElement === o.nb) o.nb.value = fmt(o.get());
+    check(o, true); return true;
+  }
+  function beyond(o){ const v = +o.get(), [lo, hi] = o.room(), eps = epsOf(lo, hi); return v < lo - eps || v > hi + eps; }
+  function check(o, user){                                 // amber box + ⚠ outside the classroom range; a message once on crossing
+    const b = beyond(o), [lo, hi] = o.room(), u = o.unit();
+    if (b && !o.was && user) o.toast(`Beyond the classroom range (${fmt(lo)}–${fmt(hi)}${u ? " " + u : ""}): fine to explore, but the lab can't do this.`);
+    o.was = b; o.fld.classList.toggle("beyond", b);
+    o.warn.title = `Outside the classroom range ${fmt(lo)}–${fmt(hi)}${u ? " " + u : ""}`;
+  }
+  function holdBtn(btn, o, dir){
+    let tm = null, t0 = 0;
+    const stop = () => { clearTimeout(tm); tm = null; };
+    const rep = () => { if (!go(o, dir)) return stop(); tm = setTimeout(rep, performance.now() - t0 > 1400 ? 45 : 110); };
+    btn.addEventListener("pointerdown", e => { if (e.button) return; e.preventDefault(); stop(); go(o, dir, e.shiftKey ? 10 : 1); t0 = performance.now(); tm = setTimeout(rep, 420); });
+    ["pointerup", "pointerleave", "pointercancel", "blur"].forEach(k => btn.addEventListener(k, stop));
+    btn.addEventListener("click", e => { if (e.detail === 0) go(o, dir, e.shiftKey ? 10 : 1); });   // keyboard (Enter/Space)
+    btn.addEventListener("contextmenu", e => e.preventDefault());
+  }
+  const mk = (cls, txt, lab) => { const b = document.createElement("button"); b.type = "button"; b.className = "stp " + cls; b.textContent = txt;
+    b.tabIndex = -1; b.setAttribute("aria-label", lab); return b; };
+  // o: {nb, get, apply(v), room() → classroom [lo, hi], hard() → physical [min, max], step() | list() | log, base(), def() | null, unit(), toast(msg)}
+  function attach(nb, o){
+    o.nb = nb; const u = nb.nextElementSibling && nb.nextElementSibling.classList.contains("u") ? nb.nextElementSibling : null;
+    const fld = document.createElement("span"); fld.className = "fld"; nb.before(fld); fld.appendChild(nb); if (u) fld.appendChild(u);
+    const warn = document.createElement("span"); warn.className = "bw"; warn.textContent = "⚠"; fld.appendChild(warn);
+    const dn = mk("dn", "▼", "decrease"), up = mk("up", "▲", "increase"), rs = mk("rs", "↺", "back to the start value");
+    dn.title = "Decrease · hold to repeat · Shift = ×10"; up.title = "Increase · hold to repeat · Shift = ×10";
+    fld.before(dn); fld.after(up); up.after(rs);
+    if (!o.def) rs.style.visibility = "hidden";
+    Object.assign(o, {fld, warn, dn, up, rs, was:false});
+    holdBtn(dn, o, -1); holdBtn(up, o, 1);
+    rs.addEventListener("click", () => { const d = o.def ? o.def() : null; if (d === null || d === undefined || nb.disabled) return; o.apply(d); check(o, true); });
+    // clicking into the box selects the whole value, so typing replaces it (a 2nd click places the cursor as usual)
+    nb.addEventListener("focus", () => { nb.select(); nb._sel = true; });
+    nb.addEventListener("mouseup", e => { if (nb._sel){ e.preventDefault(); nb._sel = false; } });
+    nb.addEventListener("touchend", e => { if (nb._sel){ nb._sel = false; setTimeout(() => nb.select(), 0); } });
+    nb.addEventListener("blur", () => { nb._sel = false; });
+    nb.addEventListener("keydown", e => { if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return; e.preventDefault();
+      clearTimeout(nb._tm); go(o, e.key === "ArrowUp" ? 1 : -1, e.shiftKey ? 10 : 1); nb.select(); });
+    nb.addEventListener("wheel", e => { if (document.activeElement !== nb || !e.deltaY) return; e.preventDefault();
+      clearTimeout(nb._tm); go(o, e.deltaY < 0 ? 1 : -1, e.shiftKey ? 10 : 1); }, {passive:false});
+    nb._st = o; all.push(o); return o;
+  }
+  function tick(){
+    for (const o of all){
+      if (!o.nb.isConnected) continue;
+      const off = o.nb.disabled, v = +o.get(), [mn, mx] = o.hard(), d = o.def ? o.def() : null;
+      o.dn.disabled = off || !(v > mn + 1e-12 * Math.max(1, Math.abs(mn))); o.up.disabled = off || !(v < mx - 1e-12 * Math.max(1, Math.abs(mx)));
+      o.rs.disabled = off || d === null || d === undefined || Math.abs(v - d) <= 1e-9 * Math.max(1, Math.abs(d));
+      if (o.def && d !== null && d !== undefined) o.rs.title = `Back to the start value (${fmt(d)}${o.unit() ? " " + o.unit() : ""})`;
+      check(o, false);
+    }
+    requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+  return {attach, check, fmt, all};
+})();
+
+// Chart probe: move the pointer over any graph (or tap it) → a dashed vertical line, a dot where it cuts each curve and the x and y
+// values (as on the Free fall graphs). It reads what each graph draws after its axes (axes/axesR), so every graph gets it.
+// On graphs with only data points the line snaps to the nearest point; near a point its exact values are shown too.
+const PROBE = (() => {
+  const S = new Map();                                   // canvas → {frames, px, py, on, touch, ov}
+  const st = cv => { let s = S.get(cv); if (!s){ s = {frames:[], on:false}; S.set(cv, s); } return s; };
+  let pause = 0;
+  const P = CanvasRenderingContext2D.prototype, orig = {};
+  const rec = ctx => ctx.__pf && !pause;
+  ["beginPath", "moveTo", "lineTo", "closePath", "arc", "quadraticCurveTo", "bezierCurveTo", "stroke", "fill", "clearRect"].forEach(k => orig[k] = P[k]);
+  P.beginPath = function(){ if (rec(this)) this.__pp = {subs:[], arcs:[], cur:null}; return orig.beginPath.apply(this, arguments); };
+  const pp = ctx => ctx.__pp || (ctx.__pp = {subs:[], arcs:[], cur:null});
+  P.moveTo = function(x, y){ if (rec(this)){ const p = pp(this); p.cur = [[x, y]]; p.subs.push(p.cur); } return orig.moveTo.apply(this, arguments); };
+  P.lineTo = function(x, y){ if (rec(this)){ const p = pp(this); if (!p.cur){ p.cur = [[x, y]]; p.subs.push(p.cur); } else p.cur.push([x, y]); } return orig.lineTo.apply(this, arguments); };
+  P.quadraticCurveTo = function(a, b, x, y){ if (rec(this)){ const p = pp(this); if (p.cur) p.cur.push([x, y]); } return orig.quadraticCurveTo.apply(this, arguments); };
+  P.bezierCurveTo = function(a, b, c, d, x, y){ if (rec(this)){ const p = pp(this); if (p.cur) p.cur.push([x, y]); } return orig.bezierCurveTo.apply(this, arguments); };
+  P.closePath = function(){ if (rec(this)){ const p = pp(this); if (p.cur) p.cur.closed = true; p.cur = null; } return orig.closePath.apply(this, arguments); };
+  P.arc = function(x, y, r){ if (rec(this)) pp(this).arcs.push([x, y, r]); return orig.arc.apply(this, arguments); };
+  function toFrame(ctx, f, pts){                         // path points → the frame's coordinates (if the transform has changed)
+    const m = ctx.getTransform(), g = f.m;
+    if (m.a === g.a && m.b === g.b && m.c === g.c && m.d === g.d && m.e === g.e && m.f === g.f) return pts;
+    const gi = g.inverse(); return pts.map(([x, y]) => { const X = m.a * x + m.c * y + m.e, Y = m.b * x + m.d * y + m.f;
+      return [gi.a * X + gi.c * Y + gi.e, gi.b * X + gi.d * Y + gi.f]; });
+  }
+  function commit(ctx, stroke){
+    const f = ctx.__pf, p = ctx.__pp; if (!f || !p) return;
+    const col = stroke ? ctx.strokeStyle : ctx.fillStyle, c = typeof col === "string" ? col : null;
+    for (const [x, y, r] of p.arcs) if (r <= 9 && r >= 1.5 && c){ const [[X, Y]] = toFrame(ctx, f, [[x, y]]);
+      if (X >= f.box.x - 2 && X <= f.box.x + f.box.w + 2 && Y >= f.box.y - 2 && Y <= f.box.y + f.box.h + 2) f.pts.push({x:X, y:Y, col:c}); }
+    if (stroke && c && ctx.globalAlpha > 0.3) for (const s of p.subs) if (!s.closed && s.length >= 2) f.raw.push({pts:toFrame(ctx, f, s), col:c, dash:ctx.getLineDash().length > 0});
+  }
+  P.stroke = function(){ if (rec(this) && !arguments.length) commit(this, true); return orig.stroke.apply(this, arguments); };
+  P.fill = function(){ if (rec(this) && !(arguments[0] instanceof Path2D)) commit(this, false); return orig.fill.apply(this, arguments); };
+  P.clearRect = function(x, y, w, h){ if (x <= 0 && y <= 0 && w * 1.01 >= this.canvas.clientWidth && h * 1.01 >= this.canvas.clientHeight){ st(this.canvas).frames = []; this.__pf = null; }
+    return orig.clearRect.apply(this, arguments); };
+  // the text helpers, arrows, tangents and shaded areas on a graph are not curves
+  const quiet = fn => function(){ pause++; try { return fn.apply(this, arguments); } finally { pause--; } };
+  function newFrame(ctx, box, x0, x1, y0, y1, xl, yl, noX){
+    const cv = ctx.canvas, s = st(cv), f = {box:{...box}, x0, x1, y0, y1, xl, yl, m:ctx.getTransform(), raw:[], pts:[], skip:!!noX || !(x1 > x0) || !(y1 > y0)};
+    s.frames.push(f); if (s.frames.length > 8) s.frames.shift(); bind(cv); return f;
+  }
+  function wrapAxes(fn, ranged){
+    return function(ctx, box){
+      ctx.__pf = null; const r = fn.apply(this, arguments), a = arguments;
+      ctx.__pf = ranged ? newFrame(ctx, box, a[2], a[3], a[4], a[5], a[6], a[7], a[8]) : newFrame(ctx, box, 0, a[2], 0, a[3], a[4], a[5], false);
+      ctx.__pp = null; return r;
+    };
+  }
+  // ---- labels: "time t / s" → symbol t, unit s
+  function split(parts){
+    if (typeof parts === "string") parts = [[parts, "n"]];
+    if (!Array.isArray(parts)) return {sym:[["x", "i"]], unit:""};
+    const flat = parts.map(p => [String(p[0]), p[1] || "n"]), txt = flat.map(p => p[0]).join(""), k = txt.lastIndexOf(" / ");
+    const left = [], unit = [];
+    let pos = 0;
+    for (const [t, sty] of flat){ const a = pos, b = pos + t.length; pos = b;
+      if (k < 0 || b <= k) left.push([t, sty]); else if (a >= k + 3) unit.push([t, sty]);
+      else { if (k > a) left.push([t.slice(0, k - a), sty]); if (b > k + 3) unit.push([t.slice(Math.max(0, k + 3 - a)), sty]); } }
+    // drop a describing word or two in front of the symbol ("time t", "drop height h"), keep "cos θ", "1 − cos θ"
+    let first = left.findIndex(p => p[1] !== "n" && p[0].trim());
+    if (first > 0){ const pre = left.slice(0, first).map(p => p[0]).join(""); if (!/^([A-Za-z]{4,}\s+)+$/.test(pre)) first = 0; }
+    let sym = first < 0 ? [[left.map(p => p[0]).join("").trim(), "n"]] : left.slice(first).map(p => [p[0], p[1]]);
+    let cut = false; sym = sym.filter(p => { if (cut) return false; const i = p[0].indexOf(" = "); if (i >= 0){ p[0] = p[0].slice(0, i); cut = true; } return true; });
+    if (sym.length) sym[sym.length - 1][0] = sym[sym.length - 1][0].replace(/\s+$/, "");
+    if (sym.length && sym[0][0]) sym[0][0] = sym[0][0].replace(/^\s+/, "");
+    let un = unit.map(p => p[1] === "s" ? toSub(p[0]) : p[0]).join("").replace(/\s*\(.*$/, "").trim(); if (un === "1") un = "";
+    return {sym:sym.filter(p => p[0]), unit:un};
+  }
+  const SUBS = {"0":"₀", "1":"₁", "2":"₂", "3":"₃", "4":"₄", "5":"₅", "6":"₆", "7":"₇", "8":"₈", "9":"₉"};
+  const toSub = t => t.replace(/[0-9]/g, d => SUBS[d]);
+  const SUP = {"0":"⁰", "1":"¹", "2":"²", "3":"³", "4":"⁴", "5":"⁵", "6":"⁶", "7":"⁷", "8":"⁸", "9":"⁹", "-":"⁻"};
+  function num(v, span){                                   // enough decimals for the axis, × 10ⁿ for very big or small values
+    if (!isFinite(v)) return "–";
+    const a = Math.abs(v);
+    if (a >= 1e5 || (a > 0 && a < 1e-3 && span < 1e-2)){ const e = Math.floor(Math.log10(a)), m = v / Math.pow(10, e);
+      return `${m.toFixed(2).replace("-", "−")} × 10${String(e).replace(/[0-9-]/g, c => SUP[c])}`; }
+    const d = Math.max(0, Math.min(6, Math.ceil(-Math.log10(span / 400))));
+    let s = v.toFixed(d); if (/^-0\.?0*$/.test(s)) s = s.slice(1); return s.replace("-", "−");
+  }
+  // ---- curves of a frame: join touching pieces of the same colour, drop vertical lines and short legend strokes
+  function curves(f){
+    if (f.lines && f.nraw === f.raw.length) return f.lines;
+    const L = [];
+    for (const r of f.raw){ const last = L[L.length - 1];
+      if (last && last.col === r.col && Math.hypot(last.pts[last.pts.length - 1][0] - r.pts[0][0], last.pts[last.pts.length - 1][1] - r.pts[0][1]) < 0.6) last.pts = last.pts.concat(r.pts.slice(1));
+      else L.push({pts:r.pts.slice(), col:r.col, dash:r.dash}); }
+    f.lines = L.filter(l => { let lo = Infinity, hi = -Infinity; for (const [x] of l.pts){ lo = Math.min(lo, x); hi = Math.max(hi, x); }
+      const span = hi - lo; return span >= 1.5 && !(l.pts.length <= 3 && span < 0.08 * f.box.w) && hi >= f.box.x - 1 && lo <= f.box.x + f.box.w + 1; });
+    f.nraw = f.raw.length; return f.lines;
+  }
+  function cut(l, x){ const out = [];
+    for (let i = 1; i < l.pts.length; i++){ const [xa, ya] = l.pts[i - 1], [xb, yb] = l.pts[i];
+      if (Math.abs(xb - xa) < 1e-6 || (x - xa) * (x - xb) > 0) continue;
+      const y = ya + (yb - ya) * (x - xa) / (xb - xa); if (!out.some(q => Math.abs(q - y) < 2)) out.push(y); }
+    return out; }
+  // ---- drawing on a transparent canvas laid over the graph
+  function overlay(cv, s){
+    if (!s.ov){ const o = document.createElement("canvas"); o.className = "probeOv"; o.setAttribute("aria-hidden", "true");
+      o.style.cssText = "position:absolute;pointer-events:none;z-index:2"; cv.after(o); s.ov = o;
+      const par = cv.parentNode; if (getComputedStyle(par).position === "static") par.style.position = "relative"; }
+    const o = s.ov; o.style.left = cv.offsetLeft + "px"; o.style.top = cv.offsetTop + "px";
+    o.style.width = cv.offsetWidth + "px"; o.style.height = cv.offsetHeight + "px";
+    if (o.width !== cv.width || o.height !== cv.height){ o.width = cv.width; o.height = cv.height; }
+    return o;
+  }
+  const FONT = (sty, z) => sty === "i" ? `italic 600 ${z}px "Segoe UI",Calibri,Arial,sans-serif` : sty === "s" ? `600 ${Math.round(z * .72)}px "Segoe UI",Calibri,Arial,sans-serif` : `600 ${z}px "Segoe UI",Calibri,Arial,sans-serif`;
+  const runW = (ctx, run, z) => run.reduce((w, [t, sty]) => { ctx.font = FONT(sty, z); return w + ctx.measureText(t).width; }, 0);
+  function runDraw(ctx, run, x, y, col, z){ for (const [t, sty] of run){ ctx.font = FONT(sty, z); ctx.fillStyle = col;
+    ctx.fillText(t, x, sty === "s" ? y + z * .3 : y); x += ctx.measureText(t).width; } return x; }
+  function draw(cv, s){
+    const o = overlay(cv, s), ctx = o.getContext("2d");
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, o.width, o.height);
+    if (!s.on || !cv.offsetParent) return;
+    const dpr = cv.width / Math.max(1, cv.getBoundingClientRect().width), dx = s.px * dpr, dy = s.py * dpr;
+    let f = null, lx = 0, ly = 0;
+    for (const g of s.frames){ if (g.skip) continue; const gi = g.m.inverse(), X = gi.a * dx + gi.c * dy + gi.e, Y = gi.b * dx + gi.d * dy + gi.f;
+      if (X >= g.box.x && X <= g.box.x + g.box.w && Y >= g.box.y - 4 && Y <= g.box.y + g.box.h + 4){ f = g; lx = X; ly = Y; break; } }
+    if (!f) return;
+    const b = f.box, xv = px => f.x0 + (px - b.x) / b.w * (f.x1 - f.x0), yv = py => f.y0 + (b.y + b.h - py) / b.h * (f.y1 - f.y0);
+    const lines = curves(f), pts = f.pts.filter(p => p.x >= b.x - 1 && p.x <= b.x + b.w + 1);
+    let hits = [], near = null, x = lx;
+    for (const l of lines) for (const y of cut(l, x)) if (y >= b.y - 1 && y <= b.y + b.h + 1) hits.push({y, col:l.col, dash:l.dash ? 1 : 0});
+    if (pts.length){ const n = pts.reduce((m, p) => { const d = Math.hypot(p.x - lx, p.y - ly); return d < m.d ? {p, d} : m; }, {p:null, d:Infinity});
+      if (n.d <= 12) near = n.p; }
+    if (!lines.length && pts.length){                    // only data points: snap to the nearest one along x
+      near = pts.reduce((m, p) => Math.abs(p.x - lx) + 1e-3 * Math.abs(p.y - ly) < Math.abs(m.x - lx) + 1e-3 * Math.abs(m.y - ly) ? p : m, pts[0]); x = near.x; }
+    if (!hits.length && !near) return;
+    hits.sort((p, q) => p.y - q.y || p.dash - q.dash);    // curves on top of each other: one row (the solid one)
+    hits = hits.filter((h, i) => !hits.slice(0, i).some(q => Math.abs(q.y - h.y) < 1.5)).slice(0, 6);
+    ctx.setTransform(f.m);
+    ctx.save(); ctx.strokeStyle = "rgba(38,50,56,.55)"; ctx.lineWidth = 1.2; ctx.setLineDash([4, 4]);
+    orig.beginPath.call(ctx); orig.moveTo.call(ctx, x, b.y); orig.lineTo.call(ctx, x, b.y + b.h); orig.stroke.call(ctx); ctx.restore();
+    const dot = (X, Y, c, r) => { ctx.save(); ctx.fillStyle = c; ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; orig.beginPath.call(ctx); orig.arc.call(ctx, X, Y, r, 0, 7); orig.stroke.call(ctx); orig.fill.call(ctx); ctx.restore(); };
+    for (const h of hits) dot(x, h.y, shade(h.col), 4.5);
+    if (near){ ctx.save(); ctx.strokeStyle = "#263238"; ctx.lineWidth = 2; orig.beginPath.call(ctx); orig.arc.call(ctx, near.x, near.y, 8, 0, 7); orig.stroke.call(ctx); ctx.restore(); }
+    const X = split(f.xl), Y = split(f.yl), xs = f.x1 - f.x0, ys = f.y1 - f.y0, z = 13.5, rows = [];
+    const eq = (sym, v, span, unit) => [...sym, [` = ${num(v, span)}${unit ? (unit === "°" ? "" : " ") + unit : ""}`, "n"]];
+    if (!near || lines.length) rows.push({run:eq(X.sym, xv(x), xs, X.unit), col:"#263238"});
+    if (lines.length) for (const h of hits) rows.push({run:eq(Y.sym, yv(h.y), ys, Y.unit), col:h.col, mark:hits.length > 1});
+    if (near){ rows.push({run:[["point:  ", "n"], ...eq(X.sym, xv(near.x), xs, X.unit)], col:near.col, mark:true});
+      rows.push({run:[["point:  ", "n"], ...eq(Y.sym, yv(near.y), ys, Y.unit)], col:near.col, mark:true, hide:true}); }
+    if (!rows.length) return;
+    ctx.save(); ctx.textBaseline = "middle"; ctx.textAlign = "left";
+    const rh = z + 6, mw = Math.max(...rows.map(r => runW(ctx, r.run, z) + (r.mark ? 14 : 0))), bw = mw + 16, bh = rows.length * rh + 8;
+    const right = x + 10 + bw > b.x + b.w; let bx = right ? x - 10 - bw : x + 10;
+    const cw = o.width / dpr; bx = Math.max(b.x + 2, Math.min(bx, b.x + b.w - bw - 2)); bx = Math.max(2, Math.min(bx, cw - bw - 2));
+    let by = ly - bh / 2;
+    if (near && near.x + 10 > bx && near.x - 10 < bx + bw){ by = near.y + 14; if (by + bh > b.y + b.h - 2) by = near.y - 14 - bh; }   // keep the point visible
+    by = Math.max(b.y + 2, Math.min(by, b.y + b.h - bh - 2));
+    ctx.fillStyle = "rgba(255,255,255,.94)"; ctx.strokeStyle = "rgba(38,50,56,.35)"; ctx.lineWidth = 1;
+    orig.beginPath.call(ctx); ctx.roundRect ? ctx.roundRect(bx, by, bw, bh, 6) : ctx.rect(bx, by, bw, bh); orig.fill.call(ctx); orig.stroke.call(ctx);
+    rows.forEach((r, i) => { const yy = by + 4 + rh * i + rh / 2; let xx = bx + 8;
+      if (r.mark && !r.hide){ ctx.fillStyle = shade(r.col); orig.beginPath.call(ctx); orig.arc.call(ctx, xx + 4, yy, 4, 0, 7); orig.fill.call(ctx); }
+      if (r.mark) xx += 14;
+      let run = r.run; if (r.hide){ ctx.font = FONT("n", z); xx += ctx.measureText(run[0][0]).width; run = run.slice(1); }   // 2nd point row lines up under the 1st
+      runDraw(ctx, run, xx, yy, r.col === "#263238" ? r.col : shade(r.col), z); });
+    ctx.restore();
+  }
+  function shade(c){                                      // pale curve colours (e.g. dashed grey) are darkened for text
+    let r, g, bb; const m = /^#([0-9a-f]{6})$/i.exec(c), q = /^rgba?\(\s*(\d+)[ ,]+(\d+)[ ,]+(\d+)/i.exec(c);
+    if (m){ const n = parseInt(m[1], 16); r = n >> 16; g = (n >> 8) & 255; bb = n & 255; } else if (q){ r = +q[1]; g = +q[2]; bb = +q[3]; } else return c;
+    c = `rgb(${r},${g},${bb})`; const L = 0.299 * r + 0.587 * g + 0.114 * bb;
+    if (L < 150) return c; const k = 150 / L; return `rgb(${Math.round(r * k)},${Math.round(g * k)},${Math.round(bb * k)})`;
+  }
+  function bind(cv){
+    const s = st(cv); if (s.bound) return; s.bound = true;
+    const at = e => { const r = cv.getBoundingClientRect(); s.px = e.clientX - r.left; s.py = e.clientY - r.top; s.on = true; };
+    cv.addEventListener("pointermove", e => { if (e.pointerType === "touch" && !s.touch) return; at(e); });
+    cv.addEventListener("pointerdown", e => { s.touch = e.pointerType === "touch"; at(e); });
+    cv.addEventListener("pointerup", e => { if (e.pointerType === "touch") s.touch = false; });
+    cv.addEventListener("pointercancel", () => { s.touch = false; });   // a finger that scrolls the page lets go of the probe
+    cv.addEventListener("pointerleave", e => { if (e.pointerType !== "touch") s.on = false; });
+    document.addEventListener("pointerdown", e => { if (e.target !== cv) s.on = false; });
+  }
+  function tick(){ for (const [cv, s] of S) if (s.ov || s.on) draw(cv, s); requestAnimationFrame(tick); }
+  requestAnimationFrame(tick);
+  return {wrapAxes, quiet, S};
+})();
+if (typeof axesR === "function") axesR = PROBE.wrapAxes(axesR, true);
+if (typeof axes === "function") axes = PROBE.wrapAxes(axes, false);
+if (typeof drawTangent === "function") drawTangent = PROBE.quiet(drawTangent);
+if (typeof shadeArea === "function") shadeArea = PROBE.quiet(shadeArea);
+if (typeof areaName === "function") areaName = PROBE.quiet(areaName);
+if (typeof toolLabels === "function") toolLabels = PROBE.quiet(toolLabels);
+if (typeof arrow === "function") arrow = PROBE.quiet(arrow);
+if (typeof fArrow === "function") fArrow = PROBE.quiet(fArrow);
+if (typeof label === "function") label = PROBE.quiet(label);
+if (typeof rich === "function") rich = PROBE.quiet(rich);
+if (typeof subLabel === "function") subLabel = PROBE.quiet(subLabel);
+if (typeof note === "function") note = PROBE.quiet(note);
+if (typeof pill === "function") pill = PROBE.quiet(pill);
+/* ==== SHARED-UI END ==== */
+/* ============================ 3 CONFIG ============================ */
+const STORE = "sim25-connected-blocks";
+const COL = {W:"#2A5D8A", N:"#2E7D32", F:"#C62828", P:"#6A1B9A", v:"#1565C0", a:"#E65100",
+             navy:"#1F3A5F", accent:"#E65100", ink:"#263238", muted:"#606A72", grid:"#E3E9F0", grey:"#90A4AE"};
+// one colour per 3rd-law pair (A–B, B–C) and one per block on the graphs
+const PAIR = ["#AD1457", "#00838F"];
+const BCOL = ["#1565C0", "#EF6C00", "#6D4C41"];
+const NM = ["A", "B", "C"];
+// connection types: c = touching (can only push), s = string (can only pull), b = tow bar / rod (push or pull)
+const CONN = {push:["c", "c"], pull:["s", "s"], bar:["b", "b"], mix:["s", "c"], stack:[]};
+const FD = [["pushL", "▶ Push the left end"], ["pullR", "Pull the right end ▶"], ["pushR", "◀ Push the right end"], ["pullL", "◀ Pull the left end"], ["pushM", "▶ Push the middle block (B)"]];
+// ⑤ stacked: the force pulls one block of the stack (A = bottom), to the right (+) or left (−)
+const FDS = [["sA+", "→ Pull A (bottom)"], ["sB+", "→ Pull B"], ["sC+", "→ Pull C (top)"], ["sA-", "← Pull A (bottom)"], ["sB-", "← Pull B"], ["sC-", "← Pull C (top)"]];
+const SURF = [["none", "Frictionless"], ["same", "Same μ for all"], ["each", "μ for each block"], ["res", "Resistive forces (N)"]];
+const BASE = {n:2, mA:4, mB:2, mC:1, F:18, th:0, fd:"pushL", u:0, surf:"none", ms:0.30, md:0.20, mdA:0.20, mdB:0.20, mdC:0.20,
+              RA:0, RB:0, RC:0, skin:null, L:0.25, T:3, ph0:"on", mfs:0, mfd:0, rel:null};
+const PRESETS = [
+  {id:"custom", name:"my own values"},
+  {id:"c1",   sc:"push", name:"Card C1★: pushing two boxes, 4.0 kg + 2.0 kg, 18 N", mA:4, mB:2, F:18},
+  {id:"s20",  sc:"push", name:"Newton's laws slide 20: 4.0 kg + 2.0 kg, 24 N", mA:4, mB:2, F:24},
+  {id:"s20r", sc:"push", name:"Slide 20, but the push is on B (from the right)", mA:4, mB:2, F:24, fd:"pushR"},
+  {id:"q24",  sc:"push", name:"Problem set Q24: 10 kg + 6.0 kg, 60 N, μd = 0.20", mA:10, mB:6, F:60, surf:"same", ms:0.25, md:0.20},
+  {id:"t3L",  sc:"push", name:"Three boxes 1.0, 2.0, 3.0 kg, 12 N from the left", n:3, mA:1, mB:2, mC:3, F:12},
+  {id:"t3R",  sc:"push", name:"Three boxes 1.0, 2.0, 3.0 kg, 12 N from the right", n:3, mA:1, mB:2, mC:3, F:12, fd:"pushR"},
+  {id:"tcv",  sc:"push", name:"Constant velocity: 2.0, 3.0, 5.0 kg, μd = 0.30, 29.4 N", n:3, mA:2, mB:3, mC:5, F:29.43, u:0.8, surf:"same", ms:0.35, md:0.30, T:4},
+  {id:"tang", sc:"push", name:"Pushing down at 30°: 5.0 kg + 5.0 kg, 80 N, μd = 0.30", mA:5, mB:5, F:80, th:30, surf:"same", ms:0.35, md:0.30},
+  {id:"tsep", sc:"push", name:"Let go: 2.0 kg (μd 0.40) pushes 2.0 kg (μd 0.10), 20 N", mA:2, mB:2, F:20, surf:"each", mdA:0.40, mdB:0.10, T:2},
+  {id:"cart", sc:"push", name:"Smart Carts: A (0.75 kg) pushes B (0.25 kg), 2.0 N", mA:0.75, mB:0.25, F:2, skin:["cart", "cart"], L:0.30, T:1.5},
+  {id:"q16",  sc:"pull", name:"Problem set Q16: 5.0 kg + 3.0 kg on a string, 24 N", mA:5, mB:3, F:24, fd:"pullR"},
+  {id:"exit", sc:"pull", name:"Exit question: a 3000 kg truck tows a 1000 kg car, a = 0.80 m s⁻²", mA:1000, mB:3000, F:3200, fd:"pullR",
+   skin:["car", "truck"], L:4, T:5},
+  {id:"exitv", sc:"pull", name:"Exit question 3: truck tows the car at constant velocity (resistance 200 N + 600 N)", mA:1000, mB:3000, F:800, fd:"pullR",
+   skin:["car", "truck"], L:4, T:4, u:10, surf:"res", RA:200, RB:600},
+  {id:"s3cv", sc:"pull", name:"Constant velocity: 5.0, 3.0, 2.0 kg on strings, μd = 0.30, 29.4 N", n:3, mA:5, mB:3, mC:2, F:29.43, fd:"pullR", u:0.8,
+   surf:"same", ms:0.35, md:0.30, T:4},
+  {id:"sled", sc:"pull", name:"Two sleds pulled at 30°: 20 kg + 40 kg, 150 N, μd = 0.20", mA:20, mB:40, F:150, th:30, fd:"pullR", surf:"same", ms:0.22, md:0.20,
+   skin:["sled", "sled"], L:1.0, T:4},
+  {id:"slack", sc:"pull", name:"Let go: 3.0 kg (μd 0.05) behind 3.0 kg (μd 0.40), 24 N", mA:3, mB:3, F:24, fd:"pullR", surf:"each", mdA:0.05, mdB:0.40, T:2, L:0.30},
+  {id:"tug",  sc:"pull", name:"Smart Carts: pull B (0.25 kg), it tows A (0.75 kg), 1.0 N", mA:0.75, mB:0.25, F:1, fd:"pullR", skin:["cart", "cart"], L:0.30, T:2},
+  {id:"car",  sc:"bar", name:"Card C1★★★: car 1200 kg tows trailer 400 kg, a = 1.5 m s⁻²", mA:400, mB:1200, F:2800, fd:"pullR", surf:"res", RA:100, RB:300,
+   skin:["trailer", "car"], L:1.2, T:5},
+  {id:"carb", sc:"bar", name:"Card C1★★★(c): the car brakes at 2.0 m s⁻² (trailer has no brakes)", mA:400, mB:1200, F:2800, fd:"pullR", surf:"res", RA:100, RB:300,
+   skin:["trailer", "car"], L:1.2, T:6, u:12, ph0:"brake"},
+  {id:"carv", sc:"bar", name:"Car and trailer at constant velocity, F = 400 N", mA:400, mB:1200, F:400, fd:"pullR", surf:"res", RA:100, RB:300,
+   skin:["trailer", "car"], L:1.2, T:4, u:15},
+  {id:"rod",  sc:"bar", name:"Pushing with a rod: 2.0 kg + 3.0 kg, 10 N from the left", mA:2, mB:3, F:10, fd:"pushL"},
+  {id:"mx1",  sc:"mix", name:"Push B: it pulls A (string) and pushes C (touching), 2.0 kg each, 12 N", n:3, mA:2, mB:2, mC:2, F:12, fd:"pushM"},
+  {id:"mx2",  sc:"mix", name:"Push B with friction: 2.0 kg each, 24 N, μd = 0.20", n:3, mA:2, mB:2, mC:2, F:24, fd:"pushM", surf:"same", ms:0.25, md:0.20},
+  {id:"mx3",  sc:"mix", name:"Push B: A 1.0 kg, B 3.0 kg, C 2.0 kg, 18 N", n:3, mA:1, mB:3, mC:2, F:18, fd:"pushM"},
+  {id:"mx4",  sc:"mix", name:"Push A instead (left end): the string cannot push", n:3, mA:2, mB:2, mC:2, F:12, fd:"pushL", T:2},
+  {id:"s23a", sc:"stack", ms:0.40, md:0.30, name:"Forces in 30 situations, 23: pull A (4.0 kg) with 15 N, B (1.0 kg) on top", mA:4, mB:1, F:15, fd:"sA+"},
+  {id:"s23L", sc:"stack", ms:0.40, md:0.30, name:"Situation 23 at the limit: 19.6 N (a = μs g = 3.92 m s⁻²)", mA:4, mB:1, F:19.62, fd:"sA+"},
+  {id:"s23b", sc:"stack", ms:0.40, md:0.30, name:"Situation 23, pull harder: 30 N — B slips", mA:4, mB:1, F:30, fd:"sA+", T:2},
+  {id:"pt1",  sc:"stack", ms:0.40, md:0.30, name:"Pull the top block B (2.0 kg) with 10 N; A (5.0 kg) on a floor with μs 0.20", mA:5, mB:2, F:10, fd:"sB+", mfs:0.20, mfd:0.15, T:2},
+  {id:"pt2",  sc:"stack", ms:0.40, md:0.30, name:"Pull B with 20 N, smooth floor: A is dragged along", mA:5, mB:2, F:20, fd:"sB+", T:2},
+  {id:"books", sc:"stack", ms:0.40, md:0.30, name:"Three books pushed at constant velocity (2.0, 1.5, 1.0 kg, table μd 0.30)", n:3, mA:2, mB:1.5, mC:1, F:13.2435, fd:"sA+",
+   mfs:0.35, mfd:0.30, u:0.4, skin:["book", "book", "book"], rel:[0, 0.018, 0.018]},
+  {id:"cartb", sc:"stack", name:"Smart Cart (0.25 kg) carrying a 0.50 kg friction block, 2.0 N", mA:0.25, mB:0.5, F:2, fd:"sA+", ms:0.35, md:0.25,
+   skin:["cart", "fblock"], T:1.5},
+  {id:"cartv", sc:"stack", ms:0.40, md:0.30, name:"Box (2.0 kg) on a cart (10 kg) at constant velocity, no force", mA:10, mB:2, F:0, u:1, fd:"sA+"},
+  {id:"Ma",   sc:"stack", ms:0.40, md:0.30, name:"Card M★★★(a): truck 2000 kg, box 50 kg — largest acceleration without sliding", mA:2000, mB:50, F:8044.2, fd:"sA+",
+   skin:["truck", "tbox"], rel:[0, 3.4]},
+  {id:"Mb",   sc:"stack", ms:0.40, md:0.30, name:"Card M★★★(b, c): the truck brakes at 5.0 m s⁻² from 15 m s⁻¹ — the box slides into the cab", mA:2000, mB:50, F:10147.15, fd:"sA+",
+   skin:["truck", "tbox"], rel:[0, 3.4], u:15, ph0:"brake", T:4},
+  {id:"mx5",  sc:"mix", name:"Pull C instead (right end): touching blocks cannot pull", n:3, mA:2, mB:2, mC:2, F:12, fd:"pullR", T:2},
+];
+const SCN = {
+  push:{pre:"c1", mid:"Free-body diagrams · whole system",
+    hint:"Forces–<i>t</i>: the push between the boxes is a 3rd-law pair — the same size on both boxes at every instant."},
+  pull:{pre:"q16", mid:"Free-body diagrams · whole system",
+    hint:"Forces–<i>t</i>: the tension pulls both blocks equally hard. Let go and watch it fall to zero."},
+  bar:{pre:"car", mid:"Free-body diagrams · whole system",
+    hint:"Forces–<i>t</i>: a tow bar can pull (tension, +) or push (compression, −). Press ◀ Brake while the car moves."},
+  stack:{pre:"s23a", mid:"Free-body diagrams · whole system",
+    hint:"Forces–<i>t</i>: the friction between the blocks is a 3rd-law pair: forwards on the top block, backwards on the one below."},
+  mix:{pre:"mx1", mid:"Free-body diagrams · whole system",
+    hint:"A string joins A and B (it can only pull); B touches C (it can only push). Push the middle block and both carry a force."},
+};
+const RUN_DT = 0.02;                                       // s between stored states
+/* ============================ 4 PHYSICS ============================ */
+// shared number helpers (as in Simulations 16–18)
+const g = 9.81, TWO_PI = 2 * Math.PI;
+const f0 = x => String(Math.round(x));
+const f1 = x => (Math.round(x * 10) / 10).toFixed(1);
+const f2 = x => (Math.round(x * 100) / 100).toFixed(2);
+const f3 = x => (Math.round(x * 1000) / 1000).toFixed(3);
+const sig = (x, n = 3) => { const a = Math.abs(x); return a >= 1e6 || (a > 0 && a < 1e-4) ? sci(x, n) : String(+Number(x).toPrecision(n)); };   // very big/small typed values in × 10ⁿ form
+const SUP = {"0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹","-":"⁻"};
+const sup = n => String(n).split("").map(c => SUP[c] ?? c).join("");
+function sci(x, n = 3){ if (!x) return "0"; let e = Math.floor(Math.log10(Math.abs(x)));
+  if (e >= -2 && e <= 4) return sig(x, n);
+  let m = x / Math.pow(10, e); if (Math.abs(+m.toFixed(n - 1)) >= 10){ e += 1; m = x / Math.pow(10, e); }   // 9.999… rounds up to 1.00 × 10^(e+1)
+  return `${m.toFixed(n - 1)} × 10${sup(e)}`; }
+const rad = d => d * Math.PI / 180, deg = r => r * 180 / Math.PI;
+const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
+const mn = x => String(x).replace(/^-/, "−");
+// value + unit with SI prefixes for big numbers: 30500 W → "30.5 kW"
+function fmtU(x, u, n = 3){
+  const a = Math.abs(x);
+  if (a > 0 && a < 1e-3) return `${mn(sci(x, n))} ${u}`;
+  if (a >= 1e9) return `${mn(sig(x / 1e9, n))} G${u}`;
+  if (a >= 1e6) return `${mn(sig(x / 1e6, n))} M${u}`;
+  if (a >= 1e4) return `${mn(sig(x / 1e3, n))} k${u}`;
+  return `${mn(sig(x, n))} ${u}`;
+}
+const fmtF = F => fmtU(F, "N"), fmtE = E => fmtU(E, "J"), fmtP = P => fmtU(P, "W");
+function originFit(pts){ const sxx = pts.reduce((a, p) => a + p[0] * p[0], 0);
+  return sxx && pts.length >= 2 ? {k:pts.reduce((a, p) => a + p[0] * p[1], 0) / sxx, b:0} : null; }
+function linFit(pts){
+  const n = pts.length; if (n < 2) return null;
+  const sx = pts.reduce((a, p) => a + p[0], 0), sy = pts.reduce((a, p) => a + p[1], 0);
+  const sxx = pts.reduce((a, p) => a + p[0] * p[0], 0), sxy = pts.reduce((a, p) => a + p[0] * p[1], 0), d = n * sxx - sx * sx;
+  if (Math.abs(d) < 1e-15) return null;
+  const k = (n * sxy - sx * sy) / d; return {k, b:(sy - k * sx) / n};
+}
+
+// The blocks move along a line (x to the right). Block i has left edge x[i] and length w[i] (scene metres).
+// Connection j joins block j (left) and block j + 1 (right). Q[j] = force ON the right block BY the left one (+ = to the right);
+// the left block feels −Q[j] (Newton's 3rd law). Touching: Q ≥ 0 (a push). String: Q ≤ 0 (a pull, T = −Q). Tow bar: either sign.
+// A gap of 0 is the touching limit; a string can stretch to its length L (taut) and no further.
+const SKINW = {cart:0.18, car:4.2, trailer:2.6, truck:6.5, sled:1.3};
+const blockW = (m, sk) => sk && SKINW[sk] ? SKINW[sk] : clamp(0.20 + 0.10 * Math.cbrt(m), 0.20, 0.60);
+const fdDir = fd => fd === "pushL" || fd === "pullR" || fd === "pushM" ? 1 : -1;      // + = the force points to the right
+const fdEnd = (fd, n) => fd === "pushM" ? (n === 3 ? 1 : 0) : fd === "pushL" || fd === "pullL" ? 0 : n - 1;
+const isPush = fd => fd.startsWith("push");
+// everything the solver needs, from a settings object (set, or a preset for the tasks)
+function params(c){
+  if (c.sc === "stack") return stackParams(c);
+  const n = c.n, m = [c.mA, c.mB, c.mC].slice(0, n), types = CONN[c.sc];
+  const sk = c.skin || [], w = m.map((mm, i) => blockW(mm, sk[i]));
+  const e = fdEnd(c.fd, n), dir = fdDir(c.fd), th = rad(c.th);
+  return {n, m, w, types:types.slice(0, n - 1), L:c.L, e, dir, push:isPush(c.fd), F:c.F, th, surf:c.surf,
+          ms:c.ms, md:c.md, mdi:[c.mdA, c.mdB, c.mdC], R:[c.RA, c.RB, c.RC]};
+}
+// applied force (x, y components on block e) in each phase: on = the push/pull; off = let go; brake = a braking force on block e
+function applied(p, ph){
+  if (ph !== "on") return {x:0, y:0};
+  return {x:p.dir * p.F * Math.cos(p.th), y:(p.push ? -1 : 1) * p.F * Math.sin(p.th)};
+}
+// normal forces and friction limits per block. s = largest static friction, d = sliding friction (both ≥ 0)
+function surfaceForces(p, ph){
+  const A = applied(p, ph), lift = [];
+  const N = p.m.map((m, i) => { const v = m * g - (i === p.e ? A.y : 0); lift.push(v < 0); return Math.max(0, v); });
+  const fr = N.map((Ni, i) => p.surf === "same" ? {s:p.ms * Ni, d:p.md * Ni} : p.surf === "each" ? {s:p.mdi[i] * Ni, d:p.mdi[i] * Ni}
+    : p.surf === "res" ? {s:p.R[i], d:p.R[i]} : {s:0, d:0});
+  const brake = ph === "brake" ? p.F * Math.cos(p.th) : 0;
+  return {A, N, fr, lift:lift.some(x => x), brake};
+}
+const VEPS = 1e-7, GEPS = 1e-7;
+// Motion of one group of blocks that move together (indices i0..i1). Fx = applied force on each block.
+// Moving: sliding friction against v. At rest: static friction (taken up first by the block nearest the force) holds
+// as long as it can; otherwise the group starts to slide in the direction of the force.
+function groupMotion(p, sf, i0, i1, v, Fx){
+  let M = 0, Fe = 0; const f = [], fb = [];
+  for (let i = i0; i <= i1; i++){ M += p.m[i]; Fe += Fx[i]; }
+  const lim = i => ({s:sf.fr[i].s + (i === p.e ? sf.brake : 0), d:sf.fr[i].d + (i === p.e ? sf.brake : 0)});
+  const split = (i, tot, sd) => { const L = lim(i)[sd], b = i === p.e ? sf.brake : 0; f[i] = L ? tot * (L - b) / L : 0; fb[i] = L ? tot * b / L : 0; };
+  let a, stat = false;
+  if (Math.abs(v) > VEPS){ const sg = Math.sign(v); for (let i = i0; i <= i1; i++) split(i, -sg * lim(i).d, "d"); }
+  else {
+    let maxS = 0; for (let i = i0; i <= i1; i++) maxS += lim(i).s;
+    if (Math.abs(Fe) <= maxS + 1e-9){
+      stat = true; let rem = Fe;
+      const order = []; for (let i = i0; i <= i1; i++) order.push(i); order.sort((x, y) => Math.abs(x - p.e) - Math.abs(y - p.e));
+      for (const i of order){ const s = lim(i).s, ff = -clamp(rem, -s, s); rem += ff; split(i, ff, "s"); }
+    } else { const sg = Math.sign(Fe); for (let i = i0; i <= i1; i++) split(i, -sg * lim(i).d, "d"); }
+  }
+  let Ff = 0; for (let i = i0; i <= i1; i++) Ff += f[i] + fb[i];
+  a = stat ? 0 : (Fe + Ff) / M; if (Math.abs(a) < 1e-9) a = 0;          // rounding noise (e.g. F set for constant velocity)
+  // forces between neighbours inside the group: block by block from the left, ΣF = m a
+  const Q = {}; let qL = 0;
+  for (let i = i0; i < i1; i++){ Q[i] = Fx[i] + f[i] + fb[i] + qL - p.m[i] * a; qL = Q[i]; if (Math.abs(Q[i]) < 1e-9 * (1 + Math.abs(Fe))) Q[i] = 0; }
+  return {a, f, fb, Q, stat};
+}
+// One instant: which connections are engaged (taut / touching), the groups, accelerations and all the forces
+function solve(p, x, v, ph){
+  const n = p.n, sf = surfaceForces(p, ph), Fx = p.m.map((_, i) => i === p.e ? sf.A.x : 0);
+  const lim = [];                                          // per connection: "lo" touching, "hi" taut string, "bar", or ""
+  for (let j = 0; j < n - 1; j++){
+    const gap = x[j + 1] - x[j] - p.w[j], dv = v[j + 1] - v[j], t = p.types[j];
+    if (t === "b") lim.push("bar");
+    else if (gap <= GEPS && dv <= 1e-6) lim.push("lo");
+    else if (t === "s" && gap >= p.L - GEPS && dv >= -1e-6) lim.push("hi");
+    else lim.push("");
+  }
+  const opt = lim.map((l, j) => l === "lo" || l === "hi" ? j : -1).filter(j => j >= 0);
+  let best = null;
+  for (let mask = (1 << opt.length) - 1; mask >= 0; mask--){
+    const eng = lim.map(l => l === "bar");
+    opt.forEach((j, k) => { if (mask & (1 << k)) eng[j] = true; });
+    const r = {a:[], f:[], fb:[], Q:Array(n - 1).fill(0), eng, stat:[]};
+    let i0 = 0;
+    for (let i = 0; i < n; i++){
+      if (i < n - 1 && eng[i]) continue;
+      let M = 0, P = 0; for (let k = i0; k <= i; k++){ M += p.m[k]; P += p.m[k] * v[k]; }
+      const gm = groupMotion(p, sf, i0, i, P / M, Fx);
+      for (let k = i0; k <= i; k++){ r.a[k] = gm.a; r.f[k] = gm.f[k]; r.fb[k] = gm.fb[k]; r.stat[k] = gm.stat; if (k < i) r.Q[k] = gm.Q[k]; }
+      i0 = i + 1;
+    }
+    let ok = true;
+    for (let j = 0; j < n - 1 && ok; j++){
+      const da = r.a[j + 1] - r.a[j];
+      if (lim[j] === "lo") ok = eng[j] ? r.Q[j] >= -1e-9 : da >= -1e-9;
+      else if (lim[j] === "hi") ok = eng[j] ? r.Q[j] <= 1e-9 : da <= 1e-9;
+    }
+    if (ok){ best = r; break; }
+    if (!best) best = r;
+  }
+  return Object.assign(best, {sf, Fx, lim});
+}
+// state record (numbers are interpolated by at(); strings are not)
+function rec(t, p, x, v, r, ph){
+  const o = {t, ph, lift:r.sf.lift ? "1" : "", Fx:r.sf.A.x, Fy:r.sf.A.y};
+  for (let i = 0; i < p.n; i++){ o["x" + i] = x[i]; o["v" + i] = v[i]; o["a" + i] = r.a[i]; o["f" + i] = r.f[i]; o["b" + i] = r.fb[i] || 0;
+    o["N" + i] = r.sf.N[i]; o["st" + i] = r.stat[i] ? "1" : ""; }
+  for (let j = 0; j < p.n - 1; j++){ o["Q" + j] = r.Q[j]; o["e" + j] = r.eng[j] ? (r.lim[j] === "bar" ? "bar" : r.lim[j] === "lo" ? "c" : "s") : "";
+    o["g" + j] = x[j + 1] - x[j] - p.w[j]; }
+  let F = 0, M = 0, P = 0; for (let i = 0; i < p.n; i++){ F += r.f[i] + (r.fb[i] || 0); M += p.m[i]; P += p.m[i] * v[i]; }
+  o.Ff = F; o.vc = P / M; o.xc = (x.reduce((s, xi, i) => s + p.m[i] * (xi + p.w[i] / 2), 0)) / M;
+  return o;
+}
+// Inelastic contact: when two blocks hit (or a string jerks taut) they move on together; momentum is conserved
+function constrain(p, x, v){
+  for (let pass = 0; pass < 3; pass++)
+    for (let j = 0; j < p.n - 1; j++){
+      const gap = x[j + 1] - x[j] - p.w[j], t = p.types[j], ma = p.m[j], mb = p.m[j + 1];
+      const target = t === "b" ? p.L : gap < 0 ? 0 : t === "s" && gap > p.L ? p.L : null;
+      if (target === null) continue;
+      const d = target - gap; x[j] -= d * mb / (ma + mb); x[j + 1] += d * ma / (ma + mb);
+      const dv = v[j + 1] - v[j];
+      if (t === "b" || (target === 0 && dv < 0) || (target === p.L && dv > 0)){ const vc = (ma * v[j] + mb * v[j + 1]) / (ma + mb); v[j] = vc; v[j + 1] = vc; }
+    }
+}
+// Work out the run from state (x, v) at time t0 in phase ph, for up to tMax seconds; returns the stored states
+function simulate(p, x, v, t0, ph, tMax){
+  if (p.stack) return stackSimulate(p, x, v, t0, ph, tMax);
+  x = x.slice(); v = v.slice();
+  const h = 0.001, per = Math.round(RUN_DT / h), S = [];
+  let r = solve(p, x, v, ph), rest = 0;
+  S.push(rec(t0, p, x, v, r, ph));
+  const still = () => v.every(vi => Math.abs(vi) < VEPS) && r.a.every(ai => Math.abs(ai) < 1e-9);
+  if (still()) return S;
+  for (let k = 1; k * h <= tMax + 1e-9; k++){
+    r = solve(p, x, v, ph);
+    const v0 = v.slice();
+    for (let i = 0; i < p.n; i++) v[i] += r.a[i] * h;
+    // sliding friction cannot make a block go backwards: if v passes through zero, it stops (static friction takes over)
+    for (let i = 0; i < p.n; i++) if (v0[i] !== 0 && Math.sign(v[i]) !== Math.sign(v0[i]) && !r.stat[i]) v[i] = 0;
+    for (let i = 0; i < p.n; i++) x[i] += (v0[i] + v[i]) / 2 * h;
+    constrain(p, x, v);
+    if (k % per === 0){ r = solve(p, x, v, ph); S.push(rec(t0 + k * h, p, x, v, r, ph));
+      rest = still() ? rest + 1 : 0; if (rest >= 15) break; }
+  }
+  return S;
+}
+// starting positions: touching blocks touch, strings and bars are straight
+function startPos(p){ if (p.stack) return stackStart(p); const x = [0]; for (let i = 1; i < p.n; i++) x.push(x[i - 1] + p.w[i - 1] + (p.types[i - 1] === "c" ? 0 : p.L)); return x; }
+function build(){
+  const p = params(set), x = startPos(p), v = p.m.map(() => set.u * p.dir);
+  const S = simulate(p, x, v, 0, set.ph0, set.T);
+  const out = {p, S, dt:RUN_DT, speed:1, stepDt:0.1};
+  if (S.length === 1){
+    const s = S[0];
+    out.still = set.ph0 === "on" && set.F > 0 && s.st0 ? `Static friction holds: the force along the floor (${fmtF(Math.abs(s.Fx))}) is not bigger than the largest static friction. Push harder.`
+      : "Nothing moves: give it a push (F) or a start speed.";
+  }
+  return out;
+}
+// steady values at the start of a run (for tasks and tests): a and the forces between the blocks
+function steady(cfg){ const c = {...set, ...cfg}, p = params(c), x = startPos(p), v = p.m.map(() => c.u * p.dir), r = solve(p, x, v, c.ph0 || "on");
+  return {a:r.a, Q:r.Q, f:r.f, fb:r.fb, N:r.sf.N, A:r.sf.A, eng:r.eng}; }
+// force needed for constant velocity (all blocks moving together in the direction of the force)
+function constF(c){
+  const p = params(c), Nn = p.m.map(m => m * g);
+  if (p.stack) return c.mfd * p.N[0];
+  if (c.surf === "none") return 0;
+  if (c.surf === "res") return p.R.slice(0, p.n).reduce((a, b) => a + b, 0) / Math.cos(p.th);
+  const mu = i => c.surf === "same" ? c.md : p.mdi[i];
+  let others = 0; for (let i = 0; i < p.n; i++) if (i !== p.e) others += mu(i) * Nn[i];
+  const den = Math.cos(p.th) + (p.push ? -1 : 1) * mu(p.e) * Math.sin(p.th);
+  return den > 0 ? (others + mu(p.e) * Nn[p.e]) / den : NaN;
+}
+
+/* ============================ 5 RUN ============================ */
+const presetById = id => PRESETS.find(q => q.id === id);
+const P = id => { const q = presetById(id), o = {...JSON.parse(JSON.stringify(BASE)), pre:id};
+  for (const k in q) if (k !== "id" && k !== "name") o[k] = JSON.parse(JSON.stringify(q[k])); return o; };
+// The whole run is worked out when a setting changes; at(t) interpolates, so ▶, ⏸, the ◂ ▸ steps and the graph probe show the
+// same numbers. ✋ Let go and ◀ Brake work out a new run from the current instant and join it on.
+const R = {playing:false, paused:false, t:0};
+let M = null, fresh = true;
+const tEnd = () => M.S[M.S.length - 1].t;
+function at(t){
+  const S = M.S, n = S.length; if (n === 1 || t <= S[0].t) return S[0]; if (t >= S[n - 1].t) return S[n - 1];
+  const i = Math.min(n - 2, Math.max(0, Math.floor((t - S[0].t) / M.dt + 1e-9)));
+  const a = S[i], b = S[i + 1], u = clamp((t - a.t) / ((b.t - a.t) || 1), 0, 1), o = {};
+  for (const k in a){ const va = a[k], vb = b[k]; o[k] = typeof va === "number" && typeof vb === "number" ? va + (vb - va) * u : va; }
+  o.t = t; return o;
+}
+function reset(){
+  fresh = false; M = build(); R.t = 0; R.playing = false; R.paused = false;
+  updateButtons(); updateStepLabels();
+}
+function stepDt(){ return M.stepDt || 0.1; }
+function start(){
+  if (tEnd() <= 0){ flash(M.still); return; }
+  R.t = 0; R.playing = true; R.paused = false; updateButtons(); }
+// ✋ Let go / ◀ Brake / ▶ push again from the current instant (the stored run is cut there and continued)
+function changePhase(ph){
+  const k = Math.min(M.S.length - 1, Math.floor(R.t / M.dt + 1e-9)), s = M.S[k], p = M.p;
+  if (s.ph === ph){ flash(ph === "off" ? "Already let go." : ph === "brake" ? "Already braking." : "Already pushing."); return; }
+  const x = [], v = []; for (let i = 0; i < p.n; i++){ x.push(s["x" + i]); v.push(s["v" + i]); }
+  if (ph !== "on" && v.every(vi => Math.abs(vi) < VEPS)){ flash("Nothing is moving. Press ▶ first."); return; }
+  const more = simulate(p, x, v, s.t, ph, Math.max(2.5, set.T));
+  M.S = M.S.slice(0, k).concat(more); R.t = s.t; R.playing = tEnd() > R.t; R.paused = false; updateButtons();
+}
+function stepBy(d){
+  R.t = Math.min(tEnd(), Math.max(0, R.t + d));
+  R.playing = R.t < tEnd(); R.paused = R.playing; updateButtons();
+}
+function step(dt){
+  if (!R.playing || R.paused) return;
+  R.t += dt * (M.speed || 1);
+  if (R.t >= tEnd()){ R.t = tEnd(); R.playing = false; updateButtons(); }
+}
+const set = {sc:"push", pre:"c1", ...JSON.parse(JSON.stringify(BASE))};
+/* ---- ⑤ Stacked blocks: A on the floor, B on A (, C on B) ----
+   Contact 0 = floor–A, contact j (j ≥ 1) = block j−1 (below) – block j (above). H[j] = horizontal force ON the upper body of contact j
+   (from the floor or from the block below; + = to the right); the block below feels −H[j] (Newton's 3rd law).
+   N[j] = normal force on the upper body = g × (its mass + everything above it); the block above pushes down with the same N[j].
+   Each contact sticks (static friction up to μs N) or slips (μd N against the sliding). The block below has a raised stop at each end:
+   pressed against a stop, the stop adds whatever push is needed in its direction. ◀ Brake = a braking force F on the bottom block. */
+const STACKW = {truck:8.0, tbox:1.0, cart:0.18, fblock:0.10, book:0.30};
+const CAB = 1.6;                                           // truck cab length (the front stop of the bed) / m
+function stackParams(c){
+  const n = c.n, m = [c.mA, c.mB, c.mC].slice(0, n), sk = c.skin || [];
+  const w = m.map((_, i) => STACKW[sk[i]] ? STACKW[sk[i]] * (sk[i] === "book" ? 1 - 0.12 * i : 1) : [1.20, 0.40, 0.26][i]);
+  const bed = w.map((wi, i) => sk[i] === "truck" ? wi - CAB : wi);       // usable length on top of each block
+  const fd = c.fd || "sA+", e = fd[1] === "A" ? 0 : fd[1] === "C" ? Math.min(2, n - 1) : Math.min(1, n - 1), dir = fd[2] === "-" ? -1 : 1;
+  const Nup = m.map((_, j) => g * m.slice(j).reduce((a, b) => a + b, 0));
+  const relMax = m.map((_, j) => j ? Math.max(0, bed[j - 1] - w[j]) : 0);
+  // start position of each upper block on the one below: at the end it would slide away from (so a slip can be seen for longest)
+  const rel0 = m.map((_, j) => j === 0 ? 0 : c.rel && c.rel[j] !== undefined ? c.rel[j] : (e < j) === (dir > 0) ? relMax[j] : 0);
+  return {stack:true, n, m, w, bed, e, dir, F:c.F, th:0, push:false, ms:c.ms, md:c.md, fs:c.mfs, fdk:c.mfd, N:Nup, rel0, relMax, types:[]};
+}
+function stackStart(p){ const x = [0]; for (let j = 1; j < p.n; j++) x.push(x[j - 1] + p.rel0[j]); return x; }
+function stackSolve(p, x, v, ph){
+  const n = p.n, Fa = p.m.map((_, i) => ph === "on" && i === p.e ? p.dir * p.F : 0), B = ph === "brake" ? p.F : 0;
+  const s = [], d = [], rv = [], atL = [], atR = [];
+  for (let c = 0; c < n; c++){
+    if (c === 0){ s.push(p.fs * p.N[0] + B); d.push(p.fdk * p.N[0] + B); rv.push(v[0]); atL.push(false); atR.push(false); continue; }
+    s.push(p.ms * p.N[c]); d.push(p.md * p.N[c]); rv.push(v[c] - v[c - 1]);
+    const rel = x[c] - x[c - 1]; atL.push(rel <= 1e-7); atR.push(rel >= p.relMax[c] - 1e-7);
+  }
+  const opts = rv.map((r, c) => Math.abs(r) > VEPS ? [r > 0 ? "+" : "-"] : ["0", "+", "-"].filter(o => !(o === "+" && atR[c]) && !(o === "-" && atL[c])));
+  let combos = [[]]; for (const o of opts) combos = combos.flatMap(cb => o.map(x2 => [...cb, x2]));
+  combos.sort((a, b) => a.filter(z => z !== "0").length - b.filter(z => z !== "0").length);
+  let best = null;
+  for (const cb of combos){
+    const H = Array(n).fill(0), a = Array(n).fill(0);
+    cb.forEach((o, c) => { if (o !== "0") H[c] = o === "+" ? -d[c] : d[c]; });
+    // groups of blocks joined by sticking contacts
+    let lo = 0;
+    for (let i = 0; i < n; i++){
+      if (i + 1 < n && cb[i + 1] === "0") continue;
+      let M = 0, F = 0; for (let k = lo; k <= i; k++){ M += p.m[k]; F += Fa[k]; }
+      const fixed = lo === 0 && cb[0] === "0", ag = fixed ? 0 : (F + H[lo] - (i + 1 < n ? H[i + 1] : 0)) / M;
+      for (let k = lo; k <= i; k++) a[k] = ag;
+      lo = i + 1;
+    }
+    for (let j = n - 1; j >= 0; j--) if (cb[j] === "0") H[j] = p.m[j] * a[j] - Fa[j] + (j + 1 < n ? H[j + 1] : 0);
+    let ok = true;
+    for (let c = 0; c < n && ok; c++){
+      const tol = 1e-7 * (1 + s[c]), ra = c === 0 ? a[0] : a[c] - a[c - 1];
+      if (cb[c] === "0") ok = (Math.abs(H[c]) <= s[c] + tol) || (atL[c] && H[c] > 0) || (atR[c] && H[c] < 0);
+      else if (Math.abs(rv[c]) <= VEPS) ok = cb[c] === "+" ? ra >= -1e-9 : ra <= 1e-9;
+    }
+    if (ok){ best = {a, H, cb}; break; }
+    if (!best) best = {a, H, cb};
+  }
+  const {a, H, cb} = best, f = [], S = [], fb = [];
+  for (let c = 0; c < n; c++){
+    let fr = cb[c] === "0" ? clamp(H[c], -s[c], s[c]) : H[c]; const st = H[c] - fr;
+    if (c === 0 && B > 0){ const cap = cb[c] === "0" ? s[0] : d[0]; fb.push(cap ? fr * B / cap : 0); fr -= fb[0]; } else if (c === 0) fb.push(0);
+    f.push(fr); S.push(st);
+  }
+  for (let i = 0; i < n; i++) if (Math.abs(a[i]) < 1e-9) a[i] = 0;
+  const big = 1e-9 * (1 + Math.max(...s, Math.abs(p.F))); for (let c = 0; c < n; c++) if (Math.abs(H[c]) < big) H[c] = 0;
+  return {a, H, f, S, fb:fb[0], state:cb.map((o, c) => o !== "0" ? "slip" : Math.abs(S[c]) > 1e-9 ? "stop" : "stick"), Fa};
+}
+function stackRec(t, p, x, v, r, ph){
+  const o = {t, ph, Fx:r.Fa[p.e], Fy:0, lift:"", Ff:r.f[0] + r.fb};
+  for (let i = 0; i < p.n; i++){ o["x" + i] = x[i]; o["v" + i] = v[i]; o["a" + i] = r.a[i]; o["H" + i] = r.H[i]; o["f" + i] = r.f[i]; o["S" + i] = r.S[i];
+    o["k" + i] = r.state[i]; o["N" + i] = p.N[i]; o["b" + i] = 0; o["r" + i] = i ? x[i] - x[i - 1] : x[0]; }
+  o.b0 = r.fb; o.st0 = r.state[0] === "stick" && Math.abs(v[0]) < VEPS ? "1" : "";
+  let M = 0, P = 0, X = 0; for (let i = 0; i < p.n; i++){ M += p.m[i]; P += p.m[i] * v[i]; X += p.m[i] * (x[i] + p.w[i] / 2); }
+  o.vc = P / M; o.xc = X / M; return o;
+}
+function stackSimulate(p, x, v, t0, ph, tMax){
+  x = x.slice(); v = v.slice();
+  const h = 0.001, per = Math.round(RUN_DT / h), S = [];
+  let r = stackSolve(p, x, v, ph), rest = 0;
+  S.push(stackRec(t0, p, x, v, r, ph));
+  const still = () => v.every(vi => Math.abs(vi) < VEPS) && r.a.every(ai => Math.abs(ai) < 1e-9);
+  if (still()) return S;
+  const above = c => { const ids = []; for (let i = c; i < p.n; i++) ids.push(i); return ids; };
+  const share = (ids, vv) => { let M = 0, P = 0; ids.forEach(i => { M += p.m[i]; P += p.m[i] * vv[i]; }); return P / M; };
+  for (let k = 1; k * h <= tMax + 1e-9; k++){
+    r = stackSolve(p, x, v, ph);
+    const v0 = v.slice();
+    for (let i = 0; i < p.n; i++) v[i] += r.a[i] * h;
+    // sliding friction stops sliding but never reverses it
+    for (let c = 0; c < p.n; c++){
+      if (r.state[c] !== "slip") continue;
+      const before = c ? v0[c] - v0[c - 1] : v0[0], after = c ? v[c] - v[c - 1] : v[0];
+      if (before !== 0 && Math.sign(after) !== Math.sign(before)){
+        if (c === 0){ let top = 1; while (top < p.n && r.state[top] !== "slip") top++;          // blocks stuck to A stop with it
+          const shift = v[0]; for (let i = 0; i < top; i++) v[i] -= shift; }
+        else { const ids = [...above(c), c - 1], vc = share(ids, v); ids.forEach(i => v[i] = vc); }
+      }
+    }
+    for (let i = 0; i < p.n; i++) x[i] += (v0[i] + v[i]) / 2 * h;
+    // stops at the ends of each lower block (inelastic: the upper part moves on with the block below)
+    for (let c = 1; c < p.n; c++){
+      const rel = x[c] - x[c - 1], lim = rel < 0 ? 0 : rel > p.relMax[c] ? p.relMax[c] : null;
+      if (lim === null) continue;
+      const dx = lim - rel; for (const i of above(c)) x[i] += dx;
+      const rvc = v[c] - v[c - 1];
+      if ((lim === 0 && rvc < 0) || (lim > 0 && rvc > 0)){ const ids = [...above(c), c - 1], vc = share(ids, v); ids.forEach(i => v[i] = vc); }
+    }
+    if (k % per === 0){ r = stackSolve(p, x, v, ph); S.push(stackRec(t0 + k * h, p, x, v, r, ph));
+      rest = still() ? rest + 1 : 0; if (rest >= 15) break; }
+  }
+  return S;
+}
+function stackSteady(c){ const p = stackParams(c), x = stackStart(p), v = p.m.map(() => c.u), r = stackSolve(p, x, v, c.ph0 || "on"); return {...r, p}; }
+// first time the upper block of contact j reaches a stop (for Card M: when the box hits the cab)
+function stopTime(S, j){ for (const s of S) if (s["k" + j] === "stop" || (s["r" + j] !== undefined && j && Math.abs(s["r" + j] - M.p.relMax[j]) < 1e-6)) return s.t; return null; }
+
+/* ============================ 6 SCENE ============================ */
+function fitCanvas(cv){
+  const r = cv.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
+  if (cv.width !== w || cv.height !== h){ cv.width = w; cv.height = h; }
+  const ctx = cv.getContext("2d"); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return {ctx, w:r.width, h:r.height};
+}
+function arrow(ctx, x1, y1, x2, y2, color, width = 4, dashed = false){
+  const L = Math.hypot(x2 - x1, y2 - y1); if (L < 2) return;
+  const ux = (x2 - x1) / L, uy = (y2 - y1) / L, hs = Math.min(13, 6 + width * 1.6, L * 0.6);
+  ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width; ctx.lineCap = "round";
+  if (dashed) ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 - ux * hs * 0.8, y2 - uy * hs * 0.8); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - ux * hs - uy * hs * 0.5, y2 - uy * hs + ux * hs * 0.5);
+  ctx.lineTo(x2 - ux * hs + uy * hs * 0.5, y2 - uy * hs - ux * hs * 0.5); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+function label(ctx, txt, x, y, color, align = "center", size = 15, base = "middle"){
+  ctx.save(); ctx.font = `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = color;
+  ctx.textAlign = align; ctx.textBaseline = base;
+  ctx.lineWidth = 4; ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.strokeText(txt, x, y); ctx.fillText(txt, x, y);
+  ctx.restore();
+}
+function subLabel(ctx, main, sub, rest, x, y, color, align = "center", size = 15){
+  ctx.save(); const f1 = `italic 600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`,
+    f2 = `600 ${Math.round(size * .72)}px "Segoe UI",Calibri,Arial,sans-serif`, f3 = `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`;
+  ctx.font = f1; const w1 = ctx.measureText(main).width; ctx.font = f2; const w2 = sub ? ctx.measureText(sub).width : 0;
+  ctx.font = f3; const w3 = ctx.measureText(rest).width; const W = w1 + w2 + w3;
+  let x0 = align === "center" ? x - W / 2 : align === "right" ? x - W : x;
+  ctx.textBaseline = "middle"; ctx.lineWidth = 4; ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.fillStyle = color;
+  ctx.font = f1; ctx.strokeText(main, x0, y); ctx.fillText(main, x0, y);
+  if (sub){ ctx.font = f2; ctx.strokeText(sub, x0 + w1, y + size * .3); ctx.fillText(sub, x0 + w1, y + size * .3); }
+  ctx.font = f3; ctx.strokeText(rest, x0 + w1 + w2, y); ctx.fillText(rest, x0 + w1 + w2, y);
+  ctx.restore(); return W;
+}
+function rich(ctx, parts, x, y, color, size = 14){
+  const font = st => st === "i" ? `italic 600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`
+    : st === "s" ? `600 ${Math.round(size * .72)}px "Segoe UI",Calibri,Arial,sans-serif` : `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`;
+  ctx.save(); ctx.fillStyle = color; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+  const ws = parts.map(([t, st]) => { ctx.font = font(st); return ctx.measureText(t).width; });
+  let cx = x - ws.reduce((a, b) => a + b, 0) / 2;
+  parts.forEach(([t, st], i) => { ctx.font = font(st); ctx.fillText(t, cx, st === "s" ? y + size * .3 : y); cx += ws[i]; });
+  ctx.restore();
+}
+function bg(ctx, w, h, c0 = "#FAFCFF", c1 = "#EEF3F8"){ const gr = ctx.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, c0); gr.addColorStop(1, c1);
+  ctx.fillStyle = gr; ctx.fillRect(0, 0, w, h); }
+function wrap(ctx, text, maxW, size){
+  ctx.save(); ctx.font = `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`;
+  const out = []; let line = "";
+  for (const wd of text.split(" ")){ const tryL = line ? line + " " + wd : wd; if (ctx.measureText(tryL).width > maxW && line){ out.push(line); line = wd; } else line = tryL; }
+  if (line) out.push(line); ctx.restore(); return out;
+}
+function note(ctx, text, x, y, maxW, color = "#606A72", size = 11.5, align = "center"){   // wrapped grey note, bottom line at y
+  const nl = wrap(ctx, text, maxW, size); nl.forEach((L, i) => label(ctx, L, x, y - (nl.length - 1 - i) * (size + 2.5), color, align, size)); return nl.length;
+}
+function rrect(ctx, x, y, w, h, r){ ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+// force arrow on a free-body diagram: from (x, y), components in N, k px per N; label just beyond the tip
+function fArrow(ctx, x, y, Fx, Fy, k, col, main, sub, rest = "", size = 13, dashed = false){
+  const L = Math.hypot(Fx, Fy) * k; if (L < 2) return;
+  const ux = Fx / Math.hypot(Fx, Fy), uy = -Fy / Math.hypot(Fx, Fy), x2 = x + ux * L, y2 = y + uy * L;
+  arrow(ctx, x, y, x2, y2, col, 4, dashed);
+  const lx = x2 + ux * 14, ly = y2 + uy * 12, al = Math.abs(ux) < 0.35 ? "center" : ux > 0 ? "left" : "right";
+  subLabel(ctx, main, sub, rest, al === "center" ? lx : lx + (ux > 0 ? -6 : 6), ly, col, al, size);
+}
+function plain(ctx, txt, x, y, col, size = 12, align = "center"){ ctx.save(); ctx.fillStyle = col; ctx.font = `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`;
+  ctx.textAlign = align; ctx.textBaseline = "middle"; ctx.fillText(txt, x, y); ctx.restore(); }
+/* ---- Connected blocks scene ---- */
+const SUBN = {0:"A", 1:"B", 2:"C"};
+const ptype = j => M.p.types[j];
+// force of block j on block j + 1 written the usual way: push (touching) +, tension + for strings and bars (− = compression)
+const linkVal = (s, j) => ptype(j) === "c" ? s["Q" + j] : -s["Q" + j];
+const linkName = j => ptype(j) === "c" ? "contact force" : ptype(j) === "s" ? "tension" : "force in the bar";
+// a few small drawings: wooden box, Smart Cart, sled, car, trailer, truck. (x, y) = bottom-left corner on the floor, w × h in px
+function woodBox(ctx, x, y, w, h){
+  ctx.save(); ctx.fillStyle = "#D7B98E"; ctx.strokeStyle = "#8D6E63"; ctx.lineWidth = 2; ctx.fillRect(x, y - h, w, h); ctx.strokeRect(x, y - h, w, h);
+  ctx.strokeStyle = "rgba(141,110,99,.35)"; ctx.lineWidth = 1; ctx.beginPath();
+  for (let k = 1; k < 4; k++){ ctx.moveTo(x + 3, y - h * k / 4); ctx.lineTo(x + w - 3, y - h * k / 4); } ctx.stroke(); ctx.restore();
+}
+function wheel(ctx, x, y, r){ r = Math.max(1.5, r); ctx.save(); ctx.fillStyle = "#37474F"; ctx.beginPath(); ctx.arc(x, y, r, 0, TWO_PI); ctx.fill();
+  ctx.fillStyle = "#B0BEC5"; ctx.beginPath(); ctx.arc(x, y, r * 0.45, 0, TWO_PI); ctx.fill(); ctx.restore(); }
+function skinDraw(ctx, sk, x, y, w, h, i){
+  ctx.save();
+  if (sk === "cart"){ const r = Math.max(4, h * 0.22); ctx.fillStyle = i ? "#1565C0" : "#C62828"; rrect(ctx, x, y - h, w, h - r, 5); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,.25)"; ctx.fillRect(x + 4, y - h + 4, w - 8, 4); wheel(ctx, x + w * 0.22, y - r, r); wheel(ctx, x + w * 0.78, y - r, r); }
+  else if (sk === "sled"){ ctx.fillStyle = "#8D6E63"; ctx.fillRect(x + 4, y - h, w - 8, h * 0.55);
+    ctx.strokeStyle = "#455A64"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x, y - 2); ctx.lineTo(x + w - 8, y - 2); ctx.quadraticCurveTo(x + w, y - 2, x + w, y - 12); ctx.stroke();
+    ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x + w * 0.25, y - 2); ctx.lineTo(x + w * 0.25, y - h * 0.45); ctx.moveTo(x + w * 0.75, y - 2); ctx.lineTo(x + w * 0.75, y - h * 0.45); ctx.stroke(); }
+  else if (sk === "car"){ const r = h * 0.2; ctx.fillStyle = "#1E88E5"; rrect(ctx, x, y - h * 0.62, w, h * 0.42, 6); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(x + w * 0.22, y - h * 0.6); ctx.lineTo(x + w * 0.34, y - h); ctx.lineTo(x + w * 0.7, y - h); ctx.lineTo(x + w * 0.82, y - h * 0.6); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#E3F2FD"; ctx.fillRect(x + w * 0.37, y - h * 0.92, w * 0.14, h * 0.28); ctx.fillRect(x + w * 0.54, y - h * 0.92, w * 0.13, h * 0.28);
+    wheel(ctx, x + w * 0.22, y - r, r); wheel(ctx, x + w * 0.78, y - r, r); }
+  else if (sk === "truck"){ const r = h * 0.15; ctx.fillStyle = "#EF6C00"; ctx.fillRect(x + w * 0.72, y - h, w * 0.28, h * 0.8);
+    ctx.fillStyle = "#E3F2FD"; ctx.fillRect(x + w * 0.80, y - h * 0.92, w * 0.15, h * 0.25);
+    ctx.fillStyle = "#90A4AE"; ctx.fillRect(x, y - h * 0.85, w * 0.70, h * 0.62);
+    wheel(ctx, x + w * 0.12, y - r, r); wheel(ctx, x + w * 0.28, y - r, r); wheel(ctx, x + w * 0.86, y - r, r); }
+  else if (sk === "trailer"){ const r = h * 0.2; ctx.fillStyle = "#A1887F"; ctx.fillRect(x, y - h, w, h * 0.72);
+    ctx.strokeStyle = "#6D4C41"; ctx.lineWidth = 2; ctx.strokeRect(x, y - h, w, h * 0.72); wheel(ctx, x + w * 0.5, y - r, r); }
+  else woodBox(ctx, x, y, w, h);
+  ctx.restore();
+}
+const skinH = (sk, wpx) => sk === "cart" ? clamp(wpx * 0.55, 22, 46) : sk === "car" ? wpx * 0.36 : sk === "truck" ? wpx * 0.38 : sk === "trailer" ? wpx * 0.36
+  : sk === "sled" ? wpx * 0.32 : clamp(wpx * 0.78, 24, 78);
+function sceneMain(ctx, w, h, s){
+  if (M.p.stack) return sceneStack(ctx, w, h, s);
+  bg(ctx, w, h);
+  const p = M.p, n = p.n, sk = set.skin || [];
+  const cp = h < 240, band = cp ? 58 : 74, sp = cp ? 26 : 34;          // compact layout for a short scene
+  const Yf = Math.min(h - band, 268 + (n - 1) * sp), maxH = Math.max(18, Yf - (cp ? 70 : 92) - (n - 1) * sp), x0 = s.x0, x1 = s["x" + (n - 1)] + p.w[n - 1], span = x1 - x0;
+  const S0 = M.S[0], span0 = S0["x" + (n - 1)] + p.w[n - 1] - S0.x0;
+  const k = Math.min(w * 0.56 / span0, (w - 150) / Math.max(span, 1e-6));
+  const side = p.e === 0 && n > 1 ? 1 : p.e === n - 1 && n > 1 ? -1 : 0, mid = (x0 + x1) / 2;
+  const X = xx => w / 2 + side * 34 + (xx - mid) * k;
+  // floor with distance marks (0 = where block A started)
+  ctx.fillStyle = "#D7CCC8"; ctx.fillRect(0, Yf, w, h - Yf); ctx.fillStyle = "#A1887F"; ctx.fillRect(0, Yf, w, 3);
+  const visM = w / k, st = niceStep(visM, 7), xs0 = mid - (w / 2 + side * 34) / k, xs1 = xs0 + w / k;
+  ctx.save(); ctx.strokeStyle = "#8D6E63"; ctx.fillStyle = "#6D4C41"; ctx.font = `11px "Segoe UI",Calibri,Arial,sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "top";
+  for (let v = Math.ceil(xs0 / st) * st; v <= xs1; v += st){ const xx = X(v); ctx.beginPath(); ctx.moveTo(xx, Yf + 3); ctx.lineTo(xx, Yf + 9); ctx.stroke();
+    ctx.fillText(`${+v.toFixed(6)} m`, xx, Yf + 10); }
+  ctx.restore();
+  // blocks
+  const B = p.m.map((m, i) => { const xl = X(s["x" + i]), wp = p.w[i] * k, hp = Math.min(maxH, skinH(sk[i], wp)); return {xl, wp, hp, xc:xl + wp / 2, top:Yf - hp}; });
+  // links (drawn first, at the height of the lower block)
+  for (let j = 0; j < n - 1; j++){
+    const a = B[j], b = B[j + 1], y = Yf - Math.min(a.hp, b.hp) * 0.45, t = ptype(j), xa = a.xl + a.wp, xb = b.xl;
+    if (t === "s"){ const slack = s["g" + j] < p.L - 1e-4, sag = slack ? Math.min(18, (p.L - Math.max(0, s["g" + j])) * k * 0.4) : 0;
+      ctx.save(); ctx.strokeStyle = "#455A64"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(xa, y);
+      if (xb > xa) ctx.quadraticCurveTo((xa + xb) / 2, y + 2 * sag, xb, y); else ctx.lineTo(xb, y); ctx.stroke(); ctx.restore(); }
+    else if (t === "b"){ ctx.save(); ctx.fillStyle = "#546E7A"; ctx.fillRect(xa - 2, y - 3, xb - xa + 4, 6); ctx.restore(); }
+  }
+  B.forEach((b, i) => skinDraw(ctx, sk[i], b.xl, Yf, b.wp, b.hp, i));
+  B.forEach((b, i) => { const big = b.wp > 46 && b.hp > 30, y = sk[i] && sk[i] !== "sled" ? b.top - 11 : b.top + b.hp / 2;
+    if (!sk[i] && big){ label(ctx, NM[i], b.xc, b.top + b.hp * 0.40, "#4E342E", "center", 16); label(ctx, `${fm(p.m[i])} kg`, b.xc, b.top + b.hp * 0.40 + 17, "#4E342E", "center", 11.5); }
+    else label(ctx, `${NM[i]} · ${fm(p.m[i])} kg`, b.xc, b.top - 10, "#4E342E", "center", 12); });
+  // common scale for the force arrows in the scene
+  const Fm = Math.max(1e-9, Math.abs(p.F), ...Array.from({length:n - 1}, (_, j) => Math.abs(s["Q" + j])), ...p.m.map((_, i) => Math.abs(s["f" + i] + s["b" + i])));
+  const kf = Math.max(20, Math.min(70, w * 0.13, Math.min(...B.map(b => b.wp)) - 10)) / Fm, L = F => Math.max(14, Math.abs(F) * kf);
+  // applied force on block e (with a hand, or a rope for a pull)
+  const e = p.e, be = B[e], push = p.push, Ax = s.Fx, Ay = s.Fy;
+  if (s.ph === "on" && p.F > 0){
+    const Fv = Math.hypot(Ax, Ay), ux = Ax / Fv, uy = -Ay / Fv, len = L(Fv), yA = Yf - be.hp * 0.55;
+    const fx = push ? (ux > 0 ? be.xl : be.xl + be.wp) : (ux > 0 ? be.xl + be.wp : be.xl);
+    const veh = sk[e] === "car" || sk[e] === "truck";
+    if (veh){ const yv = Yf - be.hp * 0.45, xf = ux > 0 ? be.xl + be.wp : be.xl; arrow(ctx, xf, yv, xf + ux * len, yv, COL.P, 4);
+      label(ctx, `driving force ${fmtF(Fv)}`, xf + ux * len, yv - 16, COL.P, ux > 0 ? "right" : "left", 12); }
+    else if (push){ const x2 = fx, y2 = yA, x1 = x2 - ux * len, y1 = y2 - uy * len; arrow(ctx, x1, y1, x2, y2, COL.P, 4);
+      hand(ctx, x1 - ux * 10, y1 - uy * 10); label(ctx, `F = ${fmtF(Fv)}`, x1, y1 - 18, COL.P, ux > 0 ? "left" : "right", 13); }
+    else { const x1 = fx, y1 = yA, x2 = x1 + ux * len, y2 = y1 + uy * len;
+      ctx.save(); ctx.strokeStyle = "#455A64"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2 + ux * 16, y2 + uy * 16); ctx.stroke(); ctx.restore();
+      arrow(ctx, x1, y1 - 7, x2, y2 - 7, COL.P, 4); hand(ctx, x2 + ux * 22, y2 + uy * 22);
+      label(ctx, `F = ${fmtF(Fv)}`, x2 + ux * 36, y2 + uy * 22, COL.P, ux > 0 ? "left" : "right", 13); }
+    if (p.th > 0) label(ctx, `θ = ${f0(deg(p.th))}°`, push ? fx - ux * len - ux * 8 : fx + ux * len + ux * 34, yA + 16, COL.P, ux > 0 === push ? "right" : "left", 12);
+  }
+  // friction (and braking) at the floor under each block
+  B.forEach((b, i) => { const f = s["f" + i] + s["b" + i]; if (Math.abs(f) < 1e-9) return;
+    const len = L(f), sg = Math.sign(f), yf = Yf + (cp ? 22 : 30); arrow(ctx, b.xc, yf, b.xc + sg * len, yf, COL.F, 3);
+    label(ctx, s["b" + i] && Math.abs(s["b" + i]) > 1e-9 ? "brake + Ff" : "Ff", b.xc - sg * 4, yf, COL.F, sg > 0 ? "right" : "left", 11.5); });
+  // Newton's 3rd-law pairs, one level per link, each arrow drawn above the body it acts on
+  const topMin = Math.min(...B.map(b => b.top)) - (cp ? 14 : 22), PL = [];
+  for (let j = 0; j < n - 1; j++){
+    const Q = s["Q" + j]; if (Math.abs(Q) < 1e-9) continue;
+    const y = topMin - sp * j - 10, len = L(Q), on = [[B[j + 1], Q, j + 1, j], [B[j], -Q, j, j + 1]];
+    on.forEach(([b, F, i, by]) => { const sg = Math.sign(F); arrow(ctx, b.xc - sg * len / 2, y, b.xc + sg * len / 2, y, PAIR[j], 4);
+      const t = ptype(j) === "c" ? ["F", `${NM[by]} on ${NM[i]}`] : ptype(j) === "s" ? ["T", `on ${NM[i]}`] : ["F", `bar on ${NM[i]}`];
+      PL.push({main:t[0], sub:t[1], rest:` ${fmtF(Math.abs(F))}`, x:b.xc, y:y - 15, col:PAIR[j], align:"center", size:12.5}); });
+  }
+  placeLabels(ctx, PL);
+  // v and a of each group, under the floor
+  const groups = []; B.forEach((b, i) => { const g0 = groups[groups.length - 1];
+    if (g0 && Math.abs(s["v" + i] - s["v" + g0.i[0]]) < 1e-4 && Math.abs(s["a" + i] - s["a" + g0.i[0]]) < 1e-4) g0.i.push(i); else groups.push({i:[i]}); });
+  groups.forEach(G => { const i0 = G.i[0], i1 = G.i[G.i.length - 1], xc = (B[i0].xl + B[i1].xl + B[i1].wp) / 2, v = s["v" + i0], a = s["a" + i0];
+    if (Math.abs(v) > 1e-4){ const lv = clamp(18 + Math.abs(v) * 12, 18, 60) * Math.sign(v); const yv = Yf + (cp ? 38 : 50); arrow(ctx, xc - lv / 2, yv, xc + lv / 2, yv, COL.v, 3);
+      label(ctx, `v ${f2(Math.abs(v))} m s⁻¹`, xc + lv / 2 + Math.sign(v) * 6, yv, COL.v, v > 0 ? "left" : "right", 11.5); }
+    if (Math.abs(a) > 1e-6){ const la = clamp(16 + Math.abs(a) * 6, 16, 50) * Math.sign(a); const ya = Yf + (cp ? 51 : 66); arrow(ctx, xc - la / 2, ya, xc + la / 2, ya, COL.a, 3);
+      label(ctx, `a ${sig(Math.abs(a))} m s⁻²`, xc + la / 2 + Math.sign(a) * 6, ya, COL.a, a > 0 ? "left" : "right", 11.5); } });
+  // status
+  const [txt1, c1] = motionText(s);
+  label(ctx, txt1, 10, 16, c1, "left", 14);
+  const ph = s.ph === "on" ? (p.F > 0 ? (push ? "pushing" : "pulling") : "no force") : s.ph === "off" ? "✋ let go" : "◀ braking";
+  label(ctx, ph, w - 10, 16, s.ph === "on" ? COL.P : COL.F, "right", 13);
+  if (s.lift) note(ctx, "F sin θ is bigger than the weight: the block would lift off the floor (F_N = 0 here).", w / 2, 40, w - 40, COL.F, 12);
+  if (M.still && tEnd() <= 0) note(ctx, M.still, w / 2, 54, w - 60, COL.F, 12);
+}
+function motionText(s){
+  const n = M.p.n, vs = [], as = [];
+  for (let i = 0; i < n; i++){ vs.push(s["v" + i]); as.push(s["a" + i]); }
+  const apart = []; for (let j = 0; j < n - 1; j++) if (!s["e" + j]) apart.push(ptype(j) === "s" ? "string slack" : "blocks apart");
+  const extra = apart.length ? ` · ${[...new Set(apart)].join(", ")}` : "";
+  if (vs.every(v => Math.abs(v) < 1e-4) && as.every(a => Math.abs(a) < 1e-6)) return [`At rest: ΣF = 0 on every block${extra}`, COL.N];
+  if (as.every(a => Math.abs(a) < 1e-6)) return [`Constant velocity: ΣF = 0 on every block${extra}`, COL.N];
+  const sp = vs.every((v, i) => Math.abs(v) < 1e-4 || v * as[i] > 0) ? "Speeding up" : vs.every((v, i) => v * as[i] <= 0) ? "Slowing down" : "Accelerating";
+  return [`${sp}: ΣF = ma${extra}`, COL.a];
+}
+const fm = m => m >= 100 ? f0(m) : m < 1 ? String(+m.toFixed(3)) : f1(m);
+function hand(ctx, x, y){ ctx.save(); ctx.fillStyle = "#F1C27D"; ctx.strokeStyle = "#C99A5B"; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.ellipse(x, y, 11, 8, 0, 0, TWO_PI); ctx.fill(); ctx.stroke(); ctx.restore(); }
+/* ============================ 7 FBD ============================ */
+function twoBoxes(w, h, f = 0.55){
+  if (h < 240 && w > h * 2) return [{x:0, y:0, w:Math.round(w * 0.55), h}, {x:Math.round(w * 0.55), y:0, w:w - Math.round(w * 0.55), h, side:true}];
+  const t = Math.round(h * f); return [{x:0, y:0, w, h:t}, {x:0, y:t, w, h:h - t}];
+}
+function sepLine(ctx, B){ ctx.save(); ctx.strokeStyle = "#DDE6F0"; ctx.lineWidth = 1; ctx.beginPath();
+  if (B.side){ ctx.moveTo(B.x, B.y + 8); ctx.lineTo(B.x, B.y + B.h - 8); } else { ctx.moveTo(B.x + 8, B.y + 2); ctx.lineTo(B.x + B.w - 8, B.y + 2); }
+  ctx.stroke(); ctx.restore(); }
+// all the forces on block i at state s: {x, y (N, up +), col, main, sub, dy (offset of a horizontal arrow), dash}
+function forcesOn(s, i){
+  const p = M.p, out = [], W = p.m[i] * g;
+  out.push({x:0, y:-W, col:COL.W, main:"W", sub:""});
+  if (s["N" + i] > 1e-9) out.push({x:0, y:s["N" + i], col:COL.N, main:"F", sub:"N"});
+  if (i === p.e && s.ph === "on" && p.F > 0) out.push({x:s.Fx, y:s.Fy, col:COL.P, main:"F", sub:"", dy:-9});
+  if (Math.abs(s["f" + i]) > 1e-9) out.push({x:s["f" + i], y:0, col:COL.F, main:"F", sub:"f", dy:11});
+  if (Math.abs(s["b" + i]) > 1e-9) out.push({x:s["b" + i], y:0, col:COL.F, main:"F", sub:"brake", dy:17, dash:true});
+  for (let j = 0; j < p.n - 1; j++){
+    const Q = s["Q" + j]; if (Math.abs(Q) < 1e-9 || (i !== j && i !== j + 1)) continue;
+    const other = i === j ? j + 1 : j, F = i === j ? -Q : Q, t = ptype(j);
+    out.push({x:F, y:0, col:PAIR[j], main:t === "s" ? "T" : "F", sub:t === "c" ? `${NM[other]} on ${NM[i]}` : t === "s" ? "" : "bar", dy:j ? 3 : -3, pair:j});
+  }
+  return out;
+}
+// labels that would overlap are moved up (or down) a step
+function placeLabels(ctx, L){
+  const done = [];
+  for (const l of L){
+    ctx.save(); ctx.font = `italic 600 ${l.size}px "Segoe UI",Calibri,Arial,sans-serif`; const wd = ctx.measureText(l.main + l.sub + l.rest).width * 0.92 + 4; ctx.restore();
+    const box = y => { const x0 = l.align === "center" ? l.x - wd / 2 : l.align === "right" ? l.x - wd : l.x; return {x0, x1:x0 + wd, y0:y - l.size * 0.6, y1:y + l.size * 0.6}; };
+    let y = l.y, tries = 0;
+    const hit = b => done.some(d => b.x0 < d.x1 && b.x1 > d.x0 && b.y0 < d.y1 && b.y1 > d.y0);
+    while (hit(box(y)) && tries < 8){ tries++; y = l.y + (tries % 2 ? -1 : 1) * Math.ceil(tries / 2) * (l.size + 2); }
+    done.push(box(y)); subLabel(ctx, l.main, l.sub, l.rest, l.x, y, l.col, l.align, l.size);
+  }
+}
+function midMain(ctx, w, h, s){
+  if (M.p.stack) return fbdStack(ctx, w, h, s);
+  const p = M.p, n = p.n, [A, B] = twoBoxes(w, h, 0.58);
+  // 1 · one FBD per block, all to the same scale
+  const F = p.m.map((_, i) => forcesOn(s, i)), Fmax = Math.max(...F.flat().map(f => Math.hypot(f.x, f.y)));
+  const cw = A.w / n, cy = A.y + 44 + (A.h - 44) / 2, room = Math.max(16, Math.min(cw / 2 - 18, (A.h - 44) / 2 - 18)), k = room / Fmax, L = [];
+  label(ctx, "Each block on its own (to scale)", A.x + 10, A.y + 12, COL.navy, "left", 12.5);
+  for (let i = 0; i < n; i++){
+    const cx = A.x + cw * (i + 0.5);
+    ctx.save(); ctx.globalAlpha = .55; ctx.fillStyle = "#BCAAA4"; ctx.fillRect(cx - 13, cy - 13, 26, 26); ctx.restore();
+    label(ctx, `${NM[i]} · ${fm(p.m[i])} kg`, cx, A.y + 30, "#4E342E", "center", 12);
+    for (const f of F[i]){
+      const hor = Math.abs(f.y) < 1e-12, y0 = cy + (hor ? (f.dy || 0) : 0), x0 = cx;
+      const Lp = Math.hypot(f.x, f.y) * k; if (Lp < 2) continue;
+      const ux = f.x / Math.hypot(f.x, f.y), uy = -f.y / Math.hypot(f.x, f.y), x2 = x0 + ux * Lp, y2 = y0 + uy * Lp;
+      arrow(ctx, x0, y0, x2, y2, f.col, 3.5, !!f.dash);
+      const al = Math.abs(ux) < 0.35 ? "center" : ux > 0 ? "left" : "right";
+      L.push({main:f.main, sub:f.sub, rest:"", x:x2 + ux * 6, y:y2 + uy * 10 + (al === "center" ? 0 : -1), col:f.col, align:al, size:12});
+    }
+  }
+  placeLabels(ctx, L);
+  // 2 · whole system: only external forces; the pairs between the blocks cancel
+  sepLine(ctx, B);
+  const together = Array.from({length:n - 1}, (_, j) => s["e" + j]).every(x => x);
+  label(ctx, together ? "Whole system (the forces between the blocks cancel)" : "Not one system now: the blocks move separately", B.x + 10, B.y + 16, together ? COL.navy : COL.F, "left", 12.5);
+  const bs = 24, gap = 22, tot = n * bs + (n - 1) * gap, yb = B.y + B.h * 0.40, x0 = B.x + (B.w - tot) / 2;
+  ctx.save(); ctx.strokeStyle = COL.accent; ctx.lineWidth = 1.6; ctx.setLineDash([6, 4]); rrect(ctx, x0 - 12, yb - bs / 2 - 12, tot + 24, bs + 24, 10); ctx.stroke(); ctx.restore();
+  for (let i = 0; i < n; i++){ const xi = x0 + i * (bs + gap);
+    ctx.fillStyle = "#BCAAA4"; ctx.fillRect(xi, yb - bs / 2, bs, bs); plain(ctx, NM[i], xi + bs / 2, yb, "#4E342E", 12);
+    if (i < n - 1){ const xa = xi + bs, xb = xa + gap; ctx.save(); ctx.strokeStyle = PAIR[i]; ctx.globalAlpha = .45; ctx.lineWidth = 2; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(xa + 2, yb - 4); ctx.lineTo(xb - 2, yb - 4); ctx.moveTo(xa + 2, yb + 4); ctx.lineTo(xb - 2, yb + 4); ctx.stroke(); ctx.restore(); } }
+  const Mt = p.m.reduce((a, b) => a + b, 0), Fx = s.ph === "on" ? s.Fx : 0, Ff = s.Ff;
+  const kk = Math.min(B.w * 0.18, 90) / Math.max(1e-9, Math.abs(Fx), Math.abs(Ff));
+  if (Math.abs(Fx) > 1e-9){ const sg = Math.sign(Fx), xs = sg > 0 ? x0 + tot + 12 : x0 - 12;
+    arrow(ctx, xs, yb, xs + Fx * kk + sg * 8, yb, COL.P, 4); subLabel(ctx, "F", "", p.th > 0 ? " cos θ" : "", xs + Fx * kk / 2, yb - 14, COL.P, "center", 12.5); }
+  if (Math.abs(Ff) > 1e-9){ const sg = Math.sign(Ff), xs = sg > 0 ? x0 + tot + 12 : x0 - 12;
+    arrow(ctx, xs, yb + 12, xs + Ff * kk + sg * 8, yb + 12, COL.F, 3.5); subLabel(ctx, "ΣF", "f", "", xs + Ff * kk / 2, yb + 27, COL.F, "center", 12.5); }
+  const a = s["a" + p.e], ext0 = Fx + Ff, ext = Math.abs(ext0) < 1e-9 * (1 + Math.abs(Fx)) ? 0 : ext0;
+  const l1 = together ? `ΣF = F${p.th > 0 ? " cos θ" : ""} − ΣF_f = (${p.m.map((_, i) => "m" + NM[i]).join(" + ")}) a`.replace("F_f", "Ff") : "Use the FBD of each block (or group) on its own.";
+  const l2 = together ? `${mn(sig(ext))} N = ${sig(Mt)} kg × a  →  a = ${mn(sig(a))} m s⁻²` : "";
+  label(ctx, l1, B.x + B.w / 2, B.y + B.h - (l2 ? 30 : 14), COL.ink, "center", 12.5);
+  if (l2) label(ctx, l2, B.x + B.w / 2, B.y + B.h - 12, COL.accent, "center", 12.5);
+}
+// table of the horizontal forces on every block (+ = to the right) and the check ΣF = ma
+function renderKtab(s){
+  if (M.p.stack) return ktabStack(s);
+  const p = M.p, n = p.n, el = $("ktab"), z = v => Math.abs(v) < 5e-4 ? "0" : mn(sig(v, 3));
+  const rows = [], cell = (v, c) => `<td${c ? ` style="color:${c}"` : ""}>${v === null ? "" : z(v)}</td>`;
+  const val = (fn) => p.m.map((_, i) => fn(i));
+  rows.push(["<i>F</i> (applied)", val(i => i === p.e && s.ph === "on" ? s.Fx : null), COL.P]);
+  rows.push(["friction <i>F</i><sub>f</sub>", val(i => p.surf === "none" ? null : s["f" + i]), COL.F]);
+  if (p.m.some((_, i) => Math.abs(s["b" + i]) > 1e-9)) rows.push(["braking force", val(i => i === p.e ? s["b" + i] : null), COL.F]);
+  for (let j = 0; j < n - 1; j++) rows.push([`${NM[j]} ↔ ${NM[j + 1]} (${ptype(j) === "c" ? "push" : ptype(j) === "s" ? "string" : "bar"})`,
+    val(i => i === j ? -s["Q" + j] : i === j + 1 ? s["Q" + j] : null), PAIR[j]]);
+  const sum = val(i => { let F = (i === p.e && s.ph === "on" ? s.Fx : 0) + s["f" + i] + s["b" + i]; for (let j = 0; j < n - 1; j++){ if (i === j) F -= s["Q" + j]; if (i === j + 1) F += s["Q" + j]; } return F; });
+  const html = `<table><tr><th>horizontal force / N</th>${p.m.map((_, i) => `<th>on ${NM[i]}</th>`).join("")}</tr>
+    ${rows.map(r => `<tr><td style="color:${r[2]};font-weight:600">${r[0]}</td>${r[1].map(v => cell(v, r[2])).join("")}</tr>`).join("")}
+    <tr class="sum"><td>Σ<i>F</i></td>${sum.map(v => cell(v)).join("")}</tr>
+    <tr><td><i>m a</i></td>${p.m.map((m, i) => cell(m * s["a" + i])).join("")}</tr></table>
+    <div class="cap">+ = to the right · each 3rd-law pair: the same size with opposite signs, on two different blocks</div>`;
+  if (el.dataset.h !== html){ el.innerHTML = html; el.dataset.h = html; }
+}
+/* ---- ⑤ Stacked blocks: scene, FBDs, table, readouts ---- */
+const SNAME = {truck:"truck", tbox:"box", cart:"Smart Cart", fblock:"friction block", book:"book"};
+const BOOKC = ["#C62828", "#1565C0", "#2E7D32"];
+const ASPECT = {truck:0.11, tbox:0.8, cart:0.45, fblock:0.55, book:0.17};
+function stackHeights(p, k, avail){
+  const sk = set.skin || [];
+  let hs = p.w.map((w, i) => w * k * (ASPECT[sk[i]] || [0.30, 0.42, 0.5][i]));
+  const tot = hs.reduce((a, b) => a + b, 0); if (tot > avail) hs = hs.map(x => x * avail / tot);
+  return hs.map(x => Math.max(14, x));
+}
+function sceneStack(ctx, w, h, s){
+  bg(ctx, w, h);
+  const p = M.p, n = p.n, sk = set.skin || [], cp = h < 240, sp = cp ? 26 : 32;
+  const Yf = Math.min(h - (cp ? 58 : 74), 250 + (n - 1) * 46);
+  const k = Math.min(w * 0.52 / p.w[0], (w - 220) / p.w[0]), off = p.dir > 0 ? -55 : 55;
+  const X = xx => w / 2 + off + (xx - (s.x0 + p.w[0] / 2)) * k;
+  // floor and distance marks
+  ctx.fillStyle = "#D7CCC8"; ctx.fillRect(0, Yf, w, h - Yf); ctx.fillStyle = "#A1887F"; ctx.fillRect(0, Yf, w, 3);
+  const st = niceStep(w / k, 7), xs0 = s.x0 + p.w[0] / 2 - (w / 2 + off) / k;
+  ctx.save(); ctx.strokeStyle = "#8D6E63"; ctx.fillStyle = "#6D4C41"; ctx.font = `11px "Segoe UI",Calibri,Arial,sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "top";
+  for (let v = Math.ceil(xs0 / st) * st; v <= xs0 + w / k; v += st){ const xx = X(v); ctx.beginPath(); ctx.moveTo(xx, Yf + 3); ctx.lineTo(xx, Yf + 9); ctx.stroke(); ctx.fillText(`${+v.toFixed(6)} m`, xx, Yf + 10); }
+  ctx.restore();
+  const hs = stackHeights(p, k, Math.max(40, Yf - 48));
+  const B = [], PL = []; let base = Yf;
+  for (let i = 0; i < n; i++){ const xl = X(s["x" + i]), wp = p.w[i] * k, hp = hs[i];
+    const top = sk[i] === "truck" ? base - hp : base - hp; B.push({xl, wp, hp, xc:xl + wp / 2, bot:base, top}); base = top; }
+  // draw from the bottom up, with the stops at the ends of each lower block
+  B.forEach((b, i) => {
+    const s_ = sk[i];
+    ctx.save();
+    if (s_ === "truck"){ const cab = CAB * k, r = Math.max(5, b.hp * 0.9);
+      ctx.fillStyle = "#90A4AE"; ctx.fillRect(b.xl, b.top, b.wp - cab, b.hp);
+      ctx.fillStyle = "#EF6C00"; ctx.fillRect(b.xl + b.wp - cab, b.top - b.hp * 2.6, cab, b.hp * 3.6);
+      ctx.fillStyle = "#E3F2FD"; ctx.fillRect(b.xl + b.wp - cab * 0.7, b.top - b.hp * 2.3, cab * 0.55, b.hp * 1.0);
+      ctx.fillStyle = "#607D8B"; ctx.fillRect(b.xl, b.top - 6, 4, 6);
+      wheel(ctx, b.xl + b.wp * 0.15, Yf - r, r); wheel(ctx, b.xl + b.wp * 0.32, Yf - r, r); wheel(ctx, b.xl + b.wp * 0.86, Yf - r, r);
+      b.bedTop = b.top; }
+    else if (s_ === "cart") skinDraw(ctx, "cart", b.xl, b.bot, b.wp, b.hp, 0);
+    else if (s_ === "book"){ ctx.fillStyle = BOOKC[i % 3]; rrect(ctx, b.xl, b.top, b.wp, b.hp, 3); ctx.fill(); ctx.fillStyle = "#FFF8E1"; ctx.fillRect(b.xl + b.wp - 6, b.top + 2, 4, b.hp - 4); }
+    else woodBox(ctx, b.xl, b.bot, b.wp, b.hp);
+    if (i < n - 1 && s_ !== "truck" && s_ !== "book"){ ctx.fillStyle = "#5D4037"; ctx.fillRect(b.xl - 1, b.top - 6, 4, 6); ctx.fillRect(b.xl + b.wp - 3, b.top - 6, 4, 6); }
+    ctx.restore();
+  });
+  B.forEach((b, i) => { const t = `${NM[i]} · ${fm(p.m[i])} kg${sk[i] && SNAME[sk[i]] ? " (" + SNAME[sk[i]] + ")" : ""}`;
+    ctx.save(); ctx.font = `600 12px "Segoe UI",Calibri,Arial,sans-serif`; const tw = ctx.measureText(t).width; ctx.restore();
+    if (sk[i] === "truck") PL.push({main:"", sub:"", rest:t, x:b.xl + 4, y:b.top - 12, col:"#4E342E", align:"left", size:11.5});
+    else if (b.wp > tw + 30 && b.hp >= 18) label(ctx, t, b.xc, b.top + b.hp / 2, "#4E342E", "center", 12);
+    else PL.push({main:"", sub:"", rest:t, x:b.xc, y:b.top - 10 - (i === n - 1 ? 0 : 0), col:"#4E342E", align:"center", size:11.5}); });
+  // force arrows: one scale for the horizontal forces in the scene
+  const Hs = Array.from({length:n}, (_, i) => Math.abs(s["H" + i])), Fm = Math.max(1e-9, Math.abs(p.F), ...Hs);
+  const kf = Math.max(20, Math.min(80, w * 0.14)) / Fm, L = F => Math.max(14, Math.abs(F) * kf);
+  // applied force on block e (rope + hand; driving force for the truck)
+  if (s.ph === "on" && p.F > 0){ const b = B[p.e], ux = p.dir, len = L(p.F), y = b.top + b.hp * 0.5, xf = ux > 0 ? b.xl + b.wp : b.xl;
+    if (sk[p.e] === "truck"){ const xt = ux > 0 ? b.xl + b.wp : b.xl; arrow(ctx, xt, y, xt + ux * len, y, COL.P, 4);
+      label(ctx, `driving force ${fmtF(p.F)}`, xt + ux * len, y - 15, COL.P, ux > 0 ? "right" : "left", 12); }
+    else { ctx.save(); ctx.strokeStyle = "#455A64"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(xf, y); ctx.lineTo(xf + ux * (len + 16), y); ctx.stroke(); ctx.restore();
+      arrow(ctx, xf, y - 7, xf + ux * len, y - 7, COL.P, 4); hand(ctx, xf + ux * (len + 22), y);
+      label(ctx, `F = ${fmtF(p.F)}`, xf + ux * (len + 38), y, COL.P, ux > 0 ? "left" : "right", 13); } }
+  // floor friction (and the brake) under A
+  { const f = s.H0; if (Math.abs(f) > 1e-9){ const yf = Yf + (cp ? 22 : 30), sg = Math.sign(f); arrow(ctx, B[0].xc, yf, B[0].xc + sg * L(f), yf, COL.F, 3);
+    label(ctx, Math.abs(s.b0) > 1e-9 ? `brake + Ff ${fmtF(Math.abs(f))}` : `Ff ${fmtF(Math.abs(f))}`, B[0].xc - sg * 4, yf, COL.F, sg > 0 ? "right" : "left", 11.5); } }
+  // the two 3rd-law pairs at every interface: friction (bold) and normal force (thin)
+  for (let j = 1; j < n; j++){
+    const up = B[j], lo = B[j - 1], yi = up.bot, H = s["H" + j], c = PAIR[j - 1], xc = up.xc;
+    const kn = Math.min(up.hp * 0.85, 40) / Math.max(...p.N.slice(1)), ln = Math.max(10, p.N[j] * kn), xn = p.dir > 0 ? up.xl + up.wp - Math.min(14, up.wp * 0.2) : up.xl + Math.min(14, up.wp * 0.2);
+    ctx.save(); ctx.globalAlpha = .75; arrow(ctx, xn, yi, xn, yi - ln, c, 2); arrow(ctx, xn, yi, xn, yi + Math.min(ln, lo.hp * 0.9), c, 2); ctx.restore();
+    if (Math.abs(H) > 1e-9){ const sg = Math.sign(H), len = Math.min(L(H), up.wp * 0.8);
+      arrow(ctx, xc - sg * len / 2, yi - 7, xc + sg * len / 2, yi - 7, c, 4); arrow(ctx, xc + sg * len / 2, yi + 7, xc - sg * len / 2, yi + 7, c, 4);
+      const stop = Math.abs(s["S" + j]) > 1e-9 ? " (+ stop)" : "";
+      const roomL = Math.min(up.xl, xc - len / 2), roomR = w - Math.max(up.xl + up.wp, xc + len / 2), L_ = p.dir > 0 ? roomL > 125 || roomL > roomR : roomR < 125 && roomL > roomR, xr = L_ ? Math.min(up.xl, xc - len / 2) - 8 : Math.max(up.xl + up.wp, xc + len / 2) + 8, al = L_ ? "right" : "left";
+      PL.push({main:"F", sub:`f, ${NM[j - 1]} on ${NM[j]}`, rest:` ${fmtF(Math.abs(H))}${stop}`, x:xr, y:yi - 10, col:c, align:al, size:12});
+      PL.push({main:"F", sub:`f, ${NM[j]} on ${NM[j - 1]}`, rest:` ${fmtF(Math.abs(H))}`, x:xr, y:yi + 10, col:c, align:al, size:12}); }
+  }
+  placeLabels(ctx, PL);
+  // v and a of each block (groups that move together share one pair of arrows)
+  const groups = []; B.forEach((b, i) => { const g0 = groups[groups.length - 1];
+    if (g0 && Math.abs(s["v" + i] - s["v" + g0[0]]) < 1e-4 && Math.abs(s["a" + i] - s["a" + g0[0]]) < 1e-4) g0.push(i); else groups.push([i]); });
+  groups.forEach((G, gi) => { const xc = groups.length > 1 ? w * (0.28 + 0.4 * gi) : B[G[0]].xc, v = s["v" + G[0]], a = s["a" + G[0]], nm = groups.length > 1 ? G.map(i => NM[i]).join("") + ": " : "";
+    if (Math.abs(v) > 1e-4){ const lv = clamp(18 + Math.abs(v) * 12, 18, 60) * Math.sign(v), yv = Yf + (cp ? 38 : 50); arrow(ctx, xc - lv / 2, yv, xc + lv / 2, yv, COL.v, 3);
+      label(ctx, `${nm}v ${f2(Math.abs(v))} m s⁻¹`, xc + lv / 2 + Math.sign(v) * 6, yv, COL.v, v > 0 ? "left" : "right", 11.5); }
+    if (Math.abs(a) > 1e-6){ const la = clamp(16 + Math.abs(a) * 6, 16, 50) * Math.sign(a), ya = Yf + (cp ? 51 : 66); arrow(ctx, xc - la / 2, ya, xc + la / 2, ya, COL.a, 3);
+      label(ctx, `${nm}a ${sig(Math.abs(a))} m s⁻²`, xc + la / 2 + Math.sign(a) * 6, ya, COL.a, a > 0 ? "left" : "right", 11.5); } });
+  const [t1, c1] = motionTextStack(s); label(ctx, t1, 10, 16, c1, "left", 14);
+  label(ctx, s.ph === "on" ? (p.F > 0 ? "pulling" : "no force") : s.ph === "off" ? "✋ let go" : "◀ braking", w - 10, 16, s.ph === "on" ? COL.P : COL.F, "right", 13);
+  if (sk[0] === "truck" && n > 1) label(ctx, `box → cab: ${f2(p.relMax[1] - s.r1)} m`, w - 10, 34, COL.navy, "right", 12.5);
+  if (M.still && tEnd() <= 0) note(ctx, M.still, w / 2, 54, w - 60, COL.F, 12);
+}
+function motionTextStack(s){
+  const n = M.p.n, vs = [], as = [];
+  for (let i = 0; i < n; i++){ vs.push(s["v" + i]); as.push(s["a" + i]); }
+  const slips = []; for (let j = 1; j < n; j++){ if (s["k" + j] === "slip") slips.push(`${NM[j]} slides on ${NM[j - 1]}`); else if (s["k" + j] === "stop") slips.push(`${NM[j]} against the stop`); }
+  const extra = slips.length ? ` · ${slips.join(", ")}` : n > 1 ? " · moving together" : "";
+  if (vs.every(v => Math.abs(v) < 1e-4) && as.every(a => Math.abs(a) < 1e-6)) return [`At rest: ΣF = 0 on every block`, COL.N];
+  if (as.every(a => Math.abs(a) < 1e-6)) return [`Constant velocity: ΣF = 0 on every block${extra}`, COL.N];
+  return [`Accelerating: ΣF = ma${extra}`, COL.a];
+}
+// every force on block i (x, y in N; up +): {label main/sub, colour, dx (vertical arrows), row (horizontal arrows)}
+function forcesOnStack(s, i){
+  const p = M.p, n = p.n, out = [];
+  out.push({x:0, y:-p.m[i] * g, col:COL.W, main:"W", sub:"", dx:-5});
+  out.push({x:0, y:p.N[i], col:i ? PAIR[i - 1] : COL.N, main:"F", sub:i ? `N, ${NM[i - 1]} on ${NM[i]}` : "N", dx:-5});
+  if (i + 1 < n) out.push({x:0, y:-p.N[i + 1], col:PAIR[i], main:"F", sub:`N, ${NM[i + 1]} on ${NM[i]}`, dx:6});
+  if (i === p.e && s.ph === "on" && p.F > 0) out.push({x:s.Fx, y:0, col:COL.P, main:"F", sub:"", row:-1});
+  if (i === 0){ if (Math.abs(s.f0) > 1e-9) out.push({x:s.f0, y:0, col:COL.F, main:"F", sub:"f", row:1});
+    if (Math.abs(s.b0) > 1e-9) out.push({x:s.b0, y:0, col:COL.F, main:"F", sub:"brake", row:1, dash:true}); }
+  else if (Math.abs(s["H" + i]) > 1e-9) out.push({x:s["H" + i], y:0, col:PAIR[i - 1], main:"F", sub:`f, ${NM[i - 1]} on ${NM[i]}`, row:1});
+  if (i + 1 < n && Math.abs(s["H" + (i + 1)]) > 1e-9) out.push({x:-s["H" + (i + 1)], y:0, col:PAIR[i], main:"F", sub:`f, ${NM[i + 1]} on ${NM[i]}`, row:0});
+  return out;
+}
+function fbdStack(ctx, w, h, s){
+  const p = M.p, n = p.n, [A, B] = twoBoxes(w, h, 0.62);
+  const F = p.m.map((_, i) => forcesOnStack(s, i)), Fmax = Math.max(...F.flat().map(f => Math.hypot(f.x, f.y)));
+  const cw = A.w / n, cy = A.y + 44 + (A.h - 44) / 2, room = Math.max(16, Math.min(cw / 2 - 18, (A.h - 44) / 2 - 18)), L = [];
+  const Fi = F.map(fs => Math.max(...fs.map(f => Math.hypot(f.x, f.y)))), own = Math.max(...Fi) / Math.min(...Fi) > 8;
+  label(ctx, own ? "Each block on its own (each FBD to its own scale)" : "Each block on its own (to scale)", A.x + 10, A.y + 12, COL.navy, "left", 12.5);
+  for (let i = 0; i < n; i++){
+    const cx = A.x + cw * (i + 0.5);
+    ctx.save(); ctx.globalAlpha = .55; ctx.fillStyle = "#BCAAA4"; ctx.fillRect(cx - 13, cy - 13, 26, 26); ctx.restore();
+    label(ctx, `${NM[i]} · ${fm(p.m[i])} kg`, cx, A.y + 30, "#4E342E", "center", 12);
+    for (const f of F[i]){
+      const k = room / (own ? Fi[i] : Fmax), hor = Math.abs(f.y) < 1e-12, Lp = Math.hypot(f.x, f.y) * k; if (Lp < 2) continue;
+      const x0 = cx + (hor ? 0 : f.dx || 0), y0 = cy + (hor ? (f.row || 0) * 6 : 0), ux = f.x / Math.hypot(f.x, f.y), uy = -f.y / Math.hypot(f.x, f.y);
+      const x2 = x0 + ux * Lp, y2 = y0 + uy * Lp; arrow(ctx, x0, y0, x2, y2, f.col, 3.5, !!f.dash);
+      const al = Math.abs(ux) < 0.35 ? (f.dx > 0 ? "left" : f.dx < 0 ? "right" : "center") : ux > 0 ? "left" : "right";
+      L.push({main:f.main, sub:f.sub, rest:"", x:hor ? x2 + ux * 6 : x2 + (f.dx > 0 ? 5 : -5), y:hor ? y2 : y2 + uy * 8, col:f.col, align:al, size:11.5});
+    }
+  }
+  placeLabels(ctx, L);
+  sepLine(ctx, B);
+  const together = Array.from({length:n - 1}, (_, j) => s["k" + (j + 1)] !== "slip").every(x => x);
+  label(ctx, together ? "Whole system (the pairs between the blocks cancel)" : "A block slides: use each block's FBD", B.x + 10, B.y + 16, together ? COL.navy : COL.F, "left", 12.5);
+  const bw = 54, bh = 15, yb = B.y + 30 + n * bh / 2 + 8, x0 = B.x + B.w / 2;
+  ctx.save(); ctx.strokeStyle = COL.accent; ctx.lineWidth = 1.6; ctx.setLineDash([6, 4]); rrect(ctx, x0 - bw / 2 - 12, yb - n * bh / 2 - 8, bw + 24, n * bh + 16, 9); ctx.stroke(); ctx.restore();
+  for (let i = 0; i < n; i++){ const ww = bw - i * 12, y = yb + n * bh / 2 - (i + 1) * bh; ctx.fillStyle = "#BCAAA4"; ctx.fillRect(x0 - ww / 2, y, ww, bh - 1); plain(ctx, NM[i], x0, y + bh / 2, "#4E342E", 10.5); }
+  const Fx = s.ph === "on" ? s.Fx : 0, Ff = s.H0, kk = Math.min(B.w * 0.18, 90) / Math.max(1e-9, Math.abs(Fx), Math.abs(Ff));
+  if (Math.abs(Fx) > 1e-9){ const sg = Math.sign(Fx), xs = x0 + sg * (bw / 2 + 12); arrow(ctx, xs, yb - 4, xs + Fx * kk + sg * 8, yb - 4, COL.P, 4); subLabel(ctx, "F", "", "", xs + Fx * kk / 2, yb - 18, COL.P, "center", 12.5); }
+  if (Math.abs(Ff) > 1e-9){ const sg = Math.sign(Ff), xs = x0 + sg * (bw / 2 + 12); arrow(ctx, xs, yb + 10, xs + Ff * kk + sg * 8, yb + 10, COL.F, 3.5); subLabel(ctx, "F", "f, floor", "", xs + Ff * kk / 2, yb + 25, COL.F, "center", 12); }
+  const Mt = p.m.reduce((a, b) => a + b, 0), ext0 = Fx + Ff, ext = Math.abs(ext0) < 1e-9 * (1 + Math.abs(Fx)) ? 0 : ext0, a = s.a0;
+  const l1 = together ? `ΣF = F − F_f,floor = (${p.m.map((_, i) => "m" + NM[i]).join(" + ")}) a`.replace("F_f,floor", "Ff,floor") : "Top block slides: ΣF = ma for each block";
+  label(ctx, l1, B.x + B.w / 2, B.y + B.h - (together ? 30 : 14), COL.ink, "center", 12.5);
+  if (together) label(ctx, `${mn(sig(ext))} N = ${sig(Mt)} kg × a  →  a = ${mn(sig(a))} m s⁻²`, B.x + B.w / 2, B.y + B.h - 12, COL.accent, "center", 12.5);
+}
+function ktabStack(s){
+  const p = M.p, n = p.n, el = $("ktab"), z = v => Math.abs(v) < 5e-4 ? "0" : mn(sig(v, 3));
+  const cell = (v, c) => `<td${c ? ` style="color:${c}"` : ""}>${v === null ? "" : z(v)}</td>`, val = fn => p.m.map((_, i) => fn(i));
+  const rows = [["<i>F</i> (applied)", val(i => i === p.e && s.ph === "on" ? s.Fx : null), COL.P], ["floor friction", val(i => i ? null : s.f0), COL.F]];
+  if (Math.abs(s.b0) > 1e-9) rows.push(["braking force", val(i => i ? null : s.b0), COL.F]);
+  for (let j = 1; j < n; j++) rows.push([`${NM[j - 1]} ↔ ${NM[j]} friction${Math.abs(s["S" + j]) > 1e-9 ? " + stop" : ""} (${s["k" + j]})`,
+    val(i => i === j ? s["H" + j] : i === j - 1 ? -s["H" + j] : null), PAIR[j - 1]]);
+  const sum = val(i => (i === p.e && s.ph === "on" ? s.Fx : 0) + s["H" + i] - (i + 1 < n ? s["H" + (i + 1)] : 0));
+  const html = `<table><tr><th>horizontal force / N</th>${p.m.map((_, i) => `<th>on ${NM[i]}</th>`).join("")}</tr>
+    ${rows.map(r => `<tr><td style="color:${r[2]};font-weight:600">${r[0]}</td>${r[1].map(v => cell(v, r[2])).join("")}</tr>`).join("")}
+    <tr class="sum"><td>Σ<i>F</i></td>${sum.map(v => cell(v)).join("")}</tr>
+    <tr><td><i>m a</i></td>${p.m.map((m, i) => cell(m * s["a" + i])).join("")}</tr></table>
+    <div class="cap">+ = to the right · vertical: each block's <i>F</i><sub>N</sub> from below = its weight + the push from the block above</div>`;
+  if (el.dataset.h !== html){ el.innerHTML = html; el.dataset.h = html; }
+}
+function readoutsStack(s){
+  const p = M.p, n = p.n, same = p.m.every((_, i) => Math.abs(s["a" + i] - s.a0) < 1e-6 && Math.abs(s["v" + i] - s.v0) < 1e-4);
+  let html = "<table>" + (same ? row("acceleration <i>a</i>", `${mn(sig(s.a0))} m s⁻²`, "speed <i>v</i>", `${f2(Math.abs(s.v0))} m s⁻¹`, COL.a, COL.v)
+    : row("accelerations", p.m.map((_, i) => `${NM[i]} ${mn(sig(s["a" + i], 3))}`).join(" · ") + " m s⁻²", "", "", COL.a)
+      + row("speeds", p.m.map((_, i) => `${NM[i]} ${f2(Math.abs(s["v" + i]))}`).join(" · ") + " m s⁻¹", "", "", COL.v));
+  html += row("applied force <i>F</i>", s.ph === "on" ? fmtF(Math.abs(s.Fx)) : s.ph === "off" ? "0 (let go)" : `braking ${fmtF(p.F)}`, "floor friction", fmtF(Math.abs(s.f0)), COL.P, COL.F);
+  for (let j = 1; j < n; j++){ const H = s["H" + j], a = NM[j - 1], b = NM[j], ar = v => v > 1e-9 ? "→" : v < -1e-9 ? "←" : "";
+    html += row(`friction ${a} on ${b}`, `${fmtF(Math.abs(H))} ${ar(H)}`, `friction ${b} on ${a}`, `${fmtF(Math.abs(H))} ${ar(-H)} <span class="k">${s["k" + j]}</span>`, PAIR[j - 1], PAIR[j - 1]);
+    html += row(`<i>F</i><sub>N</sub> ${a} on ${b}`, `${fmtF(p.N[j])} ↑`, `<i>F</i><sub>N</sub> ${b} on ${a}`, `${fmtF(p.N[j])} ↓`, PAIR[j - 1], PAIR[j - 1]); }
+  return html + `<tr><td colspan="5" class="ev">3rd law at each contact: friction and normal force come in pairs — same size, opposite directions, on the two blocks</td></tr></table>`;
+}
+/* ============================ 8 GRAPHS ============================ */
+function niceUp(x){ const p = Math.pow(10, Math.floor(Math.log10(x))), m = x / p;
+  return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p; }
+function niceStep(range, n){ return niceUp(range / n); }
+function niceCeil(x, n = 5){ const st = niceUp(x / n); return Math.ceil(x / st - 1e-9) * st; }
+// axis numbers: enough decimals for small steps, × 10ⁿ form for very big values (typed values can be far outside the sliders)
+const tickTxt = (v, st, d0) => { if (Math.abs(v) >= 1e6){ const e = Math.floor(Math.log10(Math.abs(v)) + 1e-9);
+    return `${+(v / 10 ** e).toPrecision(3)}×10${[...String(e)].map(c => "⁰¹²³⁴⁵⁶⁷⁸⁹"[c]).join("")}`; }
+  return String(+v.toFixed(Math.min(12, Math.max(d0, Math.ceil(-Math.log10(st)) + 1)))); };
+function axesR(ctx, box, x0, x1, y0, y1, xLab, yLab, noX = false){
+  const {x, y, w, h} = box, X = v => x + w * (v - x0) / (x1 - x0), Y = v => y + h - h * (v - y0) / (y1 - y0);
+  ctx.save(); ctx.font = `13px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillStyle = COL.muted; ctx.strokeStyle = COL.grid; ctx.lineWidth = 1;
+  const xs = niceStep(x1 - x0, 8), ys = niceStep(y1 - y0, 6);
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  if (!noX) for (let v = Math.ceil(x0 / xs - 1e-9) * xs; v <= x1 + xs * 1e-6; v += xs){ ctx.beginPath(); ctx.moveTo(X(v), y); ctx.lineTo(X(v), y + h); ctx.stroke(); ctx.fillText(tickTxt(v, xs, 3), X(v), y + h + 4); }
+  ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  for (let v = Math.ceil(y0 / ys - 1e-9) * ys; v <= y1 + ys * 1e-6; v += ys){ ctx.beginPath(); ctx.moveTo(x, Y(v)); ctx.lineTo(x + w, Y(v)); ctx.stroke(); ctx.fillText(tickTxt(v, ys, 3), x - 5, Y(v)); }
+  ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.5; ctx.beginPath();
+  const zx = x0 <= 0 && x1 >= 0 ? X(0) : x, zy = y0 <= 0 && y1 >= 0 ? Y(0) : y + h;
+  ctx.moveTo(zx, y); ctx.lineTo(zx, y + h); ctx.moveTo(x, zy); ctx.lineTo(x + w, zy); ctx.stroke();
+  ctx.restore();
+  rich(ctx, xLab, x + w / 2, y + h + 30, COL.ink);
+  ctx.save(); ctx.translate(x - 46, y + h / 2); ctx.rotate(-Math.PI / 2); rich(ctx, yLab, 0, 0, COL.ink); ctx.restore();
+  return {X, Y};
+}
+function shadeArea(ctx, X, Y, f, t1, n = 240){
+  if (!(t1 > 0)) return 0;
+  let A = 0, ta = 0, fa = f(0); ctx.save();
+  for (let i = 1; i <= n; i++){
+    const tb = t1 * i / n, fb = f(tb); A += (fa + fb) / 2 * (tb - ta);
+    ctx.fillStyle = fa + fb >= 0 ? "rgba(21,101,192,.22)" : "rgba(198,40,40,.22)";
+    ctx.beginPath(); ctx.moveTo(X(ta), Y(0)); ctx.lineTo(X(ta), Y(fa)); ctx.lineTo(X(tb), Y(fb)); ctx.lineTo(X(tb), Y(0)); ctx.closePath(); ctx.fill();
+    ta = tb; fa = fb;
+  }
+  ctx.restore(); return A;
+}
+// Name + value of the shaded area, written inside it (beside it with a leader line when it does not fit) — as in sims 10–15
+function areaName(ctx, box, L){
+  const {X, Y, f, t1, nm, val} = L; if (!(t1 > 0)) return;
+  const l1 = nm[0], l2 = `${nm[1]} = ${mn(sci(val))} ${nm[2]}`, col = val >= 0 ? "#0D47A1" : "#B71C1C", fs = 13;
+  ctx.save(); ctx.font = `700 ${fs}px "Segoe UI",Calibri,Arial,sans-serif`;
+  const w = Math.max(ctx.measureText(l1).width, ctx.measureText(l2).width) + 14, h = 2 * fs + 14;
+  const xa = X(0), xb = X(t1), wt = w / ((xb - xa) / t1 || 1);
+  let best = {d:-1, t:t1 / 2, s:1};
+  if (wt < t1) for (let i = 0; i <= 40; i++){
+    const t = wt / 2 + (t1 - wt) * i / 40, s = f(t) >= 0 ? 1 : -1; let d = Infinity;
+    for (let j = 0; j <= 6; j++){ const tj = t - wt / 2 + wt * j / 6, dp = (Y(0) - Y(f(tj))) * s; d = Math.min(d, dp); }
+    if (d > best.d) best = {d, t, s};
+  }
+  let cx, cy; const beside = best.d < h + 8;
+  const tm = beside ? (best.d > 0 ? best.t : t1 / 2) : best.t, yc = Y(f(tm) / 2);
+  if (!beside){ cx = X(best.t); cy = Y(0) - best.s * best.d / 2; }
+  else {
+    const iX = x => (x - xa) / ((xb - xa) / t1 || 1), clash = (x0, y0) => {
+      for (let j = 0; j <= 12; j++){ const t = iX(x0 - w / 2 - 4 + (w + 8) * j / 12); if (t < 0) continue;
+        if (t > t1){ if (Math.abs(Y(f(t)) - y0) < h / 2 + 4) return true; continue; }
+        const ya = Y(0), yf = Y(f(t)); if (Math.max(ya, yf) + 4 > y0 - h / 2 && Math.min(ya, yf) - 4 < y0 + h / 2) return true; }
+      return false; };
+    let bd = Infinity;
+    for (let x0 = box.x + w / 2 + 4; x0 <= box.x + box.w - w / 2 - 4; x0 += 8)
+      for (let y0 = box.y + 46 + h / 2; y0 <= box.y + box.h - 30 - h / 2; y0 += 6){
+        const dd = Math.hypot(x0 - X(tm), y0 - yc); if (dd < bd && !clash(x0, y0)){ bd = dd; cx = x0; cy = y0; } }
+    if (cx === undefined){ cx = X(tm); cy = yc; }
+  }
+  cx = Math.min(Math.max(cx, box.x + w / 2 + 2), box.x + box.w - w / 2 - 2);
+  cy = Math.min(Math.max(cy, box.y + h / 2 + 2), box.y + box.h - h / 2 - 4);
+  if (beside){ ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.setLineDash([3, 3]);
+    ctx.beginPath(); ctx.moveTo(X(tm), yc); ctx.lineTo(cx, cy); ctx.stroke(); ctx.setLineDash([]); }
+  const x0 = cx - w / 2, y0 = cy - h / 2, r = 6;
+  ctx.fillStyle = "rgba(255,255,255,.88)"; ctx.strokeStyle = col; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(x0 + r, y0); ctx.arcTo(x0 + w, y0, x0 + w, y0 + h, r); ctx.arcTo(x0 + w, y0 + h, x0, y0 + h, r);
+  ctx.arcTo(x0, y0 + h, x0, y0, r); ctx.arcTo(x0, y0, x0 + w, y0, r); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = col; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(l1, cx, cy - fs / 2 - 1); ctx.font = `600 ${fs}px "Segoe UI",Calibri,Arial,sans-serif`; ctx.fillText(l2, cx, cy + fs / 2 + 2);
+  ctx.restore();
+}
+const toolOn = id => !!document.getElementById(id)?.checked;
+// Generic graph. Spec (GQ[key]): {btn, sym, un, s:[[name, f(state), colour, dashed?]], x?:{f, sym, un} (default: time),
+//   area?:{nm:[line 1, symbol, unit], i?:series index}, tan?:{nm, un}, extra?(ctx, X, Y, box)}. The curve is drawn up to now.
+let gq = null;
+function gSpec(){ const keys = graphsFor(); if (!keys.includes(gq)) gq = keys[0]; return GQ[gq]; }
+function drawGraph(){
+  const cv = document.getElementById("graph"); if (!cv.offsetParent) return;
+  const {ctx, w, h} = fitCanvas(cv);
+  ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  const q = gSpec(); if (q.custom){ q.custom(ctx, w, h); return; }
+  const box = {x:66, y:16, w:w - 82, h:h - 66}, T = tEnd(), tu = M.tu || 1, N = 500;
+  const tNow = clamp(R.t, 0, T), ts = [];
+  for (let i = 0; i <= N; i++) ts.push(T * i / N);
+  const st = ts.map(t => at(t)), xf = q.x ? q.x.f : (s => s.t / tu);
+  const xs = st.map(xf), ser = q.s.map(([nm, f, col, dash]) => ({nm, f, col, dash, ys:st.map(f)}));
+  let x0 = Math.min(0, ...xs), x1 = Math.max(...xs); if (x1 - x0 < 1e-9) x1 = x0 + 1;
+  if (!q.x) { x0 = 0; x1 = Math.max(T / tu, 1e-6); }
+  if (q.xMax) x1 = Math.max(x1, q.xMax());
+  let lo = Math.min(0, ...ser.flatMap(s => s.ys)), hi = Math.max(0, ...ser.flatMap(s => s.ys)); const span = hi - lo || 1;
+  if (q.yMax) hi = Math.max(hi, q.yMax());
+  hi = hi > 0 ? niceCeil(hi + span * 0.1) : niceUp(span * 0.1); lo = lo < 0 ? -niceCeil(-lo + span * 0.08) : 0;
+  const {X, Y} = axesR(ctx, box, x0, x1, lo, hi, q.x ? [...q.x.sym, [` / ${q.x.un}`,"n"]] : [["time ","n"],["t","i"],[` / ${M.tn || "s"}`,"n"]], [...q.sym, [` / ${q.un}`,"n"]]);
+  if (q.extra) q.extra(ctx, X, Y, box);
+  const sNow = at(tNow), xNow = xf(sNow), nNow = Math.round(tNow / T * N) || 0, tl = [];
+  // points up to now (with the exact current state at the end)
+  const upTo = arr => arr.slice(0, Math.min(nNow, N) + 1);
+  if (toolOn("areaChk")){
+    if (!q.area) tl.push(M.noArea || "Area: not used on this graph");
+    else { const S = ser[q.area.i || 0], px = [...upTo(xs), xNow], py = [...upTo(S.ys), S.f(sNow)];
+      let mono = true; for (let i = 1; i < px.length; i++) if (px[i] < px[i - 1] - 1e-9) mono = false;
+      if (!mono) tl.push("Area: the quantity on the x-axis must keep increasing");
+      else if (xNow > px[0] + 1e-12){
+        let A = 0; ctx.save(); ctx.globalAlpha = .2;
+        for (let i = 1; i < px.length; i++){ A += (py[i] + py[i - 1]) / 2 * (px[i] - px[i - 1]);
+          ctx.fillStyle = py[i] + py[i - 1] >= 0 ? "#1565C0" : "#C62828";
+          ctx.beginPath(); ctx.moveTo(X(px[i - 1]), Y(0)); ctx.lineTo(X(px[i - 1]), Y(py[i - 1])); ctx.lineTo(X(px[i]), Y(py[i])); ctx.lineTo(X(px[i]), Y(0)); ctx.closePath(); ctx.fill(); }
+        ctx.restore();
+        const fI = xx => { let j = 1; while (j < px.length - 1 && px[j] < xx) j++; const u = (xx - px[j - 1]) / ((px[j] - px[j - 1]) || 1); return py[j - 1] + (py[j] - py[j - 1]) * clamp(u, 0, 1); };
+        const sh = px[0];
+        areaName(ctx, box, {X:xx => X(xx + sh), Y, f:xx => fI(xx + sh), t1:xNow - sh, nm:q.area.nm, val:A * (q.area.k || 1)});
+      }
+    }
+  }
+  ser.forEach(S => { const px = [...upTo(xs), xNow], py = [...upTo(S.ys), S.f(sNow)];
+    ctx.save(); ctx.strokeStyle = S.col; ctx.lineWidth = S.dash ? 2.6 : 2.4; if (S.dash) ctx.setLineDash([8, 4]); ctx.beginPath();
+    px.forEach((xx, i) => i ? ctx.lineTo(X(xx), Y(py[i])) : ctx.moveTo(X(xx), Y(py[i]))); ctx.stroke(); ctx.restore(); });
+  if (!q.x){ ctx.save(); ctx.strokeStyle = COL.accent; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(X(xNow), box.y); ctx.lineTo(X(xNow), box.y + box.h); ctx.stroke(); ctx.restore(); }
+  if (toolOn("tanChk")){
+    if (!q.tan) tl.push(M.noTan || "Tangent: not used on this graph");
+    else { const S = ser[q.tan.i || 0], d = Math.max(T * 2e-3, 1e-6), sa = at(clamp(tNow - d, 0, T)), sb = at(clamp(tNow + d, 0, T));
+      const dx = xf(sb) - xf(sa);
+      if (Math.abs(dx) < 1e-12 || tNow <= 0) tl.push("Tangent: move the time on (▶ or ▸) first");
+      else { const kk = (S.f(sb) - S.f(sa)) / dx, y0 = S.f(sNow), sp = (x1 - x0) * 0.14;
+        ctx.save(); ctx.beginPath(); ctx.rect(box.x, box.y, box.w, box.h); ctx.clip();
+        ctx.strokeStyle = COL.accent; ctx.lineWidth = 2; ctx.setLineDash([8, 4]);
+        ctx.beginPath(); ctx.moveTo(X(xNow - sp), Y(y0 - kk * sp)); ctx.lineTo(X(xNow + sp), Y(y0 + kk * sp)); ctx.stroke(); ctx.restore();
+        tl.push(`gradient = ${q.tan.nm} = ${mn(sci(kk * (q.tan.k || 1)))} ${q.tan.un}`); }
+    }
+  }
+  ser.forEach((S, i) => { const v = S.f(sNow); ctx.fillStyle = S.col; ctx.beginPath(); ctx.arc(X(xNow), Y(v), 4.5, 0, 7); ctx.fill();
+    label(ctx, `${S.nm}: ${mn(sci(v))} ${q.un}`, box.x + 8, box.y + 12 + 17 * i, S.col, "left", 13); });
+  tl.forEach((t, i) => label(ctx, t, box.x + box.w - 6, box.y + 12 + 17 * i, COL.accent, "right", 13));
+  if (!q.x){ const rt = X(xNow) > box.x + box.w * 0.7;
+    label(ctx, `t = ${sig(tNow / tu, 3)} ${M.tn || "s"}`, X(xNow) + (rt ? -6 : 6), box.y + box.h - 12, COL.accent, rt ? "right" : "left", 12.5); }
+}
+function renderGsel(){
+  const keys = graphsFor(); gSpec();
+  document.getElementById("gsel").innerHTML = keys.map(k => `<button data-g="${k}" aria-pressed="${k === gq}">${GQ[k].btn}</button>`).join("");
+}
+const blockSeries = (key, f) => M.p.m.map((_, i) => [`${key} ${NM[i]}`, s => f(s, i), BCOL[i]]);
+const GQ = {
+  v:{btn:"<i>v</i>–<i>t</i>", sym:[["v","i"]], un:"m s⁻¹", get s(){ return blockSeries("v", (s, i) => s["v" + i]); },
+     area:{nm:["Distance moved by A", "Δs", "m"]}, tan:{nm:"acceleration of A", un:"m s⁻²"}},
+  a:{btn:"<i>a</i>–<i>t</i>", sym:[["a","i"]], un:"m s⁻²", get s(){ return blockSeries("a", (s, i) => s["a" + i]); },
+     area:{nm:["Change in velocity of A", "Δv", "m s⁻¹"]}},
+  F:{btn:"forces–<i>t</i>", sym:[["F","i"]], un:"N", get s(){
+     const p = M.p, out = [["F applied", s => s.ph === "on" ? Math.hypot(s.Fx, s.Fy) : 0, COL.P, true]];
+     if (p.stack){ for (let j = 1; j < p.n; j++) out.push([`friction ${NM[j - 1]} on ${NM[j]}`, s => s["H" + j], PAIR[j - 1]]);
+       out.push(["floor friction", s => Math.abs(s.H0), COL.F, true]); return out; }
+     for (let j = 0; j < p.n - 1; j++) out.push([`${NM[j]}–${NM[j + 1]} ${ptype(j) === "c" ? "push" : ptype(j) === "s" ? "tension" : "bar (+ pull)"}`, s => linkVal(s, j), PAIR[j]]);
+     out.push(["total friction", s => Math.abs(s.Ff), COL.F, true]); return out; }},
+  x:{btn:"<i>x</i>–<i>t</i>", sym:[["x","i"]], un:"m", get s(){ const S0 = M.S[0];
+       if (M.p.stack) return M.p.m.map((_, i) => i ? [`${NM[i]} on ${NM[i - 1]}`, s => s["r" + i] - S0["r" + i], BCOL[i]] : ["A on the floor", s => s.x0 - S0.x0, BCOL[0]]);
+       return blockSeries("x", (s, i) => s["x" + i] - S0["x" + i]); },
+     tan:{nm:"velocity of A", un:"m s⁻¹"}},
+};
+const graphsFor = () => ["v", "a", "F", "x"];
+
+/* ============================ 9 DATA ============================ */
+// Recorded trials are kept per example (scenario). DCOLS[sc] = table columns; ANA = analysis graphs
+// {id, sc:[...], name, x(t), y(t), xs, xu, ys, yu, fit:"origin"|"line", g(fit) → text, hint}.
+let trials = [], anaId = {};
+function recordTrial(){
+  const d = trialData(); if (typeof d === "string"){ flash(d); return; }
+  trials.push({sc:set.sc, ...d}); save(); renderTrials(); flash("Trial recorded: see the Data & analysis tab.");
+}
+const anaFor = () => ANA.filter(a => a.sc.includes(set.sc));
+function curAna(){ const L = anaFor(); return L.find(a => a.id === anaId[set.sc]) || L[0]; }
+function renderTrials(){
+  const cols = DCOLS[set.sc] || [], list = trials.map((t, i) => [t, i]).filter(([t]) => t.sc === set.sc);
+  document.querySelector("#trials thead").innerHTML = `<tr><th>#</th>${cols.map(c => `<th>${c[0]}</th>`).join("")}<th></th></tr>`;
+  document.querySelector("#trials tbody").innerHTML = list.map(([t, i], n) =>
+    `<tr><td>${n + 1}</td>${cols.map(c => `<td>${c[1](t)}</td>`).join("")}<td><button class="x" aria-label="Delete trial ${n + 1}" data-del="${i}">×</button></td></tr>`).join("");
+  const A = curAna();
+  document.getElementById("anaSel").innerHTML = anaFor().map(a => `<button data-a="${a.id}" aria-pressed="${A && a.id === A.id}">${a.name}</button>`).join("");
+}
+function drawAna(){
+  const cv = document.getElementById("ana"); if (!cv.offsetParent) return;
+  const {ctx, w, h} = fitCanvas(cv);
+  ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  const A = curAna(); if (!A){ label(ctx, "No analysis graph for this example", w / 2, h / 2, COL.muted, "center", 14); return; }
+  const tr = trials.filter(t => t.sc === set.sc && (!A.filter || A.filter(t)));
+  const pts = tr.map(t => [A.x(t), A.y(t)]).filter(p => isFinite(p[0]) && isFinite(p[1]));
+  const xm = niceCeil(Math.max(1e-12, ...pts.map(p => p[0])) * 1.1), ym = niceCeil(Math.max(1e-12, ...pts.map(p => p[1])) * 1.15);
+  const box = {x:68, y:44, w:w - 84, h:h - 94};
+  const {X, Y} = axesR(ctx, box, 0, pts.length ? xm : 1, 0, pts.length ? ym : 1, [...A.xs, A.xu ? [` / ${A.xu}`, "n"] : ["", "n"]], [...A.ys, [` / ${A.yu}`, "n"]]);
+  label(ctx, `Recorded trials · ${A.hint}`, box.x, 14, COL.muted, "left", 12.5);
+  if (!pts.length){ label(ctx, "Press ● Record to add trials", box.x + box.w / 2, box.y + box.h / 2, COL.muted, "center", 15); return; }
+  for (const p of pts){ ctx.fillStyle = COL.navy; ctx.beginPath(); ctx.arc(X(p[0]), Y(p[1]), 5, 0, 7); ctx.fill(); }
+  if (document.getElementById("fitChk").checked){
+    const fit = A.fit === "line" ? linFit(pts) : originFit(pts);
+    if (!fit){ label(ctx, "Need at least 2 trials (with different values)", box.x, 30, COL.muted, "left", 13); return; }
+    const xa = 0, xb = xm;
+    ctx.save(); ctx.beginPath(); ctx.rect(box.x, box.y, box.w, box.h); ctx.clip(); ctx.strokeStyle = COL.accent; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(X(xa), Y(fit.k * xa + fit.b)); ctx.lineTo(X(xb), Y(fit.k * xb + fit.b)); ctx.stroke(); ctx.restore();
+    label(ctx, A.g(fit), box.x, 30, COL.accent, "left", 13.5);
+  }
+}
+
+// the link next to the block with the force, on the side of the other blocks (the one a push or pull goes through first)
+const nearLink = p => p.n < 2 ? -1 : p.push ? (p.dir > 0 ? Math.min(p.e, p.n - 2) : p.e - 1) : (p.dir > 0 ? p.e - 1 : p.e);
+function trialData(){
+  const s = at(R.t), p = M.p;
+  if (p.stack){ if (s.ph !== "on") return "Record while the force acts (before ✋ Let go or ◀ Brake).";
+    const nz = x => document.getElementById("noiseChk").checked ? x * (1 + 0.02 * (2 * Math.random() - 1)) : x;
+    const q = []; for (let j = 1; j < p.n; j++) q.push(nz(Math.abs(s["H" + j])));
+    return {n:p.n, m:p.m.slice(), F:set.F, th:0, a:nz(s["a" + p.e] * p.dir), q, jn:0, slip:s.k1 === "slip"}; }
+  if (s.ph !== "on") return "Record while the force acts (before ✋ Let go or ◀ Brake).";
+  if (!Array.from({length:p.n - 1}, (_, j) => s["e" + j]).every(x => x)) return "The blocks are not moving together now: record when they are all joined.";
+  const nz = x => document.getElementById("noiseChk").checked ? x * (1 + 0.02 * (2 * Math.random() - 1)) : x;
+  const q = []; for (let j = 0; j < p.n - 1; j++) q.push(nz(linkVal(s, j)));
+  return {n:p.n, m:p.m.slice(), F:set.F, th:set.th, a:nz(s["a" + p.e] * p.dir), q, jn:nearLink(p)};
+}
+const DC = [["masses / kg", t => t.m.map(fm).join(" + ")], ["<i>F</i> / N", t => sig(t.F)], ["θ / °", t => f0(t.th)], ["<i>a</i> / m s⁻²", t => sig(t.a)],
+  ["A–B / N", t => sig(t.q[0])], ["B–C / N", t => t.q.length > 1 ? sig(t.q[1]) : "—"]];
+const DCOLS = {push:DC, pull:DC, bar:DC, mix:DC, stack:DC};
+const ALL = ["push", "pull", "bar", "mix", "stack"];
+const NOSTACK = ["push", "pull", "bar", "mix"];
+const ANA = [
+  {id:"aF", sc:ALL, name:"<i>a</i>–<i>F</i>", x:t => t.F, y:t => t.a, xs:[["applied force ","n"],["F","i"]], xu:"N", ys:[["a","i"]], yu:"m s⁻²", fit:"line",
+   g:f => `gradient = ${sig(f.k)} kg⁻¹ → total mass = 1/gradient = ${sig(1 / f.k)} kg · intercept ${mn(sig(f.b, 2))} m s⁻²`, hint:"keep the masses, change F"},
+  {id:"fF", sc:["stack"], name:"friction–<i>F</i>", x:t => t.F, y:t => t.q[0], xs:[["applied force ","n"],["F","i"]], xu:"N", ys:[["friction on B","n"]], yu:"N", fit:"line",
+   g:f => `gradient = ${sig(f.k)} = m_B/(m_A + m_B) while they move together · flat at μd m_B g once B slides`, hint:"fit only the points before B slides"},
+  {id:"qF", sc:NOSTACK, name:"link–<i>F</i>", x:t => t.F, y:t => t.q[t.jn], xs:[["applied force ","n"],["F","i"]], xu:"N", ys:[["force between blocks","n"]], yu:"N", fit:"line",
+   g:f => `gradient = ${sig(f.k)} = fraction of the mass beyond the link · intercept ${mn(sig(f.b, 2))} N`, hint:"keep the masses, change F"},
+];
+
+/* ============================ 10 TASKS ============================ */
+const st = id => steady(P(id));
+const TASKS = [
+ {id:"pre", title:"1 · Pre-lab: predict", time:"≈ 15 min", steps:[
+  {type:"predict", setup:{sc:"push", pre:"c1"}, text:"① An 18 N push on box A (4.0 kg) makes A push box B (2.0 kg). While they speed up, the force of B on A is…",
+   opts:["smaller than the force of A on B (B is lighter)", "the same size as the force of A on B, in the opposite direction", "bigger than the force of A on B",
+     "zero, because the boxes move together"], correct:1,
+   why:"Newton's 3rd law: A on B and B on A are one pair — the same size, opposite directions, the same type (contact), on different bodies. Look at the two magenta arrows and the table."},
+  {type:"num", setup:{sc:"push", pre:"c1"}, text:"Card C1★: calculate the acceleration of the boxes.", answer:() => st("c1").a[0], unit:"m s⁻²", hint:"Whole system: a = F / (m<sub>A</sub> + m<sub>B</sub>)."},
+  {type:"num", setup:{sc:"push", pre:"c1"}, text:"Calculate the force of A on B.", answer:() => st("c1").Q[0], unit:"N", hint:"FBD of B alone: the only horizontal force on B is the push from A, so F = m<sub>B</sub>a."},
+  {type:"predict", setup:{sc:"push", pre:"s20"}, text:"Slide 20: 24 N pushes A (4.0 kg) and A pushes B (2.0 kg): the contact force is 8.0 N. Now the same 24 N pushes B from the right. The contact force…",
+   opts:["stays 8.0 N", "gets bigger", "gets smaller"], correct:1,
+   why:"The acceleration is the same (4.0 m s⁻²), but now the contact force has to accelerate A (4.0 kg): 4.0 × 4.0 = 16 N. Try ◀ Push right end."},
+  {type:"predict", setup:{sc:"push", pre:"tcv"}, text:"Three boxes on a rough floor are pushed at a constant velocity. The force of A on B is…",
+   opts:["zero, because the resultant force is zero", "not zero: it balances the friction on B and C", "equal to the push F"], correct:1,
+   why:"ΣF = 0 on every box, but B and C still feel friction. The push from A balances it: F<sub>A on B</sub> = F<sub>f,B</sub> + F<sub>f,C</sub> = 23.5 N, less than F = 29.4 N."},
+  {type:"num", setup:{sc:"pull", pre:"q16"}, text:"② Problem set Q16: 24 N pulls the 3.0 kg block, which pulls the 5.0 kg block on a string. Calculate the tension.",
+   answer:() => -st("q16").Q[0], unit:"N", hint:"a = 24 / 8.0; the string is the only horizontal force on the 5.0 kg block: T = 5.0a."},
+  {type:"predict", setup:{sc:"mix", pre:"mx5"}, text:"④ A is joined to B by a string, and B touches C. You pull C to the right. What happens?",
+   opts:["all three move together", "C moves away on its own: touching blocks cannot pull", "C pulls B, and B pulls A"], correct:1,
+   why:"C and B only touch: a contact force can push but never pull, so C leaves B behind (a = F/m<sub>C</sub> = 6.0 m s⁻²). Push the middle block (B) instead and all three move."},
+ ]},
+ {id:"lab", title:"2 · During the lab: compare", time:"≈ 20 min", steps:[
+  {type:"do", setup:{sc:"push", pre:"cart"}, text:"Smart Cart demo (PASCO 03): before each run, vote — which force sensor reads more? Here cart A (0.75 kg) pushes cart B (0.25 kg). Press ▶ Go and compare the two magenta arrows with the two force–time graphs on the projector."},
+  {type:"num", setup:{sc:"push", pre:"cart"}, text:"A 2.0 N push on cart A. Calculate the force of A on B (frictionless).", answer:() => st("cart").Q[0], unit:"N", hint:"a = 2.0 / 1.00 = 2.0 m s⁻²; B alone: F = m<sub>B</sub>a."},
+  {type:"predict", setup:{sc:"push", pre:"cart", fd:"pushR"}, text:"Now the 2.0 N push acts on the light cart B, from the right. The force between the carts is…",
+   opts:["still 0.50 N", "1.5 N", "2.0 N"], correct:1, why:"B now pushes A (0.75 kg) with a = 2.0 m s⁻²: 0.75 × 2.0 = 1.5 N. The two sensors still read the same size as each other."},
+  {type:"num", setup:{sc:"pull", pre:"tug"}, text:"② Pull the light cart B (0.25 kg) with 1.0 N; it tows the heavy cart A (0.75 kg) on a thread. Calculate the tension.",
+   answer:() => -st("tug").Q[0], unit:"N", hint:"a = 1.0 / 1.00; the thread is the only horizontal force on A: T = m<sub>A</sub>a."},
+  {type:"do", setup:{sc:"push", pre:"cart"}, text:"Record 5 trials with the Smart Carts: change <i>F</i> (0.5 N to 3.0 N), press ▶ Go and ● Record each time. Data tab → <b>link–F</b>."},
+  {type:"num", setup:{sc:"push", pre:"cart"}, text:"Enter the gradient of your link–<i>F</i> line (force of A on B against <i>F</i>).", answer:() => 0.25, unit:"", hint:"F<sub>A on B</sub> = F × m<sub>B</sub>/(m<sub>A</sub> + m<sub>B</sub>)."},
+  {type:"predict", setup:{sc:"push", pre:"tsep"}, text:"Push the two boxes, then press ✋ Let go while they move. Box A has more friction (μd 0.40) than box B (0.10). After you let go, the boxes…",
+   opts:["stay together and stop together", "separate: B slides on further", "separate: A slides on further"], correct:1,
+   why:"On its own, A would slow down at 3.92 m s⁻² and B at only 0.98 m s⁻². A cannot pull B back (touching blocks only push), so B slides away. The contact force drops to 0."},
+  {type:"predict", setup:{sc:"pull", pre:"slack"}, text:"② Now a string: the back block has little friction (μd 0.05), the front one a lot (0.40). Let go while they move. The string…",
+   opts:["stays tight", "goes slack and the back block catches up", "snaps"], correct:1,
+   why:"The front block slows down faster than the back one, so the gap closes: a string cannot push, so the tension falls to zero and the back block runs into the front one."},
+ ]},
+ {id:"hw", title:"3 · Homework: analyse", time:"≈ 30 min", steps:[
+  {type:"num", setup:{sc:"push", pre:"q24"}, text:"Problem set Q24: 60 N pushes a 10 kg box, which pushes a 6.0 kg box; μd = 0.20 for both. Calculate the acceleration.",
+   answer:() => st("q24").a[0], unit:"m s⁻²", hint:"Whole system: 60 − 0.20 × 16 × 9.81 = 16a."},
+  {type:"num", setup:{sc:"push", pre:"q24"}, text:"Calculate the contact force between the boxes.", answer:() => st("q24").Q[0], unit:"N", hint:"6.0 kg box alone: F − 0.20 × 6.0 × 9.81 = 6.0a."},
+  {type:"num", setup:{sc:"push", pre:"t3L"}, text:"Three boxes (1.0, 2.0, 3.0 kg), 12 N on the 1.0 kg box. Calculate the force of B on C.", answer:() => st("t3L").Q[1], unit:"N",
+   hint:"a = 12/6.0 = 2.0 m s⁻²; C alone: F = 3.0 × 2.0."},
+  {type:"num", setup:{sc:"push", pre:"t3R"}, text:"The same 12 N now pushes the 3.0 kg box from the right. Calculate the force between A and B.", answer:() => st("t3R").Q[0], unit:"N",
+   hint:"Now A (1.0 kg) is the last box: F = 1.0 × 2.0."},
+  {type:"num", setup:{sc:"bar", pre:"car"}, text:"③ Card C1★★★: a 1200 kg car tows a 400 kg trailer at 1.5 m s⁻²; resistive forces 300 N (car) and 100 N (trailer). Calculate the driving force.",
+   answer:() => 1600 * 1.5 + 400, unit:"N", hint:"Whole system: F − 400 = 1600 × 1.5."},
+  {type:"num", setup:{sc:"bar", pre:"car"}, text:"Calculate the force in the tow bar.", answer:() => -st("car").Q[0], unit:"N", hint:"Trailer alone: T − 100 = 400 × 1.5."},
+  {type:"predict", setup:{sc:"bar", pre:"carb"}, text:"The car brakes so that both slow down at 2.0 m s⁻² (the trailer has no brakes). The tow bar…",
+   opts:["still pulls the trailer (tension)", "pushes the trailer backwards (compression)", "carries no force"], correct:1,
+   why:"The trailer must lose speed at 2.0 m s⁻², which needs 400 × 2.0 = 800 N backwards. Its resistance gives only 100 N, so the bar pushes it back with 700 N: compression."},
+  {type:"num", setup:{sc:"bar", pre:"carb"}, text:"Calculate the size of the force in the tow bar while braking.", answer:() => st("carb").Q[0], unit:"N", hint:"Trailer alone (backwards +): F<sub>bar</sub> + 100 = 400 × 2.0."},
+  {type:"num", setup:{sc:"pull", pre:"sled"}, text:"② Two sleds: 150 N at 30° above the horizontal pulls the 40 kg sled, which tows a 20 kg sled on a rope; μd = 0.20. Calculate the tension in the rope.",
+   answer:() => -st("sled").Q[0], unit:"N", hint:"Front sled: F<sub>N</sub> = 40 × 9.81 − 150 sin 30°. Whole system: 150 cos 30° − 0.20(F<sub>N,front</sub> + 20 × 9.81) = 60a. Rear sled: T − 0.20 × 20 × 9.81 = 20a."},
+  {type:"num", setup:{sc:"pull", pre:"exit"}, text:"Exit question: a truck tows a 1000 kg car with a rope; both accelerate at 0.80 m s⁻² (no friction). Calculate the tension in the rope.",
+   answer:() => -st("exit").Q[0], unit:"N", hint:"Car alone: T = 1000 × 0.80."},
+  {type:"predict", setup:{sc:"pull", pre:"exitv"}, text:"The truck now tows the car at a constant velocity. The resultant force on the car is…",
+   opts:["zero", "equal to the tension", "equal to the resistive force"], correct:0,
+   why:"Constant velocity → Newton's 1st law: ΣF = 0. The rope still pulls (T = 200 N here), but it just balances the 200 N resistive force on the car."},
+ ]},
+ {id:"stk", title:"4 · Stacked blocks", time:"≈ 20 min", steps:[
+  {type:"predict", setup:{sc:"stack", pre:"s23a"}, text:"⑤ You pull the bottom block A; block B rests on top of it. Which force makes B speed up?",
+   opts:["the pull F", "friction from A on B", "the normal force from A", "nothing — B stays where it is"], correct:1,
+   why:"F acts on A only. The only horizontal force on B is the friction from A, forwards. Its 3rd-law partner, the friction from B on A, acts backwards on A."},
+  {type:"num", setup:{sc:"stack", pre:"s23a"}, text:"A (4.0 kg) is pulled with 15 N on a smooth floor; B (1.0 kg) moves with it. Calculate the friction force on B.",
+   answer:() => stackSteady(P("s23a")).H[1], unit:"N", hint:"Together: a = 15/5.0. B alone: F<sub>f</sub> = m<sub>B</sub>a."},
+  {type:"num", setup:{sc:"stack", pre:"s23L"}, text:"μs = 0.40 between the blocks. Calculate the largest pull on A for which B does not slide.",
+   answer:() => 0.40 * g * 5, unit:"N", hint:"B can get at most μ<sub>s</sub>m<sub>B</sub>g, so a<sub>max</sub> = μ<sub>s</sub>g; then F = (m<sub>A</sub> + m<sub>B</sub>)a<sub>max</sub>."},
+  {type:"predict", setup:{sc:"stack", pre:"s23b"}, text:"Now the pull is 30 N. Block B…",
+   opts:["moves with A", "slides backwards on A, but still speeds up forwards", "stays at rest on the floor"], correct:1,
+   why:"Friction can give B at most μ<sub>d</sub>g = 2.94 m s⁻² once it slides. A speeds up faster (6.76 m s⁻²), so B slides back relative to A while still moving forwards."},
+  {type:"num", setup:{sc:"stack", pre:"s23b"}, text:"Calculate the acceleration of A while B slides (μd = 0.30).", answer:() => stackSteady(P("s23b")).a[0], unit:"m s⁻²",
+   hint:"A: 30 − μ<sub>d</sub>m<sub>B</sub>g = m<sub>A</sub>a<sub>A</sub> (the friction from B pulls A back)."},
+  {type:"predict", setup:{sc:"stack", pre:"pt1"}, text:"You pull the top block B (2.0 kg) with 10 N. A (5.0 kg) stands on a floor with μs = 0.20. Block A…",
+   opts:["stays at rest", "moves with B", "moves, but slower than B"], correct:0,
+   why:"B slides, so it pulls A forwards with only μ<sub>d</sub>m<sub>B</sub>g = 5.89 N. The floor can hold A with up to 0.20 × 7.0 × 9.81 = 13.7 N, so A stays put."},
+  {type:"num", setup:{sc:"stack", pre:"Ma"}, text:"Card M★★★(a): a 50 kg box on a truck bed, μs = 0.40. Calculate the largest acceleration of the truck for which the box does not slide.",
+   answer:() => 0.40 * g, unit:"m s⁻²", hint:"Only friction pushes the box forwards: μ<sub>s</sub>mg = ma<sub>max</sub>."},
+  {type:"num", setup:{sc:"stack", pre:"Mb"}, text:"(c) The truck brakes at 5.0 m s⁻²; μd = 0.30. Calculate the time until the box, 2.0 m behind the cab, hits the cab.",
+   answer:() => Math.sqrt(2 * 2.0 / (5.0 - 0.30 * g)), unit:"s", hint:"Relative to the truck the box speeds up at 5.0 − μ<sub>d</sub>g; s = ½at²."},
+  {type:"num", setup:{sc:"stack", pre:"books"}, text:"Three books (2.0, 1.5, 1.0 kg from the bottom). Calculate the normal force of the middle book on the bottom book.",
+   answer:() => g * 2.5, unit:"N", hint:"The middle book pushes down with the weight of the middle and the top book."},
+ ]},
+];
+// Step types: "do" (instruction + done tick), "predict" (lock in a choice, then check),
+// "num" (numeric answer checked within tol, default 5 %). "setup" applies sim settings for the student.
+let taskState = {}, curSet = "pre";
+function renderTaskSets(){
+  document.getElementById("taskSets").innerHTML = TASKS.map(s =>
+    `<button class="chip" data-set="${s.id}" aria-pressed="${s.id === curSet}">${s.title} <span class="hint">${s.time}</span></button>`).join("");
+}
+function renderTasks(){
+  const ts = TASKS.find(s => s.id === curSet), box = document.getElementById("taskList"); box.innerHTML = "";
+  ts.steps.forEach((st, i) => {
+    const key = `${ts.id}.${i}`, S = taskState[key] || (taskState[key] = {});
+    const d = document.createElement("div"); d.className = "step" + (S.done ? " done" : "");
+    let html = `<p class="q"><span class="n">${i + 1}</span>${st.type === "predict" ? '<span class="tag">Predict · </span>' : ""}${st.text}</p>`;
+    if (st.setup) html += `<button class="btn small" data-setup="${key}">⚙ Set up the sim for me</button> `;
+    if (st.type === "do"){
+      html += `<label class="switch"><input type="checkbox" data-done="${key}" ${S.done ? "checked" : ""}> Done</label>`;
+    } else if (st.type === "predict"){
+      st.opts.forEach((o, j) => {
+        const cls = S.checked ? (j === st.correct ? " good" : j === S.choice ? " bad" : "") : "";
+        html += `<label class="opt${cls}"><input type="radio" name="r${key}" value="${j}" data-choice="${key}" ${S.choice === j ? "checked" : ""} ${S.locked ? "disabled" : ""}> ${o}</label>`;
+      });
+      if (!S.locked) html += `<button class="btn small primary" data-lock="${key}" ${S.choice === undefined ? "disabled" : ""}>🔒 Lock in my prediction</button>`;
+      else if (!S.checked) html += `<div class="fb info">Prediction locked. Now test it in the sim, then press Check.</div><button class="btn small navy" data-check="${key}">Check</button>`;
+      else html += `<div class="fb ${S.choice === st.correct ? "ok" : "no"}">${S.choice === st.correct ? "✔ Your prediction was right. " : "✘ Not what happens. "}${st.why}</div>`;
+    } else if (st.type === "num"){
+      const a = st.answer(), shown = st.unit ? `${mn(sci(a))} ${st.unit}` : mn(sci(a));
+      html += `<div class="row"><input class="num" inputmode="decimal" data-num="${key}" value="${S.value ?? ""}" aria-label="answer"> ${st.unit}
+               <button class="btn small navy" data-chknum="${key}">Check</button>
+               ${st.hint ? `<button class="btn small" data-hint="${key}">💡 Hint</button>` : ""}</div>`;
+      if (S.showHint && st.hint) html += `<div class="fb info">${st.hint}</div>`;
+      if (S.status === "ok") html += `<div class="fb ok">✔ Correct (within ${Math.round((st.tol ?? 0.05) * 100)} %). Model answer: ${shown}.</div>`;
+      else if (S.status) html += `<div class="fb no">✘ ${S.status === "high" ? "Too high" : S.status === "low" ? "Too low" : "Enter a number"}. ${S.tries >= 2 ? `Model answer: ${shown}.` : "Try again or use the hint."}</div>`;
+    }
+    d.innerHTML = html; box.appendChild(d);
+  });
+}
+function applySetup(su){
+  const c = JSON.parse(JSON.stringify(su)); if (c.pre && presetById(c.pre)) Object.assign(set, P(c.pre));
+  Object.assign(set, c); fresh = true; setScenarioUI(); syncControls(); reset(); renderTrials(); renderGsel();
+}
+function taskClick(e){
+  const t = e.target.closest("[data-setup],[data-lock],[data-check],[data-chknum],[data-hint],[data-set]"); if (!t) return;
+  if (t.dataset.set){ curSet = t.dataset.set; renderTaskSets(); renderTasks(); save(); return; }
+  const key = t.dataset.setup || t.dataset.lock || t.dataset.check || t.dataset.chknum || t.dataset.hint;
+  const [sid, idx] = key.split("."), st = TASKS.find(s => s.id === sid).steps[+idx], S = taskState[key];
+  if (t.dataset.setup) applySetup(st.setup);
+  if (t.dataset.lock){ S.locked = true; }
+  if (t.dataset.check){ S.checked = true; S.done = true; }
+  if (t.dataset.hint){ S.showHint = true; }
+  if (t.dataset.chknum){
+    const raw = document.querySelector(`[data-num="${key}"]`).value.replace(",", "."), v = parseFloat(raw), a = st.answer();
+    S.value = raw; S.tries = (S.tries || 0) + 1;
+    if (!isFinite(v)) S.status = "nan";
+    else if (Math.abs(v - a) <= Math.max((st.tol ?? 0.05) * Math.abs(a), st.abs ?? 1e-9)) { S.status = "ok"; S.done = true; }
+    else S.status = v > a ? "high" : "low";
+  }
+  save(); renderTasks();
+}
+function taskChange(e){
+  const t = e.target;
+  if (t.dataset.choice){ taskState[t.dataset.choice].choice = +t.value; renderTasks(); save(); }
+  if (t.dataset.done){ taskState[t.dataset.done].done = t.checked; renderTasks(); save(); }
+}
+/* ============================ 11 UI ============================ */
+const skinLab = i => { const k = (set.skin || [])[i], nm = {tbox:"box", fblock:"friction block", cart:"Smart Cart"}[k] || k; return k ? ` (${nm})` : ""; };
+const CTL = [
+  {id:"pre", kind:"select", lab:"Example", opts:() => PRESETS.filter(q => q.id === "custom" || q.sc === set.sc).map(q => [q.id, q.name]), keepPre:true},
+  {id:"n", kind:"seg", lab:"Blocks", opts:[[2, "2"], [3, "3"]], show:() => set.sc !== "mix"},
+  {id:"mA", kind:"range", log:true, lab:() => `Mass <i>m</i><sub>A</sub>${skinLab(0)}`, unit:"kg", min:0.1, max:20, tmin:0.01, tmax:10000},
+  {id:"mB", kind:"range", log:true, lab:() => `Mass <i>m</i><sub>B</sub>${skinLab(1)}`, unit:"kg", min:0.1, max:20, tmin:0.01, tmax:10000},
+  {id:"mC", kind:"range", log:true, lab:() => `Mass <i>m</i><sub>C</sub>${skinLab(2)}`, unit:"kg", min:0.1, max:20, tmin:0.01, tmax:10000, show:() => set.n === 3},
+  {id:"fd", kind:"select", lab:"Force acts", opts:() => set.sc === "stack" ? FDS.filter(o => o[0][1] !== "C" || set.n === 3) : FD.filter(o => o[0] !== "pushM" || set.n === 3)},
+  {id:"F", kind:"range", lab:"Force <i>F</i>", unit:"N", min:0, max:100, step:0.5, tmin:0, tmax:100000},
+  {id:"th", kind:"range", lab:() => set.fd.startsWith("push") ? "Angle θ (down)" : "Angle θ (up)", unit:"°", min:0, max:60, step:1, tmin:0, tmax:85, show:() => set.sc !== "stack"},
+  {id:"u", kind:"range", lab:"Start speed <i>u</i>", unit:"m s⁻¹", min:0, max:3, step:0.1, tmin:0, tmax:100},
+  {id:"surf", kind:"select", lab:"Surface", opts:SURF, show:() => set.sc !== "stack"},
+  {id:"ms", kind:"range", lab:() => set.sc === "stack" ? "μ<sub>s</sub> between blocks" : "μ<sub>s</sub>", unit:"", min:0, max:1, step:0.01, tmin:0, tmax:2, show:() => set.surf === "same" || set.sc === "stack"},
+  {id:"md", kind:"range", lab:() => set.sc === "stack" ? "μ<sub>d</sub> between blocks" : "μ<sub>d</sub>", unit:"", min:0, max:1, step:0.01, tmin:0, tmax:2, show:() => set.surf === "same" || set.sc === "stack"},
+  {id:"mfs", kind:"range", lab:"μ<sub>s</sub> floor", unit:"", min:0, max:1, step:0.01, tmin:0, tmax:2, show:() => set.sc === "stack"},
+  {id:"mfd", kind:"range", lab:"μ<sub>d</sub> floor", unit:"", min:0, max:1, step:0.01, tmin:0, tmax:2, show:() => set.sc === "stack"},
+  {id:"mdA", kind:"range", lab:"μ<sub>d</sub> of A", unit:"", min:0, max:1, step:0.01, tmin:0, tmax:2, show:() => set.surf === "each"},
+  {id:"mdB", kind:"range", lab:"μ<sub>d</sub> of B", unit:"", min:0, max:1, step:0.01, tmin:0, tmax:2, show:() => set.surf === "each"},
+  {id:"mdC", kind:"range", lab:"μ<sub>d</sub> of C", unit:"", min:0, max:1, step:0.01, tmin:0, tmax:2, show:() => set.surf === "each" && set.n === 3},
+  {id:"RA", kind:"range", lab:"Resistance on A", unit:"N", min:0, max:50, step:0.5, tmin:0, tmax:100000, show:() => set.surf === "res"},
+  {id:"RB", kind:"range", lab:"Resistance on B", unit:"N", min:0, max:50, step:0.5, tmin:0, tmax:100000, show:() => set.surf === "res"},
+  {id:"RC", kind:"range", lab:"Resistance on C", unit:"N", min:0, max:50, step:0.5, tmin:0, tmax:100000, show:() => set.surf === "res" && set.n === 3},
+];
+function onChanged(c, v){
+  if (c.id === "pre") fresh = true;
+  if (c.id === "n" && v === 2 && set.fd === "pushM") set.fd = "pushL";
+  if (c.id === "n" && v === 2 && set.fd[1] === "C") set.fd = "sB" + set.fd[2];
+  if (c.id === "fd" && v === "pushM" && set.n < 3) set.n = 3;
+  if (c.id === "n" || c.id === "fd") scenarioExtra();
+}
+function readouts(s){
+  if (M.p.stack) return readoutsStack(s);
+  const p = M.p, n = p.n, same = p.m.every((_, i) => Math.abs(s["a" + i] - s.a0) < 1e-6 && Math.abs(s["v" + i] - s.v0) < 1e-4);
+  const ar = same ? row("acceleration <i>a</i>", `${mn(sig(s["a" + p.e] * p.dir))} m s⁻²`, "speed <i>v</i>", `${f2(Math.abs(s.v0))} m s⁻¹`, COL.a, COL.v)
+    : row("accelerations", p.m.map((_, i) => `${NM[i]} ${mn(sig(s["a" + i], 2))}`).join(" · ") + " m s⁻²", "", "", COL.a);
+  const vr = same ? "" : row("speeds", p.m.map((_, i) => `${NM[i]} ${f2(Math.abs(s["v" + i]))}`).join(" · ") + " m s⁻¹", "", "", COL.v);
+  const Fa = s.ph === "on" ? Math.hypot(s.Fx, s.Fy) : 0;
+  let html = `<table>${ar}${vr}${row("applied force <i>F</i>", s.ph === "on" ? fmtF(Fa) : s.ph === "off" ? "0 (let go)" : `braking ${fmtF(p.F * Math.cos(p.th))}`,
+    "total friction", fmtF(Math.abs(p.m.reduce((t, _, i) => t + s["f" + i], 0))), COL.P, COL.F)}`;
+  for (let j = 0; j < n - 1; j++){
+    const Q = s["Q" + j], t = ptype(j), a = NM[j], b = NM[j + 1];
+    const kind = !s["e" + j] ? (t === "s" ? "slack" : "apart") : t === "c" ? "push" : t === "s" ? "tension" : Q < -1e-9 ? "tension" : Q > 1e-9 ? "compression" : "";
+    const nm1 = t === "c" ? `<i>F</i><sub>${a} on ${b}</sub>` : t === "s" ? `<i>T</i> on ${b}` : `bar on ${b}`;
+    const nm2 = t === "c" ? `<i>F</i><sub>${b} on ${a}</sub>` : t === "s" ? `<i>T</i> on ${a}` : `bar on ${a}`;
+    html += row(nm1, `${fmtF(Math.abs(Q))} ${Q > 1e-9 ? "→" : Q < -1e-9 ? "←" : ""}`, nm2, `${fmtF(Math.abs(Q))} ${Q > 1e-9 ? "←" : Q < -1e-9 ? "→" : ""} <span class="k">${kind}</span>`, PAIR[j], PAIR[j]);
+  }
+  return html + `<tr><td colspan="5" class="ev">3rd law: <i>F</i><sub>A on B</sub> = −<i>F</i><sub>B on A</sub>, always · system: <i>a</i> = Σ<i>F</i><sub>ext</sub> / <i>m</i><sub>total</sub></td></tr></table>`;
+}
+const $ = id => document.getElementById(id);
+function save(){ try { localStorage.setItem(STORE, JSON.stringify({trials, taskState, curSet, anaId})); } catch (e) {} }
+function load(){ try { const d = JSON.parse(localStorage.getItem(STORE) || "{}");
+  trials = d.trials || []; taskState = d.taskState || {}; curSet = d.curSet || "pre"; anaId = {...anaId, ...(d.anaId || {})}; } catch (e) {} }
+function flash(msg){ let el = $("toast");
+  if (!el){ el = document.createElement("div"); el.id = "toast"; el.setAttribute("role", "status");
+    el.style.cssText = "position:fixed;left:50%;bottom:120px;transform:translateX(-50%);background:#1F3A5F;color:#fff;padding:10px 16px;border-radius:10px;z-index:20;max-width:90vw;font-size:.95rem";
+    document.body.appendChild(el); }
+  el.textContent = msg; el.style.display = "block"; clearTimeout(flash.tm); flash.tm = setTimeout(() => el.style.display = "none", 3200); }
+
+// Controls: every slider has a number box next to it. Type a value and press Enter (or leave the box):
+// it is kept to the allowed range and keeps the precision you typed; the slider follows.
+// CTL entries: {id, kind:"range"|"select"|"seg"|"check", lab, unit, min, max, step | log, opts, sc:[scenarios], show()}
+const getV = id => set[id];
+function putV(id, v){ set[id] = v; }
+const fmtBox = v => String(+Number(v).toPrecision(5));
+const txt = x => typeof x === "function" ? x() : x;
+const ctlOn = c => (!c.sc || c.sc.includes(set.sc)) && (!c.show || c.show());
+const optsOf = c => typeof c.opts === "function" ? c.opts() : c.opts;
+function buildControls(){
+  $("controls").innerHTML = CTL.map(c => {
+    const lab = `<span class="lab" id="${c.id}Lab">${txt(c.lab)}</span>`;
+    if (c.kind === "range"){
+      const mn = c.log ? Math.log10(c.min) : c.min, mx = c.log ? Math.log10(c.max) : c.max, st = c.log ? 0.001 : c.step;
+      return `<div class="ctl" id="${c.id}C">${lab}<div class="rn">
+        <input type="range" id="${c.id}" min="${mn}" max="${mx}" step="${st}" aria-labelledby="${c.id}Lab">
+        <input class="nb" type="text" inputmode="decimal" id="${c.id}N" aria-label="type a value" title="Type a value (${fmtBox(c.tmin ?? c.min)}–${fmtBox(c.tmax ?? c.max)} ${c.unit}) and press Enter">
+        <span class="u">${c.unit}</span></div></div>`;
+    }
+    if (c.kind === "seg") return `<div class="ctl" id="${c.id}C">${lab}<div class="seg" id="${c.id}">${c.opts.map(o => `<button data-v="${o[0]}">${o[1]}</button>`).join("")}</div></div>`;
+    if (c.kind === "select") return `<div class="ctl" id="${c.id}C">${lab}<select id="${c.id}" aria-labelledby="${c.id}Lab"></select></div>`;
+    return `<div class="ctl" id="${c.id}C">${lab}<label class="switch"><input type="checkbox" id="${c.id}"> ${c.text}</label></div>`;
+  }).join("");
+  for (const c of CTL){
+    const el = $(c.id);
+    if (c.kind === "range"){
+      el.addEventListener("input", () => { let v = c.log ? +Number(Math.pow(10, +el.value)).toPrecision(3) : +el.value; changed(c, v); });
+      const nb = $(c.id + "N");
+      const commit = () => { const raw = nb.value.trim().replace(",", "."), v = Number(raw);
+        if (!raw || !isFinite(v)){ nb.value = fmtBox(getV(c.id)); return; }
+        const cv = clamp(v, c.tmin ?? c.min, c.tmax ?? c.max); nb.classList.toggle("clamped", cv !== v);   // typed range (tmin/tmax) can be wider than the slider
+        if (cv !== v){ flash(`Allowed range: ${fmtBox(c.tmin ?? c.min)} to ${fmtBox(c.tmax ?? c.max)} ${c.unit}. Set to ${fmtBox(cv)}.`); setTimeout(() => nb.classList.remove("clamped"), 1800); }
+        changed(c, cv); if (nb._st) STEPPER.check(nb._st, cv === v); };
+      nb.addEventListener("input", () => { clearTimeout(nb._tm); nb._tm = setTimeout(() => {   // apply by itself once typing pauses (no Enter needed)
+        const raw = nb.value.trim().replace(",", "."); if (raw && isFinite(Number(raw)) && !/[.eE+-]$/.test(raw)){ nb._auto = raw; commit(); } }, 600); });
+      nb.addEventListener("change", () => { clearTimeout(nb._tm); if (nb.value.trim().replace(",", ".") !== nb._auto) commit(); nb._auto = null; });
+      nb.addEventListener("keydown", e => { if (e.key === "Enter"){ clearTimeout(nb._tm); commit(); nb._auto = null; nb.select(); } });
+      let d0;   // ▼ [box] ▲ ↺ (shared stepper): start value = the value when the page has loaded
+      STEPPER.attach(nb, {get:() => +getV(c.id), unit:() => c.unit, toast:flash, room:() => [c.min, c.max], hard:() => [c.tmin ?? c.min, c.tmax ?? c.max],
+        log:!!c.log, step:() => c.bstep ?? c.step, base:() => c.min,
+        def:() => { if (d0 === undefined) d0 = JSON.parse(JSON.stringify(set)); const d = d0[c.id]; return Array.isArray(d) ? d[set.kSel] : d; },
+        apply:v => { nb.value = STEPPER.fmt(v); nb._auto = null; commit(); }});
+    } else if (c.kind === "seg") el.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return;
+      changed(c, typeof c.opts[0][0] === "number" ? +b.dataset.v : b.dataset.v); });
+    else if (c.kind === "select") el.addEventListener("change", () => changed(c, el.value));
+    else el.addEventListener("change", () => changed(c, el.checked));
+  }
+}
+function changed(c, v){
+  putV(c.id, v);
+  if (c.id === "pre"){ if (presetById(v) && v !== "custom") Object.assign(set, P(v)); }
+  else if (!c.keepPre) set.pre = "custom";
+  if (typeof onChanged === "function") onChanged(c, v);
+  syncControls(); reset(); renderTrials();
+}
+function syncControls(){
+  for (const c of CTL){
+    const on = ctlOn(c), box = $(c.id + "C"); box.classList.toggle("hide", !on);
+    if (!on) continue;
+    $(c.id + "Lab").innerHTML = txt(c.lab);
+    const el = $(c.id), v = getV(c.id);
+    if (c.kind === "range"){
+      el.value = c.log ? Math.log10(v) : v; const nb = $(c.id + "N");
+      if (document.activeElement !== nb) nb.value = fmtBox(v);
+    } else if (c.kind === "seg") el.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v) === String(v)));
+    else if (c.kind === "select"){ const html = optsOf(c).map(o => `<option value="${o[0]}">${o[1]}</option>`).join("");
+      if (el.dataset.h !== html){ el.innerHTML = html; el.dataset.h = html; } el.value = v; }
+    else el.checked = !!v;
+  }
+}
+function setScenarioUI(){
+  document.querySelectorAll("#scen button").forEach(b => b.setAttribute("aria-pressed", b.dataset.sc === set.sc));
+  $("graphHint").innerHTML = txt(SCN[set.sc].hint);
+  $("fbdTitle").innerHTML = txt(SCN[set.sc].mid); scenarioExtra();
+}
+function updateButtons(){
+  $("startBtn").disabled = R.playing && !R.paused;
+  $("pauseBtn").disabled = !R.playing; $("pauseBtn").textContent = R.paused ? "▶" : "⏸"; $("pauseBtn").setAttribute("aria-label", R.paused ? "Resume" : "Pause");
+}
+const fmtDur = s => s >= 3600 ? `${+(s / 3600).toPrecision(2)} h` : s >= 60 ? `${+(s / 60).toPrecision(2)} min` : s < 0.1 ? `${+(s * 1000).toPrecision(2)} ms` : `${+s.toPrecision(2)} s`;
+function updateStepLabels(){ const d = fmtDur(stepDt()); $("backBtn").textContent = `◂ ${d}`; $("fwdBtn").textContent = `${d} ▸`; }
+
+// readouts helpers
+let lastRO = "";
+const row = (a, b, c = "", d = "", col1 = "", col2 = "") => `<tr><td>${a}</td><td class="v"${col1 ? ` style="color:${col1}"` : ""}>${b}</td><td class="gap"></td><td>${c}</td><td class="v"${col2 ? ` style="color:${col2}"` : ""}>${d}</td></tr>`;
+function pill(ok, yes, no){ return `<span class="pill ${ok ? "rest" : "slide"}">${ok ? yes : no}</span>`; }
+function showReadouts(){ const html = readouts(at(R.t)); if (html !== lastRO){ $("readouts").innerHTML = html; lastRO = html; } }
+function scenarioExtra(){
+  // the "push the middle block" button only exists with three blocks; mixed mode always has three blocks
+  if (set.sc === "mix") set.n = 3;
+  const veh = (set.skin || []).some(k => k === "car" || k === "truck");
+  $("brakeBtn").title = set.sc === "stack" ? "The bottom block brakes: a braking force of size F on it" : veh ? "The car brakes: a braking force of size F on the car" : "A braking force of size F on the block that was pushed or pulled";
+}
+function drawScene(){
+  const {ctx, w, h} = fitCanvas($("scene")); ctx.clearRect(0, 0, w, h);
+  const s = at(R.t); sceneMain(ctx, w, h, s);
+  if (tEnd() > 0) label(ctx, `t = ${f2(R.t)} s`, w - 10, h - 12, COL.P, "right", 14);
+}
+function drawFBD(){
+  const {ctx, w, h} = fitCanvas($("fbd")); ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  const s = at(R.t); midMain(ctx, w, h, s); renderKtab(s);
+}
+// = const. v: the force that makes ΣF = 0 while the blocks slide together (a start speed is needed to be moving at all)
+function constVelocity(){
+  const F = constF(set);
+  if (!isFinite(F)){ flash("Pushing down this steeply, no push can keep the blocks moving: make θ smaller."); return; }
+  set.F = F; if (set.u <= 0) set.u = set.skin && set.skin.some(k => k === "car" || k === "truck") ? 10 : 0.5;
+  if (set.ph0 !== "on") set.ph0 = "on";
+  set.pre = "custom"; syncControls(); reset();
+  flash(`F = ${sig(set.F, 4)} N balances the friction: ΣF = 0 on every block. Press ▶ Go — the blocks keep their start speed u.`);
+}
+
+$("scen").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return;
+  set.sc = b.dataset.sc; Object.assign(set, P(SCN[set.sc].pre)); fresh = true;
+  setScenarioUI(); syncControls(); reset(); renderTrials(); renderGsel(); });
+$("startBtn").addEventListener("click", start);
+$("pauseBtn").addEventListener("click", () => { R.paused = !R.paused; updateButtons(); });
+$("resetBtn").addEventListener("click", reset);
+$("offBtn").addEventListener("click", () => changePhase("off"));
+$("brakeBtn").addEventListener("click", () => changePhase("brake"));
+$("recBtn").addEventListener("click", recordTrial);
+$("gsel").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; gq = b.dataset.g; renderGsel(); });
+$("anaSel").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; anaId[set.sc] = b.dataset.a; save(); renderTrials(); });
+$("clearBtn").addEventListener("click", () => { if (confirm("Delete the recorded trials of this set-up?")){ trials = trials.filter(t => t.sc !== set.sc); save(); renderTrials(); } });
+$("trials").addEventListener("click", e => { const b = e.target.closest("[data-del]"); if (b){ trials.splice(+b.dataset.del, 1); save(); renderTrials(); } });
+document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", x === t));
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("on", p.id === t.dataset.tab));
+}));
+$("pTasks").addEventListener("click", taskClick);
+$("pTasks").addEventListener("change", taskChange);
+$("helpBtn").addEventListener("click", () => $("help").classList.add("on"));
+$("helpClose").addEventListener("click", () => $("help").classList.remove("on"));
+$("help").addEventListener("click", e => { if (e.target.id === "help") $("help").classList.remove("on"); });
+const gcv = $("graph");
+const probeFromGraph = e => { if (e.buttons !== 1 && e.type !== "pointerdown") return; if (GQ[gq] && GQ[gq].x) return;
+  const r = gcv.getBoundingClientRect(), bw = r.width - 82;
+  R.t = clamp((e.clientX - r.left - 66) / bw * tEnd(), 0, tEnd());
+  R.playing = R.t < tEnd(); R.paused = R.playing; updateButtons(); };
+gcv.addEventListener("pointerdown", probeFromGraph); gcv.addEventListener("pointermove", probeFromGraph);
+$("backBtn").addEventListener("click", () => stepBy(-stepDt()));
+$("fwdBtn").addEventListener("click", () => stepBy(stepDt()));
+document.addEventListener("keydown", e => {
+  const t = e.target; if (t.tagName === "SELECT" || t.tagName === "TEXTAREA" || (t.tagName === "INPUT" && t.type !== "checkbox")) return;
+  if ($("help").classList.contains("on")) return;
+  if (e.key === "ArrowLeft"){ stepBy(-stepDt()); e.preventDefault(); }
+  else if (e.key === "ArrowRight"){ stepBy(stepDt()); e.preventDefault(); }
+});
+
+load(); Object.assign(set, P(SCN[set.sc].pre)); buildControls();
+{ const b = document.createElement("button"); b.className = "btn small"; b.id = "cvBtn"; b.innerHTML = "= const. <i>v</i>";
+  b.title = "Set F so that the blocks move at a constant velocity (ΣF = 0 on every block)"; b.addEventListener("click", constVelocity); $("FC").querySelector(".rn").appendChild(b); } setScenarioUI(); syncControls(); reset(); renderTrials(); renderGsel(); renderTaskSets(); renderTasks();
+let last = performance.now();
+function frame(now){
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  try { step(dt); drawScene(); drawFBD(); drawGraph(); drawAna(); showReadouts(); }
+  finally { requestAnimationFrame(frame); }
+}
+requestAnimationFrame(frame);
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>

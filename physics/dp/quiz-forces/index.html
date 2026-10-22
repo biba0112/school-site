@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz – Forces</title>
+<style>
+:root{--navy:#1F3A5F;--accent:#E65100;--ink:#263238;--muted:#606A72;--bg:#F2F5F9;--line:#DDE6F0;
+  --ok:#2E7D32;--okbg:#E8F5E9;--bad:#C62828;--badbg:#FFEBEE;--blue:#1565C0;--bluebg:#E3F2FD}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif}
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);padding:14px 16px;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+header h1{margin:0;font-size:1.4rem}
+header p{margin:2px 0 0;opacity:.85;font-size:.95rem}
+.credit{text-align:right;font-size:.85rem;line-height:1.35;opacity:.92}
+.credit a{color:#fff}
+svg.fig{max-width:100%;height:auto;display:block;margin:6px auto;background:#fff}
+
+.hl{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+a.home{color:#fff;text-decoration:none;border:1px solid rgba(255,255,255,.5);border-radius:8px;padding:8px 12px;
+  font-weight:600;min-height:40px;display:inline-flex;align-items:center}
+a.home:hover{background:rgba(255,255,255,.12)}
+main{max-width:1180px;margin:0 auto;padding:16px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.intro{max-width:760px;margin:10px auto}
+.intro h2{margin:0 0 6px;color:var(--navy)}
+.intro ul{margin:6px 0 12px;padding-left:20px}
+.intro a{color:var(--navy)}
+.best{color:var(--muted);font-size:.95rem;margin:8px 0}
+button{font:inherit;cursor:pointer}
+.btn{border:0;border-radius:8px;padding:11px 20px;font-weight:700;min-height:46px}
+.primary{background:var(--accent);color:#fff}
+.primary:disabled{background:#BFC7CF;cursor:default}
+.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}
+.topbar{display:flex;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap}
+.qno{font-weight:700;color:var(--navy);white-space:nowrap}
+.bar{flex:1;min-width:140px;height:10px;background:#DDE6F0;border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.score{color:var(--muted);white-space:nowrap}
+.qgrid{display:grid;grid-template-columns:1fr;gap:16px}
+@media (min-width:980px){.qgrid.hasfig{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}}
+.qtext{font-size:1.12rem;margin:0 0 6px}
+.opts{display:flex;flex-direction:column;gap:9px}
+.opt{display:flex;align-items:center;gap:12px;text-align:left;background:#fff;border:2px solid var(--line);
+  border-radius:10px;padding:10px 12px;min-height:52px;color:var(--ink);font-size:1.02rem}
+.opt:hover:not(:disabled){border-color:var(--navy)}
+.opt .L{flex:none;width:32px;height:32px;border-radius:50%;background:var(--bg);color:var(--navy);font-weight:700;
+  display:flex;align-items:center;justify-content:center;border:1px solid var(--line)}
+.opt.sel{border-color:var(--navy);background:#EEF3F9}
+.opt.sel .L{background:var(--navy);color:#fff}
+.opt.right{border-color:var(--ok);background:var(--okbg)}
+.opt.right .L{background:var(--ok);color:#fff;border-color:var(--ok)}
+.opt.wrong{border-color:var(--bad);background:var(--badbg)}
+.opt.wrong .L{background:var(--bad);color:#fff;border-color:var(--bad)}
+.opt:disabled{cursor:default}
+.actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
+.fb{margin-top:12px;border-radius:10px;padding:12px 14px;border-left:6px solid}
+.fb.ok{background:var(--okbg);border-color:var(--ok)}
+.fb.no{background:var(--badbg);border-color:var(--bad)}
+.fb h3{margin:0 0 4px;font-size:1.05rem}
+.fb.ok h3{color:var(--ok)} .fb.no h3{color:var(--bad)}
+.fb .exp{margin:4px 0 8px}
+.fb a{color:var(--blue);font-weight:600}
+.hint{color:var(--muted);font-size:.85rem;margin-top:8px}
+.result{max-width:860px;margin:0 auto}
+.big{font-size:2.6rem;font-weight:800;color:var(--navy);margin:0}
+.review{list-style:none;padding:0;margin:14px 0}
+.review li{display:flex;gap:10px;padding:9px 0;border-top:1px solid var(--line);align-items:flex-start}
+.review .m{flex:none;width:28px;height:28px;border-radius:50%;color:#fff;font-weight:700;display:flex;
+  align-items:center;justify-content:center}
+.review .m.y{background:var(--ok)} .review .m.n{background:var(--bad)}
+.review small{color:var(--muted)}
+.review button{background:none;border:0;color:var(--blue);padding:0;text-align:left;font-weight:600}
+[hidden]{display:none!important}
+@media (max-width:600px){.credit{text-align:left}header h1{font-size:1.2rem}.card{padding:14px}}
+
+.qbtn{background:#2E7D32;color:#fff;border:0;border-radius:8px;padding:9px 14px;font:inherit;font-weight:700;
+  min-height:44px;cursor:pointer;white-space:nowrap}
+.qbtn:hover{background:#256628}
+.hbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+dialog.qd{border:0;border-radius:14px;padding:0;width:min(680px,calc(100vw - 32px));max-height:calc(100vh - 40px);
+  color:#263238;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+dialog.qd::backdrop{background:rgba(15,30,50,.55)}
+.qd-head{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#1F3A5F;color:#fff;
+  padding:12px 16px;border-bottom:4px solid #E65100;position:sticky;top:0}
+.qd-head h2{margin:0;font-size:1.15rem}
+.qd-x{background:none;border:0;color:#fff;font-size:1.5rem;line-height:1;cursor:pointer;min-width:44px;min-height:44px}
+.qd-body{padding:6px 16px 14px}
+.qd-body>p{margin:8px 0;color:#606A72;font-size:.92rem}
+.qd-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #DDE6F0;flex-wrap:wrap}
+.qd-row .t{flex:1;min-width:180px}
+.qd-row .tag{display:block;font-size:.75rem;font-weight:700;color:#2E7D32;text-transform:uppercase;letter-spacing:.04em}
+.qd-row b{color:#1F3A5F;font-size:1.05rem}
+.qd-row .sc{display:block;font-size:.85rem;color:#606A72}
+.qd-row .sc.done{color:#2E7D32;font-weight:600}
+.qd-row.here{background:#FFF3E0;margin:0 -16px;padding:10px 16px}
+.qd-row .here-tag{font-size:.75rem;font-weight:700;color:#E65100;margin-left:6px}
+.qd-row .acts{display:flex;gap:8px;flex:none}
+.qd-row a{display:inline-flex;align-items:center;border-radius:8px;padding:8px 14px;min-height:42px;text-decoration:none;font-weight:600}
+.qd-row a.go{background:#E65100;color:#fff}
+.qd-row a.pdf{border:1px solid #DDE6F0;color:#1F3A5F;background:#fff}
+/* ==== PHONE CSS START: compact header on phones (10 Oct 2026); wider screens unchanged ==== */
+@media (max-width:759px){
+  header{padding:10px 14px;gap:8px}
+  header h1{font-size:1.15rem}
+  header p{font-size:.85rem}
+  .hl{gap:8px;width:100%}
+  a.home,.qbtn{min-height:40px;padding:6px 10px;font-size:.88rem}
+  .credit{flex-basis:100%;text-align:left;font-size:.75rem}
+  .credit br{display:none} .credit a{margin-left:6px}
+}
+/* ==== PHONE CSS END ==== */
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Topic quiz: Forces</h1>
+    <p>IBDP Physics SL · Grade 11 · A.2 Forces · Newton&#x27;s laws · 10 questions</p>
+  </div>
+  <div class="hl"><a class="home" href="https://school.taneski.com/physics/dp/">← All simulations</a><button class="qbtn" type="button" id="qbtn" aria-haspopup="dialog">✔ Test yourself — topic quizzes</button><div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div></div>
+</header>
+<main>
+  <section id="intro" class="card intro">
+    <h2>Test yourself: Forces</h2>
+    <p>Weight and normal force, friction, ramps, connected bodies, springs, drag and buoyancy. Practise with the simulations and worksheets first:</p>
+    <ul><li><a href="https://school.taneski.com/physics/dp/01-friction-block/" target="_blank" rel="noopener">Friction block</a></li><li><a href="https://school.taneski.com/physics/dp/02-normal-force/" target="_blank" rel="noopener">Normal force</a></li><li><a href="https://school.taneski.com/physics/dp/03-friction-incline/" target="_blank" rel="noopener">Friction on an incline</a></li><li><a href="https://school.taneski.com/physics/dp/04-incline-pulley/" target="_blank" rel="noopener">Incline with a pulley</a></li><li><a href="https://school.taneski.com/physics/dp/05-spring-force/" target="_blank" rel="noopener">Spring force</a></li><li><a href="https://school.taneski.com/physics/dp/07-drag-stokes/" target="_blank" rel="noopener">Drag and Stokes' law</a></li><li><a href="https://school.taneski.com/physics/dp/08-buoyancy/" target="_blank" rel="noopener">Buoyancy</a></li></ul>
+    <p>10 multiple-choice questions. Choose one answer and press <b>Check</b>: you see straight away whether you are
+      right, with a short explanation and a link to the simulation where you can try it. Use g = 9.81 m s⁻².
+      Your score stays on this device only.</p>
+    <p class="best" id="best"></p>
+    <button class="btn primary" id="start">Start the quiz</button>
+  </section>
+  <section id="quiz" class="card" hidden>
+    <div class="topbar"><span class="qno" id="qno"></span><div class="bar"><i id="barfill"></i></div><span class="score" id="score"></span></div>
+    <div class="qgrid" id="qgrid">
+      <div><p class="qtext" id="qtext"></p><div id="fig"></div></div>
+      <div>
+        <div class="opts" id="opts"></div>
+        <div class="fb" id="fb" hidden></div>
+        <div class="actions"><button class="btn primary" id="check" disabled>Check</button><button class="btn primary" id="next" hidden>Next question →</button></div>
+        <div class="hint">Keys: A–D or 1–4 to choose, Enter to check.</div>
+      </div>
+    </div>
+  </section>
+  <section id="result" class="card result" hidden>
+    <p>Your score</p>
+    <p class="big" id="final"></p>
+    <p id="msg"></p>
+    <p class="best" id="best2"></p>
+    <div class="actions" style="justify-content:flex-start">
+      <button class="btn primary" id="retry">↻ Try again (answers shuffled)</button>
+      <a class="btn ghost" href="https://school.taneski.com/physics/dp/" style="text-decoration:none;display:inline-flex;align-items:center">← Back to the simulations</a>
+    </div>
+    <ul class="review" id="review"></ul>
+  </section>
+</main>
+<dialog class="qd" id="qd" aria-labelledby="qd-t"><div class="qd-head"><h2 id="qd-t">Test yourself — topic quizzes</h2><button class="qd-x" type="button" id="qd-x" aria-label="Close">✕</button></div><div class="qd-body"><p>Practised the simulations and worksheets? 10 multiple-choice questions per topic, with instant feedback. Your best scores are saved on this device only.</p><div class="qd-row"><div class="t"><span class="tag">A.1 Kinematics</span><b>Projectile motion</b><span class="sc" data-slug="quiz-projectile-motion">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-projectile-motion/">✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-projectile-motion/quiz.pdf">PDF</a></span></div><div class="qd-row"><div class="t"><span class="tag">A.1 Kinematics · graphs</span><b>Motion graphs</b><span class="sc" data-slug="quiz-motion-graphs">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-motion-graphs/">✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-motion-graphs/quiz.pdf">PDF</a></span></div><div class="qd-row here"><div class="t"><span class="tag">A.2 Forces · Newton&#x27;s laws</span><b>Forces</b><span class=here-tag>● You are here</span><span class="sc" data-slug="quiz-forces">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-forces/" data-here=1>✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-forces/quiz.pdf">PDF</a></span></div><div class="qd-row"><div class="t"><span class="tag">A.2 Circular motion</span><b>Circular motion</b><span class="sc" data-slug="quiz-circular-motion">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-circular-motion/">✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-circular-motion/quiz.pdf">PDF</a></span></div><div class="qd-row"><div class="t"><span class="tag">A.2 Momentum</span><b>Momentum and impulse</b><span class="sc" data-slug="quiz-momentum">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-momentum/">✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-momentum/quiz.pdf">PDF</a></span></div><div class="qd-row"><div class="t"><span class="tag">A.3 Work and energy</span><b>Work and energy</b><span class="sc" data-slug="quiz-work-energy">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-work-energy/">✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-work-energy/quiz.pdf">PDF</a></span></div><div class="qd-row"><div class="t"><span class="tag">A.3 Power and efficiency</span><b>Power and efficiency</b><span class="sc" data-slug="quiz-power-efficiency">Not tried yet</span></div><span class="acts"><a class="go" href="https://school.taneski.com/physics/dp/quiz-power-efficiency/">✔ Start</a><a class="pdf" href="https://school.taneski.com/physics/dp/quiz-power-efficiency/quiz.pdf">PDF</a></span></div></div></dialog>
+<script>
+const DATA = {"slug": "quiz-forces", "qs": [{"q": "A book rests on a table. According to Newton's third law, which force is the partner of the book's weight?", "fig": null, "opts": ["The normal force of the table on the book", "The push of the book on the table", "The gravitational pull of the book on the Earth", "The friction of the table on the book"], "ans": 2, "exp": "Third-law pairs are the <b>same type<\/b> of force and act on <b>different bodies<\/b>. Weight = Earth pulls book (gravity), so its partner is book pulls Earth (gravity). The normal force also acts on the book, so it cannot be the partner — it only balances the weight here.", "simUrl": "https://school.taneski.com/physics/dp/02-normal-force/", "simName": "Normal force"}, {"q": "A 60.0 kg student stands on bathroom scales in a lift that is accelerating upwards at 1.50 m s⁻². What do the scales read?", "fig": null, "opts": ["90 N", "499 N", "589 N", "679 N"], "ans": 3, "exp": "The scales measure F<sub>N<\/sub>. Newton's 2nd law (up positive): F<sub>N<\/sub> − mg = ma<br>F<sub>N<\/sub> = m(g + a) = 60.0 × (9.81 + 1.50) = <b>679 N<\/b>.<br>589 N is the weight (lift at rest or at constant speed); 499 N would be accelerating downwards.", "simUrl": "https://school.taneski.com/physics/dp/02-normal-force/", "simName": "Normal force"}, {"q": "A 2.00 kg block rests on a ramp at 30° to the horizontal. What is the normal force on the block?", "fig": "<svg class=\"fig\" viewBox=\"0 0 420 240\" width=\"420\" height=\"240\" font-family=\"Segoe UI,Calibri,Helvetica,Arial,sans-serif\" font-size=\"14\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\"><defs><marker id=\"ah2A5D8A\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#2A5D8A\"/><\/marker><marker id=\"ah2E7D32\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#2E7D32\"/><\/marker><marker id=\"ahC62828\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#C62828\"/><\/marker><marker id=\"ah6A1B9A\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#6A1B9A\"/><\/marker><marker id=\"ahE65100\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#E65100\"/><\/marker><marker id=\"ah1F3A5F\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#1F3A5F\"/><\/marker><marker id=\"ah263238\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#263238\"/><\/marker><marker id=\"ah1565C0\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#1565C0\"/><\/marker><\/defs><polygon points=\"40,220 334.4,220 334.4,50.0\" fill=\"#E8EEF5\" stroke=\"#263238\" stroke-width=\"2\"/><path d=\"M100,220 A60,60 0 0,0 92.0,190.0\" fill=\"none\" stroke=\"#263238\"/><text x=\"108\" y=\"210\">30°<\/text><polygon points=\"187.2,135.0 239.2,105.0 219.2,70.4 167.2,100.4\" fill=\"#C8A26B\" stroke=\"#263238\"/><text x=\"189.2\" y=\"107.7\" font-weight=\"700\">2.00 kg<\/text><\/svg>", "opts": ["9.81 N", "17.0 N", "19.6 N", "22.7 N"], "ans": 1, "exp": "Perpendicular to the ramp there is no acceleration, so F<sub>N<\/sub> balances the perpendicular component of the weight:<br>F<sub>N<\/sub> = mg cos θ = 2.00 × 9.81 × cos 30° = <b>17.0 N<\/b>.<br>9.81 N uses sin θ (that is the component down the slope).", "simUrl": "https://school.taneski.com/physics/dp/02-normal-force/", "simName": "Normal force"}, {"q": "A block of weight 15.0 N is pulled along a horizontal bench with a slowly increasing force. The graph shows the friction force. What are the coefficients of static and dynamic friction?", "fig": "<svg class=\"fig\" viewBox=\"0 0 440 270\" width=\"440\" height=\"270\" font-family=\"Segoe UI,Calibri,Helvetica,Arial,sans-serif\" font-size=\"14\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\"><defs><marker id=\"ah2A5D8A\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#2A5D8A\"/><\/marker><marker id=\"ah2E7D32\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#2E7D32\"/><\/marker><marker id=\"ahC62828\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#C62828\"/><\/marker><marker id=\"ah6A1B9A\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#6A1B9A\"/><\/marker><marker id=\"ahE65100\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#E65100\"/><\/marker><marker id=\"ah1F3A5F\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#1F3A5F\"/><\/marker><marker id=\"ah263238\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#263238\"/><\/marker><marker id=\"ah1565C0\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#1565C0\"/><\/marker><\/defs><line x1=\"62.0\" y1=\"16\" x2=\"62.0\" y2=\"222\" stroke=\"#E3E9F0\"/><text x=\"62.0\" y=\"240\" text-anchor=\"middle\" fill=\"#263238\">0<\/text><line x1=\"133.6\" y1=\"16\" x2=\"133.6\" y2=\"222\" stroke=\"#E3E9F0\"/><text x=\"133.6\" y=\"240\" text-anchor=\"middle\" fill=\"#263238\">2<\/text><line x1=\"205.2\" y1=\"16\" x2=\"205.2\" y2=\"222\" stroke=\"#E3E9F0\"/><text x=\"205.2\" y=\"240\" text-anchor=\"middle\" fill=\"#263238\">4<\/text><line x1=\"276.8\" y1=\"16\" x2=\"276.8\" y2=\"222\" stroke=\"#E3E9F0\"/><text x=\"276.8\" y=\"240\" text-anchor=\"middle\" fill=\"#263238\">6<\/text><line x1=\"348.4\" y1=\"16\" x2=\"348.4\" y2=\"222\" stroke=\"#E3E9F0\"/><text x=\"348.4\" y=\"240\" text-anchor=\"middle\" fill=\"#263238\">8<\/text><line x1=\"420.0\" y1=\"16\" x2=\"420.0\" y2=\"222\" stroke=\"#E3E9F0\"/><text x=\"420.0\" y=\"240\" text-anchor=\"middle\" fill=\"#263238\">10<\/text><line x1=\"62\" y1=\"222.0\" x2=\"420\" y2=\"222.0\" stroke=\"#E3E9F0\"/><text x=\"56\" y=\"227.0\" text-anchor=\"end\" fill=\"#263238\">0<\/text><line x1=\"62\" y1=\"170.5\" x2=\"420\" y2=\"170.5\" stroke=\"#E3E9F0\"/><text x=\"56\" y=\"175.5\" text-anchor=\"end\" fill=\"#263238\">2<\/text><line x1=\"62\" y1=\"119.0\" x2=\"420\" y2=\"119.0\" stroke=\"#E3E9F0\"/><text x=\"56\" y=\"124.0\" text-anchor=\"end\" fill=\"#263238\">4<\/text><line x1=\"62\" y1=\"67.5\" x2=\"420\" y2=\"67.5\" stroke=\"#E3E9F0\"/><text x=\"56\" y=\"72.5\" text-anchor=\"end\" fill=\"#263238\">6<\/text><line x1=\"62\" y1=\"16.0\" x2=\"420\" y2=\"16.0\" stroke=\"#E3E9F0\"/><text x=\"56\" y=\"21.0\" text-anchor=\"end\" fill=\"#263238\">8<\/text><line x1=\"62\" y1=\"222\" x2=\"420\" y2=\"222\" stroke=\"#263238\" stroke-width=\"1.5\"/><line x1=\"62\" y1=\"16\" x2=\"62\" y2=\"222\" stroke=\"#263238\" stroke-width=\"1.5\"/><text x=\"241.0\" y=\"264\" text-anchor=\"middle\" fill=\"#263238\" font-weight=\"600\">applied pull F / N<\/text><text x=\"16\" y=\"119.0\" text-anchor=\"middle\" fill=\"#263238\" font-weight=\"600\" transform=\"rotate(-90 16 119.0)\">friction F<tspan baseline-shift=\"sub\" font-size=\"11\">f<\/tspan> / N<\/text><polyline points=\"62.0,222.0 276.8,67.5\" fill=\"none\" stroke=\"#E65100\" stroke-width=\"3\" stroke-linejoin=\"round\"/><polyline points=\"276.8,67.5 287.5,106.1 420.0,106.1\" fill=\"none\" stroke=\"#1565C0\" stroke-width=\"3\" stroke-linejoin=\"round\"/><text x=\"284.8\" y=\"65.5\" fill=\"#E65100\" font-weight=\"700\">peak 6.0 N<\/text><text x=\"355.6\" y=\"96.1\" fill=\"#1565C0\" font-weight=\"700\" text-anchor=\"middle\">4.5 N while sliding<\/text><text x=\"169.4\" y=\"103.6\" fill=\"#263238\" text-anchor=\"middle\">at rest<\/text><\/svg>", "opts": ["μ<sub>s<\/sub> = 0.30 and μ<sub>d<\/sub> = 0.40", "μ<sub>s<\/sub> = 0.40 and μ<sub>d<\/sub> = 0.40", "μ<sub>s<\/sub> = 0.40 and μ<sub>d<\/sub> = 0.30", "μ<sub>s<\/sub> = 2.5 and μ<sub>d<\/sub> = 3.3"], "ans": 2, "exp": "On a horizontal bench F<sub>N<\/sub> = W = 15.0 N.<br>Static: the peak just before it moves, μ<sub>s<\/sub> = 6.0 / 15.0 = <b>0.40<\/b>.<br>Dynamic: the plateau while sliding, μ<sub>d<\/sub> = 4.5 / 15.0 = <b>0.30<\/b>. Static is always the larger one.", "simUrl": "https://school.taneski.com/physics/dp/01-friction-block/", "simName": "Friction block"}, {"q": "A ramp is tilted slowly. A block on it just starts to slip when the angle is 28°. What is the coefficient of static friction?", "fig": null, "opts": ["0.47", "0.53", "0.88", "1.9"], "ans": 1, "exp": "At the point of slipping, mg sin θ = μ<sub>s<\/sub> mg cos θ, so μ<sub>s<\/sub> = tan θ = tan 28° = <b>0.53<\/b>.<br>0.47 is sin 28°; 1.9 is 1/tan 28°.", "simUrl": "https://school.taneski.com/physics/dp/03-friction-incline/", "simName": "Friction on an incline"}, {"q": "The block from the last question is replaced by a heavier block of the same material. At what angle does the heavier block start to slip?", "fig": null, "opts": ["At a smaller angle, because its weight down the slope is larger", "At a larger angle, because the friction force is larger", "At the same angle, because the mass cancels out", "It never slips"], "ans": 2, "exp": "Both the force down the slope (mg sin θ) and the maximum friction (μ<sub>s<\/sub> mg cos θ) are proportional to m. The mass cancels: tan θ = μ<sub>s<\/sub>, so the slip angle depends only on the surfaces.", "simUrl": "https://school.taneski.com/physics/dp/03-friction-incline/", "simName": "Friction on an incline"}, {"q": "A 3.0 kg cart on a smooth table is pulled by a string over a pulley by a hanging 1.0 kg mass. What is the tension in the string while the masses accelerate?", "fig": "<svg class=\"fig\" viewBox=\"0 0 440 235\" width=\"440\" height=\"235\" font-family=\"Segoe UI,Calibri,Helvetica,Arial,sans-serif\" font-size=\"14\" role=\"img\" xmlns=\"http://www.w3.org/2000/svg\"><defs><marker id=\"ah2A5D8A\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#2A5D8A\"/><\/marker><marker id=\"ah2E7D32\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#2E7D32\"/><\/marker><marker id=\"ahC62828\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#C62828\"/><\/marker><marker id=\"ah6A1B9A\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#6A1B9A\"/><\/marker><marker id=\"ahE65100\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#E65100\"/><\/marker><marker id=\"ah1F3A5F\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#1F3A5F\"/><\/marker><marker id=\"ah263238\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#263238\"/><\/marker><marker id=\"ah1565C0\" viewBox=\"0 0 10 10\" refX=\"9\" refY=\"5\" markerWidth=\"7\" markerHeight=\"7\" orient=\"auto-start-reverse\"><path d=\"M0,0 L10,5 L0,10 z\" fill=\"#1565C0\"/><\/marker><\/defs><rect x=\"20\" y=\"110\" width=\"300\" height=\"14\" fill=\"#B0855A\" stroke=\"#5D4037\"/><rect x=\"40\" y=\"124\" width=\"12\" height=\"100\" fill=\"#B0855A\"/><rect x=\"90\" y=\"62\" width=\"110\" height=\"48\" rx=\"4\" fill=\"#90A4AE\" stroke=\"#263238\"/><text x=\"145\" y=\"92\" text-anchor=\"middle\" font-weight=\"700\">3.0 kg<\/text><circle cx=\"110\" cy=\"114\" r=\"0\"/><circle cx=\"330\" cy=\"104\" r=\"14\" fill=\"#fff\" stroke=\"#263238\" stroke-width=\"2\"/><line x1=\"320\" y1=\"117\" x2=\"316\" y2=\"124\" stroke=\"#263238\" stroke-width=\"3\"/><line x1=\"200\" y1=\"90\" x2=\"330\" y2=\"90\" stroke=\"#6A1B9A\" stroke-width=\"2\"/><line x1=\"344\" y1=\"104\" x2=\"344\" y2=\"170\" stroke=\"#6A1B9A\" stroke-width=\"2\"/><rect x=\"324\" y=\"170\" width=\"40\" height=\"40\" fill=\"#78909C\" stroke=\"#263238\"/><text x=\"372\" y=\"195\" font-weight=\"700\">1.0 kg<\/text><text x=\"150\" y=\"146\" text-anchor=\"middle\" fill=\"#606A72\">smooth table<\/text><\/svg>", "opts": ["2.45 N", "7.36 N", "9.81 N", "29.4 N"], "ans": 1, "exp": "Whole system: a = m<sub>2<\/sub>g / (m<sub>1<\/sub> + m<sub>2<\/sub>) = 1.0 × 9.81 / 4.0 = 2.45 m s⁻².<br>Cart alone: T = m<sub>1<\/sub>a = 3.0 × 2.45 = <b>7.36 N<\/b>.<br>T is <i>less<\/i> than the hanging weight (9.81 N) — otherwise the hanging mass could not accelerate downwards.", "simUrl": "https://school.taneski.com/physics/dp/04-incline-pulley/", "simName": "Incline with a pulley"}, {"q": "A spring stretches by 4.0 cm when a 0.20 kg mass hangs from it at rest. What is the spring constant?", "fig": null, "opts": ["0.049 N m⁻¹", "0.49 N m⁻¹", "5.0 N m⁻¹", "49 N m⁻¹"], "ans": 3, "exp": "F<sub>H<\/sub> = mg = 0.20 × 9.81 = 1.96 N, and x = 4.0 cm = 0.040 m.<br>k = F / x = 1.96 / 0.040 = <b>49 N m⁻¹<\/b>.<br>Always convert cm to m and mass to weight first.", "simUrl": "https://school.taneski.com/physics/dp/05-spring-force/", "simName": "Spring force"}, {"q": "A steel ball falls through glycerol at its terminal velocity. W is its weight, F<sub>d<\/sub> the drag and F<sub>b<\/sub> the buoyant force. Which equation is correct?", "fig": null, "opts": ["W = F<sub>d<\/sub> + F<sub>b<\/sub>", "F<sub>d<\/sub> = W + F<sub>b<\/sub>", "F<sub>d<\/sub> = 0", "W > F<sub>d<\/sub> + F<sub>b<\/sub>"], "ans": 0, "exp": "At terminal velocity the acceleration is zero, so the resultant force is zero. Drag and buoyancy both act <b>upwards<\/b> and together balance the weight: W = F<sub>d<\/sub> + F<sub>b<\/sub>.", "simUrl": "https://school.taneski.com/physics/dp/07-drag-stokes/", "simName": "Drag and Stokes' law"}, {"q": "An object weighs 2.50 N in air and 1.88 N when fully under water (ρ<sub>water<\/sub> = 1000 kg m⁻³). What is its volume?", "fig": null, "opts": ["63 cm³", "192 cm³", "255 cm³", "620 cm³"], "ans": 0, "exp": "Buoyant force F<sub>b<\/sub> = 2.50 − 1.88 = 0.62 N = weight of water displaced = ρVg.<br>V = 0.62 / (1000 × 9.81) = 6.3 × 10⁻⁵ m³ = <b>63 cm³<\/b>.<br>620 cm³ forgets to divide by g.", "simUrl": "https://school.taneski.com/physics/dp/08-buoyancy/", "simName": "Buoyancy"}]};
+const KEY = "physics-" + DATA.slug + "-best";
+const $ = id => document.getElementById(id);
+let order, cur, picks, chosen, checked;
+function loadBest(){ try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) { return null; } }
+function saveBest(s){ try { const b = loadBest(); if (b === null || s > b) localStorage.setItem(KEY, JSON.stringify(s)); } catch (e) {} }
+function showBest(){ const b = loadBest(), t = b === null ? "" : "Your best score so far: " + b + " / " + DATA.qs.length;
+  $("best").textContent = t; $("best2").textContent = t; }
+function shuffle(a){ for (let i = a.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function start(shuf){
+  // order[q] = option indices in display order (printed order first time, shuffled on retry)
+  order = DATA.qs.map(q => shuf ? shuffle([0, 1, 2, 3]) : [0, 1, 2, 3]);
+  picks = DATA.qs.map(() => null); cur = 0;
+  $("intro").hidden = true; $("result").hidden = true; $("quiz").hidden = false;
+  render();
+}
+function render(){
+  const q = DATA.qs[cur], n = DATA.qs.length;
+  chosen = null; checked = false;
+  $("qno").textContent = "Question " + (cur + 1) + " of " + n;
+  $("barfill").style.width = (100 * cur / n) + "%";
+  $("score").textContent = "Score " + picks.filter((p, i) => p === DATA.qs[i].ans).length + " / " + cur;
+  $("qtext").innerHTML = q.q;
+  $("fig").innerHTML = q.fig || "";
+  $("qgrid").classList.toggle("hasfig", !!q.fig);
+  const box = $("opts"); box.innerHTML = "";
+  order[cur].forEach((oi, k) => {
+    const b = document.createElement("button");
+    b.className = "opt"; b.dataset.oi = oi;
+    b.innerHTML = '<span class="L">' + "ABCD"[k] + '</span><span>' + q.opts[oi] + '</span>';
+    b.onclick = () => pick(oi);
+    box.appendChild(b);
+  });
+  $("fb").hidden = true; $("check").hidden = false; $("check").disabled = true; $("next").hidden = true;
+  $("quiz").scrollIntoView({block: "start"});
+}
+function pick(oi){
+  if (checked) return;
+  chosen = oi;
+  document.querySelectorAll(".opt").forEach(b => b.classList.toggle("sel", +b.dataset.oi === oi));
+  $("check").disabled = false;
+}
+function letterOf(oi){ return "ABCD"[order[cur].indexOf(oi)]; }
+function doCheck(){
+  if (chosen === null || checked) return;
+  checked = true; picks[cur] = chosen;
+  const q = DATA.qs[cur], ok = chosen === q.ans;
+  document.querySelectorAll(".opt").forEach(b => {
+    const oi = +b.dataset.oi; b.disabled = true; b.classList.remove("sel");
+    if (oi === q.ans) b.classList.add("right"); else if (oi === chosen) b.classList.add("wrong");
+  });
+  const fb = $("fb");
+  fb.className = "fb " + (ok ? "ok" : "no");
+  fb.innerHTML = "<h3>" + (ok ? "✔ Correct!" : "✘ Not quite — the answer is " + letterOf(q.ans) + ".") + "</h3>" +
+    '<div class="exp">' + q.exp + '</div>' +
+    '<a href="' + q.simUrl + '" target="_blank" rel="noopener">▶ Try it in the simulation: ' + q.simName + '</a>';
+  fb.hidden = false;
+  $("score").textContent = "Score " + picks.filter((p, i) => p === DATA.qs[i].ans).length + " / " + (cur + 1);
+  $("check").hidden = true; $("next").hidden = false;
+  $("next").textContent = cur + 1 < DATA.qs.length ? "Next question →" : "See my score →";
+  $("next").focus();
+}
+function next(){ if (cur + 1 < DATA.qs.length){ cur++; render(); } else finish(); }
+function finish(){
+  const n = DATA.qs.length, s = picks.filter((p, i) => p === DATA.qs[i].ans).length;
+  saveBest(s);
+  $("barfill").style.width = "100%";
+  $("quiz").hidden = true; $("result").hidden = false;
+  $("final").textContent = s + " / " + n;
+  $("msg").textContent = s === n ? "Perfect — you have mastered this topic!" :
+    s >= 8 ? "Great work! Read the explanations for the ones you missed." :
+    s >= 5 ? "Good start. Go back to the simulations for the questions you missed, then try again." :
+    "Keep practising: work through the simulations and worksheets again, then retry the quiz.";
+  const ul = $("review"); ul.innerHTML = "";
+  DATA.qs.forEach((q, i) => {
+    const ok = picks[i] === q.ans, li = document.createElement("li");
+    const plain = q.q.replace(/<[^>]+>/g, "");
+    li.innerHTML = '<span class="m ' + (ok ? "y" : "n") + '">' + (ok ? "✔" : "✘") + '</span><div><b>Q' + (i + 1) + '.</b> ' +
+      (plain.length > 110 ? plain.slice(0, 107) + "…" : plain) + '<br><small>Your answer: ' + q.opts[picks[i]] +
+      (ok ? "" : ' · Correct: ' + q.opts[q.ans]) + '</small><br><button data-i="' + i + '">Show the explanation</button>' +
+      '<div class="exp" hidden>' + q.exp + ' <a href="' + q.simUrl + '" target="_blank" rel="noopener">▶ ' + q.simName + '</a></div></div>';
+    li.querySelector("button").onclick = e => { const d = li.querySelector(".exp"); d.hidden = !d.hidden;
+      e.target.textContent = d.hidden ? "Show the explanation" : "Hide the explanation"; };
+    ul.appendChild(li);
+  });
+  showBest();
+  $("result").scrollIntoView({block: "start"});
+}
+$("start").onclick = () => start(false);
+$("check").onclick = doCheck;
+$("next").onclick = next;
+$("retry").onclick = () => start(true);
+document.addEventListener("keydown", e => {
+  if ($("quiz").hidden || e.altKey || e.ctrlKey || e.metaKey) return;
+  const k = e.key.toUpperCase(), idx = "ABCD".indexOf(k) >= 0 ? "ABCD".indexOf(k) : "1234".indexOf(k);
+  if (idx >= 0 && !checked){ pick(order[cur][idx]); }
+  else if (e.key === "Enter"){ if (!checked && chosen !== null){ e.preventDefault(); doCheck(); } }
+});
+window.quizInProgress = () => !$("quiz").hidden && (cur > 0 || checked || chosen !== null);
+showBest();
+
+(function(){
+  const d = document.getElementById("qd"), b = document.getElementById("qbtn");
+  function best(slug){ try { return JSON.parse(localStorage.getItem("physics-" + slug + "-best") || "null"); } catch (e) { return null; } }
+  function fill(){ d.querySelectorAll(".sc").forEach(s => { const v = best(s.dataset.slug);
+    s.textContent = v === null ? "Not tried yet" : "Best: " + v + " / 10"; s.classList.toggle("done", v !== null); }); }
+  b.onclick = () => { fill(); d.showModal(); };
+  document.getElementById("qd-x").onclick = () => d.close();
+  d.addEventListener("click", e => { if (e.target === d) d.close(); });   // click on the dimmed backdrop
+  d.querySelectorAll("a.go").forEach(a => a.addEventListener("click", e => {
+    if (a.dataset.here){ e.preventDefault(); d.close(); return; }
+    if (typeof window.quizInProgress === "function" && window.quizInProgress() &&
+        !confirm("Leave this quiz? Your answers so far will be lost.")) e.preventDefault();
+  }));
+})();
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
