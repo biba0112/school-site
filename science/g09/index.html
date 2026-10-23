@@ -38,9 +38,15 @@ a.card-link .card{height:100%}
 .chip{font-size:.8rem;font-weight:600;padding:2px 9px;border-radius:999px;color:#fff;background:var(--c)}
 footer{max-width:1100px;margin:0 auto;padding:4px 16px 28px;color:var(--muted);font-size:.85rem}
 @media (max-width:759px){header{padding:12px 16px}header h1{font-size:1.25rem}main{grid-template-columns:1fr;padding:14px 16px}}
+/* icons (22 Oct 2026): same line style as the DP page */
+.block,.card h2{display:flex;align-items:center;gap:10px}
+.ic{flex:none;width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.card .ic{color:var(--sc,var(--navy))}
+.block .ic{width:28px;height:28px}
 </style>
 </head>
 <body>
+<svg id="icons" width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="ic-electricity" viewBox="0 0 24 24"><path d="M10 5H3v14h6.8M14 5h7v14h-6.8"/><path d="M10 2.5v5M14 3.8v2.4"/><circle cx="12" cy="19" r="2.2"/><path d="M10.5 17.5l3 3M13.5 17.5l-3 3"/></symbol><symbol id="ic-measure" viewBox="0 0 24 24"><rect x="2" y="13.5" width="20" height="6.5" rx="1"/><path d="M5 13.5v2.6M8 13.5v1.6M11 13.5v2.6M14 13.5v1.6M17 13.5v2.6M20 13.5v1.6" stroke-width="1.2"/><path d="M7 7h10M7 4.8v4.4M17 4.8v4.4"/><circle cx="12" cy="7" r="1.5" fill="currentColor"/></symbol><symbol id="ic-nuclear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.6" fill="currentColor"/><path d="M13.5 9.4L16.5 4.2A9 9 0 0 0 7.5 4.2L10.5 9.4A3 3 0 0 1 13.5 9.4z"/><path d="M13.5 9.4L16.5 4.2A9 9 0 0 0 7.5 4.2L10.5 9.4A3 3 0 0 1 13.5 9.4z" transform="rotate(120 12 12)"/><path d="M13.5 9.4L16.5 4.2A9 9 0 0 0 7.5 4.2L10.5 9.4A3 3 0 0 1 13.5 9.4z" transform="rotate(240 12 12)"/></symbol><symbol id="ic-physics" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.7" fill="currentColor"/><ellipse cx="12" cy="12" rx="10" ry="3.8"/><ellipse cx="12" cy="12" rx="10" ry="3.8" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="3.8" transform="rotate(-60 12 12)"/></symbol></svg>
 <header>
   <div>
     <h1>Grade 9 Science</h1>
@@ -49,11 +55,17 @@ footer{max-width:1100px;margin:0 auto;padding:4px 16px 28px;color:var(--muted);f
   <div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
 </header>
 <main>
-  <h2 class="block subj" style="--sc:#2055A3">Physics</h2>
+  <h2 class="block subj" id="physics" style="--sc:#2055A3"><svg class="ic" aria-hidden="true"><use href="#ic-physics"/></svg>Physics</h2>
   <div class="card" style="--sc:#2055A3">
-    <span class="tag">Physics</span>
-    <h2>Power up! From Atoms to Amps</h2>
-    <p class="muted">Measurement and uncertainty, atomic and nuclear physics, electricity</p>
+    <h2><svg class="ic" aria-hidden="true"><use href="#ic-measure"/></svg>Unit 1 · Measurements and uncertainty</h2>
+    <span class="soon">Simulations, worksheets and quizzes coming soon</span>
+  </div>
+  <div class="card" style="--sc:#2055A3">
+    <h2><svg class="ic" aria-hidden="true"><use href="#ic-nuclear"/></svg>Unit 2 · Nuclear physics</h2>
+    <span class="soon">Simulations, worksheets and quizzes coming soon</span>
+  </div>
+  <div class="card" style="--sc:#2055A3">
+    <h2><svg class="ic" aria-hidden="true"><use href="#ic-electricity"/></svg>Unit 3 · Electricity</h2>
     <span class="soon">Simulations, worksheets and quizzes coming soon</span>
   </div>
 </main>

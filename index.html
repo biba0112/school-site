@@ -38,9 +38,15 @@ a.card-link .card{height:100%}
 .chip{font-size:.8rem;font-weight:600;padding:2px 9px;border-radius:999px;color:#fff;background:var(--c)}
 footer{max-width:1100px;margin:0 auto;padding:4px 16px 28px;color:var(--muted);font-size:.85rem}
 @media (max-width:759px){header{padding:12px 16px}header h1{font-size:1.25rem}main{grid-template-columns:1fr;padding:14px 16px}}
+/* icons (22 Oct 2026): same line style as the DP page */
+.block,.card h2{display:flex;align-items:center;gap:10px}
+.ic{flex:none;width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.card .ic{color:var(--sc,var(--navy))}
+.block .ic{width:28px;height:28px}
 </style>
 </head>
 <body>
+<svg id="icons" width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="ic-beaker" viewBox="0 0 24 24"><path d="M4.5 3h15M6 3v15.5A2.5 2.5 0 0 0 8.5 21h7a2.5 2.5 0 0 0 2.5-2.5V3"/><path d="M6 11.5h12"/><circle cx="10" cy="16.5" r="1.1"/><circle cx="14" cy="17.6" r=".8"/><circle cx="12.8" cy="14.2" r=".7"/><circle cx="11.6" cy="8.4" r=".7"/></symbol><symbol id="ic-dp" viewBox="0 0 24 24"><path d="M3 17a9 9 0 0 1 18 0"/><path d="M12 17l5-6"/><circle cx="12" cy="17" r="1.3" fill="currentColor"/><path d="M5.6 11.6l1.2 1M12 8v1.6M18.4 11.6l-1.2 1"/></symbol><symbol id="ic-energy" viewBox="0 0 24 24"><path d="M13.5 2L5 13.5h6.5L10 22l9-12.5h-6.5z"/></symbol><symbol id="ic-forces" viewBox="0 0 24 24"><rect x="8" y="9" width="8" height="7" rx="1"/><path d="M12 9V3M10 5l2-2 2 2M12 16v6M10 20l2 2 2-2M16 12.5h6M20 10.5l2 2-2 2M8 12.5H2M4 10.5l-2 2 2 2"/></symbol><symbol id="ic-measure" viewBox="0 0 24 24"><rect x="2" y="13.5" width="20" height="6.5" rx="1"/><path d="M5 13.5v2.6M8 13.5v1.6M11 13.5v2.6M14 13.5v1.6M17 13.5v2.6M20 13.5v1.6" stroke-width="1.2"/><path d="M7 7h10M7 4.8v4.4M17 4.8v4.4"/><circle cx="12" cy="7" r="1.5" fill="currentColor"/></symbol><symbol id="ic-neuron" viewBox="0 0 24 24"><circle cx="7" cy="7" r="3"/><path d="M4.9 4.9L2.6 2.6M3.3 2.9l-.7 1.6M4 7.6l-2.5.6M6.6 4l-.3-2.6M9.6 5.5l2-1.4"/><path d="M9.1 9.1l10.4 10.4"/><rect x="10.4" y="11.1" width="4.6" height="2.4" rx="1.2" transform="rotate(45 12.7 12.3)"/><rect x="13.9" y="14.6" width="4.6" height="2.4" rx="1.2" transform="rotate(45 16.2 15.8)"/><path d="M19.5 19.5l2.3-.2M19.5 19.5l.2 2.3M19.5 19.5l2.1 1.4"/></symbol></svg>
 <header>
   <div>
     <h1>Science and Physics</h1>
@@ -52,38 +58,38 @@ footer{max-width:1100px;margin:0 auto;padding:4px 16px 28px;color:var(--muted);f
   <h2 class="block">IB MYP Sciences · Grades 6–10</h2>
   <a class="card-link" href="science/g06/"><div class="card">
     <span class="tag">IB MYP 1</span>
-    <h2>Grade 6 Science</h2>
-    <p class="muted">4 units · materials coming soon</p>
-    <div class="chips"><span class="chip" style="--c:#2E7D32">Biology</span><span class="chip" style="--c:#6A1B9A">Chemistry</span><span class="chip" style="--c:#2055A3">Physics</span></div>
+    <h2><svg class="ic" aria-hidden="true" style="color:#2055A3"><use href="#ic-energy"/></svg>Grade 6 Science</h2>
+    <p class="muted">3 units · materials coming soon</p>
+    <div class="chips"><span class="chip" style="--c:#2055A3">Physics</span><span class="chip" style="--c:#6A1B9A">Chemistry</span><span class="chip" style="--c:#2E7D32">Biology</span></div>
   </div></a>
   <a class="card-link" href="science/g07/"><div class="card">
     <span class="tag">IB MYP 2</span>
-    <h2>Grade 7 Science</h2>
+    <h2><svg class="ic" aria-hidden="true" style="color:#6A1B9A"><use href="#ic-beaker"/></svg>Grade 7 Science</h2>
     <p class="muted">3 units · 1 simulation · 1 study guide</p>
-    <div class="chips"><span class="chip" style="--c:#2E7D32">Biology</span><span class="chip" style="--c:#6A1B9A">Chemistry</span><span class="chip" style="--c:#2055A3">Physics</span></div>
+    <div class="chips"><span class="chip" style="--c:#6A1B9A">Chemistry</span><span class="chip" style="--c:#2E7D32">Biology</span><span class="chip" style="--c:#2055A3">Physics</span></div>
   </div></a>
   <a class="card-link" href="science/g08/"><div class="card">
     <span class="tag">IB MYP 3</span>
-    <h2>Grade 8 Science</h2>
+    <h2><svg class="ic" aria-hidden="true" style="color:#2E7D32"><use href="#ic-neuron"/></svg>Grade 8 Science</h2>
     <p class="muted">3 units · materials coming soon</p>
-    <div class="chips"><span class="chip" style="--c:#2E7D32">Biology</span><span class="chip" style="--c:#6A1B9A">Chemistry</span><span class="chip" style="--c:#2055A3">Physics</span></div>
+    <div class="chips"><span class="chip" style="--c:#2E7D32">Biology</span><span class="chip" style="--c:#2055A3">Physics</span><span class="chip" style="--c:#6A1B9A">Chemistry</span></div>
   </div></a>
   <a class="card-link" href="science/g09/"><div class="card">
     <span class="tag">IB MYP 4</span>
-    <h2>Grade 9 Science</h2>
-    <p class="muted">1 unit · materials coming soon</p>
+    <h2><svg class="ic" aria-hidden="true" style="color:#2055A3"><use href="#ic-measure"/></svg>Grade 9 Science</h2>
+    <p class="muted">3 units · materials coming soon</p>
     <div class="chips"><span class="chip" style="--c:#2055A3">Physics</span></div>
   </div></a>
   <a class="card-link" href="science/g10/"><div class="card">
     <span class="tag">IB MYP 5</span>
-    <h2>Grade 10 Science</h2>
-    <p class="muted">1 unit · materials coming soon</p>
+    <h2><svg class="ic" aria-hidden="true" style="color:#2055A3"><use href="#ic-forces"/></svg>Grade 10 Science</h2>
+    <p class="muted">3 units · materials coming soon</p>
     <div class="chips"><span class="chip" style="--c:#2055A3">Physics</span></div>
   </div></a>
   <h2 class="block">IB DP Physics SL/HL · Grades 11–12</h2>
   <a class="card-link" href="physics/dp/"><div class="card" style="--sc:#2055A3">
     <span class="tag">IB Diploma Programme</span>
-    <h2>DP Physics</h2>
+    <h2><svg class="ic" aria-hidden="true" style="color:#2055A3"><use href="#ic-dp"/></svg>DP Physics</h2>
     <p class="muted">25 simulations · 7 quizzes · 3 exercise sets · videos</p>
     <div class="chips"><span class="chip" style="--c:#2055A3">Physics SL/HL</span></div>
   </div></a>

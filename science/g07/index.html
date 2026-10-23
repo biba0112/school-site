@@ -41,33 +41,31 @@ a.card-link .card{height:100%}
 .chip{font-size:.8rem;font-weight:600;padding:2px 9px;border-radius:999px;color:#fff;background:var(--c)}
 footer{max-width:1100px;margin:0 auto;padding:4px 16px 28px;color:var(--muted);font-size:.85rem}
 @media (max-width:759px){header{padding:12px 16px}header h1{font-size:1.25rem}main{grid-template-columns:1fr;padding:14px 16px}}
+/* icons (22 Oct 2026): same line style as the DP page */
+.block,.card h2{display:flex;align-items:center;gap:10px}
+.ic{flex:none;width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.card .ic{color:var(--sc,var(--navy))}
+.block .ic{width:28px;height:28px}
 </style>
 </head>
 <body>
+<svg id="icons" width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="ic-beaker" viewBox="0 0 24 24"><path d="M4.5 3h15M6 3v15.5A2.5 2.5 0 0 0 8.5 21h7a2.5 2.5 0 0 0 2.5-2.5V3"/><path d="M6 11.5h12"/><circle cx="10" cy="16.5" r="1.1"/><circle cx="14" cy="17.6" r=".8"/><circle cx="12.8" cy="14.2" r=".7"/><circle cx="11.6" cy="8.4" r=".7"/></symbol><symbol id="ic-biology" viewBox="0 0 24 24"><path d="M4 20c0-9 6-15.5 16-16 0 10-6.5 16-16 16z"/><path d="M4 20l9.5-9.5M10 14.2h-3.2M13.3 10.8V7.6M12 12.3l3.4.2"/></symbol><symbol id="ic-chemistry" viewBox="0 0 24 24"><path d="M9 2.5h6M10 2.5v6.2L4.6 18.9A1.5 1.5 0 0 0 5.9 21h12.2a1.5 1.5 0 0 0 1.3-2.1L14 8.7V2.5"/><path d="M6.8 15h10.4"/></symbol><symbol id="ic-guide" viewBox="0 0 24 24"><rect x="5" y="2.5" width="14.5" height="19" rx="1.6"/><path d="M5 6.5H3M5 12H3M5 17.5H3"/><path d="M8.2 7.6l1.3 1.3 2.4-2.6M13.6 7.8h3.2M8.2 12.6l1.3 1.3 2.4-2.6M13.6 12.8h3.2M8.6 17.8h.1M13.6 17.8h3.2"/></symbol><symbol id="ic-heart" viewBox="0 0 24 24"><path d="M12 20.5S3 15 3 8.9A4.7 4.7 0 0 1 12 6.6a4.7 4.7 0 0 1 9 2.3C21 15 12 20.5 12 20.5z"/><path d="M4.5 12.2h4l1.6-3.2 2.6 6.2 1.6-3H19.5"/></symbol><symbol id="ic-newtonmeter" viewBox="0 0 24 24"><path d="M12 1.5v2"/><rect x="8" y="3.5" width="8" height="11.5" rx="1.5"/><path d="M8 6.5h1.6M8 9.2h1.6M8 11.9h1.6" stroke-width="1.1"/><path d="M13 5.2v1l-1.4.7 2.8 1.2-2.8 1.2 2.8 1.2-2.8 1.2 1.4.7V14"/><path d="M13 15v2.2"/><rect x="10" y="17.2" width="6" height="4.8" rx=".8"/></symbol><symbol id="ic-physics" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.7" fill="currentColor"/><ellipse cx="12" cy="12" rx="10" ry="3.8"/><ellipse cx="12" cy="12" rx="10" ry="3.8" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="3.8" transform="rotate(-60 12 12)"/></symbol><symbol id="ic-saltsim" viewBox="0 0 24 24"><rect x="2.5" y="2.5" width="8" height="8" rx="1.6"/><rect x="13.5" y="13.5" width="8" height="8" rx="1.6"/><path d="M13.5 6.5h4.5v4.3M16 8.8l2 2 2-2"/><path d="M10.5 17.5H6v-4.3M4 15.2l2-2 2 2"/></symbol></svg>
 <header>
   <div>
     <h1>Grade 7 Science</h1>
-    <p><a href="../../">← All grades</a> · IB MYP 2 · Biology · Chemistry · Physics</p>
+    <p><a href="../../">← All grades</a> · IB MYP 2 · Chemistry · Biology · Physics</p>
   </div>
   <div class="credit">Biljana Taneska · Science teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
 </header>
 <main>
-  <h2 class="block subj" style="--sc:#2E7D32">Biology</h2>
-  <div class="card" style="--sc:#2E7D32">
-    <span class="tag">Unit 2 · Biology</span>
-    <h2>The Secrets of a Long Life</h2>
-    <p class="muted">Health, diet, digestive, respiratory and circulatory systems, immunity</p>
-    <span class="soon">Simulations, worksheets and quizzes coming soon</span>
-  </div>
-  <h2 class="block subj" id="chemistry" style="--sc:#6A1B9A">Chemistry</h2>
+  <h2 class="block subj" id="chemistry" style="--sc:#6A1B9A"><svg class="ic" aria-hidden="true"><use href="#ic-chemistry"/></svg>Chemistry</h2>
   <div class="card" style="--sc:#6A1B9A">
-    <span class="tag">Unit 1 · Chemistry</span>
-    <h2>Chemistry&#x27;s Secrets Unlocked</h2>
-    <p class="muted">Elements, compounds and mixtures, chemical change, acids and alkalis</p>
+    <h2><svg class="ic" aria-hidden="true"><use href="#ic-beaker"/></svg>Unit 1 · Chemistry</h2>
+    <p class="muted">1 simulation · 1 study guide</p>
   </div>
   <div class="card" style="--sc:#6A1B9A">
     <span class="tag">Simulation · Unit 1</span>
-    <h2>Salt naming</h2>
+    <h2><svg class="ic" aria-hidden="true"><use href="#ic-saltsim"/></svg>Salt naming</h2>
     <p>Acid + alkali → salt + water: watch the acid and the alkali swap partners, name the salt, then try 7 new acids in a quiz.</p>
     <div class="row">
       <a class="btn primary" href="01-salt-naming/">▶ Open the simulation</a>
@@ -77,17 +75,20 @@ footer{max-width:1100px;margin:0 auto;padding:4px 16px 28px;color:var(--muted);f
   </div>
   <div class="card" style="--sc:#6A1B9A">
     <span class="tag">Study guide · Unit 1</span>
-    <h2>Criterion A revision</h2>
+    <h2><svg class="ic" aria-hidden="true"><use href="#ic-guide"/></svg>Criterion A revision</h2>
     <p>Revise the whole unit before the Criterion A test: atoms, elements, compounds and mixtures, acids and alkalis, the pH scale, neutralisation and naming salts.</p>
     <div class="row">
       <a class="btn primary" href="02-criterion-a-study-guide/study-guide.pdf" data-goatcounter-click="download/science/g07/02-criterion-a-study-guide/study-guide.pdf">Study guide (PDF)</a>
     </div>
   </div>
-  <h2 class="block subj" style="--sc:#2055A3">Physics</h2>
+  <h2 class="block subj" id="biology" style="--sc:#2E7D32"><svg class="ic" aria-hidden="true"><use href="#ic-biology"/></svg>Biology</h2>
+  <div class="card" style="--sc:#2E7D32">
+    <h2><svg class="ic" aria-hidden="true"><use href="#ic-heart"/></svg>Unit 2 · Biology</h2>
+    <span class="soon">Simulations, worksheets and quizzes coming soon</span>
+  </div>
+  <h2 class="block subj" id="physics" style="--sc:#2055A3"><svg class="ic" aria-hidden="true"><use href="#ic-physics"/></svg>Physics</h2>
   <div class="card" style="--sc:#2055A3">
-    <span class="tag">Unit 3 · Physics</span>
-    <h2>The Secret Forces</h2>
-    <p class="muted">Forces, Newton&#x27;s laws, motion graphs, Hooke&#x27;s law, mass and weight, space</p>
+    <h2><svg class="ic" aria-hidden="true"><use href="#ic-newtonmeter"/></svg>Unit 3 · Physics</h2>
     <span class="soon">Simulations, worksheets and quizzes coming soon</span>
   </div>
 </main>
