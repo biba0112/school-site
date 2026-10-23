@@ -12,11 +12,12 @@
 
   File sections (same order as the simulation template):
     1 STYLE     layout, colours (the four piece colours carry the whole lesson)
-    2 MARKUP    header · colour key · tabs (Explore + Tasks · Quiz) · help overlay
+    2 MARKUP    header · colour key · tabs (Explore + Tasks · Quiz · Build the formula) · help overlay
     3 CONFIG    alkalis, acids, naming rules
     4 CHEMISTRY pure functions (salt formula, equations; no drawing)
-    5 EXPLORE   pickers, reaction stage, "swap partners" animation
-    6 QUIZ      7 new acids, drag or tap words into the salt name
+    5 EXPLORE   drag-or-tap engine + builder (shared), pickers, reaction stage, "swap partners" animation
+    6 QUIZ      7 new acids: name the salt with word tiles, then build the products from the pieces
+    6b BUILD    8 reactions: drag the pieces to build the products, or work backwards to the reactants
     7 TASKS     data-driven task list (do / predict / word)
     8 UI        tabs, help, storage, start
 -->
@@ -233,6 +234,18 @@ ol.steps li.dim{color:#9AA4AD}
 .mini .piece .sym{font-size:1.15rem}
 footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
 
+/* building by hand: drag a piece (or tap it, then tap a box) */
+.piece.pick{cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+.piece.sel{outline:3px solid var(--focus);outline-offset:2px}
+.piece.lifting{opacity:.3}
+.pieces.drop{cursor:pointer}
+.pieces.hot{border:2px solid var(--focus)!important;background:var(--soft-blue)!important}
+.pieces.shake{animation:shake .4s;border-color:var(--bad)!important}
+.qbuild{display:grid;gap:6px;justify-items:center;padding:10px;border-radius:12px;background:var(--sunk)}
+.feedback.tip{background:#FFF8E1;border-left:4px solid #F9A825}
+.feedback.ans{background:var(--soft-blue);border-left:4px solid var(--focus)}
+#exFb{min-height:0}
+
 /* help overlay */
 #help{position:fixed;inset:0;background:rgba(31,58,95,.55);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
 #help.on{display:flex}
@@ -278,6 +291,7 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
   .slot{min-width:112px}
   .tile{padding:9px 13px}
 }
+@media (max-width:599px){ .tab .long{display:none} }
 .rotate-tip{display:none;padding:6px 10px;border-radius:8px;background:var(--soft-blue);font-size:.86rem}
 @media (max-width:599px) and (orientation:portrait){ .rotate-tip{display:block} }
 /* phones held sideways: short screens */
@@ -296,7 +310,7 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
   .q-stage .row{flex-direction:column;align-items:center;gap:4px}
   .q-stage .op{padding-bottom:0}
 }
-@media (prefers-reduced-motion:reduce){ .slot.shake{animation:none} }
+@media (prefers-reduced-motion:reduce){ .slot.shake,.pieces.shake{animation:none} }
 </style>
 </head>
 <body>
@@ -322,8 +336,9 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
 <main>
   <p class="rotate-tip">Tip: turn your phone sideways to see the reaction side by side.</p>
   <div class="tabs top" role="tablist">
-    <button class="tab" role="tab" id="tab-explore" aria-selected="true" aria-controls="explore">1 · Explore and tasks</button>
-    <button class="tab" role="tab" id="tab-quiz" aria-selected="false" aria-controls="quiz">2 · Quiz: 7 new acids</button>
+    <button class="tab" role="tab" id="tab-explore" aria-selected="true" aria-controls="explore">1 · Explore<span class="long"> and tasks</span></button>
+    <button class="tab" role="tab" id="tab-quiz" aria-selected="false" aria-controls="quiz">2 · Quiz<span class="long">: 7 new acids</span></button>
+    <button class="tab" role="tab" id="tab-build" aria-selected="false" aria-controls="build">3 · Build<span class="long"> the formula</span></button>
   </div>
 
   <!-- EXPLORE -->
@@ -342,7 +357,7 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
       </div>
 
       <div class="card stagecard">
-        <h2>2 · Predict the salt, then press React!</h2>
+        <h2>2 · Drag each piece to where it ends up, or press React!</h2>
         <div class="cb">
           <div class="stage" id="stage">
             <div class="stage-inner">
@@ -361,9 +376,9 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
               <div class="half">
                 <div class="row-label">After: products</div>
                 <div class="row">
-                  <div class="block"><div class="pieces empty" id="saltPieces"></div><div class="cap" id="saltCap"></div></div>
+                  <div class="block"><div class="pieces empty drop" data-box="salt" id="saltPieces"></div><div class="cap" id="saltCap"></div></div>
                   <div class="op">+</div>
-                  <div class="block"><div class="pieces empty" id="waterPieces"></div><div class="cap" id="waterCap"></div></div>
+                  <div class="block"><div class="pieces empty drop" data-box="water" id="waterPieces"></div><div class="cap" id="waterCap"></div></div>
                 </div>
               </div>
             </div>
@@ -372,6 +387,7 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
             <button class="btn primary" id="reactBtn">React!</button>
             <button class="btn" id="resetBtn" disabled>↺ Put it back</button>
           </div>
+          <div class="feedback" id="exFb" aria-live="polite"></div>
           <div class="eq" aria-live="polite">
             <div class="label">Word equation</div>
             <div class="eq-words" id="eqWords"></div>
@@ -407,7 +423,7 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
           <h2 id="qTitle">Question 1 of 7</h2>
           <div class="dots" id="dots"></div>
         </div>
-        <p id="quizLede">Drag the right words into the two boxes to name the salt. You can also tap a word, then tap a box.</p>
+        <p id="quizLede"><b>Step 1:</b> drag the right words into the two boxes to name the salt. <b>Step 2:</b> build the products from the pieces. You can also tap, then tap a box.</p>
         <div class="quiz-grid">
           <div class="stage q-stage">
             <div class="row-label">Reactants</div>
@@ -416,6 +432,14 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
           <div class="q-work">
             <div class="qeq" id="qeq"></div>
             <div class="bank" id="bank" aria-label="Word tiles"></div>
+            <div class="qbuild" id="qBuild" hidden>
+              <div class="row-label">Step 2 · Build the products: drag the pieces from the reactants</div>
+              <div class="row">
+                <div class="block"><div class="pieces empty drop" data-box="salt" id="qSalt"></div><div class="cap" id="qSaltCap"></div></div>
+                <div class="op">+</div>
+                <div class="block"><div class="pieces empty drop" data-box="water" id="qWater"></div><div class="cap" id="qWaterCap"></div></div>
+              </div>
+            </div>
             <div class="feedback" id="feedback" aria-live="polite">Which word comes from the alkali? Which comes from the acid?</div>
             <div class="controls"><button class="btn primary" id="nextBtn" hidden>Next acid →</button></div>
           </div>
@@ -436,6 +460,59 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
       </div>
     </div>
   </section>
+
+  <!-- BUILD THE FORMULA -->
+  <section class="panel" id="build" role="tabpanel" aria-labelledby="tab-build" hidden>
+    <div class="card" id="bCard">
+      <div class="cb">
+        <div class="qhead">
+          <h2 id="bTitle">Reaction 1 of 8</h2>
+          <div class="dots" id="bDots"></div>
+        </div>
+        <p id="bLede"></p>
+        <div class="stage" id="bStage">
+          <div class="stage-inner">
+            <div class="half">
+              <div class="row-label">Reactants</div>
+              <div class="row">
+                <div class="block"><div class="pieces drop" data-box="acid" id="bAcid"></div><div class="cap" id="bAcidCap"></div></div>
+                <div class="op">+</div>
+                <div class="block"><div class="pieces drop" data-box="alkali" id="bBase"></div><div class="cap" id="bBaseCap"></div></div>
+              </div>
+            </div>
+            <div class="big-arrow" aria-hidden="true">
+              <span class="ar-down">↓</span>
+              <span class="ar-right">→</span>
+            </div>
+            <div class="half">
+              <div class="row-label">Products</div>
+              <div class="row">
+                <div class="block"><div class="pieces drop" data-box="salt" id="bSalt"></div><div class="cap" id="bSaltCap"></div></div>
+                <div class="op">+</div>
+                <div class="block"><div class="pieces drop" data-box="water" id="bWater"></div><div class="cap" id="bWaterCap"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="feedback" id="bFb" aria-live="polite"></div>
+        <div class="eq-form" id="bEq"></div>
+        <div class="controls"><button class="btn primary" id="bNext" hidden>Next reaction →</button></div>
+      </div>
+    </div>
+
+    <div class="card" id="bEnd" hidden>
+      <h2>Your result</h2>
+      <div class="cb">
+        <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:end">
+          <div><div class="score" id="bEndScore"></div><div class="hint">right first time</div></div>
+          <div><div class="score" style="color:var(--star)" id="bEndStars"></div><div class="hint">stars out of 24</div></div>
+        </div>
+        <p id="bEndMsg"></p>
+        <ul class="review" id="bReview"></ul>
+        <div class="controls"><button class="btn primary" id="bAgain">Play again</button></div>
+      </div>
+    </div>
+  </section>
 </main>
 
 <div id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
@@ -443,14 +520,19 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
     <h3 id="helpTitle">How to use this simulation</h3>
     <ol>
       <li><b>Choose an acid and an alkali</b> on the left. The acids from our lessons come first; the challenge acids are extra.</li>
-      <li><b>Predict</b> the name of the salt. Then press <b>React!</b> and watch the four pieces <b>swap partners</b>.
+      <li><b>Predict</b> the name of the salt. Then <b>drag each piece</b> (or tap a piece, then tap a box) to where it ends
+        up: the salt or the water. Or press <b>React!</b> and watch the four pieces <b>swap partners</b>.
         <b>↺ Put it back</b> undoes the reaction.</li>
       <li>Under the reaction you see the <b>word equation</b> and, for interest, the equation with <b>formulas</b>
         (in Grade 7 you need the word equation).</li>
       <li><b>How to name the salt</b> (right) explains every step. The rule box lights up the rule for your acid.</li>
       <li><b>Tasks</b> (right): three sets — Pre-lab, During the lab and Homework. <b>⚙ Set it up for me</b> picks the
         chemicals. Write your explanations on your worksheet.</li>
-      <li><b>Quiz</b>: drag a word into each box (or tap a word, then tap a box). Right first time = 3 stars.</li>
+      <li><b>Quiz</b>: drag a word into each box to name the salt, then build the products from the pieces.</li>
+      <li><b>Build the formula</b>: 8 reactions. Sometimes you build the salt and the water, sometimes you work backwards and
+        build the acid and the alkali. The small numbers in the formulas are added for you.</li>
+      <li><b>Wrong answer?</b> The first time you get a tip. The second time the simulation shows the answer.
+        Stars: right first time ★★★ · right after a tip ★★ · answer shown: no stars.</li>
     </ol>
     <h3>The chemistry</h3>
     <ul>
@@ -491,24 +573,19 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
     { stem: "sulfurous",    f: "H2SO3",   x: "SO3",    q: 2, end: "sulfite",   rule: "ous", poly: 1 },
     { stem: "hydrobromic",  f: "HBr",     x: "Br",     q: 1, end: "bromide",   rule: "hydro" },
     // quiz acids
-    { stem: "hydroiodic",    f: "HI",      x: "I",      q: 1, end: "iodide",     rule: "hydro", wrong: ["iodate", "iodite"] },
-    { stem: "hydrofluoric",  f: "HF",      x: "F",      q: 1, end: "fluoride",   rule: "hydro", wrong: ["fluorate", "fluorite"] },
-    { stem: "nitrous",       f: "HNO2",    x: "NO2",    q: 1, end: "nitrite",    rule: "ous", poly: 1, wrong: ["nitrate", "nitride"] },
-    { stem: "chloric",       f: "HClO3",   x: "ClO3",   q: 1, end: "chlorate",   rule: "ic",  poly: 1, wrong: ["chloride", "chlorite"] },
-    { stem: "methanoic",     f: "HCOOH",   x: "HCOO",   q: 1, end: "methanoate", rule: "ic",  poly: 1, hLast: 1, wrong: ["methanide", "methanite"] },
-    { stem: "citric",        f: "C6H8O7",  x: "C6H5O7", q: 3, end: "citrate",    rule: "ic",  poly: 1, wrong: ["citride", "citrite"] },
-    { stem: "hydrosulfuric", f: "H2S",     x: "S",      q: 2, end: "sulfide",    rule: "hydro", wrong: ["sulfate", "sulfite"] },
+    { stem: "hydroiodic",    f: "HI",      x: "I",      q: 1, end: "iodide",     rule: "hydro" },
+    { stem: "hydrofluoric",  f: "HF",      x: "F",      q: 1, end: "fluoride",   rule: "hydro" },
+    { stem: "nitrous",       f: "HNO2",    x: "NO2",    q: 1, end: "nitrite",    rule: "ous", poly: 1 },
+    { stem: "chloric",       f: "HClO3",   x: "ClO3",   q: 1, end: "chlorate",   rule: "ic",  poly: 1 },
+    { stem: "methanoic",     f: "HCOOH",   x: "HCOO",   q: 1, end: "methanoate", rule: "ic",  poly: 1, hLast: 1 },
+    { stem: "citric",        f: "C6H8O7",  x: "C6H5O7", q: 3, end: "citrate",    rule: "ic",  poly: 1 },
+    { stem: "hydrosulfuric", f: "H2S",     x: "S",      q: 2, end: "sulfide",    rule: "hydro" },
   ];
   const EXPLORE = ACIDS.slice(0, 8), QUIZ = ACIDS.slice(8);
   const RULES = {
     hydro: { from: "hydro<b>…ic</b> acid", to: "<b>…ide</b>", ex: "hydrochloric → chloride, hydrobromic → bromide" },
     ic:    { from: "<b>…ic</b> acid",      to: "<b>…ate</b>", ex: "sulfuric → sulfate, nitric → nitrate, ethanoic → ethanoate" },
     ous:   { from: "<b>…ous</b> acid",     to: "<b>…ite</b>", ex: "sulfurous → sulfite" },
-  };
-  const RULE_HINT = {
-    hydro: "Acids that start with hydro- and end in -ic give salts ending in -ide.",
-    ic: "Acids ending in -ic (without hydro- at the start) give salts ending in -ate.",
-    ous: "Acids ending in -ous give salts ending in -ite.",
   };
 
   const $ = (id) => document.getElementById(id);
@@ -540,7 +617,122 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
   }
 
   /* ============================ 5 EXPLORE ============================ */
-  let acid = EXPLORE[0], base = BASES[0], reacted = false, P = {};
+  // Building by hand (Explore, quiz step 2, Build tab). Every piece has a kind: h (hydrogen), x (acid part), m (metal),
+  // oh (hydroxide); every box takes two kinds. 1st wrong drop → a tip; 2nd wrong drop → the simulation shows the answer.
+  const HOME = { salt: ["m", "x"], water: ["h", "oh"], acid: ["h", "x"], alkali: ["m", "oh"] };
+  const TIP = {
+    "h>salt": "H comes from the acid, but it does not stay in the salt: it joins OH to make water.",
+    "oh>salt": "OH comes from the alkali, but it does not stay in the salt: it joins H to make water.",
+    "m>water": "The metal does not go into the water: it joins the acid part to make the salt.",
+    "x>water": "The acid part does not go into the water: it joins the metal to make the salt.",
+    "h>alkali": "Every acid has H: the H goes back to the acid.",
+    "x>alkali": "The acid part belongs to the acid (H + acid part).",
+    "m>acid": "The metal comes from the alkali (metal + OH).",
+    "oh>acid": "OH belongs to the alkali (metal + OH).",
+  };
+  const OK = { salt: "✔ Yes: the salt is the metal + the acid part.", water: "✔ Yes: H + OH make water.",
+               acid: "✔ Yes: the acid is H + the acid part.", alkali: "✔ Yes: the alkali is the metal + OH." };
+  const order = (box, a) => box === "acid" ? (a.hLast ? ["x", "h"] : ["h", "x"]) : { salt: ["m", "x"], water: ["h", "oh"], alkali: ["m", "oh"] }[box];
+  const fb = (el, cls, html) => { el.className = "feedback" + (cls ? " " + cls : ""); el.innerHTML = html; };
+  const shake = (el) => { el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake"); setTimeout(() => el.classList.remove("shake"), 450); };
+
+  // drag, or tap then tap: shared by the pieces and the quiz word tiles
+  let SEL = null;
+  function unselect() { if (SEL) SEL.el.classList.remove("sel"); SEL = null; }
+  function pickable(el, area, targetSel, drop) {
+    el.addEventListener("click", (e) => {
+      if (el.dataset.dragged) { delete el.dataset.dragged; e.stopPropagation(); return; }
+      if (el.dataset.locked) return;                     // a placed piece: the tap goes on to its box
+      e.stopPropagation();
+      const same = SEL && SEL.el === el; unselect();
+      if (!same) { SEL = { el, area }; el.classList.add("sel"); }
+    });
+    el.addEventListener("pointerdown", (e) => {
+      if (e.button > 0 || el.dataset.locked) return;
+      const sx = e.clientX, sy = e.clientY, sel = targetSel();
+      let ghost = null, hot = null;
+      el.setPointerCapture(e.pointerId);
+      const at = (x, y) => { const t = document.elementFromPoint(x, y); return t && t.closest(sel); };
+      const move = (ev) => {
+        if (!ghost && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 6) {
+          ghost = el.cloneNode(true); ghost.classList.add("drag-ghost"); ghost.classList.remove("sel");
+          document.body.appendChild(ghost); el.classList.add("lifting");
+        }
+        if (!ghost) return;
+        ghost.style.left = ev.clientX + "px"; ghost.style.top = ev.clientY + "px";
+        const s = at(ev.clientX, ev.clientY);
+        if (s !== hot) { hot && hot.classList.remove("hot"); hot = s; hot && hot.classList.add("hot"); }
+      };
+      const up = (ev) => {
+        el.removeEventListener("pointermove", move); el.removeEventListener("pointerup", up); el.removeEventListener("pointercancel", up);
+        if (!ghost) return;
+        el.dataset.dragged = "1"; setTimeout(() => delete el.dataset.dragged, 0);
+        ghost.remove(); el.classList.remove("lifting"); hot && hot.classList.remove("hot");
+        const s = ev.type === "pointerup" && at(ev.clientX, ev.clientY);
+        if (s) { unselect(); drop(el, s); }
+      };
+      el.addEventListener("pointermove", move); el.addEventListener("pointerup", up); el.addEventListener("pointercancel", up);
+    });
+  }
+
+  const ACTIVE = {};   // the builder that is running in each area: explore · quiz · build
+  function mkPieces(a, b, area) {
+    const P = { h: piece("p-h", "H", "hydrogen"), x: piece("p-x", a.x, a.stem), m: piece("p-m", b.sym, b.name), oh: piece("p-oh", "OH", "hydroxide") };
+    for (const k in P) {
+      P[k].dataset.kind = k; P[k].classList.add("pick");
+      pickable(P[k], area, () => (ACTIVE[area] ? ACTIVE[area].sel : "#none"), (el, box) => ACTIVE[area] && ACTIVE[area].drop(el, box));
+    }
+    return P;
+  }
+  // a builder: the pieces P must go into the boxes (e.g. {salt, water}); done(state) runs when every piece is in place
+  function builder(a, P, boxes, fbEl, onBox, done) {
+    const st = { mistakes: 0, revealed: false, done: false };
+    const sel = Object.values(boxes).map((x) => "#" + x.id).join(",");
+    const homeOf = (k) => Object.keys(boxes).find((n) => HOME[n].includes(k));
+    const sources = [...new Set(Object.values(P).map((p) => p.parentNode))];
+    for (const box of Object.values(boxes)) { box.replaceChildren(); box.className = "pieces empty drop"; delete box.dataset.full; }
+    for (const p of Object.values(P)) { delete p.dataset.locked; p.classList.add("pick"); }
+    function put(k) {
+      const n = homeOf(k), box = boxes[n];
+      box.replaceChildren(...order(n, a).map((kk) => P[kk]).filter((p) => p === P[k] || p.parentNode === box));
+      P[k].dataset.locked = "1"; P[k].classList.remove("pick", "sel"); box.classList.remove("empty");
+      if (k === "x") P.x.querySelector(".nm").textContent = n === "salt" ? a.end : a.stem;   // acid part: stem in the acid, ending in the salt
+    }
+    function tidy() {
+      sources.forEach((s) => { if (s && !s.children.length) s.classList.add("empty"); });
+      for (const [n, box] of Object.entries(boxes)) if (box.children.length === 2 && !box.dataset.full) { box.dataset.full = "1"; onBox(n); }
+    }
+    function finish() {
+      if (st.done || Object.values(P).some((p) => !p.dataset.locked)) return;
+      st.done = true; done(st);
+    }
+    function drop(el, box) {
+      if (st.done || el.dataset.locked) return;
+      const k = el.dataset.kind, n = box.dataset.box;
+      if (!(n in boxes)) return;
+      if (HOME[n].includes(k)) { flip([el], () => { put(k); tidy(); }); fb(fbEl, "good", OK[n]); finish(); return; }
+      st.mistakes++; shake(box);
+      if (st.mistakes === 1) fb(fbEl, "tip", "💡 Tip: " + TIP[k + ">" + n]);
+      else reveal(true);
+    }
+    function reveal(shown) {   // shown: the answer after the 2nd mistake · otherwise React! does it
+      if (st.done) return;
+      if (shown) st.revealed = true;
+      const left = Object.keys(P).filter((k) => !P[k].dataset.locked);
+      flip(left.map((k) => P[k]), () => { left.forEach(put); tidy(); });
+      finish();
+    }
+    return { st, sel, drop, reveal };
+  }
+  // a tap on a box drops the piece that was tapped before
+  document.querySelectorAll(".pieces.drop").forEach((box) => {
+    const area = box.closest("#explore") ? "explore" : box.closest("#quiz") ? "quiz" : "build";
+    box.addEventListener("click", () => {
+      if (SEL && SEL.area === area && ACTIVE[area]) { const el = SEL.el; unselect(); ACTIVE[area].drop(el, box); }
+    });
+  });
+
+  let acid = EXPLORE[0], base = BASES[0], reacted = false, byReact = false, P = {};
 
   function chip(cls, html, pressed, onClick) {
     const b = document.createElement("button");
@@ -557,24 +749,35 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
         () => { base = b; renderChips(); build(); })));
   }
 
-  function build() {
-    reacted = false;
-    P = {
-      h: piece("p-h", "H", "hydrogen"),
-      x: piece("p-x", acid.x, acid.stem),
-      m: piece("p-m", base.sym, base.name),
-      oh: piece("p-oh", "OH", "hydroxide"),
-    };
+  const acidCap = (a) => `<strong class="t-x">${a.stem} acid</strong><span>${sub(a.f)}</span>`;
+  const baseCap = (b) => `<strong><span class="t-m">${b.name}</span> <span class="t-oh">hydroxide</span></strong><span>${sub(b.f)}</span>`;
+  const saltCap = (a, b) => `<strong><span class="t-m">${b.name}</span> <span class="t-x">${a.end}</span></strong><span>${sub(chem(a, b).salt)}</span>`;
+  const waterCap = `<strong>water</strong><span>H<sub>2</sub>O</span>`;
+  const unknown = (what) => `<strong>${what}</strong><span>?</span>`;
+
+  function startExplore() {   // pieces back in the reactants, empty products
+    reacted = false; byReact = false; unselect();
     $("acidPieces").className = "pieces"; $("basePieces").className = "pieces";
+    $("saltCap").innerHTML = unknown("salt"); $("waterCap").innerHTML = unknown("water");
+    ACTIVE.explore = builder(acid, P, { salt: $("saltPieces"), water: $("waterPieces") }, $("exFb"),
+      (n) => { $(n === "salt" ? "saltCap" : "waterCap").innerHTML = n === "salt" ? saltCap(acid, base) : waterCap; }, exDone);
+    fb($("exFb"), "", "Predict the salt. Then drag each piece to the salt or to the water (or tap a piece, then a box), or press React!");
+    $("reactBtn").disabled = false; $("resetBtn").disabled = true;
+    renderText();
+  }
+  function build() {
+    P = mkPieces(acid, base, "explore");
     $("acidPieces").replaceChildren(...(acid.hLast ? [P.x, P.h] : [P.h, P.x]));
     $("basePieces").replaceChildren(P.m, P.oh);
-    $("saltPieces").replaceChildren(); $("waterPieces").replaceChildren();
-    $("saltPieces").className = "pieces empty"; $("waterPieces").className = "pieces empty";
-    $("acidCap").innerHTML = `<strong class="t-x">${acid.stem} acid</strong><span>${sub(acid.f)}</span>`;
-    $("baseCap").innerHTML = `<strong><span class="t-m">${base.name}</span> <span class="t-oh">hydroxide</span></strong><span>${sub(base.f)}</span>`;
-    $("saltCap").innerHTML = `<strong>salt</strong><span>?</span>`;
-    $("waterCap").innerHTML = `<strong>water</strong><span>?</span>`;
-    $("reactBtn").disabled = false; $("resetBtn").disabled = true;
+    $("acidCap").innerHTML = acidCap(acid); $("baseCap").innerHTML = baseCap(base);
+    startExplore();
+  }
+  function exDone(st) {
+    reacted = true; $("reactBtn").disabled = true; $("resetBtn").disabled = false;
+    const r = chem(acid, base), salt = `<b>${base.name} ${acid.end}</b> (${sub(r.salt)})`;
+    if (byReact) fb($("exFb"), "", `The pieces swapped partners: ${salt} + water (H<sub>2</sub>O).`);
+    else if (st.revealed) fb($("exFb"), "ans", `Here is the answer: the metal and the acid part make the salt, ${salt}; H and OH make water.`);
+    else fb($("exFb"), "good", `✔ You built it: ${salt} + water (H<sub>2</sub>O).`);
     renderText();
   }
 
@@ -584,7 +787,7 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
     $("eqWords").innerHTML = reacted
       ? left + `<span class="t-m">${base.name}</span> <span class="t-x">${acid.end}</span> + water`
       : left + `<span class="q">?</span> <span class="q">?</span> + <span class="q">?</span>`;
-    $("eqForm").innerHTML = reacted ? "With formulas: " + r.formula : "Predict the salt's name, then press React!";
+    $("eqForm").innerHTML = reacted ? "With formulas: " + r.formula : "Predict the salt's name, then build it or press React!";
     const steps = [
       `Split the acid: <span class="t-h">H</span> + the <span class="t-x">acid part</span> (${sub(acid.x)}).`,
       `Split the alkali: the <span class="t-m">metal</span> (${base.name}) + <span class="t-oh">OH</span>.`,
@@ -611,43 +814,23 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
     });
   }
 
-  function react() {
-    if (reacted) return;
-    reacted = true;
-    flip([P.h, P.oh, P.m, P.x], () => {
-      $("waterPieces").replaceChildren(P.h, P.oh);
-      $("saltPieces").replaceChildren(P.m, P.x);
-      P.x.querySelector(".nm").textContent = acid.end;
-      $("acidPieces").className = "pieces empty"; $("basePieces").className = "pieces empty";
-      $("saltPieces").className = "pieces"; $("waterPieces").className = "pieces";
-      const r = chem(acid, base);
-      $("saltCap").innerHTML = `<strong><span class="t-m">${base.name}</span> <span class="t-x">${acid.end}</span></strong><span>${sub(r.salt)}</span>`;
-      $("waterCap").innerHTML = `<strong>water</strong><span>H<sub>2</sub>O</span>`;
-    });
-    $("reactBtn").disabled = true; $("resetBtn").disabled = false;
-    renderText();
-  }
-  $("reactBtn").addEventListener("click", react);
+  $("reactBtn").addEventListener("click", () => { if (!reacted) { byReact = true; ACTIVE.explore.reveal(false); } });
   $("resetBtn").addEventListener("click", () => {
-    const els = [P.m, P.x, P.h, P.oh];
-    flip(els, () => {
+    flip([P.m, P.x, P.h, P.oh], () => {
       $("acidPieces").replaceChildren(...(acid.hLast ? [P.x, P.h] : [P.h, P.x]));
       $("basePieces").replaceChildren(P.m, P.oh);
       P.x.querySelector(".nm").textContent = acid.stem;
-      $("acidPieces").className = "pieces"; $("basePieces").className = "pieces";
-      $("saltPieces").className = "pieces empty"; $("waterPieces").className = "pieces empty";
-      $("saltCap").innerHTML = `<strong>salt</strong><span>?</span>`;
-      $("waterCap").innerHTML = `<strong>water</strong><span>?</span>`;
     });
-    reacted = false;
-    $("reactBtn").disabled = false; $("resetBtn").disabled = true;
-    renderText();
+    startExplore();
   });
 
   /* ============================ 6 QUIZ ============================ */
+  // Step 1: name the salt with word tiles · Step 2: build the products from the pieces. Stars: 3 no mistakes · 2 after a tip · 0 answer shown.
   const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
-  const FIRST_BASES = ["K", "Ca", "Na", "Mg", "Li", "Na", "K"];
-  let rounds = [], qi = 0, mistakes = 0, filled = [false, false], selected = null, firstGame = true;
+  const FIRST_BASES = ["K", "Ca", "Na", "Mg", "Li", "Na", "K"];   // 1st round after loading: hydroiodic + potassium first (Exercises Q10)
+  const ENDINGS = ["chloride", "sulfate", "nitrate", "carbonate", "phosphate", "bromide"];
+  const stemOf = (end) => end.replace(/(ide|ate|ite)$/, "");
+  let rounds = [], qi = 0, firstGame = true, Q = null;
 
   function newGame() {
     rounds = QUIZ.map((a, i) => ({
@@ -663,68 +846,44 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
 
   function stars(n) { return "★".repeat(n) + `<span class="off">${"★".repeat(3 - n)}</span>`; }
 
+  // word tiles: the right two words, other metals, hydrogen, hydroxide and endings of other acids (never a trap such as iodate for iodide)
+  function words(a, b) {
+    const others = shuffle(BASES.filter((x) => x !== b)).slice(0, 2).map((x) => x.name);
+    const ends = shuffle(ENDINGS.filter((e) => e.slice(0, 4) !== a.end.slice(0, 4))).slice(0, 2);
+    return shuffle([b.name, ...others, "hydrogen", "hydroxide", a.end, ...ends]);
+  }
+
   function loadQ() {
     const { acid: a, base: b } = rounds[qi];
-    mistakes = 0; filled = [false, false]; selected = null;
+    unselect(); ACTIVE.quiz = null;
+    Q = { a, b, miss: [0, 0], filled: [false, false], mistakes: 0, revealed: false };
     $("qTitle").textContent = `Question ${qi + 1} of ${rounds.length}`;
     $("dots").innerHTML = rounds.map((r, i) =>
       `<span class="dot ${i < qi ? "done" : i === qi ? "now" : ""}" title="${i < qi ? r.stars + " stars" : ""}">${i < qi ? r.stars : i + 1}</span>`).join("");
-    const acidPieces = a.hLast ? [piece("p-x", a.x, a.stem), piece("p-h", "H", "hydrogen")] : [piece("p-h", "H", "hydrogen"), piece("p-x", a.x, a.stem)];
+    const QP = mkPieces(a, b, "quiz"); Q.P = QP;
+    for (const p of Object.values(QP)) { p.dataset.locked = "1"; p.classList.remove("pick"); }   // step 2 unlocks them
     const blk = (pcs, cap) => { const d = document.createElement("div"); d.className = "block"; const p = document.createElement("div"); p.className = "pieces"; p.append(...pcs); d.append(p); d.insertAdjacentHTML("beforeend", `<div class="cap">${cap}</div>`); return d; };
     const plus = document.createElement("div"); plus.className = "op"; plus.textContent = "+";
-    $("qBlocks").replaceChildren(
-      blk(acidPieces, `<strong class="t-x">${a.stem} acid</strong><span>${sub(a.f)}</span>`), plus,
-      blk([piece("p-m", b.sym, b.name), piece("p-oh", "OH", "hydroxide")], `<strong><span class="t-m">${b.name}</span> <span class="t-oh">hydroxide</span></strong><span>${sub(b.f)}</span>`));
+    $("qBlocks").replaceChildren(blk(a.hLast ? [QP.x, QP.h] : [QP.h, QP.x], acidCap(a)), plus, blk([QP.m, QP.oh], baseCap(b)));
     $("qeq").innerHTML =
       `<span><span class="t-x">${a.stem} acid</span> + <span class="t-m">${b.name}</span> <span class="t-oh">hydroxide</span></span><span>→</span>` +
       `<button class="slot" data-slot="0" aria-label="first word of the salt"><span>1st word<small>drop here</small></span></button>` +
       `<button class="slot" data-slot="1" aria-label="second word of the salt"><span>2nd word<small>drop here</small></span></button>` +
       `<span>+ water</span>`;
-    $("qeq").querySelectorAll(".slot").forEach((s) => s.addEventListener("click", () => { if (selected) place(selected, +s.dataset.slot); }));
-    const others = shuffle(BASES.filter((x) => x !== b)).slice(0, 2).map((x) => x.name);
-    const words = shuffle([b.name, ...others, "hydrogen", "hydroxide", a.end, ...a.wrong]);
-    $("bank").replaceChildren(...words.map(makeTile));
-    $("feedback").className = "feedback";
-    $("feedback").textContent = "Which word comes from the alkali? Which comes from the acid?";
+    $("qeq").querySelectorAll(".slot").forEach((s) => s.addEventListener("click", () => {
+      if (SEL && SEL.area === "words") { const t = SEL.el; unselect(); place(t, +s.dataset.slot); }
+    }));
+    $("bank").replaceChildren(...words(a, b).map(makeTile)); $("bank").hidden = false;
+    $("qBuild").hidden = true;
+    for (const id of ["qSalt", "qWater"]) { $(id).replaceChildren(); $(id).className = "pieces empty drop"; }
+    fb($("feedback"), "", "Step 1 · Which word comes from the alkali? Which comes from the acid?");
     $("nextBtn").hidden = true;
   }
 
   function makeTile(word) {
     const t = document.createElement("button");
     t.className = "tile"; t.textContent = word; t.dataset.word = word;
-    let suppressClick = false;
-    t.addEventListener("click", () => {
-      if (suppressClick) { suppressClick = false; return; }
-      if (selected === t) { t.classList.remove("sel"); selected = null; return; }
-      document.querySelectorAll(".tile.sel").forEach((x) => x.classList.remove("sel"));
-      t.classList.add("sel"); selected = t;
-    });
-    t.addEventListener("pointerdown", (e) => {
-      if (e.button > 0) return;
-      const sx = e.clientX, sy = e.clientY;
-      let ghost = null, hot = null;
-      t.setPointerCapture(e.pointerId);
-      const slotAt = (x, y) => { const el = document.elementFromPoint(x, y); return el && el.closest(".slot:not(.ok-m):not(.ok-x)"); };
-      const move = (ev) => {
-        if (!ghost && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 6) {
-          ghost = t.cloneNode(true); ghost.classList.add("drag-ghost"); ghost.classList.remove("sel");
-          document.body.appendChild(ghost); t.classList.add("lifting");
-        }
-        if (!ghost) return;
-        ghost.style.left = ev.clientX + "px"; ghost.style.top = ev.clientY + "px";
-        const s = slotAt(ev.clientX, ev.clientY);
-        if (s !== hot) { hot && hot.classList.remove("hot"); hot = s; hot && hot.classList.add("hot"); }
-      };
-      const up = (ev) => {
-        t.removeEventListener("pointermove", move); t.removeEventListener("pointerup", up); t.removeEventListener("pointercancel", up);
-        if (!ghost) return;
-        suppressClick = true; setTimeout(() => (suppressClick = false), 0);
-        ghost.remove(); t.classList.remove("lifting"); hot && hot.classList.remove("hot");
-        const s = ev.type === "pointerup" && slotAt(ev.clientX, ev.clientY);
-        if (s) place(t, +s.dataset.slot);
-      };
-      t.addEventListener("pointermove", move); t.addEventListener("pointerup", up); t.addEventListener("pointercancel", up);
-    });
+    pickable(t, "words", () => ".slot:not(.ok-m):not(.ok-x)", (tile, s) => place(tile, +s.dataset.slot));
     return t;
   }
 
@@ -735,39 +894,52 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
     if (slot === 0 && !metals.includes(word)) return "The 1st word of a salt is always the metal, and it comes from the alkali.";
     if (slot === 1 && metals.includes(word)) return "The 2nd word comes from the acid, not from the alkali.";
     if (slot === 0) return `Look at the alkali: ${b.name} hydroxide. Which metal is in it?`;
-    return `Look at the acid name: ${a.stem}. ${RULE_HINT[a.rule]}`;
+    return `The 2nd word comes from the acid's name: ${a.stem} acid → "${stemOf(a.end)}…". Find the word that starts like that.`;
+  }
+
+  function fill(slot, word) {
+    const el = $("qeq").querySelector(`[data-slot="${slot}"]`);
+    Q.filled[slot] = true;
+    el.className = "slot " + (slot === 0 ? "ok-m" : "ok-x");
+    el.innerHTML = word; el.setAttribute("aria-disabled", "true");
+    const t = [...$("bank").children].find((x) => x.dataset.word === word); t && t.remove();
   }
 
   function place(tile, slot) {
-    const { acid: a, base: b } = rounds[qi];
-    const word = tile.dataset.word;
+    const { a, b } = Q;
+    if (Q.filled[slot] || !tile.isConnected) return;
+    const word = tile.dataset.word, right = slot === 0 ? b.name : a.end;
     const el = $("qeq").querySelector(`[data-slot="${slot}"]`);
-    if (filled[slot]) return;
-    tile.classList.remove("sel"); selected = null;
-    const right = slot === 0 ? word === b.name : word === a.end;
-    const fb = $("feedback");
-    if (!right) {
-      mistakes++;
-      el.classList.remove("shake"); void el.offsetWidth; el.classList.add("shake");
-      fb.className = "feedback bad"; fb.textContent = "Not quite. " + hintFor(word, slot, a, b);
-      return;
+    let msg, cls = "good";
+    if (word !== right) {
+      Q.miss[slot]++; Q.mistakes++; shake(el);
+      if (Q.miss[slot] === 1) { fb($("feedback"), "tip", "💡 Tip: " + hintFor(word, slot, a, b)); return; }
+      Q.revealed = true; fill(slot, right); cls = "ans";
+      msg = `Here is the answer: the ${slot === 0 ? "1st" : "2nd"} word is <b>${right}</b>.`;
+    } else {
+      fill(slot, word);
+      msg = slot === 0 ? `✔ Yes! ${word} is the metal from the alkali.` : `✔ Yes! ${a.stem} acid gives ${word}.`;
     }
-    filled[slot] = true;
-    el.className = "slot " + (slot === 0 ? "ok-m" : "ok-x");
-    el.innerHTML = word; el.setAttribute("aria-disabled", "true");
-    tile.remove();
-    if (!(filled[0] && filled[1])) {
-      fb.className = "feedback good";
-      fb.textContent = slot === 0 ? `Yes! ${word} is the metal from the alkali. Now the 2nd word.` : `Yes! ${a.stem} acid gives ${word}. Now the 1st word.`;
-      return;
-    }
-    const r = chem(a, b);
-    const s = mistakes === 0 ? 3 : mistakes === 1 ? 2 : 1;
-    rounds[qi].stars = s; rounds[qi].mistakes = mistakes;
-    fb.className = "feedback good";
-    fb.innerHTML = `<div class="stars">${stars(s)}</div><b><span class="t-m">${b.name}</span> <span class="t-x">${a.end}</span></b>, ${sub(r.salt)}<br><span class="hint">${r.formula}</span>` +
-      `<div class="mini" style="margin-top:8px">${piece("p-m", b.sym, b.name).outerHTML}${piece("p-x", a.x, a.end).outerHTML}<span class="op" style="padding:0 6px;font-size:1.3rem">+</span>${piece("p-h", "H", "hydrogen").outerHTML}${piece("p-oh", "OH", "hydroxide").outerHTML}</div>`;
-    $("bank").replaceChildren();
+    if (!(Q.filled[0] && Q.filled[1])) { fb($("feedback"), cls, msg + (Q.filled[0] ? " Now the 2nd word." : " Now the 1st word.")); return; }
+    step2(cls, msg);
+  }
+
+  function step2(cls, msg) {
+    const { a, b } = Q;
+    $("bank").replaceChildren(); $("bank").hidden = true; $("qBuild").hidden = false;
+    $("qSaltCap").innerHTML = unknown("salt"); $("qWaterCap").innerHTML = unknown("water");
+    ACTIVE.quiz = builder(a, Q.P, { salt: $("qSalt"), water: $("qWater") }, $("feedback"),
+      (n) => { $(n === "salt" ? "qSaltCap" : "qWaterCap").innerHTML = n === "salt" ? saltCap(a, b) : waterCap; }, qDone);
+    fb($("feedback"), cls, `${msg} The salt is <b>${b.name} ${a.end}</b>. Step 2 · Drag each piece from the reactants into the salt or the water.`);
+  }
+
+  function qDone(st) {
+    const { a, b } = Q, r = chem(a, b);
+    Q.mistakes += st.mistakes; Q.revealed = Q.revealed || st.revealed;
+    const s = Q.revealed ? 0 : Q.mistakes ? 2 : 3;
+    rounds[qi].stars = s; rounds[qi].mistakes = Q.mistakes;
+    fb($("feedback"), st.revealed ? "ans" : "good",
+      `<div class="stars">${stars(s)}</div>${st.revealed ? "Here is the answer: " : ""}<b><span class="t-m">${b.name}</span> <span class="t-x">${a.end}</span></b>, ${sub(r.salt)} + water, H<sub>2</sub>O<br><span class="hint">${r.formula}</span>`);
     const btn = $("nextBtn");
     btn.hidden = false; btn.textContent = qi === rounds.length - 1 ? "See my result →" : "Next acid →";
     btn.focus();
@@ -783,14 +955,80 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
     const firstTime = rounds.filter((r) => r.stars === 3).length;
     $("endScore").textContent = `${firstTime}/7`;
     $("endStars").textContent = total;
-    $("endMsg").textContent = firstTime === 7 ? "Perfect! You can name any salt from an acid and an alkali."
-      : firstTime >= 5 ? "Great work. Check the ones with fewer stars and look at the acid ending rule again."
+    $("endMsg").textContent = firstTime === 7 ? "Perfect! You can name and build any salt from an acid and an alkali."
+      : firstTime >= 5 ? "Great work. Check the ones with fewer stars and look at the acid's name again."
       : "Go back to Explore and watch which parts swap, then try again.";
     $("review").innerHTML = rounds.map((r) => {
       const c = chem(r.acid, r.base);
       return `<li><span>${r.acid.stem} acid + ${r.base.name} hydroxide → <b><span class="t-m">${r.base.name}</span> <span class="t-x">${r.acid.end}</span></b> (${sub(c.salt)})</span><span class="stars">${stars(r.stars)}</span></li>`;
     }).join("");
     $("quizCard").hidden = true; $("endCard").hidden = false;
+  }
+
+  /* ============================ 6b BUILD THE FORMULA ============================ */
+  // 8 reactions, any acid × any alkali: forward (build the salt and the water) or backwards (build the acid and the alkali).
+  let bRounds = [], bi = 0, BR = null;
+  const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+
+  function newBuildGame() {
+    const dirs = shuffle(["f", "f", "f", "f", "b", "b", "b", "b"]), used = new Set();
+    bRounds = dirs.map((dir) => {
+      let a, b; do { a = rand(ACIDS); b = rand(BASES); } while (used.has(a.stem + b.sym)); used.add(a.stem + b.sym);
+      return { dir, acid: a, base: b, stars: 0 };
+    });
+    bi = 0; $("bEnd").hidden = true; $("bCard").hidden = false;
+    loadB();
+  }
+
+  function loadB() {
+    const r = bRounds[bi], a = r.acid, b = r.base;
+    unselect();
+    $("bTitle").textContent = `Reaction ${bi + 1} of ${bRounds.length}`;
+    $("bDots").innerHTML = bRounds.map((x, i) =>
+      `<span class="dot ${i < bi ? "done" : i === bi ? "now" : ""}">${i < bi ? x.stars : i + 1}</span>`).join("");
+    const BP = mkPieces(a, b, "build");
+    const box = { acid: $("bAcid"), alkali: $("bBase"), salt: $("bSalt"), water: $("bWater") };
+    for (const el of Object.values(box)) { el.replaceChildren(); el.className = "pieces drop"; delete el.dataset.full; }
+    const caps = { acid: "bAcidCap", alkali: "bBaseCap", salt: "bSaltCap", water: "bWaterCap" };
+    const capOf = { acid: () => acidCap(a), alkali: () => baseCap(b), salt: () => saltCap(a, b), water: () => waterCap };
+    const onBox = (n) => { $(caps[n]).innerHTML = capOf[n](); };
+    if (r.dir === "f") {
+      box.acid.replaceChildren(...(a.hLast ? [BP.x, BP.h] : [BP.h, BP.x])); box.alkali.replaceChildren(BP.m, BP.oh);
+      onBox("acid"); onBox("alkali"); $("bSaltCap").innerHTML = unknown("salt"); $("bWaterCap").innerHTML = unknown("water");
+      $("bLede").innerHTML = "<b>Build the products.</b> Drag each piece from the acid and the alkali into the salt or the water (or tap a piece, then a box).";
+      BR = ACTIVE.build = builder(a, BP, { salt: box.salt, water: box.water }, $("bFb"), onBox, bDone);
+    } else {
+      BP.x.querySelector(".nm").textContent = a.end;
+      box.salt.replaceChildren(BP.m, BP.x); box.water.replaceChildren(BP.h, BP.oh);
+      onBox("salt"); onBox("water"); $("bAcidCap").innerHTML = unknown("acid"); $("bBaseCap").innerHTML = unknown("alkali");
+      $("bLede").innerHTML = "<b>Work backwards.</b> Which acid and which alkali made this salt? Drag each piece back into the acid or the alkali.";
+      BR = ACTIVE.build = builder(a, BP, { acid: box.acid, alkali: box.alkali }, $("bFb"), onBox, bDone);
+    }
+    fb($("bFb"), "", r.dir === "f" ? "Which pieces make the salt? Which make the water?" : "Every acid has H. Every alkali has OH.");
+    $("bEq").innerHTML = ""; $("bNext").hidden = true;
+  }
+
+  function bDone(st) {
+    const r = bRounds[bi], a = r.acid, b = r.base, c = chem(a, b);
+    const s = st.revealed ? 0 : st.mistakes ? 2 : 3; r.stars = s;
+    const what = r.dir === "f" ? `<b>${b.name} ${a.end}</b> (${sub(c.salt)}) + water` : `<b>${a.stem} acid</b> + <b>${b.name} hydroxide</b>`;
+    fb($("bFb"), st.revealed ? "ans" : "good", `<div class="stars">${stars(s)}</div>${st.revealed ? "Here is the answer: " : "✔ You built it: "}${what}.`);
+    $("bEq").innerHTML = `${a.stem} acid + ${b.name} hydroxide → ${b.name} ${a.end} + water<br>${c.formula}`;
+    const btn = $("bNext"); btn.hidden = false; btn.textContent = bi === bRounds.length - 1 ? "See my result →" : "Next reaction →"; btn.focus();
+  }
+  $("bNext").addEventListener("click", () => { if (bi < bRounds.length - 1) { bi++; loadB(); } else finishB(); });
+  $("bAgain").addEventListener("click", newBuildGame);
+
+  function finishB() {
+    const total = bRounds.reduce((n, r) => n + r.stars, 0), firstTime = bRounds.filter((r) => r.stars === 3).length;
+    $("bEndScore").textContent = `${firstTime}/${bRounds.length}`; $("bEndStars").textContent = total;
+    $("bEndMsg").textContent = firstTime === bRounds.length ? "Perfect! You know which part of the acid joins which part of the alkali."
+      : firstTime >= 5 ? "Great work. Look again at the ones with fewer stars." : "Go back to Explore, press React! and watch which parts swap. Then play again.";
+    $("bReview").innerHTML = bRounds.map((r) => {
+      const c = chem(r.acid, r.base);
+      return `<li><span>${r.dir === "f" ? "→" : "←"} ${r.acid.stem} acid + ${r.base.name} hydroxide → <b>${r.base.name} ${r.acid.end}</b> (${sub(c.salt)}) + water</span><span class="stars">${stars(r.stars)}</span></li>`;
+    }).join("");
+    $("bCard").hidden = true; $("bEnd").hidden = false;
   }
 
   /* ============================ 7 TASKS ============================ */
@@ -804,7 +1042,7 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
      opts:["a salt and hydrogen gas", "a salt and water", "only water", "nothing — they just mix"], correct:1,
      why:"Acid + alkali → salt + water. This reaction is called <b>neutralisation</b>. (Hydrogen gas is made when an acid reacts with a metal, not with an alkali.)"},
     {type:"do", setup:{acid:"hydrochloric", base:"Na"},
-     text:"Press <b>React!</b> and watch the four pieces. On your worksheet, write which two pieces make water and which two make the salt."},
+     text:"Drag each of the four pieces to where it ends up (or press <b>React!</b> and watch). On your worksheet, write which two pieces make water and which two make the salt."},
     {type:"predict", text:"Where does the <b>1st name</b> of the salt come from?",
      opts:["the acid", "the water", "the metal in the alkali", "the hydrogen"], correct:2,
      why:"The <span class='t-m'>metal</span> (blue) leaves the alkali and joins the acid part. It gives the 1st name: <b>sodium</b> chloride."},
@@ -864,6 +1102,7 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
      text:"…and which <b>alkali</b>? Then check: the sim is set up with your answer to the last question.",
      accept:["potassium hydroxide", "koh"], answer:"potassium hydroxide",
      hint:"The 1st name of the salt is the metal from the alkali."},
+    {type:"do", text:"Open <b>3 · Build the formula</b> and play one round (8 reactions). Copy three of the formulas onto your worksheet (Part 3, question 14)."},
    ]},
   ];
   let taskState = {}, curSet = "pre";
@@ -897,7 +1136,7 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
                  ${st.hint ? `<button class="btn small" data-hint="${key}">💡 Hint</button>` : ""}</div>`;
         if (S.showHint && st.hint) html += `<div class="fb info">${st.hint}</div>`;
         if (S.status === "ok") html += `<div class="fb ok">✔ Correct: ${st.answer}.</div>`;
-        else if (S.status) html += `<div class="fb no">✘ ${S.status === "empty" ? "Type your answer first." : "Not yet."} ${S.tries >= 2 ? `Answer: <b>${st.answer}</b>.` : "Try again or use the hint."}</div>`;
+        else if (S.status) html += `<div class="fb no">✘ ${S.status === "empty" ? "Type your answer first." : "Not yet."} ${S.tries >= 2 ? `Answer: <b>${st.answer}</b>.` : st.hint ? `💡 Tip: ${st.hint}` : "Try again."}</div>`;
       }
       d.innerHTML = html; box.appendChild(d);
     });
@@ -946,13 +1185,10 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
   function load() { try { const d = JSON.parse(localStorage.getItem(STORE) || "{}"); taskState = d.taskState || {}; curSet = d.curSet || "pre"; } catch (e) {} }
 
   function showTab(which) {
-    const quiz = which === "quiz";
-    $("tab-explore").setAttribute("aria-selected", !quiz);
-    $("tab-quiz").setAttribute("aria-selected", quiz);
-    $("explore").hidden = quiz; $("quiz").hidden = !quiz;
+    unselect();
+    for (const t of ["explore", "quiz", "build"]) { $("tab-" + t).setAttribute("aria-selected", t === which); $(t).hidden = t !== which; }
   }
-  $("tab-explore").addEventListener("click", () => showTab("explore"));
-  $("tab-quiz").addEventListener("click", () => showTab("quiz"));
+  for (const t of ["explore", "quiz", "build"]) $("tab-" + t).addEventListener("click", () => showTab(t));
   document.querySelectorAll("[data-side]").forEach((t) => t.addEventListener("click", () => {
     document.querySelectorAll("[data-side]").forEach((x) => x.setAttribute("aria-selected", x === t));
     $("sp-rules").classList.toggle("on", t.dataset.side === "rules");
@@ -964,7 +1200,7 @@ footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
   $("help").addEventListener("click", (e) => { if (e.target.id === "help") $("help").classList.remove("on"); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") $("help").classList.remove("on"); });
 
-  load(); renderChips(); build(); newGame(); renderTaskSets(); renderTasks();
+  load(); renderChips(); build(); newGame(); newBuildGame(); renderTaskSets(); renderTasks();
 })();
 </script>
 <script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
