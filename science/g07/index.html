@@ -46,10 +46,77 @@ footer{max-width:1100px;margin:0 auto;padding:4px 16px 28px;color:var(--muted);f
 .ic{flex:none;width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .card .ic{color:var(--sc,var(--navy))}
 .block .ic{width:28px;height:28px}
+/* ---- subject accordion (24 Oct 2026, same as the DP theme accordion): one bar per subject, a line per unit with 4 kind buttons, cards open under the line ---- */
+[hidden]{display:none!important}
+.start-hint{max-width:1100px;margin:16px auto 0;padding:0 16px;color:var(--muted);font-size:1rem}
+.subjects{max-width:1100px;margin:8px auto 0;padding:0 16px;display:grid;gap:10px}
+.th-h{margin:0;font-size:1rem}
+.th-bar{width:100%;display:flex;align-items:center;gap:12px;min-height:58px;padding:8px 16px 8px 9px;border:2px solid var(--tc);border-radius:11px;
+  background:var(--tc);color:#fff;font:inherit;text-align:left;cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.th-bar:hover{filter:brightness(1.06)}
+.th-bar:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.th.open .th-bar{border-radius:11px 11px 0 0;box-shadow:none}
+.th-bar .L{flex:none;width:40px;height:40px;border-radius:8px;background:#fff;color:var(--tc);display:grid;place-items:center}
+.th-bar .L .ic{width:28px;height:28px}
+.th-bar .tx{flex:1;min-width:0;display:flex;align-items:center;gap:4px 14px}
+.th-bar .tn{flex:1;min-width:0;font-weight:700;font-size:1.1rem;line-height:1.25}
+.th-bar .sum{flex:none;font-size:.88rem;font-weight:600;opacity:.92;white-space:nowrap}
+.th-bar .car{flex:none;width:16px;text-align:center}
+.th-body{background:color-mix(in srgb,var(--tc) 6%,#fff);border:2px solid var(--tc);border-top:0;border-radius:0 0 11px 11px;padding:2px 12px 6px}
+.st + .st{border-top:1px solid color-mix(in srgb,var(--tc) 22%,#fff)}
+.st-line{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 14px;padding:8px 0}
+.st-name{margin:0;display:flex;align-items:center;gap:8px;min-width:0;font-size:1rem;line-height:1.25;color:var(--ink)}
+.st-name .code{flex:none;min-width:38px;text-align:center;font-weight:800;font-size:.88rem;color:#fff;background:var(--tc);border-radius:5px;padding:2px 6px}
+.st-name .nm{font-weight:700}
+.kbs{display:grid;grid-template-columns:repeat(4,9.6rem);gap:8px}
+.kb{display:flex;align-items:center;justify-content:center;gap:5px;min-height:44px;padding:6px 8px;border:2px solid var(--tc);border-radius:9px;
+  background:#fff;color:var(--tc);font-weight:700;font-size:.88rem;line-height:1.15;text-decoration:none;white-space:nowrap}
+.kb.k-sim{background:var(--tc);color:#fff;box-shadow:0 2px 0 rgba(0,0,0,.18)}
+.kb.k-worksheet{border-style:dashed}
+a.kb:hover,a.kb.on{background:color-mix(in srgb,var(--tc) 12%,#fff)}
+a.kb.k-sim:hover,a.kb.k-sim.on{background:var(--tc);filter:brightness(1.1)}
+a.kb.on{box-shadow:0 0 0 3px #fff,0 0 0 5px var(--tc)}
+a.kb:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.kb.soon{border:2px solid #D5DADF;background:#F3F5F7;color:#9AA3AA;box-shadow:none;cursor:default}
+.kb.soon .ks{display:none}
+.kb.soon .sn::before{content:"· "}
+.st.open > .st-line{position:sticky;top:0;z-index:6;background:color-mix(in srgb,var(--tc) 6%,#fff);box-shadow:0 7px 8px -7px rgba(0,0,0,.3)}
+.st-panel{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;padding:6px 0 16px}
+@media (max-width:1099px){
+  .st-line{grid-template-columns:1fr}
+  .kbs{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media (max-width:1023px){
+  .th-bar .tx{flex-direction:column;align-items:flex-start}
+  .th-bar .tn{flex:none}
+}
+@media (max-width:759px){
+  .start-hint{margin-top:10px;font-size:.92rem}
+  .subjects{gap:8px}
+  .th-bar{min-height:60px;gap:10px;padding:7px 12px 7px 7px}
+  .th-bar .sum{display:none}
+  .th-bar .tn{font-size:1rem}
+  .th-body{padding:0 8px 4px}
+  .st-line{gap:6px}
+  .kbs{gap:6px}
+  .kb{flex-direction:column;gap:1px;min-height:50px;padding:4px 2px;font-size:.92rem}
+  .kb .kw{font-size:0;line-height:1}
+  .kb .kw::after{content:attr(data-short);font-size:.72rem;font-weight:600}
+  .kb.soon .sn{order:-1;font-size:.72rem}
+  .kb.soon .sn::before{content:""}
+  .st-panel{grid-template-columns:1fr;gap:10px}
+}
+.totop{display:none}
+@media (max-width:759px){
+  .totop{position:fixed;right:14px;bottom:14px;z-index:15;display:none;align-items:center;gap:6px;min-height:46px;padding:8px 16px;
+    border:0;border-radius:23px;background:var(--navy);color:#fff;font:inherit;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.28);cursor:pointer}
+  .totop.on{display:flex}
+}
+/* ---- end subject accordion ---- */
 </style>
 </head>
 <body>
-<svg id="icons" width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="ic-beaker" viewBox="0 0 24 24"><path d="M4.5 3h15M6 3v15.5A2.5 2.5 0 0 0 8.5 21h7a2.5 2.5 0 0 0 2.5-2.5V3"/><path d="M6 11.5h12"/><circle cx="10" cy="16.5" r="1.1"/><circle cx="14" cy="17.6" r=".8"/><circle cx="12.8" cy="14.2" r=".7"/><circle cx="11.6" cy="8.4" r=".7"/></symbol><symbol id="ic-biology" viewBox="0 0 24 24"><path d="M4 20c0-9 6-15.5 16-16 0 10-6.5 16-16 16z"/><path d="M4 20l9.5-9.5M10 14.2h-3.2M13.3 10.8V7.6M12 12.3l3.4.2"/></symbol><symbol id="ic-chemistry" viewBox="0 0 24 24"><path d="M9 2.5h6M10 2.5v6.2L4.6 18.9A1.5 1.5 0 0 0 5.9 21h12.2a1.5 1.5 0 0 0 1.3-2.1L14 8.7V2.5"/><path d="M6.8 15h10.4"/></symbol><symbol id="ic-guide" viewBox="0 0 24 24"><rect x="5" y="2.5" width="14.5" height="19" rx="1.6"/><path d="M5 6.5H3M5 12H3M5 17.5H3"/><path d="M8.2 7.6l1.3 1.3 2.4-2.6M13.6 7.8h3.2M8.2 12.6l1.3 1.3 2.4-2.6M13.6 12.8h3.2M8.6 17.8h.1M13.6 17.8h3.2"/></symbol><symbol id="ic-heart" viewBox="0 0 24 24"><path d="M12 20.5S3 15 3 8.9A4.7 4.7 0 0 1 12 6.6a4.7 4.7 0 0 1 9 2.3C21 15 12 20.5 12 20.5z"/><path d="M4.5 12.2h4l1.6-3.2 2.6 6.2 1.6-3H19.5"/></symbol><symbol id="ic-newtonmeter" viewBox="0 0 24 24"><path d="M12 1.5v2"/><rect x="8" y="3.5" width="8" height="11.5" rx="1.5"/><path d="M8 6.5h1.6M8 9.2h1.6M8 11.9h1.6" stroke-width="1.1"/><path d="M13 5.2v1l-1.4.7 2.8 1.2-2.8 1.2 2.8 1.2-2.8 1.2 1.4.7V14"/><path d="M13 15v2.2"/><rect x="10" y="17.2" width="6" height="4.8" rx=".8"/></symbol><symbol id="ic-physics" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.7" fill="currentColor"/><ellipse cx="12" cy="12" rx="10" ry="3.8"/><ellipse cx="12" cy="12" rx="10" ry="3.8" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="3.8" transform="rotate(-60 12 12)"/></symbol><symbol id="ic-saltsim" viewBox="0 0 24 24"><rect x="2.5" y="2.5" width="8" height="8" rx="1.6"/><rect x="13.5" y="13.5" width="8" height="8" rx="1.6"/><path d="M13.5 6.5h4.5v4.3M16 8.8l2 2 2-2"/><path d="M10.5 17.5H6v-4.3M4 15.2l2-2 2 2"/></symbol><symbol id="ic-particles" viewBox="0 0 24 24"><circle cx="6.5" cy="8" r="3.5"/><circle cx="11.5" cy="8" r="3.5"/><circle cx="16" cy="17" r="3.5"/><circle cx="5" cy="17.5" r="2.2"/><circle cx="19.5" cy="6" r="1.8"/></symbol></svg>
+<svg id="icons" width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="ic-beaker" viewBox="0 0 24 24"><path d="M4.5 3h15M6 3v15.5A2.5 2.5 0 0 0 8.5 21h7a2.5 2.5 0 0 0 2.5-2.5V3"/><path d="M6 11.5h12"/><circle cx="10" cy="16.5" r="1.1"/><circle cx="14" cy="17.6" r=".8"/><circle cx="12.8" cy="14.2" r=".7"/><circle cx="11.6" cy="8.4" r=".7"/></symbol><symbol id="ic-biology" viewBox="0 0 24 24"><path d="M4 20c0-9 6-15.5 16-16 0 10-6.5 16-16 16z"/><path d="M4 20l9.5-9.5M10 14.2h-3.2M13.3 10.8V7.6M12 12.3l3.4.2"/></symbol><symbol id="ic-chemistry" viewBox="0 0 24 24"><path d="M9 2.5h6M10 2.5v6.2L4.6 18.9A1.5 1.5 0 0 0 5.9 21h12.2a1.5 1.5 0 0 0 1.3-2.1L14 8.7V2.5"/><path d="M6.8 15h10.4"/></symbol><symbol id="ic-guide" viewBox="0 0 24 24"><rect x="5" y="2.5" width="14.5" height="19" rx="1.6"/><path d="M5 6.5H3M5 12H3M5 17.5H3"/><path d="M8.2 7.6l1.3 1.3 2.4-2.6M13.6 7.8h3.2M8.2 12.6l1.3 1.3 2.4-2.6M13.6 12.8h3.2M8.6 17.8h.1M13.6 17.8h3.2"/></symbol><symbol id="ic-heart" viewBox="0 0 24 24"><path d="M12 20.5S3 15 3 8.9A4.7 4.7 0 0 1 12 6.6a4.7 4.7 0 0 1 9 2.3C21 15 12 20.5 12 20.5z"/><path d="M4.5 12.2h4l1.6-3.2 2.6 6.2 1.6-3H19.5"/></symbol><symbol id="ic-newtonmeter" viewBox="0 0 24 24"><path d="M12 1.5v2"/><rect x="8" y="3.5" width="8" height="11.5" rx="1.5"/><path d="M8 6.5h1.6M8 9.2h1.6M8 11.9h1.6" stroke-width="1.1"/><path d="M13 5.2v1l-1.4.7 2.8 1.2-2.8 1.2 2.8 1.2-2.8 1.2 1.4.7V14"/><path d="M13 15v2.2"/><rect x="10" y="17.2" width="6" height="4.8" rx=".8"/></symbol><symbol id="ic-physics" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1.7" fill="currentColor"/><ellipse cx="12" cy="12" rx="10" ry="3.8"/><ellipse cx="12" cy="12" rx="10" ry="3.8" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="3.8" transform="rotate(-60 12 12)"/></symbol><symbol id="ic-saltsim" viewBox="0 0 24 24"><rect x="2.5" y="2.5" width="8" height="8" rx="1.6"/><rect x="13.5" y="13.5" width="8" height="8" rx="1.6"/><path d="M13.5 6.5h4.5v4.3M16 8.8l2 2 2-2"/><path d="M10.5 17.5H6v-4.3M4 15.2l2-2 2 2"/></symbol><symbol id="ic-particles" viewBox="0 0 24 24"><circle cx="6.5" cy="8" r="3.5"/><circle cx="11.5" cy="8" r="3.5"/><circle cx="16" cy="17" r="3.5"/><circle cx="5" cy="17.5" r="2.2"/><circle cx="19.5" cy="6" r="1.8"/></symbol><symbol id="ic-skills" viewBox="0 0 24 24"><path d="M3.5 3v17.5H21"/><path d="M7 15.5l4-5 3.5 3L20 7"/><circle cx="7" cy="15.5" r="1"/><circle cx="11" cy="10.5" r="1"/><circle cx="14.5" cy="13.5" r="1"/></symbol></svg>
 <header>
   <div>
     <h1>Grade 7 Science</h1>
@@ -57,12 +124,11 @@ footer{max-width:1100px;margin:0 auto;padding:4px 16px 28px;color:var(--muted);f
   </div>
   <div class="credit">Biljana Taneska · Science teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
 </header>
+<!-- ---- subject accordion ---- -->
+<p class="start-hint">Open a subject, then choose simulations, quizzes, worksheets or study guides for a unit.</p>
+<div class="subjects" id="subjects"></div>
+<!-- ---- end subject accordion ---- -->
 <main>
-  <h2 class="block subj" id="chemistry" style="--sc:#6A1B9A"><svg class="ic" aria-hidden="true"><use href="#ic-chemistry"/></svg>Chemistry</h2>
-  <div class="card" style="--sc:#6A1B9A">
-    <h2><svg class="ic" aria-hidden="true"><use href="#ic-beaker"/></svg>Unit 1 · Chemistry</h2>
-    <p class="muted">2 simulations · 1 study guide</p>
-  </div>
   <div class="card" style="--sc:#6A1B9A">
     <span class="tag">Simulation · Unit 1</span>
     <h2><svg class="ic" aria-hidden="true"><use href="#ic-saltsim"/></svg>Salt naming</h2>
@@ -87,18 +153,112 @@ footer{max-width:1100px;margin:0 auto;padding:4px 16px 28px;color:var(--muted);f
       <a class="btn primary" href="02-revision-chemistry/study-guide.pdf" data-goatcounter-click="download/science/g07/02-revision-chemistry/study-guide.pdf">Study guide (PDF)</a>
     </div>
   </div>
-  <h2 class="block subj" id="biology" style="--sc:#2E7D32"><svg class="ic" aria-hidden="true"><use href="#ic-biology"/></svg>Biology</h2>
-  <div class="card" style="--sc:#2E7D32">
-    <h2><svg class="ic" aria-hidden="true"><use href="#ic-heart"/></svg>Unit 2 · Biology</h2>
-    <span class="soon">Simulations, worksheets and quizzes coming soon</span>
-  </div>
-  <h2 class="block subj" id="physics" style="--sc:#2055A3"><svg class="ic" aria-hidden="true"><use href="#ic-physics"/></svg>Physics</h2>
-  <div class="card" style="--sc:#2055A3">
-    <h2><svg class="ic" aria-hidden="true"><use href="#ic-newtonmeter"/></svg>Unit 3 · Physics</h2>
-    <span class="soon">Simulations, worksheets and quizzes coming soon</span>
-  </div>
 </main>
 <footer>Works in any modern browser on laptops, Chromebooks, tablets and phones.</footer>
+<script>/* ---- subject accordion (JS, 24 Oct 2026, adapted from the DP theme accordion): one bar per subject; unit lines with 4 kind buttons; the cards from <main> open under the line ---- */
+(function(){
+  // [key, name, colour, icon, [[unit, title], …]] in teaching order; CURRENT = the subject open on arrival
+  const SUBJECTS = [["chemistry", "Chemistry", "#6A1B9A", "ic-chemistry", [["1", "Chemistry's Secrets Unlocked"]]], ["biology", "Biology", "#2E7D32", "ic-biology", [["2", "The Secrets of a Long Life"]]], ["physics", "Physics", "#2055A3", "ic-physics", [["3", "The Secret Forces"]]], ["skills", "Science skills", "#1F3A5F", "ic-skills", [["S", "Graphs, data, variables and lab reports"]]]];
+  const CURRENT = "chemistry";
+  // kind, label, label for 1, short label (phones), sign, hash suffix
+  const KINDS = [["sim", "Simulations", "Simulation", "Sims", "▶", "-sims"], ["quiz", "Quizzes", "Quiz", "Quizzes", "✔", "-quizzes"],
+                 ["worksheet", "Worksheets", "Worksheet", "Sheets", "✎", "-worksheets"], ["guide", "Study guides", "Study guide", "Guides", "📘", "-guides"]];
+  const esc = t => String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+  const hk = u => u === "S" ? "skills" : "u" + u;   // hash name of a unit line
+  const main = document.querySelector("main"), box = document.getElementById("subjects");
+  // cards: kind and unit from the tag text ("Simulation · Unit 1", "Study guide · Science skills"), so new cards need no extra attributes
+  const cards = [...main.querySelectorAll(".card")];
+  cards.forEach(c => { const t = ((c.querySelector(".tag") || {}).textContent || "").toLowerCase(); let m;
+    if (!c.dataset.kind) c.dataset.kind = /^quiz/.test(t) ? "quiz" : /^worksheet/.test(t) ? "worksheet" : /^study guide/.test(t) ? "guide" : "sim";
+    if (!c.dataset.unit) c.dataset.unit = /science skills/.test(t) ? "S" : (m = t.match(/unit (\d+)/)) ? m[1] : ""; });
+  const of = (kind, u) => cards.filter(c => c.dataset.kind === kind && c.dataset.unit === u);
+  const SUBJ = {}; SUBJECTS.forEach(([key, name, col, icon, units]) => units.forEach(([u]) => SUBJ[u] = key));
+  const many = (n, one, more) => n + " " + (n === 1 ? one : more);
+
+  // ---------- build: subject bars, unit lines, empty panels ----------
+  let h = "";
+  SUBJECTS.forEach(([key, name, col, icon, units]) => {
+    const sum = [];
+    KINDS.forEach(([kind, lab, one]) => { const n = units.reduce((a, [u]) => a + of(kind, u).length, 0); if (n) sum.push(many(n, one.toLowerCase(), lab.toLowerCase())); });
+    h += '<section class="th" id="th-' + key + '" style="--tc:' + col + '"><h2 class="th-h"><button type="button" class="th-bar" id="thb-' + key +
+      '" aria-expanded="false" aria-controls="thp-' + key + '"><span class="L"><svg class="ic" aria-hidden="true"><use href="#' + icon + '"/></svg></span><span class="tx"><span class="tn">' +
+      esc(name) + '</span><span class="sum">' + (sum.length ? sum.join(" · ") : "coming soon") +
+      '</span></span><span class="car" aria-hidden="true">▾</span></button></h2><div class="th-body" id="thp-' + key + '" role="region" aria-labelledby="thb-' + key + '" hidden>';
+    units.forEach(([u, title]) => {
+      let btns = "", panels = "";
+      KINDS.forEach(([kind, lab, one, short, sign, suf]) => {
+        const c = of(kind, u).length;
+        if (c){
+          btns += '<a class="kb k-' + kind + '" href="#' + hk(u) + suf + '" data-kind="' + kind + '" aria-controls="sp-' + u + '-' + kind + '" aria-expanded="false"><span class="ks">' +
+            sign + " " + c + '</span> <span class="kw" data-short="' + short + '">' + (c === 1 ? one : lab) + '</span></a>';
+          panels += '<div class="st-panel" id="sp-' + u + '-' + kind + '" role="region" aria-label="' + esc(title) + " — " + lab.toLowerCase() + '" hidden></div>';
+        } else btns += '<span class="kb k-' + kind + ' soon" aria-disabled="true"><span class="ks">' + sign + '</span> <span class="kw" data-short="' + short + '">' + lab + '</span><span class="sn">soon</span></span>';
+      });
+      h += '<div class="st" id="st-' + u + '" data-unit="' + u + '"><div class="st-line"><h3 class="st-name"><span class="code">' + (u === "S" ? "S" : "Unit " + u) + '</span><span class="nm">' +
+        esc(title) + '</span></h3><div class="kbs" role="group" aria-label="' + esc(title) + '">' + btns + '</div></div>' + panels + '</div>';
+    });
+    h += '</div></section>';
+  });
+  box.innerHTML = h;
+  cards.forEach(c => { const p = document.getElementById("sp-" + c.dataset.unit + "-" + c.dataset.kind); if (p) p.appendChild(c); });
+  main.hidden = true;
+
+  // ---------- state: one subject open, at most one panel; the hash names it ----------
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let S = {subj: null, unit: null, kind: null};
+  function parse(hash){   // #chemistry · #u1 · #u1-sims · #u1-quizzes · #u1-worksheets · #u1-guides · #skills…
+    const raw = decodeURIComponent((hash || "").replace(/^#/, "")); let m;
+    if ((m = raw.match(/^(?:u(\d+)|(skills))(?:-(sims|quizzes|worksheets|guides))?$/))){
+      const u = m[1] || "S", kind = m[3] ? KINDS.find(x => x[5] === "-" + m[3])[0] : null;
+      if (SUBJ[u]) return {subj: SUBJ[u], unit: kind && document.getElementById("sp-" + u + "-" + kind) ? u : null, kind: kind && document.getElementById("sp-" + u + "-" + kind) ? kind : null};
+    }
+    if (document.getElementById("th-" + raw)) return {subj: raw, unit: null, kind: null};
+    return {subj: CURRENT, unit: null, kind: null};   // start: the subject taught now is open
+  }
+  const url = s => location.pathname + location.search + (s.kind ? "#" + hk(s.unit) + KINDS.find(x => x[0] === s.kind)[5] : s.subj ? "#" + s.subj : "");
+  // open panel: a long one brings its line to the top (it then sticks); a short one scrolls only as far as needed to be fully visible
+  function reveal(el, open){ const r = el.getBoundingClientRect(), H = innerHeight; let dy = 0;
+    if (r.top < 0 || (open && r.height > H - 12)) dy = r.top - 6;
+    else if (open && r.bottom > H) dy = Math.min(r.bottom - H + 8, r.top - 6);
+    else if (r.top > H - 80) dy = r.top - 6;
+    if (Math.abs(dy) > 1) window.scrollBy({top: dy, behavior: reduce ? "auto" : "smooth"}); }
+  function render(s, target, open){
+    S = s;
+    box.querySelectorAll(".th").forEach(t => { const on = t.id === "th-" + s.subj, b = t.querySelector(".th-bar");
+      t.classList.toggle("open", on); b.setAttribute("aria-expanded", String(on)); b.querySelector(".car").textContent = on ? "▴" : "▾"; t.querySelector(".th-body").hidden = !on; });
+    box.querySelectorAll(".st").forEach(st => st.classList.toggle("open", !!s.kind && st.dataset.unit === s.unit));
+    box.querySelectorAll(".st-panel").forEach(p => p.hidden = !(s.kind && p.id === "sp-" + s.unit + "-" + s.kind));
+    box.querySelectorAll("a.kb").forEach(a => { const on = !!s.kind && a.dataset.kind === s.kind && a.closest(".st").dataset.unit === s.unit;
+      a.classList.toggle("on", on); a.setAttribute("aria-expanded", String(on)); });
+    if (target) reveal(target, open);
+  }
+  function go(s, target, open){ history.pushState(s, "", url(s)); render(s, target, open); }
+  box.querySelectorAll(".th-bar").forEach(b => b.addEventListener("click", () => { const key = b.id.slice(4);
+    go(S.subj === key ? {subj: null, unit: null, kind: null} : {subj: key, unit: null, kind: null}, b); }));
+  box.addEventListener("click", e => { const a = e.target.closest("a.kb"); if (!a) return; e.preventDefault();
+    const st = a.closest(".st"), u = st.dataset.unit, kind = a.dataset.kind;
+    if (S.unit === u && S.kind === kind) go({subj: SUBJ[u], unit: null, kind: null}, st);   // the open button again: close
+    else go({subj: SUBJ[u], unit: u, kind}, st, true); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape" && S.kind){ const st = document.getElementById("st-" + S.unit);
+    go({subj: S.subj, unit: null, kind: null}, st); const a = st.querySelector("a.kb"); if (a) a.focus(); } });
+  const fromState = st => st && "subj" in st ? st : parse(location.hash);
+  window.addEventListener("popstate", e => { const s = fromState(e.state);
+    render(s, s.unit ? document.getElementById("st-" + s.unit) : s.subj ? document.getElementById("thb-" + s.subj) : null, !!s.kind); });
+  const s0 = parse(location.hash); history.replaceState(s0, "", location.href);
+  render(s0, s0.unit ? document.getElementById("st-" + s0.unit) : null, !!s0.kind);
+  if (s0.unit) window.addEventListener("load", () => setTimeout(() => render(S, document.getElementById("st-" + S.unit), !!S.kind), 60));
+})();
+</script>
+<button class="totop" id="totop" type="button" aria-label="Back to the subjects">↑ Subjects</button>
+<script>
+// phones: "↑ Subjects" appears once the first subject bar has scrolled out of view, and scrolls back to the subjects
+(function(){ const b = document.getElementById("totop"), box = document.getElementById("subjects");
+  const upd = () => b.classList.toggle("on", box.getBoundingClientRect().top < -60);
+  window.addEventListener("scroll", upd, {passive: true}); window.addEventListener("resize", upd); upd();
+  b.addEventListener("click", () => box.scrollIntoView({behavior: "smooth", block: "start"}));
+})();
+</script>
+<!-- ---- end subject accordion JS ---- -->
 <script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
 </html>
