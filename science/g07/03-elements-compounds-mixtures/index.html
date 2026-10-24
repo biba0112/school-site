@@ -1,0 +1,1786 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Elements, Compounds and Mixtures Simulation</title>
+<!--
+  IB MYP 2 Sciences · Grade 7 · Chemistry Unit 1 Chemistry's Secrets Unlocked
+  Elements, compounds and mixtures · physical and chemical change · separating mixtures.
+  Goes with the unit slides 2–41 (slide 5 "Put on your particle spectacles", slide 21 particle diagrams,
+  slide 25 "Can it be separated physically?") and Workbook Practical Activity 1 and Activities 2–5
+  (definitions p. 3–4, physical and chemical change, notice any change, iron and sulfur investigation).
+  Self-contained: no internet, no external libraries or fonts. Open in any modern browser.
+
+  The guide is Marie (named after Marie Curie), a scientist with particle spectacles.
+
+  File sections (same order as the simulation template):
+    1 STYLE     layout, colours (one colour per element)
+    2 MARKUP    header · colour key · 3 tabs (Explore: look and sort + build · Change · Quiz) · overlays (help, present, certificate)
+    3 CONFIG    atoms, substances, 10 objects, 2 reactions, 4 experiment cards, quiz bank, 4 building jobs
+    4 CHEMISTRY pure functions: formula key, classify (element / compound / mixture), explanations (no drawing)
+    5 ENGINE    particle drawing, layouts, animation, Marie, sound, stars, badges, storage, questions
+    6 EXPLORE   diagram guide (6 cards) + present mode, zoom shelf
+    7 BUILD     atom box, live naming, 4 building jobs
+    8 CHANGE    lab bench: 4 experiment cards, what you see + particles, physical or chemical?
+    9 QUIZ      16 questions: 8 diagrams, then 8 changes (first round after loading is always the same)
+   10 UI        tabs, overlays, certificate, start
+-->
+<style>
+/* ============================ 1 STYLE ============================ */
+:root{
+  --navy:#1F3A5F; --accent:#E65100; --ink:#263238; --muted:#606A72;
+  --bg:#F2F5F9; --card:#FFFFFF; --line:#DDE6F0; --sunk:#EEF2F7; --soft-blue:#E3F2FD;
+  --star:#F9A825; --ok:#2E7D32; --bad:#C62828; --focus:#1565C0;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;font-size:18px}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:1rem/1.45 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;min-height:100dvh}
+h2,h3{margin:0}
+p{margin:0}
+sub{font-size:.68em;line-height:0}
+button{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,.atomBtn:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+/* header (as in every simulation) */
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);
+  display:flex;align-items:center;gap:12px;padding:8px 16px;flex-wrap:wrap;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header h1{font-size:1.25rem;margin:0;font-weight:600}
+header .sub{font-size:.85rem;opacity:.85}
+.sub a.home{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55);white-space:nowrap}
+header .grow{flex:1}
+.hbtns{display:flex;gap:6px;flex-wrap:wrap}
+.credit{text-align:right;font-size:.74rem;line-height:1.3;opacity:.92;white-space:nowrap}
+.credit a{color:#fff;text-decoration:underline}
+.btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;
+  min-height:44px;padding:6px 14px;cursor:pointer;touch-action:manipulation}
+.btn:hover{border-color:var(--navy)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.small{min-height:36px;padding:4px 10px;font-size:.9rem}
+header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5);white-space:nowrap}
+header .btn[aria-pressed="true"]{background:rgba(255,255,255,.18)}
+
+/* colour key */
+.keybar{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;padding:6px 16px;background:#fff;
+  border-bottom:1px solid var(--line);font-size:.84rem}
+.keybar .k{display:flex;align-items:center;gap:5px}
+.keybar svg{width:20px;height:20px;flex:none}
+.keybar .tools{margin-left:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.keybar .sum{font-weight:700;color:var(--navy);white-space:nowrap}
+.switch{display:flex;align-items:center;gap:8px;min-height:36px;cursor:pointer}
+.switch input{width:20px;height:20px;accent-color:var(--accent)}
+
+/* tabs + panels */
+main{flex:1;display:flex;flex-direction:column;gap:10px;padding:10px 16px 16px;min-height:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.tabs{display:flex;gap:4px;padding:6px 6px 0;background:#F7F9FC;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+.tabs.top{background:transparent;padding:0}
+.tab{font:inherit;border:1px solid transparent;border-bottom:none;background:transparent;padding:8px 14px;
+  min-height:44px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--muted);font-weight:600;white-space:nowrap}
+.tab[aria-selected="true"]{background:#fff;border-color:var(--line);color:var(--navy);margin-bottom:-1px}
+.tab .tstar{font-size:.78rem;color:var(--star);margin-left:4px}
+.panel{display:flex;flex-direction:column;gap:10px;min-height:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0;display:flex;flex-direction:column}
+.card > h2{font-size:.95rem;padding:6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line);color:var(--navy);font-weight:600}
+.cb{padding:10px 12px;display:grid;gap:10px;align-content:start;min-height:0}
+.label{font-size:.75rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.hint{font-size:.85rem;color:var(--muted)}
+.grid3{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+.grid2{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:760px){
+  .grid3{grid-template-columns:minmax(220px,260px) minmax(0,1fr)} .grid3 > .side{grid-column:1/-1}
+  .grid2{grid-template-columns:minmax(220px,270px) minmax(0,1fr)}
+}
+@media (min-width:1150px){ .grid3{grid-template-columns:minmax(220px,240px) minmax(0,1fr) minmax(400px,520px)} .grid3 > .side{grid-column:auto} }
+
+.subsw{display:flex;gap:8px;flex-wrap:wrap}
+.subsw .chip{font-size:1.05rem;min-height:46px;padding:6px 18px;font-weight:600}
+/* Marie, the guide */
+.spexbar{display:flex;align-items:center;gap:10px;min-height:76px}
+.spex{width:72px;height:72px;flex:none}
+.bubble{position:relative;background:#fff;border:2px solid var(--navy);border-radius:14px;padding:8px 12px;
+  font-size:1rem;line-height:1.4;flex:1;min-width:0}
+.bubble::before{content:"";position:absolute;left:-11px;top:24px;border:10px solid transparent;border-right-color:var(--navy);border-left:0}
+.bubble::after{content:"";position:absolute;left:-7px;top:26px;border:8px solid transparent;border-right-color:#fff;border-left:0}
+.bubble.tip{background:#FFF8E1} .bubble.tip::after{border-right-color:#FFF8E1}
+.bubble.good{background:#E8F5E9} .bubble.good::after{border-right-color:#E8F5E9}
+.bubble.ans{background:var(--soft-blue)} .bubble.ans::after{border-right-color:var(--soft-blue)}
+.spex .lens{fill:#FFE0C2;fill-opacity:.45;transition:fill .3s}
+.spex.zoom .lens{fill:#4DD0E1;fill-opacity:.85;animation:glow .5s ease-in-out 3 alternate}
+@keyframes glow{to{fill:#FFF59D}}
+.spex .m{display:none} .spex[data-mood="talk"] .m-talk,.spex[data-mood="happy"] .m-happy,.spex[data-mood="think"] .m-think,
+.spex[data-mood="wow"] .m-wow,.spex[data-mood="hmm"] .m-hmm{display:inline}
+.spex[data-mood="hmm"] .brow{transform:translateY(-2px)}
+
+/* atoms and particle boxes */
+.pbox{width:100%;background:#fff;border:2px solid #90A4AE;border-radius:6px;display:block}
+.pbox.fixed{width:auto;max-width:100%;height:auto}
+.pbox.big{border-width:3px}
+.atom text,text.lbl{font-weight:700;text-anchor:middle;dominant-baseline:central;pointer-events:none;font-family:"Segoe UI",Calibri,Arial,sans-serif}
+body.nosym .atom text,body.nosym text.lbl{display:none}
+.flash{fill:none;stroke:#FFC107;stroke-width:3;opacity:0;animation:flash 1.2s ease-out}
+@keyframes flash{0%{opacity:0}25%{opacity:.9}100%{opacity:0;stroke-width:9}}
+.jig{animation:jig 2.4s ease-in-out infinite alternate}
+.jig.gas{animation:jig2 1.6s ease-in-out infinite alternate}
+@keyframes jig{0%{transform:translate(-.6px,.4px)}100%{transform:translate(.6px,-.5px)}}
+@keyframes jig2{0%{transform:translate(-2px,1.5px)}100%{transform:translate(2px,-1.5px)}}
+.blabel{font-size:11px;fill:var(--navy);font-weight:700}
+
+/* explore */
+.filters{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font:inherit;font-size:.86rem;border:1px solid var(--line);background:#fff;border-radius:99px;padding:4px 11px;
+  min-height:36px;cursor:pointer;display:inline-flex;gap:6px;align-items:center;line-height:1.2}
+.chip[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.shelf{display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+@media (min-width:760px){ .shelf{max-height:max(320px,calc(100vh - 360px));overflow:auto;padding-right:4px} }
+@media (max-width:759px){ .shelf,.cardlist{max-height:230px;overflow:auto;padding-right:4px} }
+.obj{font:inherit;display:flex;align-items:center;gap:8px;text-align:left;border:1px solid var(--line);background:#fff;
+  border-radius:10px;padding:5px 8px;min-height:46px;cursor:pointer;line-height:1.2;font-size:.9rem}
+.obj .em{font-size:1.5rem;width:30px;text-align:center;flex:none}
+.obj .st{margin-left:auto;color:var(--star);font-size:.75rem;white-space:nowrap}
+.obj[aria-pressed="true"]{border:2px solid var(--accent);background:#FFF3E0}
+.zoomwrap{display:grid;gap:10px;align-items:center;grid-template-columns:minmax(0,1fr)}
+@media (min-width:620px){ .zoomwrap{grid-template-columns:150px minmax(0,1fr)} }
+.real{display:grid;justify-items:center;gap:4px;text-align:center}
+.real .em{font-size:4.2rem;line-height:1.1;width:120px;height:120px;border-radius:50%;background:var(--sunk);display:grid;place-items:center}
+#zBox{max-width:380px;margin:0 auto}
+.lensbox{position:relative;border-radius:10px;min-height:120px;display:grid;place-items:center;background:var(--sunk)}
+.lensbox .pbox{transition:transform .6s ease,opacity .6s ease}
+.lensbox.off .pbox{transform:scale(.15);opacity:0}
+.lensbox .cover{position:absolute;inset:0;display:grid;place-items:center;gap:6px;text-align:center;padding:10px}
+.cats{display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.cat{font:inherit;border:1px solid #B0BEC5;background:#fff;border-radius:10px;padding:6px 10px;min-height:44px;cursor:pointer;font-weight:600;font-size:.9rem;line-height:1.2;text-align:left}
+.cat small{display:block;font-weight:500;color:var(--muted);font-size:.8rem}
+.cat.right{background:#E8F5E9;border:2px solid var(--ok)}
+.cat.wrong{background:#FFEBEE;border-color:var(--bad)}
+.cat:disabled{cursor:default}
+.feedback{min-height:2.4em;border-radius:10px;padding:8px 12px;background:var(--sunk)}
+.feedback:empty{display:none}
+.feedback.tip{background:#FFF8E1;border-left:4px solid #F9A825}
+.feedback.ans{background:var(--soft-blue);border-left:4px solid var(--focus)}
+.feedback.good{background:#E8F5E9;border-left:4px solid var(--ok)}
+.feedback.info{background:var(--sunk);border-left:4px solid #90A4AE}
+.didyou{font-size:.88rem;background:#F3E5F5;border-left:4px solid #8E24AA;border-radius:8px;padding:6px 10px}
+.stars{color:var(--star);font-size:1.2rem;letter-spacing:2px}
+.stars .off{color:var(--line)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.spanel{display:none;padding:10px 12px;gap:10px;align-content:start;min-height:0}
+.spanel.on{display:grid}
+.spanel h3{font-size:1rem;color:var(--navy)}
+
+/* slides (diagram guide, intro, present) */
+.slide{display:grid;gap:10px}
+.slide h3{font-size:1.1rem;color:var(--navy)}
+.slide .sv{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
+.slide .sv figure{margin:0;display:grid;gap:3px;justify-items:center;text-align:center;font-size:.82rem;font-weight:600;color:var(--navy)}
+.slide .sv figure span{font-weight:500;color:var(--muted);font-size:.76rem}
+.slide ul{margin:0;padding-left:1.2em;display:grid;gap:3px}
+.slidenav{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.slidenav .pg{font-size:.85rem;color:var(--muted)}
+.flow{display:grid;gap:6px;grid-template-columns:1fr 1fr;text-align:center;font-size:.86rem}
+.flow div{border-radius:8px;padding:6px;border:1px solid var(--line)}
+.flow .q{grid-column:1/-1;background:var(--navy);color:#fff;font-weight:700}
+.flow .no{background:#FFE0B2} .flow .yes{background:#B2EBF2}
+
+/* ordering */
+.order{display:grid;gap:8px}
+.oslots{display:grid;gap:6px;counter-reset:o}
+.oslot{display:flex;align-items:center;gap:8px;min-height:46px;border:2px dashed #B0BEC5;border-radius:10px;padding:4px 8px;background:#fff}
+.oslot::before{counter-increment:o;content:counter(o);width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-size:.85rem;font-weight:700;flex:none}
+.oslot.filled{border-style:solid;border-color:var(--line)}
+.oslot.good{border-color:var(--ok);background:#E8F5E9}
+.oslot.badslot{border-color:var(--bad);background:#FFEBEE}
+.obank{display:flex;flex-wrap:wrap;gap:6px;padding:8px;border-radius:10px;background:var(--sunk);min-height:54px}
+.ocard{font:inherit;border:1px solid #B0BEC5;background:#fff;border-radius:10px;padding:6px 10px;min-height:42px;cursor:pointer;text-align:left;font-size:.9rem;line-height:1.25}
+.ocard .em{font-size:1.2rem;margin-right:4px}
+.oslot .ocard{border:none;padding:2px 4px;flex:1;background:transparent}
+
+#sp-ladder .ocard{font-size:20px}
+#sp-ladder .oslot{min-height:56px}
+#sp-ladder h3{font-size:1.15rem}
+/* build */
+.palette{display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(64px,1fr))}
+.atomBtn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:4px;min-height:58px;cursor:grab;display:grid;justify-items:center;gap:0;
+  touch-action:none;user-select:none;-webkit-user-select:none;font-size:.7rem;color:var(--muted);line-height:1.1}
+.atomBtn svg{width:34px;height:34px}
+.atomBtn.sel{outline:3px solid var(--focus);outline-offset:1px;background:var(--soft-blue)}
+.canvasWrap{position:relative;max-width:520px;width:100%;margin:0 auto}
+#bCanvas{width:100%;display:block;background:#fff;border:3px solid #90A4AE;border-radius:6px;touch-action:none;user-select:none;-webkit-user-select:none}
+#bCanvas.hot{border-color:var(--focus);background:#F5FAFF}
+#bCanvas .sel circle.body{stroke:var(--focus);stroke-width:3}
+.tools{display:flex;flex-wrap:wrap;gap:6px}
+.readout{display:grid;gap:6px;font-size:20px;line-height:1.35;background:var(--soft-blue);border-left:5px solid var(--navy);border-radius:10px;padding:10px 14px}
+.readout .cat-out{font-weight:700;color:var(--navy);font-size:22px}
+.readout .warn{color:#8D6E00;font-size:18px}
+.readout .hint{font-size:18px}
+.drag-ghost{position:fixed;z-index:80;pointer-events:none;transform:translate(-50%,-50%)}
+.chal{display:grid;gap:8px}
+.chal .task{font-size:1.02rem;font-weight:600}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:.78rem;font-weight:600;color:var(--muted);background:#fff;cursor:default}
+.dot.now{border-color:var(--navy);color:var(--navy)}
+.dot.done{background:var(--star);border-color:var(--star);color:#3E2A00}
+.dot.zero{background:#CFD8DC;border-color:#CFD8DC;color:#37474F}
+
+/* change */
+.cardlist{display:grid;gap:6px}
+.xcard{font:inherit;display:flex;gap:8px;align-items:center;text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 8px;min-height:48px;cursor:pointer;line-height:1.2;font-size:.9rem}
+.xcard .em{font-size:1.35rem;flex:none;width:30px;text-align:center}
+.xcard .kind{display:block;font-size:.72rem;color:var(--muted)}
+.xcard .st{margin-left:auto;color:var(--star);font-size:.75rem;white-space:nowrap}
+.xcard[aria-pressed="true"]{border:2px solid var(--accent);background:#FFF3E0}
+.bench{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:620px){ .bench{grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr)} }
+.view{display:grid;gap:4px;justify-items:center}
+.view .vl{font-size:.75rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.seeSvg{width:100%;max-width:300px;display:block}
+.actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.benchrow{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+.actcol{display:grid;gap:6px;align-content:start}
+#xSee{max-width:270px;max-height:225px}
+#xBox{max-width:420px;margin:0 auto}
+#change .btn,#change .xcard,#change .cat,#change .ocard{font-size:20px}
+#xActs .btn{font-weight:600;min-height:44px;padding:4px 12px}
+#xObs{font-size:20px}
+@media (min-width:620px){
+  .benchrow{grid-template-columns:minmax(0,1fr) 210px;align-items:start}
+  #xActs{flex-direction:column;flex-wrap:nowrap;gap:5px}
+  #xActs .btn{width:100%;text-align:left;min-width:0}
+}
+/* shorter laptop screens: the action buttons in two columns, so all of them are in view */
+@media (min-width:620px) and (max-height:799px){
+  .benchrow{grid-template-columns:minmax(0,1fr) 330px}
+  #xActs{display:grid;grid-template-columns:1fr 1fr}
+  #xSee{max-height:200px} #xBox{max-width:360px}
+}
+.actions .btn{min-width:96px}
+.obs{font-size:.95rem}
+.safety{font-size:.86rem;background:#FFEBEE;border-left:4px solid var(--bad);border-radius:8px;padding:5px 10px}
+.qs{display:grid;gap:8px}
+.qrow{display:grid;gap:5px;border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.qrow .qt{font-weight:600}
+.qrow .opts{display:flex;flex-wrap:wrap;gap:6px}
+.qrow .cat{flex:1 1 140px}
+
+/* separate */
+.appSvg{width:100%;max-width:600px;display:block;margin:0 auto}
+.sepgrid{display:grid;gap:14px;grid-template-columns:minmax(0,1fr)}
+.seppic,.sepsteps{display:grid;gap:10px;align-content:start;min-width:0}
+#sTrick{max-width:600px!important}
+@media (min-width:1000px){ .sepgrid{grid-template-columns:minmax(0,1fr) minmax(340px,400px)} .sepsteps .techs{grid-template-columns:1fr 1fr} }
+.techs{display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+.tech{font:inherit;border:1px solid #B0BEC5;background:#fff;border-radius:10px;padding:6px 8px;min-height:50px;cursor:pointer;font-weight:600;font-size:.88rem;display:flex;gap:6px;align-items:center;line-height:1.2;text-align:left}
+.tech .em{font-size:1.3rem}
+.tech.right{background:#E8F5E9;border:2px solid var(--ok)}
+.tech.wrong{background:#FFEBEE;border-color:var(--bad)}
+.goal{font-size:1.02rem}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.82rem;color:var(--muted);justify-content:center}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:4px;vertical-align:-1px;border:1px solid rgba(0,0,0,.2)}
+
+/* quiz */
+.qhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.qhead h2{font-size:1.15rem;color:var(--navy)}
+.qbody{display:grid;gap:10px;max-width:1150px;width:100%;margin:0 auto}
+@media (min-width:700px){ #qBody .cats,#zCats{grid-template-columns:repeat(3,minmax(0,1fr))} }
+.qbody .pbox{max-width:600px;margin:0 auto}
+.qtext{font-size:1.15rem;font-weight:600}
+.review{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.review li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;padding:7px 12px;border:1px solid var(--line);border-radius:10px}
+.score{font-size:2.6rem;font-weight:700;line-height:1;color:var(--navy)}
+
+/* overlays */
+.overlay{position:fixed;inset:0;background:rgba(31,58,95,.55);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+.overlay.on{display:flex}
+.overlay .box{background:#fff;border-radius:14px;max-width:760px;width:100%;max-height:92vh;overflow:auto;padding:16px 20px;display:grid;gap:10px}
+.overlay h3{margin:.1em 0 .2em;color:var(--navy)}
+.overlay li{margin:.2em 0}
+#present .box{max-width:1200px;width:96vw;height:94vh;max-height:none;font-size:1.35rem;align-content:start}
+#present .slide h3{font-size:2rem}
+#present .slide .sv figure{font-size:1.1rem}
+#present .slide .sv figure span{font-size:.95rem}
+#present .spex{width:110px;height:110px}
+#present .bubble{font-size:1.35rem}
+#present .flow{font-size:1.2rem}
+#drawer{position:fixed;top:0;right:0;bottom:0;width:min(420px,100vw);background:#fff;z-index:55;box-shadow:-8px 0 24px rgba(0,0,0,.2);
+  display:none;flex-direction:column}
+#drawer.on{display:flex}
+#drawer .dh{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--navy);color:#fff}
+#drawer .dh h3{font-size:1.05rem}
+#drawer .dh .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
+#drawer .db{overflow:auto;padding:10px 12px;display:grid;gap:8px;align-content:start}
+.setrow{display:grid;gap:5px;grid-template-columns:repeat(3,minmax(0,1fr))}
+.chip.set{font-size:.82rem;padding:4px 8px;min-height:40px;border-radius:10px;flex-direction:column;align-items:flex-start;justify-content:center;gap:0}
+.chip.set .hint{font-size:.72rem}
+.chip.set[aria-pressed="true"] .hint{color:#DDE6F0}
+#taskList{display:flex;flex-direction:column;gap:8px}
+.step{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#fff}
+.step .qq{margin:0 0 6px}
+.step .n{display:inline-block;min-width:26px;height:26px;border-radius:50%;background:var(--navy);color:#fff;
+  text-align:center;line-height:26px;font-size:.85rem;font-weight:700;margin-right:6px}
+.step.done .n{background:var(--ok)}
+.tag{font-size:.75rem;color:var(--accent);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.opt{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;margin:4px 0;cursor:pointer;min-height:40px}
+.opt input{width:20px;height:20px;flex:none}
+.opt.good{border-color:var(--ok);background:#E8F5E9}
+.opt.bad{border-color:var(--bad);background:#FFEBEE}
+.fb{margin-top:6px;padding:6px 10px;border-radius:8px;font-size:.92rem}
+.fb.ok{background:#E8F5E9;border-left:4px solid var(--ok)}
+.fb.no{background:#FFEBEE;border-left:4px solid var(--bad)}
+.fb.info{background:var(--soft-blue);border-left:4px solid #1565C0}
+.wrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.word{font:inherit;flex:1 1 170px;min-width:0;min-height:40px;padding:4px 8px;border:1px solid #B0BEC5;border-radius:8px}
+.badges{display:flex;flex-wrap:wrap;gap:8px}
+.badge{display:grid;justify-items:center;gap:2px;width:118px;padding:8px 6px;border-radius:12px;border:2px dashed #CFD8DC;text-align:center;font-size:.8rem;color:#90A4AE}
+.badge .em{font-size:2rem;filter:grayscale(1);opacity:.45}
+.badge.on{border:2px solid var(--star);background:#FFFDE7;color:var(--ink)}
+.badge.on .em{filter:none;opacity:1}
+.cert{border:6px double var(--navy);border-radius:12px;padding:16px;text-align:center;display:grid;gap:8px}
+.cert .who{font-size:1.6rem;font-weight:700;color:var(--accent)}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:12px;
+  z-index:90;box-shadow:0 8px 20px rgba(0,0,0,.25);font-weight:600;display:none}
+.toast.on{display:block;animation:pop .35s}
+@keyframes pop{from{transform:translate(-50%,20px);opacity:0}}
+footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
+
+@media (max-width:1099px){ header .sub{font-size:.75rem} }
+@media (max-width:759px){
+  header h1{font-size:1.05rem}
+  .credit{order:3;flex-basis:100%;text-align:left;font-size:.7rem}
+  .credit br{display:none} .credit a{margin-left:6px}
+  .keybar{font-size:.76rem;gap:2px 10px}
+  .keybar .tools{margin-left:0}
+  .spex{width:56px;height:56px}
+  .bubble{font-size:.92rem}
+  .hbtns .btn{min-height:38px;padding:4px 9px;font-size:.88rem}
+}
+@media (max-width:599px){ .tab .long{display:none} .tab{padding:8px 10px} }
+@media print{ body *{visibility:hidden} #cert, #cert *{visibility:visible} #cert{position:absolute;inset:0;background:#fff} #cert .noprint{display:none} }
+@media (prefers-reduced-motion:reduce){ .jig,.flash,.spex.zoom .lens{animation:none} .lensbox .pbox{transition:none} }
+</style>
+</head>
+<body>
+<!-- ============================ 2 MARKUP ============================ -->
+<header>
+  <div>
+    <h1>Elements, compounds and mixtures</h1>
+    <div class="sub"><a class="home" href="https://school.taneski.com/science/g07/#chemistry" title="Back to Grade 7 science">← All Grade 7 science</a> · IB MYP 2 · Unit 1 Chemistry's Secrets Unlocked · with Marie's particle spectacles</div>
+  </div>
+  <div class="grow"></div>
+  <div class="hbtns">
+    <button class="btn" id="certBtn">🏅 My badges</button>
+    <button class="btn" id="soundBtn" aria-pressed="false" aria-label="Sound on or off">🔇 Sound</button>
+    <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
+  </div>
+  <div class="credit">Biljana Taneska · Science teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
+</header>
+
+<div class="keybar" aria-label="Colour key">
+  <span id="keyAtoms" style="display:contents"></span>
+  <div class="tools">
+    <label class="switch"><input type="checkbox" id="hideSym"> Hide symbols</label>
+    <span class="sum" id="starSum">★ 0</span>
+  </div>
+</div>
+
+<main>
+  <div class="tabs top" role="tablist">
+    <button class="tab" role="tab" id="tab-explore" aria-selected="true" aria-controls="explore">1 · Explore<span class="tstar" data-ts="explore"></span></button>
+    <button class="tab" role="tab" id="tab-change" aria-selected="false" aria-controls="change">2 · Change<span class="tstar" data-ts="change"></span></button>
+    <button class="tab" role="tab" id="tab-quiz" aria-selected="false" aria-controls="quiz">3 · Quiz<span class="tstar" data-ts="quiz"></span></button>
+  </div>
+
+  <!-- EXPLORE: look and sort -->
+  <section class="panel" id="explore" role="tabpanel" aria-labelledby="tab-explore">
+    <div class="spexbar" data-spex="explore"></div>
+    <div class="subsw"><button class="chip" data-sub="explore" aria-pressed="true">👓 Look and sort</button><button class="chip" data-sub="build" aria-pressed="false">🔗 Build</button></div>
+    <div class="grid3">
+      <div class="card">
+        <h2>1 · Choose something to zoom into</h2>
+        <div class="cb">
+          <div class="shelf" id="shelf"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2 id="zTitle">2 · Look through the particle spectacles</h2>
+        <div class="cb">
+          <div class="zoomwrap">
+            <div class="real"><div class="em" id="zEm"></div><b id="zName"></b><span class="hint" id="zNote"></span></div>
+            <div class="lensbox off" id="zLens">
+              <div id="zBox" style="width:100%"></div>
+              <div class="cover" id="zCover"><button class="btn primary" id="zBtn">👓 Put on the particle spectacles</button><span class="hint">See the particles inside</span></div>
+            </div>
+          </div>
+          <div id="zAsk" hidden>
+            <div class="label" style="margin-bottom:6px">3 · What is it?</div>
+            <div class="cats" id="zCats"></div>
+          </div>
+          <div class="feedback" id="zFb" aria-live="polite"></div>
+          <div class="didyou" id="zDid" hidden></div>
+          <div class="controls"><button class="btn" id="zNext" hidden>Next object →</button></div>
+        </div>
+      </div>
+      <div class="card side">
+        <h2>Diagram guide</h2>
+        <div class="spanel on" id="sp-guide">
+          <div id="guideSlide"></div>
+          <div class="slidenav">
+            <button class="btn small" id="gPrev">← Back</button>
+            <span class="pg" id="gPg"></span>
+            <button class="btn small" id="gNext">Next →</button>
+          </div>
+          <button class="btn navy" id="presentBtn">🖥 Present on the board</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPLORE: build (part of tab 1) -->
+  <section class="panel" id="build" role="tabpanel" aria-labelledby="tab-explore" hidden>
+    <div class="spexbar" data-spex="build"></div>
+    <div class="subsw"><button class="chip" data-sub="explore" aria-pressed="false">👓 Look and sort</button><button class="chip" data-sub="build" aria-pressed="true">🔗 Build</button></div>
+    <div class="grid3">
+      <div class="card">
+        <h2>Atoms</h2>
+        <div class="cb">
+          <p class="hint">Drag an atom into the box (or tap it, then tap the box). Drop it <b>on</b> another atom to join them with a chemical bond.</p>
+          <div class="palette" id="palette"></div>
+          <div class="tools">
+            <button class="btn small" id="bCopy" disabled>⧉ Copy ×3</button>
+            <button class="btn small" id="bDel" disabled>🗑 Remove</button>
+            <button class="btn small" id="bClear">↺ Clear</button>
+          </div>
+          <p class="hint">Tap a particle in the box to select it (for Copy or Remove). Drag a particle to move it.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Your particle diagram</h2>
+        <div class="cb">
+          <div class="canvasWrap"><svg id="bCanvas" viewBox="0 0 480 300" aria-label="Particle box: build here"></svg></div>
+          <div class="readout" id="bRead" aria-live="polite"></div>
+        </div>
+      </div>
+      <div class="card side">
+        <h2>Building jobs</h2>
+        <div class="spanel on" id="bm-chal">
+          <div class="qhead"><h3 id="cTitle">Job 1 of 4</h3><div class="dots" id="cDots"></div></div>
+          <div class="chal">
+            <div class="task" id="cTask"></div>
+            <div class="controls"><button class="btn primary" id="cCheck">✔ Check my diagram</button><button class="btn" id="cNext" hidden>Next job →</button></div>
+            <div class="feedback" id="cFb" aria-live="polite"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHANGE -->
+  <section class="panel" id="change" role="tabpanel" aria-labelledby="tab-change" hidden>
+    <div class="spexbar" data-spex="change"></div>
+    <div class="grid2">
+      <div class="card">
+        <h2>Experiment cards</h2>
+        <div class="cb">
+          <div class="cardlist" id="xList"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2 id="xTitle">Lab bench</h2>
+        <div class="cb" id="xBench">
+          <div class="safety" id="xSafety" hidden></div>
+          <div class="benchrow">
+            <div class="bench">
+              <div class="view"><span class="vl">What you see</span><svg class="seeSvg" id="xSee" viewBox="0 0 240 200"></svg></div>
+              <div class="view"><span class="vl">👓 Particles</span><div id="xBox" style="width:100%"></div></div>
+            </div>
+            <div class="actcol"><div class="label">What will you do?</div><div class="actions" id="xActs"></div></div>
+          </div>
+          <div class="obs" id="xObs" aria-live="polite"></div>
+          <div class="qs" id="xQs"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="panel" id="quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden>
+    <div class="spexbar" data-spex="quiz"></div>
+    <div class="card" id="quizCard">
+      <div class="cb">
+        <div class="qhead"><h2 id="qTitle">Question 1 of 16</h2><div class="dots" id="qDots"></div></div>
+        <div class="qbody" id="qBody"></div>
+        <div class="feedback" id="qFb" aria-live="polite"></div>
+        <div class="controls"><button class="btn primary" id="qNext" hidden>Next question →</button></div>
+      </div>
+    </div>
+    <div class="card" id="qEnd" hidden>
+      <h2>Your result</h2>
+      <div class="cb">
+        <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:end">
+          <div><div class="score" id="qEndScore"></div><div class="hint">right first time</div></div>
+          <div><div class="score" style="color:var(--star)" id="qEndStars"></div><div class="hint">stars out of 48</div></div>
+        </div>
+        <p id="qEndMsg"></p>
+        <ul class="review" id="qReview"></ul>
+        <div class="controls"><button class="btn primary" id="qAgain">Play again (new questions)</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- overlays -->
+<div class="overlay" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="box">
+    <h3 id="helpTitle">How to use this simulation</h3>
+    <ol>
+      <li><b>Marie</b> is your guide. Her <b>particle spectacles</b> show the tiny particles inside things.</li>
+      <li><b>1 · Explore → 👓 Look and sort</b>: choose an object, put on the spectacles and decide: element, compound or mixture?
+        The <b>Diagram guide</b> (right) explains the particle diagrams.</li>
+      <li><b>1 · Explore → 🔗 Build</b>: drag atoms into the box. Drop an atom <b>on</b> another atom to join them. Do the 4 building jobs.</li>
+      <li><b>2 · Change</b>: choose an experiment card, then Mix, Heat or Cool. Watch what you see and what the particles do.
+        Then decide: physical or chemical change?</li>
+      <li><b>3 · Quiz</b>: 16 questions.</li>
+      <li><b>Wrong answer?</b> The first time you get a tip. The second time the simulation shows the answer.
+        Stars: right first time ★★★ · right after a tip ★★ · answer shown: no stars. Finish a part to win its <b>badge</b> (🏅 My badges).</li>
+      <li><b>Hide symbols</b> shows the atoms as plain coloured balls. Your progress is saved in this browser.</li>
+    </ol>
+    <h3>The chemistry</h3>
+    <ul>
+      <li><b>Atom</b>: the smallest particle of an element.</li>
+      <li><b>Element</b>: only one type of atom. <b>Compound</b>: two or more different atoms chemically joined.
+        <b>Mixture</b>: two or more substances that are not chemically joined.</li>
+      <li><b>Physical change</b>: no new substance; easy to undo (melting, dissolving, mixing).
+        <b>Chemical change</b>: a new substance is made; hard to undo (burning, cooking, rusting).</li>
+    </ul>
+    <p class="hint">The particle pictures are a model: atoms are not really coloured balls. Touching atoms = chemically joined.</p>
+    <p style="text-align:right"><button class="btn primary" data-close="help">Close</button></p>
+  </div>
+</div>
+
+<div class="overlay" id="present" role="dialog" aria-modal="true" aria-label="Diagram guide, presentation">
+  <div class="box">
+    <div class="spexbar" data-spex="present"></div>
+    <div id="presentSlide"></div>
+    <div class="slidenav">
+      <button class="btn" id="pPrev">← Back</button>
+      <span class="pg" id="pPg"></span>
+      <button class="btn primary" id="pNext">Next →</button>
+      <button class="btn" data-close="present">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="certOv" role="dialog" aria-modal="true" aria-label="My badges">
+  <div class="box" id="cert">
+    <div class="cert">
+      <div class="label">Certificate · Elements, compounds and mixtures</div>
+      <label class="noprint">Your name: <input class="word" id="certName" autocomplete="off" style="max-width:260px"></label>
+      <div class="who" id="certWho"></div>
+      <div id="certStars"></div>
+      <div class="badges" id="certBadges" style="justify-content:center"></div>
+      <div class="hint" id="certDate"></div>
+    </div>
+    <div class="controls noprint">
+      <button class="btn" id="certPrint">🖨 Print</button>
+      <button class="btn" id="resetAll">↺ Start again (delete my progress)</button>
+      <button class="btn primary" data-close="certOv">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<footer>Element: one type of atom · Compound: different atoms chemically joined · Mixture: not chemically joined · Physical change: no new substance · Chemical change: new substance.</footer>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+
+  /* ============================ 3 CONFIG ============================ */
+  // one colour per element (based on the usual CPK colours); t = text colour; r = size (1 = most atoms)
+  const ATOMS = {
+    H:  { name: "hydrogen",  c: "#FFFFFF", t: "#263238", r: 0.72 },
+    O:  { name: "oxygen",    c: "#E53935", t: "#FFFFFF", r: 1 },
+    C:  { name: "carbon",    c: "#37474F", t: "#FFFFFF", r: 1 },
+    N:  { name: "nitrogen",  c: "#1E88E5", t: "#FFFFFF", r: 1 },
+    Fe: { name: "iron",      c: "#78909C", t: "#FFFFFF", r: 1.05 },
+    S:  { name: "sulfur",    c: "#FDD835", t: "#263238", r: 1 },
+    Na: { name: "sodium",    c: "#8E24AA", t: "#FFFFFF", r: 1.05 },
+    Cl: { name: "chlorine",  c: "#43A047", t: "#FFFFFF", r: 1 },
+    Mg: { name: "magnesium", c: "#00897B", t: "#FFFFFF", r: 1.05 },
+    He: { name: "helium",    c: "#80DEEA", t: "#263238", r: 0.85 },
+    Ne: { name: "neon",      c: "#FF8A65", t: "#263238", r: 0.9 },
+    Ar: { name: "argon",     c: "#B39DDB", t: "#263238", r: 0.95 },
+    Au: { name: "gold",      c: "#C9A227", t: "#263238", r: 1.05 },
+    Cu: { name: "copper",    c: "#C46A2B", t: "#FFFFFF", r: 1.05 },
+  };
+  const BUILD_ATOMS = ["H", "O", "C", "N", "Cl", "Fe", "S", "He"];
+
+  // substances: atoms = [symbol, dx, dy] in units of the atom radius (joined atoms overlap = chemical bond)
+  // mol: is one particle a molecule? (salts are drawn as pairs to keep it simple, but they are NOT molecules)
+  // build: false = not offered as a real particle in Build (simplified pictures, or not found as single atoms)
+  const one = (s) => [[s, 0, 0]];
+  const pair = (a, b, d = 0.65) => [[a, -d, 0], [b, d, 0]];
+  const ring = (syms, rad) => syms.map((s, i) => [s, rad * Math.cos((i * 2 * Math.PI) / syms.length - Math.PI / 2), rad * Math.sin((i * 2 * Math.PI) / syms.length - Math.PI / 2)]);
+  const SUBS = {
+    He: { name: "helium", f: "He", atoms: one("He") },
+    Ne: { name: "neon", f: "Ne", atoms: one("Ne") },
+    Ar: { name: "argon", f: "Ar", atoms: one("Ar") },
+    Fe: { name: "iron", f: "Fe", atoms: one("Fe") },
+    S:  { name: "sulfur", f: "S", atoms: one("S") },
+    Mg: { name: "magnesium", f: "Mg", atoms: one("Mg") },
+    Na: { name: "sodium", f: "Na", atoms: one("Na") },
+    C:  { name: "carbon", f: "C", atoms: one("C") },
+    Au: { name: "gold", f: "Au", atoms: one("Au") },
+    Cu: { name: "copper", f: "Cu", atoms: one("Cu") },
+    H:  { name: "hydrogen atoms", f: "H", atoms: one("H"), build: false },
+    H2: { name: "hydrogen", f: "H2", atoms: pair("H", "H", 0.5), mol: true },
+    O2: { name: "oxygen", f: "O2", atoms: pair("O", "O"), mol: true },
+    N2: { name: "nitrogen", f: "N2", atoms: pair("N", "N"), mol: true },
+    Cl2: { name: "chlorine", f: "Cl2", atoms: pair("Cl", "Cl"), mol: true },
+    H2O: { name: "water", f: "H2O", atoms: [["O", 0, -0.18], ["H", -0.9, 0.48], ["H", 0.9, 0.48]], mol: true },
+    CO2: { name: "carbon dioxide", f: "CO2", atoms: [["O", -1.3, 0], ["C", 0, 0], ["O", 1.3, 0]], mol: true },
+    CO: { name: "carbon monoxide", f: "CO", atoms: pair("C", "O"), mol: true },
+    CH4: { name: "methane", f: "CH4", atoms: [["C", 0, 0], ["H", -0.85, -0.85], ["H", 0.85, -0.85], ["H", -0.85, 0.85], ["H", 0.85, 0.85]], mol: true },
+    NH3: { name: "ammonia", f: "NH3", atoms: [["N", 0, 0.12], ["H", -1.0, 0.55], ["H", 1.0, 0.55], ["H", 0, -1.05]], mol: true },
+    HCl: { name: "hydrogen chloride", f: "HCl", atoms: [["H", -0.62, 0], ["Cl", 0.55, 0]], mol: true },
+    FeS: { name: "iron sulfide", f: "FeS", atoms: pair("Fe", "S", 0.68) },
+    NaCl: { name: "sodium chloride", f: "NaCl", atoms: pair("Na", "Cl", 0.68) },
+    MgO: { name: "magnesium oxide", f: "MgO", atoms: pair("Mg", "O", 0.68) },
+    sugar: { name: "sugar (simplified)", f: "C12H22O11", atoms: ring(["O", "C", "C", "C", "C", "C"], 1.25), mol: true, build: false },
+    coffee: { name: "coffee substances (simplified)", f: "", atoms: [["C", -0.65, -0.55], ["N", 0.65, -0.55], ["C", 0, 0.55], ["O", 1.3, 0.55]], mol: true, build: false, mixOf: true },
+    sand: { name: "sand grain (silicon dioxide)", f: "SiO2", atoms: [], grain: true, build: false },
+  };
+
+
+  const CATS = [
+    { id: "el", name: "Element", sub: "only one type of atom" },
+    { id: "comp", name: "Compound", sub: "different atoms joined" },
+    { id: "mix", name: "Mixture", sub: "different substances, not joined" },
+  ];
+
+  // Explore: objects to zoom into. items = [substance, how many, state, region]; states: solid · liquid · gas · powder
+  const OBJECTS = [
+    { id: "gold", em: "🪙", name: "Gold", note: "a gold coin or bar", items: [["Au", 27, "solid"]],
+      did: "One gold atom is not yellow or shiny. That is what lots of gold atoms together look like." },
+    { id: "oxygen", em: "🏥", name: "Oxygen gas", note: "from a hospital oxygen tank", items: [["O2", 9, "gas"]],
+      did: "Oxygen atoms go around in pairs (O₂). Still only one type of atom – so oxygen is an element." },
+    { id: "helium", em: "🎈", name: "Helium", note: "the gas in a party balloon", items: [["He", 10, "gas"]] },
+    { id: "water", em: "💧", name: "Pure water", note: "distilled water", items: [["H2O", 13, "liquid"]] },
+    { id: "salt", em: "🧂", name: "Table salt", note: "sodium chloride", items: [["NaCl", 15, "solid"]],
+      did: "Marie draws salt as sodium–chlorine pairs to keep it simple." },
+    { id: "co2", em: "🧯", name: "Carbon dioxide", note: "the gas in a fire extinguisher", items: [["CO2", 7, "gas"]] },
+    { id: "air", em: "🌬️", name: "Air", note: "what you breathe in", items: [["N2", 8, "gas"], ["O2", 2, "gas"], ["Ar", 1, "gas"], ["CO2", 1, "gas"]],
+      did: "Air is mostly nitrogen and oxygen. Real air has much less carbon dioxide – Marie drew one so you can see it." },
+    { id: "sea", em: "🌊", name: "Sea water", note: "salty water", items: [["H2O", 11, "liquid"], ["NaCl", 3, "liquid"]] },
+    { id: "fesmix", em: "🥄", name: "Iron + sulfur mixture", note: "stirred together, not heated", items: [["Fe", 12, "powder"], ["S", 12, "powder"]],
+      did: "A magnet can still pull the iron out – they are only mixed, not joined." },
+    { id: "fes", em: "⚫", name: "Iron sulfide", note: "after heating iron + sulfur", items: [["FeS", 15, "solid"]],
+      did: "Every iron atom is now joined to a sulfur atom. A magnet can't pull the iron out any more." },
+  ];
+
+  // the 2 chemical reactions (whole particles; atoms are conserved – checked in the tests)
+  const REACTIONS = {
+    fes: { from: [["Fe", 8], ["S", 8]], to: [["FeS", 8]], words: "iron + sulfur → iron sulfide" },
+    mgo: { from: [["Mg", 6], ["O2", 3]], to: [["MgO", 6]], words: "magnesium + oxygen → magnesium oxide" },
+  };
+
+  // Change tab: 4 experiment cards. Each state = particles (items) + what you see (see).
+  // acts: action → { txt, go: next state, key: the change the question is about, react: chemical }; any other action: "nothing new"
+  const ACTS = [["mix", "🥄 Mix"], ["heat", "🔥 Heat"], ["cool", "❄️ Cool"]];
+  const XCARDS = [
+    { id: "ice", em: "🧊", title: "Ice melting", kind: "phys",
+      states: {
+        start: { items: [["H2O", 12, "solid"]], see: { v: "beaker", ice: true }, txt: "Ice cubes in a beaker." },
+        melted: { items: [["H2O", 12, "liquid"]], see: { v: "beaker", liquid: "#BBDEFB" }, txt: "The ice melts into liquid water." },
+        steam: { items: [["H2O", 12, "gas"]], see: { v: "beaker", liquid: "#BBDEFB", low: true, fx: "steam" }, txt: "The water boils into steam." },
+      },
+      acts: { start: { heat: { txt: "You warm the ice…", go: "melted", key: true } },
+              melted: { cool: { txt: "You put it in the freezer: it freezes back into ice.", go: "start" },
+                        heat: { txt: "You keep heating…", go: "steam" } },
+              steam: { cool: { txt: "You cool the steam: it condenses back into water.", go: "melted" } } },
+      why: "The water particles are still H₂O – they only move out of their neat rows. No new substance, and cooling turns it back into ice: a <b>physical change</b>." },
+    { id: "salt", em: "🧂", title: "Salt dissolving in water", kind: "phys",
+      states: {
+        start: { items: [["NaCl", 4, "solid", "bottom"], ["H2O", 10, "liquid", "top"]], see: { v: "beaker", liquid: "#BBDEFB", crystals: true }, txt: "White salt crystals at the bottom of a beaker of water." },
+        mixed: { items: [["NaCl", 4, "liquid"], ["H2O", 10, "liquid"]], see: { v: "beaker", liquid: "#BBDEFB" }, txt: "The salt disappears: it dissolves. The water tastes salty – the salt is still there." },
+        dry: { items: [["NaCl", 4, "solid", "bottom"], ["H2O", 10, "gone"]], see: { v: "dish", powder: "#FFFFFF", fx: "steam" }, txt: "The water evaporates. Salt crystals are left – the salt is back!" },
+      },
+      acts: { start: { mix: { txt: "You stir…", go: "mixed", key: true } },
+              mixed: { heat: { txt: "You heat the salty water in a dish…", go: "dry" } } },
+      why: "The salt particles spread out between the water particles, but no new bonds form: salty water is a mixture. Heating gives the salt back: a <b>physical change</b>." },
+    { id: "fes", em: "🔥", title: "Iron + sulfur heated", kind: "chem", magnet: true, rx: "fes",
+      safety: "Eye protection. Heat only a small amount, in a well-ventilated room: hot sulfur can make a choking gas.",
+      states: {
+        start: { items: [["Fe", 8, "powder", "left"], ["S", 8, "powder", "right"]], see: { v: "dish", piles: ["#78909C", "#FDD835"] }, txt: "Grey iron filings and yellow sulfur powder, side by side." },
+        mixed: { items: [["Fe", 8, "powder"], ["S", 8, "powder"]], see: { v: "tube", speck: ["#78909C", "#FDD835"] }, txt: "A grey-yellow mixture in a test tube. You can still see grey bits and yellow bits." },
+        pulled: { items: [["Fe", 8, "powder", "top"], ["S", 8, "powder", "bottom"]], see: { v: "tube", piles: [null, "#FDD835"], magnet: "#78909C" }, txt: "Still a mixture: the magnet pulls the iron out. The sulfur stays." },
+        after: { items: [["FeS", 8, "solid"]], see: { v: "tube", lump: "#424242", fx: "glow" }, txt: "It glows red-hot! A black-grey solid is left: iron sulfide." },
+        tested: { items: [["FeS", 8, "solid"]], see: { v: "tube", lump: "#424242", magnet: null }, txt: "The magnet does not pick anything up: there is no free iron any more." },
+      },
+      acts: { start: { mix: { txt: "You mix the iron and the sulfur. Now try the magnet – or heat the mixture!", go: "mixed" },
+                       heat: { txt: "Mix them first!" } },
+              mixed: { heat: { txt: "You heat the mixture strongly…", go: "after", key: true, react: true },
+                       magnet: { txt: "You hold a magnet near the mixture.", go: "pulled" } },
+              pulled: { mix: { txt: "You mix them again.", go: "mixed" } },
+              after: { magnet: { txt: "You hold a magnet near the new solid.", go: "tested" } } },
+      why: "Every iron atom is now chemically joined to a sulfur atom: <b>iron sulfide</b>, a new substance (black, not magnetic). You can't get the iron back with a magnet: a <b>chemical change</b>." },
+    { id: "mg", em: "🎗️", title: "Magnesium burning", kind: "chem", rx: "mgo",
+      safety: "Don't look straight at the flame – it is very bright. Hold the ribbon with tongs, over a heat-proof mat.",
+      states: {
+        start: { items: [["Mg", 6, "solid", "bottom"], ["O2", 3, "gas", "top"]], see: { v: "jar", ribbon: "#B0BEC5" }, txt: "A shiny grey magnesium ribbon in air (oxygen)." },
+        after: { items: [["MgO", 6, "solid", "bottom"]], see: { v: "jar", powder: "#FAFAFA", fx: "white" }, txt: "A dazzling white flame! A white powder (ash) is left." },
+      },
+      acts: { start: { heat: { txt: "You hold the ribbon in a hot flame…", go: "after", key: true, react: true } } },
+      why: "Magnesium atoms join with oxygen atoms: <b>magnesium oxide</b>, a new white substance. You can't get the shiny metal back: a <b>chemical change</b>." },
+  ];
+
+  // Quiz: 8 particle diagrams (element / compound / mixture), then 8 everyday changes (physical / chemical)
+  const QBANK = [
+    { id: "q-ne", t: "cat", items: [["Ne", 9, "gas"]] },
+    { id: "q-cl2", t: "cat", items: [["Cl2", 7, "gas"]] },
+    { id: "q-h2", t: "cat", items: [["H2", 9, "gas"]] },
+    { id: "q-mg", t: "cat", items: [["Mg", 27, "solid"]] },
+    { id: "q-nh3", t: "cat", items: [["NH3", 7, "gas"]] },
+    { id: "q-hcl", t: "cat", items: [["HCl", 7, "gas"]] },
+    { id: "q-ch4", t: "cat", items: [["CH4", 7, "gas"]] },
+    { id: "q-mgo", t: "cat", items: [["MgO", 15, "solid"]] },
+    { id: "q-heAr", t: "cat", items: [["He", 5, "gas"], ["Ar", 4, "gas"]] },
+    { id: "q-h2oco2", t: "cat", items: [["H2O", 9, "liquid"], ["CO2", 3, "liquid"]] },
+    { id: "q-n2h2o", t: "cat", items: [["N2", 5, "gas"], ["H2O", 4, "gas"]] },
+    { id: "q-coo2", t: "cat", items: [["CO", 5, "gas"], ["O2", 4, "gas"]] },
+    { id: "c-butter", t: "chg", em: "🧈", text: "Butter melting in a warm pan", ans: "phys", why: "Melting changes only the state: it is still butter. Cool it and it goes solid again." },
+    { id: "c-egg", t: "chg", em: "🍳", text: "Frying an egg", ans: "chem", why: "The egg white turns white and solid: new substances form, and you can't un-fry it." },
+    { id: "c-sugar", t: "chg", em: "🍵", text: "Dissolving sugar in tea", ans: "phys", why: "Dissolving makes a mixture: the sugar is still there (the tea tastes sweet)." },
+    { id: "c-wood", t: "chg", em: "🔥", text: "Burning wood", ans: "chem", why: "Burning makes new substances (ash, smoke, carbon dioxide) and gives out heat and light. It can't be undone." },
+    { id: "c-rust", t: "chg", em: "🔩", text: "An iron nail rusting", ans: "chem", why: "Iron joins with oxygen and water to make rust, a new orange-brown substance." },
+    { id: "c-window", t: "chg", em: "🪟", text: "Steam condensing on a cold window", ans: "phys", why: "Water vapour turns back into liquid water: a change of state, no new substance." },
+    { id: "c-toast", t: "chg", em: "🍞", text: "Toasting bread", ans: "chem", why: "The bread turns brown and smells different: new substances are made." },
+    { id: "c-paper", t: "chg", em: "✂️", text: "Cutting paper into pieces", ans: "phys", why: "Only the shape and size change; it is still paper." },
+    { id: "c-firework", t: "chg", em: "🎆", text: "Fireworks exploding", ans: "chem", why: "Light, heat, sound and smoke: new substances are made." },
+    { id: "c-freeze", t: "chg", em: "🧊", text: "Water freezing in the freezer", ans: "phys", why: "Liquid water becomes solid ice – still water. It melts back easily." },
+    { id: "c-milk", t: "chg", em: "🥛", text: "Milk going sour", ans: "chem", why: "Bacteria change the milk into new substances with a new smell and taste." },
+    { id: "c-fizz", t: "chg", em: "🫧", text: "Baking soda and vinegar fizzing", ans: "chem", why: "Bubbles of a new gas (carbon dioxide) are made: a sign of a chemical change." },
+  ];
+  // the first round after loading is always this one (the worksheet and exercises refer to it)
+  const FIRST_ROUND = ["q-nh3", "q-ne", "q-h2oco2", "q-cl2", "q-mgo", "q-ch4", "q-coo2", "q-mg",
+    "c-egg", "c-sugar", "c-wood", "c-butter", "c-rust", "c-window", "c-toast", "c-freeze"];
+  const ROUND_MIX = { cat: 8, chg: 8 };
+
+  // Build: 4 jobs. The example is shown as the answer after 2 mistakes
+  const CHALLENGES = [
+    { text: "Build an <b>element</b> (at least 3 particles).", cat: "el", min: 3, example: [["O2", 3]],
+      tip: "Use only ONE type of atom – e.g. drop an O on another O to make O₂, then press ⧉ Copy ×3." },
+    { text: "Build a <b>compound</b> (at least 3 particles, all the same).", cat: "comp", min: 3, example: [["CO2", 3]],
+      tip: "Join DIFFERENT atoms, e.g. one C with two O (carbon dioxide). Then ⧉ Copy ×3 so every particle is the same." },
+    { text: "Build a <b>mixture</b> (two different substances, not joined to each other).", cat: "mix", min: 2, example: [["H2O", 2], ["O2", 2]],
+      tip: "Make two different kinds of particle, e.g. some O₂ and some He – and keep them apart." },
+    { text: "Build <b>water</b>, H₂O (at least 2 molecules).", only: "H2O", min: 2, example: [["H2O", 3]],
+      tip: "Water = one O atom with two H atoms joined to it. Drop an H on the O, then another H." },
+  ];
+
+  // more real substances Marie recognises in Free build (named only; no fixed drawing)
+  const REAL_EXTRA = {
+    O3: "ozone", SO2: "sulfur dioxide", SO3: "sulfur trioxide", NO: "nitrogen monoxide", NO2: "nitrogen dioxide",
+    N2O: "dinitrogen oxide (laughing gas)", H2O2: "hydrogen peroxide", H2S: "hydrogen sulfide", C2H6: "ethane", C2H4: "ethene",
+    C2H2: "ethyne", CS2: "carbon disulfide", CCl4: "tetrachloromethane", CHCl3: "chloroform", CH3Cl: "chloromethane",
+    MgCl2: "magnesium chloride", Na2O: "sodium oxide", Na2S: "sodium sulfide", MgS: "magnesium sulfide", FeCl2: "iron chloride",
+    FeCl3: "iron chloride", FeO: "iron oxide", Fe2O3: "iron oxide (rust)", Fe3O4: "iron oxide (magnetite)", NaOH: "sodium hydroxide",
+    MgH2: "magnesium hydride", NaH: "sodium hydride", ClO2: "chlorine dioxide", N2H4: "hydrazine", C3H8: "propane", C4H10: "butane",
+    HCN: "hydrogen cyanide", CH3OH: "methanol", C2H5OH: "ethanol", NH4Cl: "ammonium chloride", "FeS2": "iron disulfide (fool's gold)",
+  };
+
+  /* ============================ 4 CHEMISTRY ============================ */
+  const sub = (s) => String(s).replace(/(\d+)/g, "<sub>$1</sub>");
+  const countAtoms = (syms) => { const m = {}; for (const s of syms) m[s] = (m[s] || 0) + 1; return m; };
+  // formula key: with carbon C, H, then A–Z (Hill order); otherwise metals first, oxygen last (NaCl, H2O, NH3, SO2)
+  const PRI = ["Na", "Mg", "Fe", "Cu", "Au", "He", "Ne", "Ar", "N", "H", "S", "Cl", "O"];
+  function fkey(syms) {
+    const m = countAtoms(syms), ks = Object.keys(m);
+    const order = m.C ? ["C", ...(m.H ? ["H"] : []), ...ks.filter((k) => k !== "C" && k !== "H").sort()] : ks.sort((a, b) => PRI.indexOf(a) - PRI.indexOf(b));
+    return order.map((s) => s + (m[s] > 1 ? m[s] : "")).join("");
+  }
+  const parseF = (f) => [...f.matchAll(/([A-Z][a-z]?)(\d*)/g)].flatMap(([, s, n]) => new Array(+(n || 1)).fill(s));
+  const SUBKEY = {};
+  for (const [id, s] of Object.entries(SUBS)) if (s.build !== false && s.atoms.length) SUBKEY[fkey(s.atoms.map((a) => a[0]))] = id;
+  const EXTRAKEY = {};
+  for (const [f, name] of Object.entries(REAL_EXTRA)) EXTRAKEY[fkey(parseF(f))] = name;
+  const ALONE = ["He", "Ne", "Ar", "Fe", "S", "Mg", "Na", "C", "Au", "Cu"];   // found as single atoms (metals, noble gases, simplified C and S)
+  const typesOf = (id) => { const s = SUBS[id]; if (s.grain || s.mixOf) return 2; return new Set(s.atoms.map((a) => a[0])).size; };
+  const isElement = (id) => typesOf(id) === 1;
+  const isMolecule = (id) => !!SUBS[id].mol;
+  // kinds: [{types, natoms, el}] one entry per DIFFERENT kind of particle → one of the 6 categories
+  // 3 categories: an element (one type of atom), a compound (different atoms joined, all particles the same), a mixture
+  function classifyKinds(kinds) {
+    if (!kinds.length) return null;
+    const els = new Set(kinds.filter((k) => k.types === 1).map((k) => k.el));
+    if (kinds.every((k) => k.types === 1) && els.size === 1) return "el";
+    return kinds.length === 1 ? "comp" : "mix";
+  }
+  const kindOfSub = (id) => ({ types: typesOf(id), natoms: Math.max(1, SUBS[id].atoms.length), el: SUBS[id].atoms[0] && SUBS[id].atoms[0][0] });
+  function classify(items) {
+    const ids = [...new Set(items.filter((it) => it[2] !== "gone").map((it) => it[0]))];
+    return classifyKinds(ids.map(kindOfSub));
+  }
+  const catById = (id) => CATS.find((c) => c.id === id);
+  const catName = (id) => catById(id).name;
+  function subLabel(id) {
+    const s = SUBS[id];
+    return `${s.name}${s.f && !s.grain && !s.mixOf && s.f !== s.name ? ` (${sub(s.f)})` : ""}`;
+  }
+  const kindWords = (id) => (isElement(id) ? "an element" : "a compound");
+  // why a sample is what it is (Explore + Quiz answers)
+  function explain(items) {
+    const ids = [...new Set(items.map((it) => it[0]))], cat = classify(items);
+    if (ids.length === 1) {
+      const id = ids[0], t = typesOf(id);
+      const what = t === 1 ? `only one type of atom (${ATOMS[SUBS[id].atoms[0][0]].name})` : `${t} different types of atom joined together`;
+      return `Every particle is the same: <b>${subLabel(id)}</b>. It has ${what} → <b>${catName(cat)}</b>.`;
+    }
+    return `There are ${ids.length} different substances: ${ids.map((id) => `<b>${subLabel(id)}</b>`).join(", ")}. ` +
+      `They are mixed, not joined to each other → <b>${catName(cat)}</b>.`;
+  }
+  function catTip(chosen, right) {
+    if (right === "mix") return "Look again: are all the particles the same? Try to find two different kinds of particle.";
+    if (chosen === "mix") return "Are all the particles exactly the same? In an element or a compound every particle is the same.";
+    if (right === "comp") return "Look inside ONE particle: are the joined atoms the same colour, or different colours?";
+    return "Count the colours: how many different types of atom are there?";
+  }
+
+  /* ============================ 5 ENGINE ============================ */
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs = {}, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  const h = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+  function rng(seed) {
+    let a = typeof seed === "number" ? seed : [...String(seed)].reduce((s, c) => (Math.imul(s, 31) + c.charCodeAt(0)) | 0, 7);
+    return () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  }
+  const shuffle = (arr, r = Math.random) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const reduced = () => window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // one atom: a coloured ball with a highlight and its symbol
+  // labels: an optional layer on top, so that every symbol stays readable where atoms overlap
+  function atomG(sym, R, parent, x = 0, y = 0, labels) {
+    const A = ATOMS[sym], r = A.r * R, tr = `translate(${x.toFixed(1)} ${y.toFixed(1)})`;
+    const g = el("g", { class: "atom", transform: tr }, parent);
+    el("circle", { class: "body", r: r.toFixed(1), fill: A.c, stroke: "rgba(38,50,56,.55)", "stroke-width": Math.max(1, R / 11) }, g);
+    el("circle", { r: (r * 0.32).toFixed(1), cx: (-r * 0.35).toFixed(1), cy: (-r * 0.38).toFixed(1), fill: "#fff", opacity: sym === "H" ? 0 : 0.35 }, g);
+    const t = el("text", { class: "lbl", fill: A.t, "font-size": (r * (sym.length > 1 ? 0.78 : 0.95)).toFixed(1), "font-weight": 700, "text-anchor": "middle", "dominant-baseline": "central" }, labels ? el("g", { transform: tr }, labels) : g);
+    t.textContent = sym;
+    g.lbl = labels ? t.parentNode : null;
+    return g;
+  }
+  const moveAtom = (g, x, y) => { const tr = `translate(${x.toFixed(1)} ${y.toFixed(1)})`; g.setAttribute("transform", tr); if (g.lbl) g.lbl.setAttribute("transform", tr); };
+  function grainG(R, parent) {
+    const g = el("g", { class: "grain" }, parent), r = R * 3.3;
+    const pts = [0, 40, 85, 130, 175, 215, 260, 300, 335].map((d, i) => { const a = (d * Math.PI) / 180, k = r * (0.82 + 0.18 * ((i * 37) % 5) / 4); return `${(k * Math.cos(a)).toFixed(1)},${(k * Math.sin(a)).toFixed(1)}`; });
+    el("polygon", { points: pts.join(" "), fill: "#D7B98E", stroke: "#8D6E63", "stroke-width": 1.5 }, g);
+    for (let i = 0; i < 9; i++) el("circle", { cx: ((i % 3) - 1) * r * 0.42, cy: (Math.floor(i / 3) - 1) * r * 0.42, r: R * 0.3, fill: "#BCA07A" }, g);
+    const t = el("text", { y: r + 11, "text-anchor": "middle", "font-size": 10, fill: "#5D4037", "font-weight": 700 }, g);
+    t.textContent = "sand grain";
+    return g;
+  }
+  const boundOf = (id, R) => SUBS[id].grain ? R * 3.3 : Math.max(...SUBS[id].atoms.map(([s, dx, dy]) => Math.hypot(dx, dy) * R + ATOMS[s].r * R));
+
+  // where the particles go. items = [substance, n, state, region]
+  function place(items, W, H, R, seed) {
+    const r = rng(seed), parts = [], m = 4;
+    const rect = (reg) => ({ all: [m, m, W - m, H - m], top: [m, m, W - m, H * 0.52], bottom: [m, H * 0.5, W - m, H - m],
+      left: [m, m, W / 2 - 6, H - m], right: [W / 2 + 6, m, W - m, H - m] })[reg || "all"];
+    const free = (x, y, b, gap) => parts.every((p) => Math.hypot(p.cx - x, p.cy - y) >= p.b + b + gap);
+    // grids first (solids and alloys), then the random ones
+    const grids = {};
+    for (const it of items) if (it[2] === "solid" || it[2] === "alloy") (grids[(it[3] || "all") + it[2]] = grids[(it[3] || "all") + it[2]] || []).push(it);
+    for (const list of Object.values(grids)) {
+      const [x0, y0, x1, y1] = rect(list[0][3]);
+      const b = Math.max(...list.map((it) => boundOf(it[0], R))), cell = 2 * b + (list[0][2] === "alloy" ? 1 : 3);
+      let ids = []; list.forEach((it) => { for (let i = 0; i < it[1]; i++) ids.push(it[0]); });
+      if (list[0][2] === "alloy") ids = shuffle(ids, r);
+      const cols = Math.max(1, Math.floor((x1 - x0) / cell)), rows = Math.ceil(ids.length / cols);
+      const w = Math.min(cols, ids.length) * cell, xs = x0 + (x1 - x0 - w) / 2 + cell / 2;
+      ids.forEach((id, i) => {
+        const row = Math.floor(i / cols), col = i % cols, inRow = Math.min(cols, ids.length - row * cols);
+        const off = (Math.min(cols, ids.length) - inRow) * cell / 2;
+        parts.push({ sub: id, cx: xs + off + col * cell, cy: y1 - cell / 2 - row * cell * 0.98, rot: 0, b: boundOf(id, R) });
+      });
+      void rows;
+    }
+    const loose = items.filter((it) => !["solid", "alloy", "gone"].includes(it[2])).sort((a, b) => boundOf(b[0], R) - boundOf(a[0], R));   // big ones first
+    for (const it of loose) {
+      const [id, n, state, reg] = it;
+      let [x0, y0, x1, y1] = rect(reg);
+      if (state === "liquid" && (!reg || reg === "all")) y0 = y0 + (y1 - y0) * 0.12;
+      const b = boundOf(id, R), gap0 = state === "gas" ? 14 : 2;
+      for (let i = 0; i < n; i++) {
+        let best = null;
+        for (let tries = 0; tries < 500 && !best; tries++) {
+          const gap = Math.max(0, gap0 - Math.floor(tries / 80) * 3);
+          const x = x0 + b + r() * Math.max(1, x1 - x0 - 2 * b), y = y0 + b + r() * Math.max(1, y1 - y0 - 2 * b);
+          if (free(x, y, b, gap)) best = [x, y];
+        }
+        if (!best) best = [x0 + b + r() * (x1 - x0 - 2 * b), y0 + b + r() * (y1 - y0 - 2 * b)];
+        const single = SUBS[id].atoms.length < 2 || SUBS[id].grain;
+        parts.push({ sub: id, cx: best[0], cy: best[1], rot: single || state === "powder" ? 0 : Math.round(r() * 360), b, state, box: [x0, y0, x1, y1] });
+      }
+    }
+    // particles that are not joined must never touch: push any overlapping loose ones apart (inside their region)
+    for (let it = 0; it < 300; it++) {
+      let moved = false;
+      for (let i = 0; i < parts.length; i++) for (let j = i + 1; j < parts.length; j++) {
+        const a = parts[i], b = parts[j], d = Math.hypot(a.cx - b.cx, a.cy - b.cy), need = a.b + b.b + 1.5;
+        if (d >= need || (!a.box && !b.box)) continue;
+        moved = true;
+        const ux = d > 0.01 ? (a.cx - b.cx) / d : r() - 0.5, uy = d > 0.01 ? (a.cy - b.cy) / d : r() - 0.5, k = (need - d) / (a.box && b.box ? 2 : 1) + 0.3;
+        if (a.box) { a.cx += ux * k; a.cy += uy * k; } if (b.box) { b.cx -= ux * k; b.cy -= uy * k; }
+      }
+      for (const p of parts) if (p.box) { p.cx = Math.min(p.box[2] - p.b, Math.max(p.box[0] + p.b, p.cx)); p.cy = Math.min(p.box[3] - p.b, Math.max(p.box[1] + p.b, p.cy)); }
+      if (!moved) break;
+    }
+    for (const it of items) if (it[2] === "gone") for (let i = 0; i < it[1]; i++) parts.push({ sub: it[0], gone: true, cx: W / 2, cy: -40, rot: 0, b: boundOf(it[0], R) });
+    return parts;
+  }
+  const rotPt = (dx, dy, deg) => { const a = (deg * Math.PI) / 180; return [dx * Math.cos(a) - dy * Math.sin(a), dx * Math.sin(a) + dy * Math.cos(a)]; };
+  const absAtoms = (p, R) => SUBS[p.sub].atoms.map(([s, dx, dy]) => { const [x, y] = rotPt(dx * R, dy * R, p.rot); return { sym: s, x: p.cx + x, y: p.cy + y }; });
+
+  // draw order: outer atoms first, the centre atom last (so its symbol is on top); letters stay upright
+  const drawOrder = (id) => SUBS[id].atoms.map((a, i) => [a, i]).sort((x, y) => Math.hypot(y[0][1], y[0][2]) - Math.hypot(x[0][1], x[0][2]));
+  function placeAtomEls(p, R) { for (const a of p.atomEls) { const [x, y] = rotPt(a.dx * R, a.dy * R, p.rotNow ?? p.rot); moveAtom(a.g, x, y); } }
+  function renderParts(layer, parts, R, flash) {
+    layer.replaceChildren();
+    parts.forEach((p, i) => {
+      if (p.gone) return;
+      const g = el("g", { class: "part", transform: `translate(${p.cx.toFixed(1)} ${p.cy.toFixed(1)})` }, layer);
+      const j = el("g", { class: "jig" + (p.state === "gas" ? " gas" : ""), style: `animation-delay:-${(i * 0.37) % 2}s` }, g);
+      p.atomEls = [];
+      if (SUBS[p.sub].grain) grainG(R, j);
+      else { const lab = el("g", {}); drawOrder(p.sub).forEach(([[s, dx, dy]]) => p.atomEls.push({ g: atomG(s, R, j, 0, 0, lab), dx, dy })); j.appendChild(lab); }
+      p.rotNow = p.rot; placeAtomEls(p, R);
+      if (p.state === "solid" || p.state === "alloy" || !p.state) j.classList.remove("jig");
+      if (flash && SUBS[p.sub].atoms.length > 1) el("circle", { class: "flash", r: (p.b + 2).toFixed(1) }, g);
+      p.el = g;
+    });
+  }
+  // a particle box: returns {svg, layer, parts, R}
+  function drawBox(holder, items, o = {}) {
+    const W = o.W || 300, H = o.H || 190, R = o.R || 11;
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, class: "pbox" + (o.big ? " big" : "") + (o.px ? " fixed" : ""), role: "img", "aria-label": o.label || "particle diagram" });
+    if (o.px) { svg.setAttribute("width", W * o.px); svg.setAttribute("height", H * o.px); }
+    const layer = el("g", {}, svg);
+    const parts = o.parts || place(items, W, H, R, o.seed || JSON.stringify(items));
+    renderParts(layer, parts, R, o.flash);
+    if (holder) holder.replaceChildren(svg);
+    return { svg, layer, parts, R, W, H };
+  }
+  // the parts as items (to classify what is in a box)
+  const itemsOf = (parts) => Object.entries(parts.filter((p) => !p.gone).reduce((m, p) => ((m[p.sub] = (m[p.sub] || 0) + 1), m), {})).map(([k, n]) => [k, n]);
+
+  function tween(ms, step, done) {
+    if (reduced()) ms = 1;
+    const t0 = performance.now();
+    const f = (now) => { const t = Math.min(1, (now - t0) / ms), e = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; step(e); if (t < 1) requestAnimationFrame(f); else done && done(); };
+    requestAnimationFrame(f);
+  }
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const angLerp = (a, b, t) => { let d = ((b - a + 540) % 360) - 180; return a + d * t; };
+
+  // physical change: the same particles move as a whole (nothing new is made)
+  function animPhys(box, toParts, done) {
+    const from = box.parts.filter((p) => !p.gone), used = new Set(), moves = [];
+    for (const tp of toParts.filter((p) => !p.gone)) {
+      let best = null, bd = 1e9;
+      from.forEach((fp, i) => { if (!used.has(i) && fp.sub === tp.sub) { const d = Math.hypot(fp.cx - tp.cx, fp.cy - tp.cy); if (d < bd) { bd = d; best = i; } } });
+      if (best !== null) { used.add(best); moves.push([from[best], tp]); }
+    }
+    const gone = from.filter((_, i) => !used.has(i));
+    tween(1300, (t) => {
+      for (const [a, b] of moves) if (a.el) { a.el.setAttribute("transform", `translate(${lerp(a.cx, b.cx, t).toFixed(1)} ${lerp(a.cy, b.cy, t).toFixed(1)})`); a.rotNow = angLerp(a.rot, b.rot, t); placeAtomEls(a, box.R); }
+      for (const a of gone) if (a.el) { a.el.setAttribute("transform", `translate(${a.cx.toFixed(1)} ${lerp(a.cy, -30, t).toFixed(1)})`); a.el.setAttribute("opacity", (1 - t).toFixed(2)); }
+    }, () => { box.parts = toParts; renderParts(box.layer, toParts, box.R); done && done(); });
+  }
+  // chemical change: the bonds break, the atoms move to new partners, new bonds form (atoms are never lost)
+  function matchAtoms(fromParts, toParts, R) {
+    const src = fromParts.filter((p) => !p.gone).flatMap((p) => absAtoms(p, R).map((a) => ({ ...a, pc: [p.cx, p.cy] })));
+    const dst = toParts.filter((p) => !p.gone).flatMap((p) => absAtoms(p, R));
+    const used = new Set(), pairs = [];
+    for (const d of dst) {
+      let best = -1, bd = 1e9;
+      src.forEach((s, i) => { if (!used.has(i) && s.sym === d.sym) { const dd = Math.hypot(s.x - d.x, s.y - d.y); if (dd < bd) { bd = dd; best = i; } } });
+      if (best < 0) throw new Error("atoms not conserved: no " + d.sym + " left");
+      used.add(best); pairs.push([src[best], d]);
+    }
+    if (used.size !== src.length) throw new Error("atoms not conserved: " + (src.length - used.size) + " atoms left over");
+    return pairs;
+  }
+  function animChem(box, toParts, done) {
+    const R = box.R, pairs = matchAtoms(box.parts, toParts, R);
+    box.layer.replaceChildren();
+    const gs = pairs.map(([s]) => atomG(s.sym, R, box.layer, s.x, s.y));
+    const mid = pairs.map(([s]) => { const dx = s.x - s.pc[0], dy = s.y - s.pc[1], k = Math.hypot(dx, dy) < 1 ? 0 : 0.7 * R / Math.hypot(dx, dy);
+      return [s.x + dx * k + (Math.random() - 0.5) * R * 0.8, s.y + dy * k + (Math.random() - 0.5) * R * 0.8]; });
+    const mv = (t, A, B) => gs.forEach((g, i) => g.setAttribute("transform", `translate(${lerp(A(i)[0], B(i)[0], t).toFixed(1)} ${lerp(A(i)[1], B(i)[1], t).toFixed(1)})`));
+    tween(600, (t) => mv(t, (i) => [pairs[i][0].x, pairs[i][0].y], (i) => mid[i]), () =>
+      tween(1300, (t) => mv(t, (i) => mid[i], (i) => [pairs[i][1].x, pairs[i][1].y]), () => {
+        box.parts = toParts; renderParts(box.layer, toParts, R, true); SND.bond(); done && done();
+      }));
+  }
+
+  /* Marie, the guide */
+  const SPEX = `<svg class="spex" viewBox="0 0 100 100" data-mood="talk" aria-hidden="true">
+    <circle cx="50" cy="50" r="49" fill="#DCE3EA"/>
+    <path d="M24 47 Q20 15 50 13 Q80 14 77 47 L78 63 Q73 67 68 60 L32 60 Q27 66 22 61Z" fill="#3B2A22"/>
+    <path d="M10 100 Q12 76 50 71 Q88 76 90 100Z" fill="#7F8C6B"/>
+    <rect x="44.5" y="60" width="11" height="13" rx="3" fill="#E6BFA3"/>
+    <path d="M41 71 L50 86 L35 82Z" fill="#8E9B79" stroke="#6B775A" stroke-width="1"/><path d="M59 71 L50 86 L65 82Z" fill="#8E9B79" stroke="#6B775A" stroke-width="1"/>
+    <circle cx="50" cy="93" r="1.6" fill="#A1887F"/>
+    <circle cx="29.5" cy="47" r="4" fill="#E6BFA3"/><circle cx="70.5" cy="47" r="4" fill="#E6BFA3"/><circle cx="29.3" cy="52.5" r="1.4" fill="#26A69A"/>
+    <ellipse cx="50" cy="45" rx="20.5" ry="23" fill="#F0CDB4"/>
+    <path d="M29.5 41 Q29 20 45 18.5 Q63 16.5 72 30 Q74 38 72.5 47 Q67 34 57 31 Q49 29 45 25.5 Q39 31 29.5 41Z" fill="#3B2A22"/>
+    <path d="M44.5 19.5 Q47 23 45.5 27" stroke="#A8A29E" stroke-width="1.6" fill="none"/><path d="M50 21 Q63 21 70 32" stroke="#5A463C" stroke-width="1.2" fill="none"/>
+    <circle cx="37" cy="54" r="3.3" fill="#F48FB1" opacity=".35"/><circle cx="63" cy="54" r="3.3" fill="#F48FB1" opacity=".35"/>
+    <g class="brow" stroke="#3B2A22" stroke-width="1.6" fill="none" stroke-linecap="round"><path d="M35 35.5 q5 -2.5 10 -0.5"/><path d="M55 35 q5 -2 10 0.5"/></g>
+    <circle cx="41" cy="44" r="2.2" fill="#4E342E"/><circle cx="59" cy="44" r="2.2" fill="#4E342E"/>
+    <path d="M50 46 q-2.2 5 0 6.2" stroke="#D49F82" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <rect class="lens" x="32" y="37.5" width="16.5" height="13.5" rx="6" stroke="#B98A70" stroke-width="1.2"/>
+    <rect class="lens" x="51.5" y="37.5" width="16.5" height="13.5" rx="6" stroke="#B98A70" stroke-width="1.2"/>
+    <path d="M48.5 42 q1.5 -1.6 3 0 M32 41 L28 40 M68 41 L72 40" stroke="#B98A70" stroke-width="1.1" fill="none"/>
+    <ellipse class="m m-talk" cx="50" cy="58.5" rx="3.6" ry="2.6" fill="#B5545C"/>
+    <path class="m m-happy" d="M43 56.5 Q50 63.5 57 56.5Z" fill="#B5545C"/>
+    <path class="m m-think" d="M45.5 59 h8" stroke="#B5545C" stroke-width="2" stroke-linecap="round"/>
+    <circle class="m m-wow" cx="50" cy="59" r="3.2" fill="#B5545C"/>
+    <path class="m m-hmm" d="M44 59.5 q3 -2.2 6 0 t6 0" stroke="#B5545C" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>`;
+  function spexBar(name) {
+    const bar = document.querySelector(`[data-spex="${name}"]`);
+    if (bar && !bar.firstChild) { bar.innerHTML = SPEX + `<div class="bubble" aria-live="polite"></div>`; }
+    return bar;
+  }
+  function say(name, html, mood = "talk", cls = "") {
+    const bar = spexBar(name); if (!bar) return;
+    bar.querySelector(".spex").dataset.mood = mood;
+    const b = bar.querySelector(".bubble"); b.className = "bubble" + (cls ? " " + cls : ""); b.innerHTML = html;
+  }
+  function spexZoom(name) {
+    const s = spexBar(name).querySelector(".spex"); s.classList.remove("zoom"); void s.getBoundingClientRect(); s.classList.add("zoom");
+    setTimeout(() => s.classList.remove("zoom"), 1600);
+  }
+
+  /* sound: off by default; tiny tones made in the browser */
+  let actx = null;
+  function beep(f, d, type = "sine", v = 0.06, when = 0) {
+    if (!P.sound) return;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + when;
+      o.type = type; o.frequency.value = f; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + d + 0.02);
+    } catch (e) {}
+  }
+  const SND = {
+    bond: () => { beep(880, 0.07, "square", 0.03); beep(1320, 0.08, "square", 0.025, 0.06); },
+    star: () => { beep(660, 0.12); beep(990, 0.18, "sine", 0.06, 0.1); },
+    tip: () => beep(250, 0.22, "triangle", 0.07),
+    pop: () => { beep(140, 0.25, "sawtooth", 0.08); beep(90, 0.3, "square", 0.05, 0.03); },
+    badge: () => [523, 659, 784, 1047].forEach((f, i) => beep(f, 0.18, "sine", 0.06, i * 0.11)),
+  };
+
+  /* progress: stars, badges, tasks – saved in this browser */
+  const STORE = "g7-ecm-v2";
+  const P = { stars: { explore: {}, build: {}, change: {}, quiz: {} }, badges: {},
+    name: "", hideSym: false, sound: false, seenIntro: false, quizRounds: 0 };
+  function save() { try { localStorage.setItem(STORE, JSON.stringify(P)); } catch (e) {} }
+  function load() {
+    try { const d = JSON.parse(localStorage.getItem(STORE) || "{}"); for (const k in d) if (k in P) P[k] = d[k]; for (const t in P.stars) P.stars[t] = P.stars[t] || {}; } catch (e) {}
+  }
+  const starsOf = (st) => (st.revealed ? 0 : st.mistakes ? 2 : 3);
+  const starsHTML = (n, of = 3) => `<span class="stars" aria-label="${n} stars">${"★".repeat(n)}<span class="off">${"★".repeat(Math.max(0, of - n))}</span></span>`;
+  const tabStars = (t) => Object.values(P.stars[t]).reduce((s, n) => s + n, 0);
+  const BADGES = [
+    { tab: "explore", em: "🔍", name: "Atom spotter", how: "Sort all 10 objects", got: () => OBJECTS.every((o) => o.id in P.stars.explore) },
+    { tab: "build", em: "🔗", name: "Bond builder", how: "Do all 4 building jobs", got: () => CHALLENGES.every((_, i) => ("c" + i) in P.stars.build) },
+    { tab: "change", em: "🕵️", name: "Change detective", how: "Finish all 4 experiment cards", got: () => XCARDS.every((c) => c.id in P.stars.change) },
+    { tab: "quiz", em: "🏆", name: "Quiz master", how: "Finish one quiz round", got: () => P.quizRounds >= 1 },
+  ];
+  function toast(msg) { const t = $("toast"); t.innerHTML = msg; t.classList.remove("on"); void t.offsetWidth; t.classList.add("on"); clearTimeout(toast.k); toast.k = setTimeout(() => t.classList.remove("on"), 3200); }
+  function refreshStars() {
+    let total = 0;
+    for (const t in P.stars) total += tabStars(t);
+    for (const [t, n] of [["explore", tabStars("explore") + tabStars("build")], ["change", tabStars("change")], ["quiz", tabStars("quiz")]]) {
+      const s = document.querySelector(`[data-ts="${t}"]`); if (s) s.textContent = n ? "★" + n : ""; }
+    $("starSum").textContent = "★ " + total;
+    for (const b of BADGES) if (!P.badges[b.tab] && b.got()) {
+      P.badges[b.tab] = new Date().toISOString().slice(0, 10);
+      toast(`${b.em} New badge: <b>${b.name}</b>!`); SND.badge();
+      say(currentTab(), `${b.em} You won the <b>${b.name}</b> badge! See 🏅 My badges.`, "happy", "good");
+    }
+    save();
+  }
+  function addStars(tab, id, n) {
+    P.stars[tab][id] = Math.max(P.stars[tab][id] ?? -1, n);
+    if (n) SND.star();
+    refreshStars();
+  }
+
+  /* questions: 1st wrong → a tip, 2nd wrong → the answer is shown */
+  function ask({ box, fb, opts, correct, tip, answer, good, cls = "cat", spex, onDone }) {
+    const st = { mistakes: 0, revealed: false, done: false };
+    box.replaceChildren();
+    const btns = opts.map(([v, html]) => {
+      const b = h(`<button class="${cls}" data-v="${v}">${html}</button>`);
+      b.addEventListener("click", () => pick(v, b)); box.appendChild(b); return b;
+    });
+    function finish() { st.done = true; btns.forEach((b) => (b.disabled = true)); onDone && onDone(st); }
+    function pick(v, b) {
+      if (st.done) return;
+      if (correct.includes(v)) {
+        b.classList.add("right");
+        fbSet(fb, "good", `✔ ${typeof good === "function" ? good(v) : good}`);
+        spex && say(spex, st.mistakes ? "Yes! You got it after the tip. ★★" : "Brilliant – right first time! ★★★", "happy", "good");
+        return finish();
+      }
+      st.mistakes++; b.classList.add("wrong"); b.disabled = true; SND.tip();
+      if (st.mistakes === 1) { fbSet(fb, "tip", "💡 Tip: " + tip(v)); spex && say(spex, "Hmm, not quite. Read my tip and try again!", "hmm", "tip"); }
+      else {
+        st.revealed = true;
+        btns.forEach((x) => correct.includes(x.dataset.v) && x.classList.add("right"));
+        fbSet(fb, "ans", "The answer: " + answer);
+        spex && say(spex, "Here is the answer – read why, and you'll get the next one!", "think", "ans");
+        finish();
+      }
+    }
+    return st;
+  }
+  function fbSet(e, cls, html) { e.className = "feedback " + cls; e.innerHTML = html; }
+
+  /* ============================ 6 EXPLORE ============================ */
+  // the diagram guide: 8 cards (also the first-visit intro and the Present mode)
+  const SLIDES = [
+    { title: "1 · The atom", spex: "Everything is made of tiny particles called <b>atoms</b>. My particle spectacles let me see them!",
+      figs: [{ items: [["C", 1, "gas"]], cap: "one carbon atom", W: 120, H: 90, R: 26 }, { items: [["Au", 1, "gas"]], cap: "one gold atom", W: 120, H: 90, R: 26 }],
+      bullets: ["An <b>atom</b> is the smallest particle of an element.", "Atoms are the building blocks of everything.",
+        "In our diagrams each type of atom has its own colour and letter."] },
+    { title: "2 · Element", spex: "An element has only <b>one type of atom</b>.",
+      figs: [{ items: [["He", 9, "gas"]], cap: "helium: single atoms", W: 220, H: 140 }, { items: [["O2", 7, "gas"]], cap: "oxygen: atoms joined in pairs", W: 220, H: 140 }],
+      bullets: ["An <b>element</b> contains only <b>one type of atom</b>.", "The atoms can be on their own (helium) or joined in pairs (oxygen, O₂) – it is still an element.",
+        "There are about 118 elements. They are all in the Periodic Table."] },
+    { title: "3 · Compound", spex: "Water! Two <b>different</b> types of atom chemically joined. Watch the bonds flash.", flash: true,
+      figs: [{ items: [["H2O", 8, "liquid"]], cap: "water, H₂O", W: 220, H: 140 }, { items: [["CO2", 6, "gas"]], cap: "carbon dioxide, CO₂", W: 220, H: 140 }],
+      bullets: ["A <b>compound</b> contains two or more <b>different types of atom chemically joined</b>.", "Every particle is the same.",
+        "A compound is a new substance: water is nothing like hydrogen or oxygen gas."] },
+    { title: "4 · Mixture", spex: "A mixture: different substances mixed together, but <b>not joined</b>.",
+      figs: [{ items: [["N2", 5, "gas"], ["O2", 3, "gas"]], cap: "air: nitrogen + oxygen", W: 220, H: 140, R: 10 }, { items: [["H2O", 8, "liquid"], ["NaCl", 2, "liquid"]], cap: "sea water: water + salt", W: 220, H: 140, R: 10 }],
+      bullets: ["A <b>mixture</b> contains two or more substances that are <b>not chemically joined</b>.", "You can see different kinds of particle in the box.",
+        "A mixture can be separated again, e.g. with a magnet, a filter or by evaporating."] },
+    { title: "5 · How to draw a particle diagram", spex: "Use these rules when you draw particles on your worksheet!",
+      figs: [{ items: [["H2O", 12, "solid"]], cap: "solid: neat rows", W: 160, H: 110, R: 9 }, { items: [["H2O", 9, "liquid"]], cap: "liquid: close, random", W: 160, H: 110, R: 9 },
+        { items: [["H2O", 6, "gas"]], cap: "gas: far apart", W: 160, H: 110, R: 9 }],
+      bullets: ["Draw a <b>box</b>. One circle = one atom. Same colour = same type of atom. Add a <b>key</b>.",
+        "Joined atoms <b>touch</b>. Particles that are not joined don't touch."] },
+    { title: "6 · Physical or chemical change?", spex: "The big question: <b>is a new substance made?</b>", table: true,
+      bullets: ["Physical change: the particles only move or mix – they stay the same.", "Chemical change: atoms join new partners – a new substance."] },
+  ];
+  function renderSlide(holder, i, big) {
+    const S = SLIDES[i];
+    const d = h(`<div class="slide"><h3>${S.title}</h3>${S.figs ? `<div class="sv"></div>` : ""}${S.table ? `<div class="flow"><div class="no"><b>🔄 Physical change</b></div><div class="yes"><b>⚗️ Chemical change</b></div>
+      <div class="no">No new substance</div><div class="yes">A new substance is made</div>
+      <div class="no">Easy to undo</div><div class="yes">Hard to undo</div>
+      <div class="no">e.g. melting, freezing, dissolving, mixing</div><div class="yes">e.g. burning, cooking, rusting</div></div>` : ""}
+      <ul>${S.bullets.map((b) => `<li>${b}</li>`).join("")}</ul></div>`);
+    (S.figs || []).forEach((f) => {
+      const fig = h(`<figure><div style="width:100%;display:grid;justify-items:center"></div>${f.cap}${f.note ? `<span>${f.note}</span>` : ""}</figure>`);
+      drawBox(fig.firstElementChild, f.items, { W: f.W, H: f.H, R: f.R || 11, flash: S.flash, seed: S.title + f.cap, px: big ? 1.45 : 1 });
+      d.querySelector(".sv").appendChild(fig);
+    });
+    holder.replaceChildren(d);
+    if (big) say("present", S.spex, "talk");
+  }
+  let gi = 0, pi = 0;
+  function showGuide(i) { gi = Math.max(0, Math.min(SLIDES.length - 1, i)); renderSlide($("guideSlide"), gi); $("gPg").textContent = `${gi + 1} / ${SLIDES.length}`;
+    $("gPrev").disabled = gi === 0; $("gNext").disabled = gi === SLIDES.length - 1; }
+  function showPresent(i) { pi = Math.max(0, Math.min(SLIDES.length - 1, i)); renderSlide($("presentSlide"), pi, true); $("pPg").textContent = `${pi + 1} / ${SLIDES.length}`;
+    $("pPrev").disabled = pi === 0; $("pNext").textContent = pi === SLIDES.length - 1 ? "Start exploring ✔" : "Next →"; }
+  function openPresent(i = 0) { $("present").classList.add("on"); showPresent(i); }
+  $("gPrev").addEventListener("click", () => showGuide(gi - 1));
+  $("gNext").addEventListener("click", () => showGuide(gi + 1));
+  $("presentBtn").addEventListener("click", () => openPresent(gi));
+  $("pPrev").addEventListener("click", () => showPresent(pi - 1));
+  $("pNext").addEventListener("click", () => { if (pi === SLIDES.length - 1) closeOv("present"); else showPresent(pi + 1); });
+  document.addEventListener("keydown", (e) => {
+    if (!$("present").classList.contains("on")) return;
+    if (e.key === "ArrowRight" || e.key === "PageDown" || (e.key === " " && e.target === document.body)) { e.preventDefault(); if (pi < SLIDES.length - 1) showPresent(pi + 1); }
+    if (e.key === "ArrowLeft" || e.key === "PageUp") showPresent(pi - 1);
+  });
+
+  // the zoom shelf
+  let obj = null, zst = null;
+  function renderShelf() {
+    $("shelf").innerHTML = OBJECTS.map((o) => {
+      const s = P.stars.explore[o.id];
+      return `<button class="obj" data-o="${o.id}" aria-pressed="${obj && obj.id === o.id}"><span class="em">${o.em}</span><span>${o.name}</span><span class="st">${s !== undefined ? "★".repeat(s) || "✓" : ""}</span></button>`;
+    }).join("");
+  }
+  $("shelf").addEventListener("click", (e) => { const b = e.target.closest("[data-o]"); if (b) selectObj(b.dataset.o); });
+  function selectObj(id) {
+    obj = OBJECTS.find((o) => o.id === id); zst = null;
+    renderShelf();
+    $("zEm").textContent = obj.em; $("zName").textContent = obj.name; $("zNote").textContent = obj.note || "";
+    $("zLens").classList.add("off"); $("zCover").hidden = false; $("zAsk").hidden = true; $("zDid").hidden = true; $("zNext").hidden = true;
+    $("zFb").className = "feedback"; $("zFb").innerHTML = "";
+    $("zBox").replaceChildren();
+    say("explore", `${obj.em} <b>${obj.name}</b>. What do you think is inside? Press <b>👓 Put on the particle spectacles</b>!`, "talk");
+  }
+  $("zBtn").addEventListener("click", () => {
+    if (!obj) return;
+    spexZoom("explore");
+    drawBox($("zBox"), obj.items, { W: 320, H: 200, R: 14, big: true, seed: obj.id, label: "particles in " + obj.name });
+    requestAnimationFrame(() => $("zLens").classList.remove("off"));
+    $("zCover").hidden = true; $("zAsk").hidden = false;
+    say("explore", "Look closely: how many <b>kinds</b> of particle? Are the atoms in each particle the <b>same</b> or <b>different</b>? Then choose below.", "wow");
+    const right = classify(obj.items);
+    zst = ask({ box: $("zCats"), fb: $("zFb"), spex: "explore",
+      opts: CATS.map((c) => [c.id, `${c.name}<small>${c.sub}</small>`]), correct: [right],
+      tip: (v) => catTip(v, right), answer: explain(obj.items), good: () => explain(obj.items),
+      onDone: (st) => {
+        addStars("explore", obj.id, starsOf(st)); renderShelf();
+        if (obj.did) { $("zDid").hidden = false; $("zDid").innerHTML = "💡 <b>Did you know?</b> " + obj.did; }
+        $("zNext").hidden = false;
+      } });
+  });
+  $("zNext").addEventListener("click", () => {
+    const list = OBJECTS;
+    const next = list.find((o) => !(o.id in P.stars.explore) && o.id !== obj.id) || list[(list.indexOf(obj) + 1) % list.length];
+    selectObj(next.id);
+  });
+
+  /* ============================ 7 BUILD ============================ */
+  const BW = 480, BH = 300, BR = 17;
+  const B = { atoms: [], bonds: new Set(), next: 1, sel: null, pal: null, mode: "chal", ci: 0, cst: null };
+  const rOf = (s) => ATOMS[s].r * BR;
+  const bk = (a, b) => (a < b ? a + "-" + b : b + "-" + a);
+  const byId = (id) => B.atoms.find((a) => a.id === id);
+  function recipeBonds(id) {
+    const at = SUBS[id].atoms, out = [];
+    for (let i = 0; i < at.length; i++) for (let j = i + 1; j < at.length; j++)
+      if (Math.hypot(at[i][1] - at[j][1], at[i][2] - at[j][2]) < (ATOMS[at[i][0]].r + ATOMS[at[j][0]].r) * 0.95) out.push([i, j]);
+    return out;
+  }
+  function groupsB() {
+    const seen = new Set(), out = [];
+    for (const a of B.atoms) {
+      if (seen.has(a.id)) continue;
+      const g = [], stack = [a]; seen.add(a.id);
+      while (stack.length) {
+        const x = stack.pop(); g.push(x);
+        for (const y of B.atoms) if (!seen.has(y.id) && B.bonds.has(bk(x.id, y.id))) { seen.add(y.id); stack.push(y); }
+      }
+      out.push(g);
+    }
+    return out;
+  }
+  const groupOf = (id) => groupsB().find((g) => g.some((a) => a.id === id));
+  function kindInfo(key, syms) {
+    const types = new Set(syms).size, subId = SUBKEY[key];
+    const name = subId ? SUBS[subId].name : EXTRAKEY[key] || null;
+    return { key, types, natoms: syms.length, el: syms[0], real: !!name, name, subId };
+  }
+  function infoB() {
+    const kinds = {};
+    for (const g of groupsB()) {
+      const syms = g.map((a) => a.sym), key = fkey(syms);
+      (kinds[key] = kinds[key] || { ...kindInfo(key, syms), count: 0 }).count++;
+    }
+    const list = Object.values(kinds);
+    return { kinds: list, total: list.reduce((s, k) => s + k.count, 0), cat: classifyKinds(list) };
+  }
+  function fakeMsg(k) {
+    const nm = ATOMS[k.el].name;
+    if (k.types === 1 && k.natoms === 1) return `Single ${nm} atoms don't stay on their own – ${nm} comes as ${k.el}<sub>2</sub>. Drop another ${k.el} on it.`;
+    if (k.key.match(/He|Ne|Ar/) && k.natoms > 1) return "Helium, neon and argon atoms don't join with any other atoms.";
+    if (k.types === 1 && ["Fe", "Mg", "Na", "Au", "Cu"].includes(k.el)) return `${nm[0].toUpperCase() + nm.slice(1)} atoms don't make small molecules – in the metal they sit in neat rows on their own.`;
+    if (k.types === 1 && ["H", "N", "Cl", "O"].includes(k.el)) return `By its pattern it would be an element – but ${sub(k.key)} doesn't exist: ${nm} comes as ${k.el}<sub>2</sub>.`;
+    return `By its pattern it would be ${k.types === 1 ? "an element" : "a compound"} – but Marie doesn't know ${sub(k.key)}. Most made-up groups of atoms don't exist in real life.`;
+  }
+  const kindName = (k) => (k.real ? `${k.name} (${sub(k.key)})` : `${sub(k.key)} ⚠`);
+  const CATWORDS = { el: "an ELEMENT", comp: "a COMPOUND", mix: "a MIXTURE" };
+
+  const svgB = $("bCanvas");
+  function renderB() {
+    svgB.replaceChildren();
+    groupsB().forEach((g) => {
+      const gg = el("g", { class: "bgroup" + (B.sel && g.some((a) => a.id === B.sel) ? " sel" : "") }, svgB), lab = el("g", {});
+      const nb = (a) => g.filter((b) => B.bonds.has(bk(a.id, b.id))).length;   // the most-bonded (centre) atom is drawn last
+      g.slice().sort((a, b) => nb(a) - nb(b)).forEach((a) => { const ag = atomG(a.sym, BR, gg, a.x, a.y, lab); ag.dataset.aid = a.id; ag.style.cursor = "grab"; });
+      gg.appendChild(lab);
+    });
+    if (!B.atoms.length) { const t = el("text", { x: BW / 2, y: BH / 2, "text-anchor": "middle", fill: "#90A4AE", "font-size": 16 }, svgB); t.textContent = "Drag atoms here"; }
+    ["bCopy", "bDel"].forEach((id) => ($(id).disabled = !B.sel));
+    readout();
+  }
+  function readout() {
+    const I = infoB();
+    if (!I.total) { $("bRead").innerHTML = `<span class="hint">The box is empty. Drag atoms in – drop one atom on another to join them.</span>`; return; }
+    const fakes = I.kinds.filter((k) => !k.real);
+    $("bRead").innerHTML = `<div><b>In the box:</b> ${I.kinds.map((k) => `${k.count} × ${kindName(k)}`).join(" · ")}</div>
+      <div class="cat-out">→ ${CATWORDS[I.cat][0].toUpperCase() + CATWORDS[I.cat].slice(1)}</div>
+      ${fakes.map((k) => `<div class="warn">⚠ ${fakeMsg(k)}</div>`).join("")}`;
+  }
+  const svgPt = (x, y) => { const p = svgB.createSVGPoint(); p.x = x; p.y = y; const q = p.matrixTransform(svgB.getScreenCTM().inverse()); return [q.x, q.y]; };
+  const inside = (x, y) => { const r = svgB.getBoundingClientRect(); return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom; };
+  function overlapsAny(x, y, r, skip) { return B.atoms.some((a) => !skip.includes(a.id) && Math.hypot(a.x - x, a.y - y) < (r + rOf(a.sym)) * 0.82); }
+
+  function placeAtom(sym, x, y) {
+    const r = rOf(sym); let near = null, nd = 1e9;
+    for (const a of B.atoms) { const d = Math.hypot(a.x - x, a.y - y); if (d < (r + rOf(a.sym)) * 1.25 && d < nd) { nd = d; near = a; } }
+    const id = B.next++;
+    if (near) {
+      const d = (r + rOf(near.sym)) * 0.66, base = Math.atan2(y - near.y, x - near.x) || 0;
+      let pos = null;
+      for (const k of [0, 1, -1, 2, -2, 3, -3, 4, -4, 5, -5, 6]) {
+        const ang = base + (k * Math.PI) / 6, px = near.x + d * Math.cos(ang), py = near.y + d * Math.sin(ang);
+        if (!overlapsAny(px, py, r, [near.id])) { pos = [px, py]; break; }
+      }
+      pos = pos || [near.x + d * Math.cos(base), near.y + d * Math.sin(base)];
+      B.atoms.push({ id, sym, x: pos[0], y: pos[1] }); B.bonds.add(bk(id, near.id));
+      SND.bond(); normalize(id, true);
+    } else B.atoms.push({ id, sym, x: Math.max(r, Math.min(BW - r, x)), y: Math.max(r, Math.min(BH - r, y)) });
+    separate(); B.sel = null; renderB();
+    if (near) flashAt(id);
+  }
+  function flashAt(id) { const g = groupOf(id); if (!g) return; const cx = g.reduce((s, a) => s + a.x, 0) / g.length, cy = g.reduce((s, a) => s + a.y, 0) / g.length;
+    const rr = Math.max(...g.map((a) => Math.hypot(a.x - cx, a.y - cy) + rOf(a.sym))); el("circle", { class: "flash", cx, cy, r: rr + 2 }, svgB); }
+  // a real particle snaps into its usual shape and Marie names it
+  function normalize(id, talk) {
+    const g = groupOf(id); if (!g || g.length < 2) return;
+    const key = fkey(g.map((a) => a.sym)), sid = SUBKEY[key];
+    if (sid && SUBS[sid].atoms.length === g.length) {
+      const cx = g.reduce((s, a) => s + a.x, 0) / g.length, cy = g.reduce((s, a) => s + a.y, 0) / g.length, used = new Set(), slot = [];
+      SUBS[sid].atoms.forEach(([s, dx, dy]) => {
+        let best = null, bd = 1e9;
+        g.forEach((a) => { if (!used.has(a.id) && a.sym === s) { const d = Math.hypot(a.x - cx - dx * BR, a.y - cy - dy * BR); if (d < bd) { bd = d; best = a; } } });
+        used.add(best.id); best.x = cx + dx * BR; best.y = cy + dy * BR; slot.push(best.id);
+      });
+      g.forEach((a) => g.forEach((b) => B.bonds.delete(bk(a.id, b.id))));
+      recipeBonds(sid).forEach(([i, j]) => B.bonds.add(bk(slot[i], slot[j])));
+      if (talk) say("build", `✨ That's <b>${SUBS[sid].name}</b>, ${sub(key)}!`, "wow");
+    } else if (talk && EXTRAKEY[key]) say("build", `✨ That's <b>${EXTRAKEY[key]}</b>, ${sub(key)}!`, "wow");
+  }
+  // particles that are not joined must not touch: push them apart, and keep them in the box
+  function separate() {
+    for (let it = 0; it < 60; it++) {
+      const gs = groupsB(); let moved = false;
+      for (let i = 0; i < gs.length; i++) for (let j = i + 1; j < gs.length; j++) {
+        let worst = 0, va = null;
+        for (const a of gs[i]) for (const b of gs[j]) {
+          const d = Math.hypot(a.x - b.x, a.y - b.y), need = rOf(a.sym) + rOf(b.sym) + 4;
+          if (need - d > worst) { worst = need - d; va = d > 0.01 ? [(a.x - b.x) / d, (a.y - b.y) / d] : [Math.random() - 0.5, Math.random() - 0.5]; }
+        }
+        if (worst > 0) { moved = true; const k = worst / 2 + 0.5; gs[i].forEach((a) => { a.x += va[0] * k; a.y += va[1] * k; }); gs[j].forEach((b) => { b.x -= va[0] * k; b.y -= va[1] * k; }); }
+      }
+      for (const g of gs) {
+        const x0 = Math.min(...g.map((a) => a.x - rOf(a.sym))), x1 = Math.max(...g.map((a) => a.x + rOf(a.sym)));
+        const y0 = Math.min(...g.map((a) => a.y - rOf(a.sym))), y1 = Math.max(...g.map((a) => a.y + rOf(a.sym)));
+        const dx = x0 < 0 ? -x0 : x1 > BW ? BW - x1 : 0, dy = y0 < 0 ? -y0 : y1 > BH ? BH - y1 : 0;
+        if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) { g.forEach((a) => { a.x += dx; a.y += dy; }); moved = true; }
+      }
+      if (!moved) break;
+    }
+  }
+  function addParticle(sid, cx, cy) {
+    const ids = SUBS[sid].atoms.map(([s, dx, dy]) => { const id = B.next++; B.atoms.push({ id, sym: s, x: cx + dx * BR, y: cy + dy * BR }); return id; });
+    recipeBonds(sid).forEach(([i, j]) => B.bonds.add(bk(ids[i], ids[j])));
+  }
+  function loadExample(list) {
+    B.atoms = []; B.bonds = new Set(); B.sel = null;
+    place(list.map(([id, n]) => [id, n, "gas"]), BW, BH, BR, "ex" + JSON.stringify(list)).forEach((p) => addParticle(p.sub, p.cx, p.cy));
+    separate(); renderB();
+  }
+
+  // dragging in the box (moves a whole particle; drop it on another particle to join them) or tapping
+  let drag = null;
+  svgB.addEventListener("pointerdown", (e) => {
+    const [x, y] = svgPt(e.clientX, e.clientY), t = e.target.closest(".atom");
+    if (!t) { drag = { empty: true, x, y }; return; }
+    const g = groupOf(+t.dataset.aid);
+    drag = { aid: +t.dataset.aid, g, x, y, orig: g.map((a) => [a.x, a.y]), moved: false };
+    svgB.setPointerCapture(e.pointerId);
+  });
+  svgB.addEventListener("pointermove", (e) => {
+    if (!drag || drag.empty) return;
+    const [x, y] = svgPt(e.clientX, e.clientY);
+    if (!drag.moved && Math.hypot(x - drag.x, y - drag.y) < 5) return;
+    drag.moved = true;
+    drag.g.forEach((a, i) => { a.x = drag.orig[i][0] + x - drag.x; a.y = drag.orig[i][1] + y - drag.y; });
+    renderB();
+  });
+  svgB.addEventListener("pointerup", (e) => {
+    if (!drag) return;
+    const d = drag; drag = null;
+    const [x, y] = svgPt(e.clientX, e.clientY);
+    if (d.empty) { if (B.pal) placeAtom(B.pal, x, y); else { B.sel = null; renderB(); } return; }
+    if (!d.moved) {
+      if (B.pal) { const a = byId(d.aid); placeAtom(B.pal, a.x + 1, a.y); return; }
+      B.sel = B.sel && d.g.some((a) => a.id === B.sel) ? null : d.aid; renderB(); return;
+    }
+    // join with the nearest other particle?
+    let best = null, bd = 1e9;
+    for (const a of d.g) for (const b of B.atoms) {
+      if (d.g.includes(b)) continue;
+      const dd = Math.hypot(a.x - b.x, a.y - b.y);
+      if (dd < (rOf(a.sym) + rOf(b.sym)) * 1.15 && dd < bd) { bd = dd; best = [a, b]; }
+    }
+    if (best) {
+      const [a, b] = best, want = (rOf(a.sym) + rOf(b.sym)) * 0.66, ux = (a.x - b.x) / (bd || 1), uy = (a.y - b.y) / (bd || 1);
+      const sx = b.x + ux * want - a.x, sy = b.y + uy * want - a.y;
+      d.g.forEach((q) => { q.x += sx; q.y += sy; });
+      B.bonds.add(bk(a.id, b.id)); SND.bond(); normalize(a.id, true);
+    }
+    separate(); renderB(); if (best) flashAt(best[0].id);
+  });
+  svgB.addEventListener("pointercancel", () => { drag = null; });
+
+  // the atom palette: drag into the box, or tap then tap the box
+  function renderPalette() {
+    $("palette").replaceChildren();
+    for (const s of BUILD_ATOMS) {
+      const b = h(`<button class="atomBtn" data-sym="${s}" aria-label="${ATOMS[s].name} atom"><svg viewBox="-20 -20 40 40"></svg>${ATOMS[s].name}</button>`);
+      atomG(s, 17 / ATOMS[s].r * 0.95, b.querySelector("svg"));
+      b.addEventListener("pointerdown", (e) => {
+        if (e.button > 0) return;
+        const sx = e.clientX, sy = e.clientY; let ghost = null;
+        b.setPointerCapture(e.pointerId);
+        const move = (ev) => {
+          if (!ghost && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 7) { ghost = b.querySelector("svg").cloneNode(true); ghost.classList.add("drag-ghost"); ghost.style.width = ghost.style.height = "44px"; document.body.appendChild(ghost); }
+          if (ghost) { ghost.style.left = ev.clientX + "px"; ghost.style.top = ev.clientY + "px"; svgB.classList.toggle("hot", inside(ev.clientX, ev.clientY)); }
+        };
+        const up = (ev) => {
+          b.removeEventListener("pointermove", move); b.removeEventListener("pointerup", up); b.removeEventListener("pointercancel", up);
+          svgB.classList.remove("hot");
+          if (!ghost) { if (ev.type === "pointerup") { B.pal = B.pal === s ? null : s; markPal(); if (B.pal) say("build", `Now tap in the box to add a <b>${ATOMS[s].name}</b> atom. Tap on another atom to join them.`, "talk"); } return; }
+          ghost.remove();
+          if (ev.type === "pointerup" && inside(ev.clientX, ev.clientY)) { const [x, y] = svgPt(ev.clientX, ev.clientY); placeAtom(s, x, y); }
+        };
+        b.addEventListener("pointermove", move); b.addEventListener("pointerup", up); b.addEventListener("pointercancel", up);
+      });
+      b.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); placeAtom(s, 40 + Math.random() * (BW - 80), 40 + Math.random() * (BH - 80)); } });
+      $("palette").appendChild(b);
+    }
+  }
+  const markPal = () => document.querySelectorAll(".atomBtn").forEach((x) => x.classList.toggle("sel", x.dataset.sym === B.pal));
+
+  $("bClear").addEventListener("click", () => { B.atoms = []; B.bonds = new Set(); B.sel = null; renderB(); });
+  $("bDel").addEventListener("click", () => { const g = groupOf(B.sel); if (!g) return; const ids = g.map((a) => a.id); B.atoms = B.atoms.filter((a) => !ids.includes(a.id)); B.sel = null; renderB(); });
+  $("bCopy").addEventListener("click", () => {
+    const g = groupOf(B.sel); if (!g) return;
+    const cx = g.reduce((s, a) => s + a.x, 0) / g.length, cy = g.reduce((s, a) => s + a.y, 0) / g.length;
+    const rad = Math.max(...g.map((a) => Math.hypot(a.x - cx, a.y - cy) + rOf(a.sym)));
+    for (let k = 0; k < 3; k++) {
+      let spot = null;
+      for (let t = 0; t < 300 && !spot; t++) {
+        const x = rad + Math.random() * (BW - 2 * rad), y = rad + Math.random() * (BH - 2 * rad);
+        if (B.atoms.every((a) => Math.hypot(a.x - x, a.y - y) > rad + rOf(a.sym) + 6)) spot = [x, y];
+      }
+      spot = spot || [rad + Math.random() * (BW - 2 * rad), rad + Math.random() * (BH - 2 * rad)];
+      const map = {};
+      g.forEach((a) => { const id = B.next++; map[a.id] = id; B.atoms.push({ id, sym: a.sym, x: a.x - cx + spot[0], y: a.y - cy + spot[1] }); });
+      g.forEach((a) => g.forEach((b) => { if (B.bonds.has(bk(a.id, b.id))) B.bonds.add(bk(map[a.id], map[b.id])); }));
+    }
+    separate(); renderB();
+  });
+
+  // the 4 building jobs
+  function showChal(i) {
+    B.ci = i; B.cst = { mistakes: 0, revealed: false, done: false };
+    const ch = CHALLENGES[i];
+    $("cTitle").textContent = `Job ${i + 1} of ${CHALLENGES.length}`;
+    $("cTask").innerHTML = ch.text; $("cFb").className = "feedback"; $("cFb").innerHTML = "";
+    $("cNext").hidden = true; $("cCheck").disabled = false;
+    $("cDots").innerHTML = CHALLENGES.map((_, k) => { const s = P.stars.build["c" + k]; return `<span class="dot${k === i ? " now" : ""}${s > 0 ? " done" : s === 0 ? " zero" : ""}">${k + 1}</span>`; }).join("");
+    say("build", `Job ${i + 1}: ${ch.text} Then press <b>✔ Check my diagram</b>.`, "talk");
+  }
+  function chalProblem(ch, I) {
+    const fakes = I.kinds.filter((k) => !k.real);
+    if (fakes.length) return "Some of your particles don't exist in real life: " + fakes.map((k) => sub(k.key)).join(", ") + ". " + fakeMsg(fakes[0]);
+    if (ch.only) { if (I.kinds.length !== 1 || I.kinds[0].key !== ch.only) return `You made ${CATWORDS[I.cat]}. Water is H₂O: one O with two H joined to it.`; if (I.total < ch.min) return `Build at least ${ch.min} particles (⧉ Copy ×3 helps).`; return null; }
+    if (I.cat !== ch.cat) return `You made ${CATWORDS[I.cat]}, but the job asks for ${CATWORDS[ch.cat]}.`;
+    if (I.total < ch.min) return `Build at least ${ch.min} particles (⧉ Copy ×3 helps).`;
+    return null;
+  }
+  $("cCheck").addEventListener("click", () => {
+    const st = B.cst, ch = CHALLENGES[B.ci]; if (st.done) return;
+    const I = infoB();
+    if (!I.total) { fbSet($("cFb"), "info", "Build something in the box first!"); return; }
+    const prob = chalProblem(ch, I);
+    if (!prob) {
+      st.done = true; fbSet($("cFb"), "good", `✔ Yes! You built ${CATWORDS[I.cat]}: ${I.kinds.map((k) => `${k.count} × ${kindName(k)}`).join(" · ")}. ${starsHTML(starsOf(st))}`);
+      say("build", st.mistakes ? "You got it after the tip! ★★" : "Perfect – right first time! ★★★", "happy", "good");
+      return chalDone(st);
+    }
+    st.mistakes++; SND.tip();
+    if (st.mistakes === 1) { fbSet($("cFb"), "tip", `💡 Tip: ${prob} ${ch.tip}`); say("build", "Not quite yet – read my tip, change your diagram and check again!", "hmm", "tip"); }
+    else {
+      st.revealed = true; st.done = true; loadExample(ch.example);
+      fbSet($("cFb"), "ans", `The answer: here is one diagram that works – ${ch.example.map(([id, n]) => `${n} × ${subLabel(id)}`).join(" + ")}. Look at it, then go on.`);
+      say("build", "Here is one way to do it. Study it – you'll get the next one!", "think", "ans");
+      chalDone(st);
+    }
+  });
+  function chalDone(st) {
+    addStars("build", "c" + B.ci, starsOf(st)); $("cCheck").disabled = true;
+    $("cNext").hidden = false; $("cNext").textContent = B.ci < CHALLENGES.length - 1 ? "Next job →" : "↺ Start the jobs again";
+    $("cDots").innerHTML = CHALLENGES.map((_, k) => { const s = P.stars.build["c" + k]; return `<span class="dot${k === B.ci ? " now" : ""}${s > 0 ? " done" : s === 0 ? " zero" : ""}">${k + 1}</span>`; }).join("");
+  }
+  $("cNext").addEventListener("click", () => { B.atoms = []; B.bonds = new Set(); B.sel = null; renderB(); showChal((B.ci + 1) % CHALLENGES.length); });
+
+  /* ============================ 8 CHANGE ============================ */
+  // "what you see": a simple drawing of the test tube / jar / beaker
+  function drawSee(svg, s) {
+    svg.replaceChildren();
+    const glass = { fill: "none", stroke: "#78909C", "stroke-width": 3, "stroke-linejoin": "round" };
+    const dots = (x0, y0, x1, y1, n, c, r, seed) => { const R = rng(seed); for (let i = 0; i < n; i++) el("circle", { cx: x0 + R() * (x1 - x0), cy: y0 + R() * (y1 - y0), r, fill: c }, svg); };
+    const heap = (cx, w, c, y = 170) => el("path", { d: `M${cx - w} ${y} Q${cx} ${y - w * 0.9} ${cx + w} ${y}Z`, fill: c, stroke: "rgba(0,0,0,.2)" }, svg);
+    let floor = 170;
+    if (s.v === "jar") {
+      if (s.gas) el("rect", { x: 62, y: 32, width: 116, height: 146, rx: 10, fill: s.gas, opacity: 0.8 }, svg);
+      el("path", { d: "M60 30 L60 168 Q60 180 72 180 L168 180 Q180 180 180 168 L180 30", ...glass }, svg);
+      el("rect", { x: 52, y: 22, width: 136, height: 8, rx: 3, fill: "#B0BEC5" }, svg);
+      floor = 176;
+    } else if (s.v === "tube") {
+      el("path", { d: "M98 18 L98 150 Q98 172 120 172 Q142 172 142 150 L142 18", ...glass }, svg);
+      floor = 168;
+    } else if (s.v === "beaker") {
+      const top = s.low ? 140 : 95;
+      if (s.liquid) el("path", { d: `M54 ${top} L54 172 Q54 178 60 178 L180 178 Q186 178 186 172 L186 ${top}Z`, fill: s.liquid, opacity: 0.85 }, svg);
+      el("path", { d: "M44 44 L52 52 L52 172 Q52 180 60 180 L180 180 Q188 180 188 172 L188 48", ...glass }, svg);
+      floor = 176;
+    } else if (s.v === "dish") {
+      el("path", { d: "M30 140 Q120 200 210 140", fill: "#ECEFF1", stroke: "#78909C", "stroke-width": 3 }, svg);
+      floor = 160;
+    } else if (s.v === "bunsen") {
+      el("rect", { x: 80, y: 182, width: 80, height: 12, rx: 3, fill: "#546E7A" }, svg);
+      el("rect", { x: 111, y: 110, width: 18, height: 74, fill: "#90A4AE", stroke: "#546E7A" }, svg);
+      el("rect", { x: 106, y: 160, width: 28, height: 10, fill: "#78909C" }, svg);
+      el("path", { d: "M60 20 L60 52 Q60 58 66 58 L174 58 Q180 58 180 52 L180 20", ...glass }, svg);
+      if (s.fx === "blue") {
+        el("path", { d: "M120 108 C100 92 108 72 120 62 C132 72 140 92 120 108Z", fill: "#42A5F5", opacity: 0.85, class: "flame" }, svg);
+        el("path", { d: "M120 106 C112 96 114 86 120 80 C126 86 128 96 120 106Z", fill: "#BBDEFB" }, svg);
+        dots(66, 40, 174, 56, 14, "#64B5F6", 2.2, "drops");
+      }
+    }
+    if (s.piles) { if (s.piles[0]) heap(80, 34, s.piles[0], floor - 10); if (s.piles[1]) heap(160, 34, s.piles[1], floor - 10); }
+    if (s.speck) { const cx = s.v === "tube" ? 120 : 120, w = s.v === "tube" ? 20 : 60; heap(cx, w, s.speck[0], floor - (s.v === "tube" ? 0 : 10)); dots(cx - w * 0.7, floor - w * 0.6, cx + w * 0.7, floor - 4, s.v === "tube" ? 18 : 60, s.speck[1], 1.8, "sp"); }
+    if (s.lump) el("ellipse", { cx: 120, cy: floor - 10, rx: s.v === "tube" ? 16 : 24, ry: 11, fill: s.lump, stroke: "rgba(0,0,0,.3)" }, svg);
+    if (s.ribbon) el("path", { d: `M95 ${floor - 4} Q120 ${floor - 30} 150 ${floor - 4}`, fill: "none", stroke: s.ribbon, "stroke-width": 6, "stroke-linecap": "round" }, svg);
+    if (s.powder) heap(120, 40, s.powder, floor);
+    if (s.crystals) for (let i = 0; i < 9; i++) el("rect", { x: 85 + i * 8, y: floor - 8 - (i % 3) * 3, width: 7, height: 7, fill: "#fff", stroke: "#90A4AE" }, svg);
+    if (s.ice) [[70, 120], [110, 132], [150, 118], [92, 150], [134, 152]].forEach(([x, y]) => el("rect", { x, y, width: 30, height: 26, rx: 4, fill: "#E1F5FE", stroke: "#81D4FA", "stroke-width": 2 }, svg));
+    if (s.drops) dots(64, 40, 176, 170, 22, "#64B5F6", 2.6, "drops");
+    if (s.magnet !== undefined) {
+      el("path", { d: "M92 6 L92 34 Q92 60 120 60 Q148 60 148 34 L148 6 L134 6 L134 34 Q134 46 120 46 Q106 46 106 34 L106 6Z", fill: "#E53935", stroke: "#B71C1C" }, svg);
+      el("rect", { x: 92, y: 2, width: 14, height: 8, fill: "#CFD8DC" }, svg); el("rect", { x: 134, y: 2, width: 14, height: 8, fill: "#CFD8DC" }, svg);
+      if (s.magnet) { dots(88, 10, 110, 22, 12, s.magnet, 2, "m1"); dots(130, 10, 152, 22, 12, s.magnet, 2, "m2"); }
+    }
+    const fx = s.fx;
+    if (fx === "glow" || fx === "glowsmall") el("ellipse", { cx: 120, cy: floor - 12, rx: fx === "glow" ? 30 : 22, ry: 16, fill: "#FF6D00", opacity: 0.75, class: "flash", style: "animation:flash 1.2s ease-in-out 3" }, svg);
+    if (fx === "white" || fx === "yellow") {
+      const c = fx === "white" ? "#FFFFFF" : "#FFD600";
+      el("circle", { cx: 120, cy: floor - 22, r: 34, fill: c, opacity: 0.9, stroke: fx === "white" ? "#FFF59D" : "#FFAB00", "stroke-width": 6 }, svg);
+      for (let i = 0; i < 12; i++) { const a = (i * Math.PI) / 6; el("line", { x1: 120 + 38 * Math.cos(a), y1: floor - 22 + 38 * Math.sin(a), x2: 120 + 52 * Math.cos(a), y2: floor - 22 + 52 * Math.sin(a), stroke: fx === "white" ? "#FFF176" : "#FFAB00", "stroke-width": 3 }, svg); }
+    }
+    if (fx === "pop") { const t = el("text", { x: 120, y: 100, "text-anchor": "middle", "font-size": 34, "font-weight": 800, fill: "#E65100" }, svg); t.textContent = "POP!"; }
+    if (fx === "smell" || fx === "steam") for (let i = 0; i < 3; i++) el("path", { d: `M${95 + i * 25} ${fx === "steam" ? 40 : 60} q6 -8 0 -16 q-6 -8 0 -16`, fill: "none", stroke: fx === "steam" ? "#B0BEC5" : "#9575CD", "stroke-width": 3, "stroke-linecap": "round" }, svg);
+  }
+
+  let xc = null, xs = "start", xbox = null, xbusy = false, xq = null;
+  const NOOP = { mix: "You stir. Nothing new happens.", heat: "You heat it. It gets warm, but nothing new is made.",
+    cool: "You cool it. Nothing new happens.", magnet: "You hold a magnet near it. Nothing is attracted." };
+  function renderXList() {
+    const st = (id) => { const s = P.stars.change[id]; return s !== undefined ? "★".repeat(s) || "✓" : ""; };
+    $("xList").innerHTML = XCARDS.map((c) => `<button class="xcard" data-x="${c.id}" aria-pressed="${xc && xc.id === c.id}"><span class="em">${c.em}</span><span>${c.title}</span><span class="st">${st(c.id)}</span></button>`).join("");
+  }
+  $("xList").addEventListener("click", (e) => { const b = e.target.closest("[data-x]"); if (b) selectCard(b.dataset.x); });
+  function selectCard(id) {
+    xc = XCARDS.find((c) => c.id === id); xs = "start"; xbusy = false; xq = null;
+    renderXList();
+    $("xTitle").textContent = xc.em + " " + xc.title;
+    $("xSafety").hidden = !xc.safety; $("xSafety").innerHTML = "⚠ <b>Safety:</b> " + (xc.safety || "");
+    const S = xc.states.start;
+    drawSee($("xSee"), S.see);
+    xbox = drawBox($("xBox"), S.items, { seed: xc.id + "start", label: "particles" });
+    $("xObs").innerHTML = "👀 " + S.txt;
+    $("xQs").replaceChildren();
+    const acts = ACTS.concat(xc.magnet ? [["magnet", "🧲 Magnet test"]] : []);
+    $("xActs").innerHTML = acts.map(([a, n]) => `<button class="btn" data-act="${a}">${n}</button>`).join("") + `<button class="btn small" data-act="reset">↺ Start again</button>`;
+    say("change", `${xc.title}. Choose what to do – and watch <b>both</b> pictures: what you see, and the particles through my spectacles.`, "talk");
+  }
+  $("xActs").addEventListener("click", (e) => { const b = e.target.closest("[data-act]"); if (b) doAct(b.dataset.act); });
+  function doAct(a) {
+    if (!xc || xbusy) return;
+    if (a === "reset") return selectCard(xc.id);
+    const o = (xc.acts[xs] || {})[a];
+    if (!o) { $("xObs").innerHTML = "👀 " + (xc.noop || NOOP[a]); say("change", "Nothing new… try something else!", "think"); return; }
+    $("xObs").innerHTML = "👀 " + o.txt;
+    if (!o.go) { say("change", o.txt, "think"); return; }
+    const ns = xc.states[o.go], to = place(ns.items, 300, 190, 11, xc.id + o.go);
+    xbusy = true;
+    const finish = () => {
+      xbusy = false; xs = o.go;
+      $("xObs").innerHTML = "👀 " + o.txt + " " + ns.txt;
+      if (o.key && !xq) showXQ();
+    };
+    if (o.react) {
+      drawSee($("xSee"), ns.see); if (ns.see.fx === "pop") SND.pop();
+      say("change", "Look at the particles! The bonds break and the atoms join <b>new partners</b>…", "wow");
+      animChem(xbox, to, finish);
+    } else {
+      drawSee($("xSee"), ns.see);
+      say("change", "Watch the particles: are they the <b>same particles</b>, just moving?", "wow");
+      animPhys(xbox, to, finish);
+    }
+  }
+  // one question: physical or chemical? Then Marie explains why
+  function showXQ() {
+    const c = xc, chem = c.kind === "chem";
+    $("xQs").replaceChildren();
+    const row = h(`<div class="qrow"><div class="qt">Is this a physical or a chemical change?</div><div class="opts"></div><div class="feedback"></div></div>`);
+    $("xQs").appendChild(row);
+    const answer = (chem ? "a <b>chemical change</b>: the atoms joined new partners – a new substance. " : "a <b>physical change</b>: the same particles, no new substance. ") + c.why;
+    xq = ask({ box: row.querySelector(".opts"), fb: row.querySelector(".feedback"), opts: [["phys", "🔄 Physical change"], ["chem", "⚗️ Chemical change"]], correct: [c.kind],
+      tip: () => chem ? "Look at the particles: did the atoms join new partners? Is there a new substance?" : "Look at the particles: are they still the same particles, only moved around?",
+      answer, good: c.why, spex: "change",
+      onDone: (st) => {
+        const n = starsOf(st); addStars("change", c.id, n); renderXList();
+        say("change", n === 3 ? "Brilliant detective work! ★★★ Try another card." : "Card done! Try another card – or this one again for more stars.", "happy", "good");
+      } });
+    row.scrollIntoView({ block: "nearest", behavior: reduced() ? "auto" : "smooth" });
+  }
+
+  /* ============================ 10 QUIZ ============================ */
+  let QL = [], qi = 0, QR = [], firstRound = true;
+  function newRound() {
+    if (firstRound) { QL = FIRST_ROUND.map((id) => QBANK.find((q) => q.id === id)); firstRound = false; }
+    else {
+      QL = [];
+      for (const [t, n] of Object.entries(ROUND_MIX)) QL.push(...shuffle(QBANK.filter((q) => q.t === t)).slice(0, n));   // diagrams first, then changes
+    }
+    qi = 0; QR = [];
+    $("quizCard").hidden = false; $("qEnd").hidden = true;
+    loadQ();
+  }
+  function qDots() {
+    $("qDots").innerHTML = QL.map((_, k) => { const r = QR[k]; return `<span class="dot${k === qi ? " now" : ""}${r ? (r.n > 0 ? " done" : " zero") : ""}">${k + 1}</span>`; }).join("");
+  }
+  function loadQ() {
+    const q = QL[qi], body = $("qBody");
+    $("qTitle").textContent = `Question ${qi + 1} of ${QL.length}`; qDots();
+    $("qFb").className = "feedback"; $("qFb").innerHTML = ""; $("qNext").hidden = true; body.replaceChildren();
+    const done = (label) => (st) => {
+      QR[qi] = { label, n: starsOf(st) }; qDots();
+      $("qNext").hidden = false; $("qNext").textContent = qi < QL.length - 1 ? "Next question →" : "See my result →";
+    };
+    const optsBox = () => { const d = h(`<div class="cats"></div>`); body.appendChild(d); return d; };
+    if (q.t === "cat") {
+      body.appendChild(h(`<p class="qtext">What is in this box?</p>`));
+      const holder = h(`<div></div>`); body.appendChild(holder); drawBox(holder, q.items, { W: 320, H: 200, R: 14, big: true, seed: q.id });
+      const right = classify(q.items);
+      ask({ box: optsBox(), fb: $("qFb"), spex: "quiz", opts: CATS.map((c) => [c.id, `${c.name}<small>${c.sub}</small>`]), correct: [right],
+        tip: (v) => catTip(v, right), answer: explain(q.items), good: () => explain(q.items), onDone: done("Particle diagram: " + catName(right)) });
+      say("quiz", "Look at the colours, and at which atoms touch (are joined).", "talk");
+    } else if (q.t === "chg") {
+      body.appendChild(h(`<div style="text-align:center"><div style="font-size:3.4rem;line-height:1.1">${q.em}</div><p class="qtext">${q.text}</p><p class="hint">Is this a physical or a chemical change?</p></div>`));
+      ask({ box: optsBox(), fb: $("qFb"), spex: "quiz", opts: [["phys", "🔄 Physical change"], ["chem", "⚗️ Chemical change"]], correct: [q.ans],
+        tip: () => "Is a new substance made? Can it be undone easily?", answer: `<b>${q.ans === "chem" ? "Chemical" : "Physical"} change</b>. ${q.why}`,
+        good: `<b>${q.ans === "chem" ? "Chemical" : "Physical"} change</b>. ${q.why}`, onDone: done(q.text) });
+      say("quiz", "Think: is a new substance made?", "talk");
+    }
+  }
+  $("qNext").addEventListener("click", () => { if (qi < QL.length - 1) { qi++; loadQ(); } else endQuiz(); });
+  function endQuiz() {
+    const right = QR.filter((r) => r.n === 3).length, stars = QR.reduce((s, r) => s + r.n, 0);
+    $("quizCard").hidden = true; $("qEnd").hidden = false;
+    $("qEndScore").textContent = `${right}/${QL.length}`; $("qEndStars").textContent = `★ ${stars}`;
+    $("qEndMsg").textContent = stars >= 43 ? "Outstanding! You really know your elements, compounds and mixtures." : stars >= 32 ? "Well done! Look at the questions without ★★★ again." : "Good try! Go back to the Diagram guide in Explore, then play again.";
+    $("qReview").innerHTML = QR.map((r, k) => `<li><span>${k + 1}. ${r.label}</span>${starsHTML(r.n)}</li>`).join("");
+    P.quizRounds++; addStars("quiz", "best", stars);
+    say("quiz", `Round finished: <b>★ ${stars}</b> out of 48!`, "happy", "good");
+  }
+  $("qAgain").addEventListener("click", newRound);
+
+  /* ============================ 12 UI ============================ */
+  const TABS = ["explore", "change", "quiz"];
+  let curTab = "explore", sub1 = "explore";   // tab 1 has two parts: explore (look and sort) and build
+  function currentTab() { return curTab === "explore" ? sub1 : curTab; }
+  function showTab(which) {
+    if (which === "build") { sub1 = "build"; which = "explore"; }
+    curTab = which;
+    for (const t of TABS) $("tab-" + t).setAttribute("aria-selected", t === which);
+    $("explore").hidden = which !== "explore" || sub1 !== "explore"; $("build").hidden = which !== "explore" || sub1 !== "build";
+    $("change").hidden = which !== "change"; $("quiz").hidden = which !== "quiz";
+    if (which === "explore" && sub1 === "build") { renderB(); if (!B.cst) showChal(0); }
+    if (which === "change" && !xc) selectCard(XCARDS[0].id);
+    if (which === "quiz" && !QL.length) newRound();
+  }
+  for (const t of TABS) $("tab-" + t).addEventListener("click", () => showTab(t));
+  document.querySelectorAll("[data-sub]").forEach((b) => b.addEventListener("click", () => {
+    sub1 = b.dataset.sub; document.querySelectorAll("[data-sub]").forEach((x) => x.setAttribute("aria-pressed", x.dataset.sub === sub1)); showTab("explore");
+  }));
+  function closeOv(id) { $(id).classList.remove("on"); if (id === "present" && !P.seenIntro) { P.seenIntro = true; save(); } }
+  document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => closeOv(b.dataset.close)));
+  document.querySelectorAll(".overlay").forEach((o) => o.addEventListener("click", (e) => { if (e.target === o) closeOv(o.id); }));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { document.querySelectorAll(".overlay.on").forEach((o) => closeOv(o.id)); } });
+  $("helpBtn").addEventListener("click", () => $("help").classList.add("on"));
+  $("soundBtn").addEventListener("click", () => { P.sound = !P.sound; save(); markSound(); if (P.sound) SND.star(); });
+  const markSound = () => { $("soundBtn").setAttribute("aria-pressed", P.sound); $("soundBtn").textContent = P.sound ? "🔊 Sound" : "🔇 Sound"; };
+  $("hideSym").addEventListener("change", (e) => { P.hideSym = e.target.checked; document.body.classList.toggle("nosym", P.hideSym); save(); });
+
+  // certificate and badges
+  function renderCert() {
+    $("certName").value = P.name || "";
+    $("certWho").textContent = P.name || "Your name";
+    const total = Object.keys(P.stars).reduce((s, t) => s + tabStars(t), 0);
+    $("certStars").innerHTML = `<b style="font-size:1.4rem;color:var(--star)">★ ${total}</b> stars<br><span class="hint">Look and sort ★${tabStars("explore")} · Build ★${tabStars("build")} · Change ★${tabStars("change")} · Quiz ★${tabStars("quiz")}</span>`;
+    $("certBadges").innerHTML = BADGES.map((b) => `<div class="badge${P.badges[b.tab] ? " on" : ""}"><span class="em">${b.em}</span><b>${b.name}</b><span>${P.badges[b.tab] ? "won " + P.badges[b.tab] : b.how}</span></div>`).join("");
+    $("certDate").textContent = "Elements, compounds and mixtures · Grade 7 · " + new Date().toLocaleDateString();
+  }
+  $("certBtn").addEventListener("click", () => { renderCert(); $("certOv").classList.add("on"); });
+  $("certName").addEventListener("input", (e) => { P.name = e.target.value.slice(0, 40); $("certWho").textContent = P.name || "Your name"; save(); });
+  $("certPrint").addEventListener("click", () => window.print());
+  $("resetAll").addEventListener("click", () => {
+    if (!confirm("Delete all your stars, badges and task answers in this browser?")) return;
+    try { localStorage.removeItem(STORE); } catch (e) {}
+    location.reload();
+  });
+
+  // colour key
+  const USED = new Set(BUILD_ATOMS.concat(["C", "Au"]));   // only the atoms that appear somewhere in the sim
+  const addUsed = (items) => items.forEach(([id]) => SUBS[id].atoms.forEach(([sym]) => USED.add(sym)));
+  OBJECTS.forEach((o) => addUsed(o.items)); QBANK.filter((q) => q.items).forEach((q) => addUsed(q.items));
+  XCARDS.forEach((c) => Object.values(c.states).forEach((st) => addUsed(st.items)));
+  $("keyAtoms").innerHTML = Object.entries(ATOMS).filter(([s]) => USED.has(s)).map(([s, a]) => `<span class="k"><svg viewBox="-12 -12 24 24"><circle r="10.5" fill="${a.c}" stroke="rgba(38,50,56,.55)"/><text fill="${a.t}" font-size="${s.length > 1 ? 9 : 11}" font-weight="700" text-anchor="middle" dominant-baseline="central">${s}</text></svg>${a.name}</span>`).join("");
+
+  // start
+  load();
+  document.body.classList.toggle("nosym", P.hideSym); $("hideSym").checked = P.hideSym; markSound();
+  ["explore", "build", "change", "quiz"].forEach((t) => spexBar(t)); spexBar("present");
+  renderShelf(); showGuide(0); renderPalette(); renderB(); showChal(0); renderXList(); refreshStars();
+  selectObj("gold");
+  say("explore", "Hi, I'm <b>Marie</b>! With my particle spectacles I can see the atoms inside everything. Choose an object and zoom in with me!", "happy");
+  if (!P.seenIntro) openPresent(0);
+
+  // for the automatic tests only
+  window.__ECM = { ATOMS, SUBS, OBJECTS, REACTIONS, XCARDS, QBANK, FIRST_ROUND, CHALLENGES, classify, fkey, SUBKEY, EXTRAKEY,
+    place, matchAtoms, infoB, B, placeAtom, loadExample, P, showTab, selectCard, doAct, selectObj, typesOf, isMolecule };
+})();
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
