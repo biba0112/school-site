@@ -170,13 +170,13 @@ a.vbtn{background:#C62828;color:#fff}
 <header>
   <div>
     <h1>IB DP Physics SL/HL</h1>
-    <p><a href="../../" style="color:#fff">← All grades</a> · Grade 11 and 12 · Simulations, Quizzes, Videos, Exercises</p>
+    <p><a href="../../" style="color:#fff">← All grades</a> · Grade 11 and 12 · Simulations, Quizzes, Videos, Test yourself</p>
   </div>
   <div class="hbar"><div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
   </div>
 </header>
 <!-- ---- theme accordion ---- -->
-<p class="start-hint" id="start-hint">Open a theme, then choose simulations, quizzes, videos or exercises for a topic.</p>
+<p class="start-hint" id="start-hint">Open a theme, then choose simulations, quizzes, videos or test yourself for a topic.</p>
 <div class="themes" id="themes"></div>
 <p class="foot-note">Works in any modern browser on laptops, Chromebooks, tablets and phones. Once opened, the simulation keeps
     working without internet.</p>
@@ -466,7 +466,7 @@ a.vbtn{background:#C62828;color:#fff}
       <a class="thumb" href="22-efficiency-energy-density/" title="Open the simulation"><img src="22-efficiency-energy-density/thumb.webp" width="120" height="75" loading="lazy" alt="Efficiency and energy density simulation"></a>
     </div>
   </div>
-  <h2 class="block" id="quizzes" data-block="quiz">Quizzes — test yourself</h2>
+  <h2 class="block" id="quizzes" data-block="quiz">Quizzes</h2>
   <p class="lead" data-block="quiz">Practised the simulations and worksheets? 10 multiple-choice questions per quiz, with instant feedback and an explanation for every answer.</p>
   <h2 class="theme-h" id="q-themeA" data-block="quiz" data-theme="A" style="--tc:#2055A3"><span class="L">A</span>Theme A — Space, time and motion</h2>
   <h3 class="group" id="q-A1" data-block="quiz" data-topic="A1" style="--tc:#2055A3">A.1 Kinematics</h3>
@@ -1074,7 +1074,7 @@ a.vbtn{background:#C62828;color:#fff}
     <div class="row"><a class="btn vbtn" href="https://www.youtube.com/@AndyMasley/search?query=fusion%20stars" target="_blank" rel="noopener">▶ Watch the lessons</a></div>
   </div>
   <!-- ---- end lesson cards ---- -->
-  <h2 class="block" id="exercises" data-block="exercise">Exercises — practise the calculations</h2>
+  <h2 class="block" id="exercises" data-block="exercise">Test yourself — practise the calculations</h2>
   <p class="lead" data-block="exercise">24 calculation exercises per topic in three IB levels: Level 1 (Paper 1 style, one step), Level 2 (multi-step) and Level 3 (Paper 2 structured, with marks). Type your answer for instant marking, hints and worked solutions; ↻ New numbers lets you practise again.</p>
   <h2 class="theme-h" id="e-themeA" data-block="exercise" data-theme="A" style="--tc:#2055A3"><span class="L">A</span>Theme A — Space, time and motion</h2>
   <h3 class="group" id="e-A1" data-block="exercise" data-topic="A1" style="--tc:#2055A3">A.1 Kinematics</h3>
@@ -1114,9 +1114,9 @@ a.vbtn{background:#C62828;color:#fff}
 <script>/* ---- theme accordion (JS, 17 Oct 2026): one bar per theme; subtopic lines with 4 kind buttons; the cards from <main> open under the line ---- */
 (function(){
   const THEMES = [["A", "Space, time and motion", "#2055A3", [["A1", "Kinematics", 0], ["A2", "Forces and momentum", 0], ["A3", "Work, energy and power", 0], ["A4", "Rigid body mechanics", 1], ["A5", "Galilean and special relativity", 1]]], ["B", "The particulate nature of matter", "#1F982E", [["B1", "Thermal energy transfers", 0], ["B2", "Greenhouse effect", 0], ["B3", "Gas laws", 0], ["B4", "Thermodynamics", 1], ["B5", "Current and circuits", 0]]], ["C", "Wave behaviour", "#62347C", [["C1", "Simple harmonic motion", 0], ["C2", "Wave model", 0], ["C3", "Wave phenomena", 0], ["C4", "Standing waves and resonance", 0], ["C5", "Doppler effect", 0]]], ["D", "Fields", "#DF3528", [["D1", "Gravitational fields", 0], ["D2", "Electric and magnetic fields", 0], ["D3", "Motion in electromagnetic fields", 0], ["D4", "Induction", 1]]], ["E", "Nuclear and quantum physics", "#D72D6C", [["E1", "Structure of the atom", 0], ["E2", "Quantum physics", 1], ["E3", "Radioactive decay", 0], ["E4", "Fission", 0], ["E5", "Fusion and stars", 0]]]];
-  // kind, label, label for 1, short label (phones), sign, hash suffix
+  // kind, label, label for 1, short label (phones), sign, hash suffix; "exercise" is shown as "Test yourself" (teacher, 26 Oct 2026)
   const KINDS = [["sim", "Simulations", "Simulation", "Sims", "▶", ""], ["quiz", "Quizzes", "Quiz", "Quizzes", "✔", "-quizzes"],
-                 ["video", "Videos", "Videos", "Videos", "▶", "-videos"], ["exercise", "Exercises", "Exercises", "Exerc.", "✎", "-exercises"]];
+                 ["video", "Videos", "Videos", "Videos", "▶", "-videos"], ["exercise", "Test yourself", "Test yourself", "Test yourself", "✎", "-exercises"]];
   const esc = t => String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const code = k => k[0] + "." + k[1];
   const main = document.querySelector("main"), box = document.getElementById("themes");
@@ -1136,7 +1136,7 @@ a.vbtn{background:#C62828;color:#fff}
     const n = kind => topics.reduce((a, [k]) => a + of(kind, k).length, 0), sum = [];
     if (n("sim")) sum.push(many(n("sim"), "simulation", "simulations"));
     if (n("quiz")) sum.push(many(n("quiz"), "quiz", "quizzes"));
-    if (n("exercise")) sum.push(many(n("exercise"), "exercise set", "exercise sets"));
+    if (n("exercise")) sum.push(many(n("exercise"), "test yourself set", "test yourself sets"));
     h += '<section class="th" id="th-' + L + '" style="--tc:' + col + '"><h2 class="th-h"><button type="button" class="th-bar" id="thb-' + L +
       '" aria-expanded="false" aria-controls="thp-' + L + '"><span class="L">' + L + '</span><span class="tx"><span class="tn"><span class="tw">Theme ' + L +
       ' — </span>' + esc(tname) + '</span><span class="sum">' + (sum.length ? sum.join(" · ") : "video lessons · more coming soon") +

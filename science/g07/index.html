@@ -81,11 +81,10 @@ footer{max-width:1100px;margin:0 auto;padding:4px 16px 28px;color:var(--muted);f
 .st-name{margin:0;display:flex;align-items:center;gap:8px;min-width:0;font-size:1rem;line-height:1.25;color:var(--ink)}
 .st-name .code{flex:none;min-width:38px;text-align:center;font-weight:800;font-size:.88rem;color:#fff;background:var(--tc);border-radius:5px;padding:2px 6px}
 .st-name .nm{font-weight:700}
-.kbs{display:grid;grid-template-columns:repeat(4,9.6rem);gap:8px}
+.kbs{display:grid;grid-template-columns:repeat(3,9.6rem);gap:8px}
 .kb{display:flex;align-items:center;justify-content:center;gap:5px;min-height:44px;padding:6px 8px;border:2px solid var(--tc);border-radius:9px;
   background:#fff;color:var(--tc);font-weight:700;font-size:.88rem;line-height:1.15;text-decoration:none;white-space:nowrap}
 .kb.k-sim{background:var(--tc);color:#fff;box-shadow:0 2px 0 rgba(0,0,0,.18)}
-.kb.k-worksheet{border-style:dashed}
 a.kb:hover,a.kb.on{background:color-mix(in srgb,var(--tc) 12%,#fff)}
 a.kb.k-sim:hover,a.kb.k-sim.on{background:var(--tc);filter:brightness(1.1)}
 a.kb.on{box-shadow:0 0 0 3px #fff,0 0 0 5px var(--tc)}
@@ -97,7 +96,7 @@ a.kb:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 .st-panel{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;padding:6px 0 16px}
 @media (max-width:1099px){
   .st-line{grid-template-columns:1fr}
-  .kbs{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .kbs{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 @media (max-width:1023px){
   .th-bar .tx{flex-direction:column;align-items:flex-start}
@@ -138,7 +137,7 @@ a.kb:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
   <div class="credit">Biljana Taneska · Science teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
 </header>
 <!-- ---- subject accordion ---- -->
-<p class="start-hint">Open a subject, then choose simulations, quizzes, worksheets or study guides for a unit.</p>
+<p class="start-hint">Open a subject, then choose simulations, study guides or test yourself for a unit.</p>
 <div class="subjects" id="subjects"></div>
 <!-- ---- end subject accordion ---- -->
 <main>
@@ -170,7 +169,7 @@ a.kb:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
     </div>
   </div>
   <div class="card" style="--sc:#6A1B9A">
-    <span class="tag">Quiz · Unit 1</span>
+    <span class="tag">Test yourself · Unit 1</span>
     <h2><svg class="ic" aria-hidden="true"><use href="#ic-quiz"/></svg>Revision quiz: Chemistry</h2>
     <p>20 questions on the whole unit: particles and changes, acids, alkalis and the pH scale, neutralisation and salts. Test mode: you see your score and all the answers at the end.</p>
     <div class="row">
@@ -188,21 +187,23 @@ a.kb:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
   </div>
 </main>
 <footer>Works in any modern browser on laptops, Chromebooks, tablets and phones.</footer>
-<script>/* ---- subject accordion (JS, 24 Oct 2026, adapted from the DP theme accordion): one bar per subject; unit lines with 4 kind buttons; the cards from <main> open under the line ---- */
+<script>/* ---- subject accordion (JS, 24 Oct 2026, adapted from the DP theme accordion): one bar per subject; unit lines with 3 kind buttons; the cards from <main> open under the line ---- */
 (function(){
   // [key, name, colour, icon, [[unit, title], …]] in teaching order; CURRENT = the subject open on arrival
   const SUBJECTS = [["chemistry", "Chemistry", "#6A1B9A", "ic-chemistry", [["1", "Chemistry's Secrets Unlocked"]]], ["biology", "Biology", "#2E7D32", "ic-biology", [["2", "The Secrets of a Long Life"]]], ["physics", "Physics", "#2055A3", "ic-physics", [["3", "The Secret Forces"]]], ["skills", "Science skills", "#1F3A5F", "ic-skills", [["S", "Graphs, data, variables and lab reports"]]]];
   const CURRENT = "chemistry";
-  // kind, label, label for 1, short label (phones), sign, hash suffix
-  const KINDS = [["sim", "Simulations", "Simulation", "Sims", "▶", "-sims"], ["quiz", "Quizzes", "Quiz", "Quizzes", "✔", "-quizzes"],
-                 ["worksheet", "Worksheets", "Worksheet", "Sheets", "✎", "-worksheets"], ["guide", "Study guides", "Study guide", "Guides", "📘", "-guides"]];
+  // kind, label, label for 1, short label (phones), sign, hash suffix, summary words (1, more)
+  // order and names (teacher, 26 Oct 2026): Simulations · Study guides · Test yourself (was "Quizzes"; Worksheets removed)
+  const KINDS = [["sim", "Simulations", "Simulation", "Sims", "▶", "-sims", "simulation", "simulations"],
+                 ["guide", "Study guides", "Study guide", "Guides", "📘", "-guides", "study guide", "study guides"],
+                 ["quiz", "Test yourself", "Test yourself", "Test yourself", "✔", "-quizzes", "test", "tests"]];
   const esc = t => String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
   const hk = u => u === "S" ? "skills" : "u" + u;   // hash name of a unit line
   const main = document.querySelector("main"), box = document.getElementById("subjects");
   // cards: kind and unit from the tag text ("Simulation · Unit 1", "Study guide · Science skills"), so new cards need no extra attributes
   const cards = [...main.querySelectorAll(".card")];
   cards.forEach(c => { const t = ((c.querySelector(".tag") || {}).textContent || "").toLowerCase(); let m;
-    if (!c.dataset.kind) c.dataset.kind = /^quiz/.test(t) ? "quiz" : /^worksheet/.test(t) ? "worksheet" : /^study guide/.test(t) ? "guide" : "sim";
+    if (!c.dataset.kind) c.dataset.kind = /^(quiz|test yourself)/.test(t) ? "quiz" : /^study guide/.test(t) ? "guide" : "sim";
     if (!c.dataset.unit) c.dataset.unit = /science skills/.test(t) ? "S" : (m = t.match(/unit (\d+)/)) ? m[1] : ""; });
   const of = (kind, u) => cards.filter(c => c.dataset.kind === kind && c.dataset.unit === u);
   const SUBJ = {}; SUBJECTS.forEach(([key, name, col, icon, units]) => units.forEach(([u]) => SUBJ[u] = key));
@@ -212,7 +213,7 @@ a.kb:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
   let h = "";
   SUBJECTS.forEach(([key, name, col, icon, units]) => {
     const sum = [];
-    KINDS.forEach(([kind, lab, one]) => { const n = units.reduce((a, [u]) => a + of(kind, u).length, 0); if (n) sum.push(many(n, one.toLowerCase(), lab.toLowerCase())); });
+    KINDS.forEach(([kind, , , , , , w1, wn]) => { const n = units.reduce((a, [u]) => a + of(kind, u).length, 0); if (n) sum.push(many(n, w1, wn)); });
     h += '<section class="th" id="th-' + key + '" style="--tc:' + col + '"><h2 class="th-h"><button type="button" class="th-bar" id="thb-' + key +
       '" aria-expanded="false" aria-controls="thp-' + key + '"><span class="L"><svg class="ic" aria-hidden="true"><use href="#' + icon + '"/></svg></span><span class="tx"><span class="tn">' +
       esc(name) + '</span><span class="sum">' + (sum.length ? sum.join(" · ") : "coming soon") +
@@ -239,10 +240,10 @@ a.kb:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
   // ---------- state: one subject open, at most one panel; the hash names it ----------
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let S = {subj: null, unit: null, kind: null};
-  function parse(hash){   // #chemistry · #u1 · #u1-sims · #u1-quizzes · #u1-worksheets · #u1-guides · #skills…
+  function parse(hash){   // #chemistry · #u1 · #u1-sims · #u1-guides · #u1-quizzes (Test yourself) · #skills… (old #u1-worksheets: the unit's subject)
     const raw = decodeURIComponent((hash || "").replace(/^#/, "")); let m;
     if ((m = raw.match(/^(?:u(\d+)|(skills))(?:-(sims|quizzes|worksheets|guides))?$/))){
-      const u = m[1] || "S", kind = m[3] ? KINDS.find(x => x[5] === "-" + m[3])[0] : null;
+      const u = m[1] || "S", kind = m[3] ? (KINDS.find(x => x[5] === "-" + m[3]) || [null])[0] : null;
       if (SUBJ[u]) return {subj: SUBJ[u], unit: kind && document.getElementById("sp-" + u + "-" + kind) ? u : null, kind: kind && document.getElementById("sp-" + u + "-" + kind) ? kind : null};
     }
     if (document.getElementById("th-" + raw)) return {subj: raw, unit: null, kind: null};
