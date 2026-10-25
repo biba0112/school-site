@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Revision Quiz Chemistry</title>
+<!--
+  IB MYP 2 Sciences · Grade 7 · Chemistry Unit 1 Chemistry's Secrets Unlocked — revision quiz, 20 questions (1 mark each).
+  Test mode: no feedback until the end; then score, section scores, every answer with the right answer, a short
+  explanation and a link to the simulation that practises it. First round = the printed order (the PDF and the TEACHER key
+  use it); "Try again" shuffles. Best score in localStorage "g7-rev-chem-v1". Built from one question bank (scratchpad
+  quiz/bank.py) together with the printable PDF and the TEACHER answer key. Self-contained, works offline.
+-->
+<style>
+:root{--navy:#1F3A5F;--accent:#E65100;--ink:#263238;--muted:#606A72;--bg:#F2F5F9;--line:#DDE6F0;--sunk:#EEF2F7;--ok:#2E7D32;--bad:#C62828;--focus:#1565C0;--star:#F9A825}
+*{box-sizing:border-box}[hidden]{display:none!important}
+html{font-size:18px;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:1rem/1.45 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif;min-height:100dvh;display:flex;flex-direction:column}
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);display:flex;align-items:center;gap:12px;padding:8px 16px;flex-wrap:wrap}
+header h1{font-size:1.25rem;margin:0;font-weight:600}
+header .sub{font-size:.85rem;opacity:.85}
+header .sub a{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55)}
+header .grow{flex:1}
+.credit{text-align:right;font-size:.74rem;line-height:1.3;opacity:.92;white-space:nowrap}
+.credit a{color:#fff}
+main{flex:1;width:100%;max-width:960px;margin:0 auto;padding:14px 16px 24px;display:grid;gap:12px;align-content:start}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:grid;gap:12px}
+h2{margin:0;color:var(--navy);font-size:22px}
+.btn{font:inherit;font-size:20px;border:1px solid #B0BEC5;background:#fff;color:var(--ink);border-radius:10px;min-height:48px;padding:6px 16px;cursor:pointer}
+.btn:hover{border-color:var(--navy)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.controls{display:flex;flex-wrap:wrap;gap:10px;justify-content:space-between;align-items:center}
+.word{font:inherit;font-size:20px;min-height:46px;padding:4px 10px;border:1px solid #B0BEC5;border-radius:8px;width:min(100%,340px)}
+.rules{margin:0;padding-left:1.2em;display:grid;gap:4px;font-size:19px}
+.sec{font-size:15px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--accent)}
+.qnum{font-size:15px;color:var(--muted);font-weight:700}
+.qtext{font-size:21px;font-weight:600}
+.fig{display:grid;justify-items:center;gap:6px;overflow-x:auto}
+.pbox{max-width:100%;height:auto}
+.akey{display:flex;gap:16px;font-size:15px;color:var(--muted)}
+.akey span{display:flex;align-items:center;gap:5px}
+.swatch{flex:none;width:96px;height:96px;border-radius:50%;border:3px solid rgba(0,0,0,.15)}
+.uichart{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:2px;width:min(100%,560px)}
+.uichart div{color:#fff;font-weight:700;text-align:center;font-size:15px;padding:6px 0;border-radius:4px;text-shadow:0 1px 2px rgba(0,0,0,.45)}
+.uilab{display:flex;justify-content:space-between;width:min(100%,560px);font-size:15px;color:var(--muted);font-weight:700}
+.chip{display:inline-block;width:18px;height:18px;border-radius:4px;vertical-align:-3px;border:1px solid rgba(0,0,0,.2)}
+table.data{border-collapse:collapse;font-size:18px;max-width:100%}
+table.data th,table.data td{border:1px solid #B0BEC5;padding:5px 10px;text-align:left}
+table.data th{background:#F7F9FC;color:var(--navy)}
+.opts{display:grid;gap:8px}
+.opt{font:inherit;font-size:20px;text-align:left;border:2px solid #CFD8DC;background:#fff;border-radius:10px;padding:8px 12px;min-height:52px;cursor:pointer;display:flex;gap:10px;align-items:center}
+.opt .l{flex:none;width:32px;height:32px;border-radius:50%;background:var(--sunk);display:grid;place-items:center;font-weight:700}
+.opt[aria-pressed="true"]{border-color:var(--navy);background:#E3F2FD}
+.opt[aria-pressed="true"] .l{background:var(--navy);color:#fff}
+.tfrow{display:flex;gap:10px;flex-wrap:wrap}.tfrow .opt{flex:1 1 160px;justify-content:center;font-weight:700}
+.gaptext{font-size:21px;line-height:2.4}
+select{font:inherit;font-size:19px;min-height:44px;padding:2px 8px;border:2px solid #90A4AE;border-radius:8px;background:#FFFDE7;max-width:100%}
+select.set{border-color:var(--navy);background:#E3F2FD}
+.mrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto);gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:6px 0;font-size:20px}
+@media (max-width:560px){.mrow{grid-template-columns:1fr}}
+.olist{list-style:none;margin:0;padding:0;display:grid;gap:8px;counter-reset:o}
+.olist li{display:flex;gap:10px;align-items:center;border:2px solid #CFD8DC;border-radius:10px;padding:6px 8px;font-size:19px;background:#fff}
+.olist li::before{counter-increment:o;content:counter(o);flex:none;width:32px;height:32px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:700}
+.olist li span{flex:1}
+.olist button{font:inherit;font-size:18px;width:44px;height:44px;border:1px solid #B0BEC5;border-radius:8px;background:#fff;cursor:pointer}
+.olist button:disabled{opacity:.3}
+.hint{font-size:16px;color:var(--muted)}
+.dots{display:flex;flex-wrap:wrap;gap:5px}
+.dot{font:inherit;width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:#fff;font-size:15px;font-weight:700;color:var(--muted);cursor:pointer}
+.dot.ans{background:#90CAF9;border-color:#90CAF9;color:#0D47A1}
+.dot.now{border-color:var(--navy);color:var(--navy);box-shadow:0 0 0 2px var(--navy)}
+.score{font-size:3rem;font-weight:700;color:var(--navy);line-height:1}
+.review{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.review li{border:1px solid var(--line);border-left:6px solid var(--ok);border-radius:10px;padding:8px 12px;display:grid;gap:4px;font-size:18px}
+.review li.no{border-left-color:var(--bad)}
+.review .h{font-weight:700}
+.review .why{color:var(--ink);background:var(--sunk);border-radius:8px;padding:4px 8px}
+.review a{color:var(--focus)}
+.banner{background:#FFF8E1;border-left:5px solid var(--star);border-radius:8px;padding:8px 12px;font-size:18px}
+footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px;text-align:center}
+@media (max-width:759px){header h1{font-size:1.05rem}.credit{order:3;flex-basis:100%;text-align:left;font-size:.7rem}.credit br{display:none}.credit a{margin-left:6px}}
+@media print{header,footer,.noprint{display:none!important}body{background:#fff}main{max-width:none;padding:0}.card{border:none;padding:0}.review li{break-inside:avoid}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Revision quiz: Chemistry</h1><div class="sub"><a href="https://school.taneski.com/science/g07/#chemistry">← All Grade 7 science</a> · IB MYP 2 · Unit 1 Chemistry's Secrets Unlocked</div></div>
+  <div class="grow"></div>
+  <div class="credit">Biljana Taneska · Science teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
+</header>
+<main>
+  <section class="card" id="intro">
+    <h2>Revision quiz: the whole Chemistry unit</h2>
+    <ul class="rules">
+      <li><b>20 questions</b>, 1 mark each: A · Particles, changes and separating (7) · B · Acids, alkalis and the pH scale (7) · C · Neutralisation and salts (6).</li>
+      <li>Different kinds of questions: choose an answer, true or false, fill the gap, match, and put steps in order.</li>
+      <li>This is a <b>test</b>: you see your score and all the answers <b>at the end</b>. You can go back and change answers before you finish.</li>
+      <li>When you finish, show your result to your teacher (or press 🖨 Print / save as PDF).</li>
+    </ul>
+    <label style="font-size:20px">Your name: <input class="word" id="name" autocomplete="off" maxlength="40"></label>
+    <div><button class="btn primary" id="start">▶ Start the quiz</button></div>
+  </section>
+  <section class="card" id="test" hidden>
+    <div class="controls"><div class="dots" id="dots"></div><span class="hint" id="count"></span></div>
+    <div id="qbox" style="display:grid;gap:12px"></div>
+    <div class="controls">
+      <button class="btn" id="prev">← Back</button>
+      <button class="btn" id="finish">Finish the test</button>
+      <button class="btn primary" id="next">Next →</button>
+      <button class="btn primary" id="finish2" hidden>Finish the test ✔</button>
+    </div>
+  </section>
+  <section class="card" id="result" hidden>
+    <h2>Your result · Revision quiz: Chemistry</h2>
+    <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:end">
+      <div><div class="score" id="rScore"></div><div class="hint">marks</div></div>
+      <div style="font-size:18px">Name: <b id="rName"></b><br><span class="hint" id="rDate"></span><br><span class="hint" id="rBest"></span></div>
+    </div>
+    <p class="banner" id="rMsg"></p>
+    <ul style="margin:0;font-size:18px" id="rSecs"></ul>
+    <ol class="review" id="rList"></ol>
+    <div class="controls noprint"><button class="btn" id="print">🖨 Print / save as PDF</button><button class="btn primary" id="again">↺ Try again (new order)</button></div>
+  </section>
+</main>
+<footer>Grade 7 Chemistry · Elements, compounds and mixtures · Acids and alkalis · Neutralisation and salts</footer>
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const Q = [{"sec": 0, "t": "mcq", "topic": "Elements", "fig": "<svg class=\"pbox\" viewBox=\"0 0 300 170\" width=\"300\" height=\"170\" role=\"img\" aria-label=\"particle diagram\"><rect x=\"1.5\" y=\"1.5\" width=\"297\" height=\"167\" rx=\"6\" fill=\"#fff\" stroke=\"#90A4AE\" stroke-width=\"3\"/><g transform=\"translate(260 26) rotate(0)\"><circle cx=\"-7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/></g><g transform=\"translate(149 27) rotate(30)\"><circle cx=\"-7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/></g><g transform=\"translate(196 115) rotate(90)\"><circle cx=\"-7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/></g><g transform=\"translate(35 43) rotate(-30)\"><circle cx=\"-7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/></g><g transform=\"translate(140 137) rotate(30)\"><circle cx=\"-7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/></g><g transform=\"translate(248 125) rotate(0)\"><circle cx=\"-7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/></g><g transform=\"translate(32 103) rotate(-30)\"><circle cx=\"-7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/></g></svg><div class=\"akey\"><span><svg width=\"16\" height=\"16\" viewBox=\"-8 -8 16 16\"><circle r=\"7\" fill=\"#E53935\" stroke=\"#455A64\"/></svg> oxygen atom</span></div>", "q": "The box shows the particles of a pure substance. What is it?", "opts": ["An element", "A compound", "A mixture", "A salt"], "ans": 0, "link": ["Elements, compounds and mixtures simulation", "https://school.taneski.com/science/g07/03-elements-compounds-mixtures/"], "why": "All the atoms are the same type (oxygen). Atoms joined in pairs are still only one type of atom, so it is an element."}, {"sec": 0, "t": "mcq", "topic": "Mixtures", "fig": "<svg class=\"pbox\" viewBox=\"0 0 300 170\" width=\"300\" height=\"170\" role=\"img\" aria-label=\"particle diagram\"><rect x=\"1.5\" y=\"1.5\" width=\"297\" height=\"167\" rx=\"6\" fill=\"#fff\" stroke=\"#90A4AE\" stroke-width=\"3\"/><g transform=\"translate(46 59) rotate(0)\"><circle cx=\"0\" cy=\"-2\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"-10\" cy=\"7\" r=\"8\" fill=\"#FFFFFF\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"10\" cy=\"7\" r=\"8\" fill=\"#FFFFFF\" stroke=\"#455A64\" stroke-width=\"1.3\"/></g><g transform=\"translate(59 142) rotate(0)\"><circle cx=\"0\" cy=\"-2\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"-10\" cy=\"7\" r=\"8\" fill=\"#FFFFFF\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"10\" cy=\"7\" r=\"8\" fill=\"#FFFFFF\" stroke=\"#455A64\" stroke-width=\"1.3\"/></g><g transform=\"translate(98 104) rotate(0)\"><circle cx=\"0\" cy=\"-2\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"-10\" cy=\"7\" r=\"8\" fill=\"#FFFFFF\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"10\" cy=\"7\" r=\"8\" fill=\"#FFFFFF\" stroke=\"#455A64\" stroke-width=\"1.3\"/></g><g transform=\"translate(263 124) rotate(30)\"><circle cx=\"0\" cy=\"-2\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"-10\" cy=\"7\" r=\"8\" fill=\"#FFFFFF\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"10\" cy=\"7\" r=\"8\" fill=\"#FFFFFF\" stroke=\"#455A64\" stroke-width=\"1.3\"/></g><g transform=\"translate(198 56) rotate(30)\"><circle cx=\"0\" cy=\"-2\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"-10\" cy=\"7\" r=\"8\" fill=\"#FFFFFF\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"10\" cy=\"7\" r=\"8\" fill=\"#FFFFFF\" stroke=\"#455A64\" stroke-width=\"1.3\"/></g><g transform=\"translate(163 61) rotate(0)\"><circle cx=\"-7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/></g><g transform=\"translate(169 98) rotate(-30)\"><circle cx=\"-7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/></g><g transform=\"translate(156 133) rotate(30)\"><circle cx=\"-7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/></g><g transform=\"translate(116 63) rotate(-30)\"><circle cx=\"-7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/><circle cx=\"7\" cy=\"0\" r=\"11\" fill=\"#E53935\" stroke=\"#455A64\" stroke-width=\"1.3\"/></g></svg><div class=\"akey\"><span><svg width=\"16\" height=\"16\" viewBox=\"-8 -8 16 16\"><circle r=\"7\" fill=\"#FFFFFF\" stroke=\"#455A64\"/></svg> hydrogen atom</span> <span><svg width=\"16\" height=\"16\" viewBox=\"-8 -8 16 16\"><circle r=\"7\" fill=\"#E53935\" stroke=\"#455A64\"/></svg> oxygen atom</span></div>", "q": "What does this box show?", "opts": ["An element", "A compound", "A mixture", "Only water molecules"], "ans": 2, "link": ["Elements, compounds and mixtures simulation", "https://school.taneski.com/science/g07/03-elements-compounds-mixtures/"], "why": "There are two different substances (water H₂O and oxygen O₂) that are not joined to each other: a mixture."}, {"sec": 0, "t": "gap", "topic": "Definitions", "text": "A compound contains two or more different {0} that are {1} together.", "gaps": [[["types of atom", "mixtures", "states of matter"], 0], [["chemically joined", "only mixed", "melted"], 0]], "link": ["Elements, compounds and mixtures simulation", "https://school.taneski.com/science/g07/03-elements-compounds-mixtures/"], "why": "A compound = two or more different types of atom (elements) chemically joined. In a mixture they are not joined."}, {"sec": 0, "t": "match", "topic": "Element, compound or mixture", "q": "Is each substance an element, a compound or a mixture?", "rows": [["Oxygen gas, O₂", "element"], ["Carbon dioxide, CO₂", "compound"], ["Air", "mixture"], ["Iron, Fe", "element"]], "choices": ["element", "compound", "mixture"], "link": ["Elements, compounds and mixtures simulation", "https://school.taneski.com/science/g07/03-elements-compounds-mixtures/"], "why": "O₂ and Fe have only one type of atom (elements). CO₂ has carbon and oxygen joined (compound). Air is many gases mixed together (mixture)."}, {"sec": 0, "t": "tf", "topic": "Physical and chemical change", "q": "True or false? <b>Melting ice is a chemical change.</b>", "ans": false, "link": ["Elements, compounds and mixtures simulation", "https://school.taneski.com/science/g07/03-elements-compounds-mixtures/"], "why": "False. Melting is a physical change: no new substance is made (it is still water), and it can be undone by freezing."}, {"sec": 0, "t": "mcq", "topic": "Iron and sulfur", "fig": "<table class=\"data\"><tr><th>Sample</th><th>Colour</th><th>Does a magnet pull out iron?</th></tr><tr><td>Iron</td><td>grey</td><td>yes</td></tr><tr><td>Sulfur</td><td>yellow</td><td>no</td></tr><tr><td>Iron + sulfur, mixed</td><td>grey and yellow bits</td><td>yes</td></tr><tr><td>Iron + sulfur, after heating</td><td>black solid</td><td>no</td></tr></table>", "q": "A student did the iron and sulfur investigation. Which result shows that a <b>new substance</b> was made?", "opts": ["The mixture has grey and yellow bits", "The magnet pulls the iron out of the mixture", "After heating, the black solid is not pulled by the magnet", "Sulfur is yellow"], "ans": 2, "link": ["Elements, compounds and mixtures simulation", "https://school.taneski.com/science/g07/03-elements-compounds-mixtures/"], "why": "After heating, the iron is chemically joined to sulfur (iron sulfide): a new substance with new properties – black and not magnetic."}, {"sec": 0, "t": "order", "topic": "Separating a mixture", "q": "You have a mixture of sand and salt. Put the steps in order to get dry salt.", "steps": ["Add water and stir, so the salt dissolves", "Filter: the sand stays in the filter paper", "Heat the salty water in an evaporating dish", "Salt crystals are left when the water has evaporated"], "shown": [2, 0, 3, 1], "link": ["Elements, compounds and mixtures simulation", "https://school.taneski.com/science/g07/03-elements-compounds-mixtures/"], "why": "Dissolve the salt → filter out the sand → evaporate the water → salt crystals are left. Salt and sand are only mixed, so they can be separated physically."}, {"sec": 1, "t": "mcq", "topic": "Universal indicator", "fig": "<div class=\"swatch\" style=\"background:#EE3D23\"></div><div class=\"uiw\"><div class=\"uichart\"><div style=\"background:#E21F26\">1</div><div style=\"background:#EE3D23\">2</div><div style=\"background:#F37021\">3</div><div style=\"background:#F99D1C\">4</div><div style=\"background:#F7EC13\">5</div><div style=\"background:#C4D82E\">6</div><div style=\"background:#4CB848\">7</div><div style=\"background:#169D4E\">8</div><div style=\"background:#0E9A8D\">9</div><div style=\"background:#1A75BC\">10</div><div style=\"background:#264C9C\">11</div><div style=\"background:#3A2C8C\">12</div><div style=\"background:#5B2A86\">13</div><div style=\"background:#6E2878\">14</div></div><div class=\"uilab\"><span>← acid</span><span>neutral</span><span>alkali →</span></div></div>", "q": "Universal indicator turns a liquid this colour. Use the chart: what is the liquid?", "opts": ["pH 2 – very acidic", "pH 7 – neutral", "pH 9 – slightly alkaline", "pH 13 – very alkaline"], "ans": 0, "link": ["Acids, alkalis and neutralisation simulation", "https://school.taneski.com/science/g07/04-acids-alkalis-neutralisation/"], "why": "Red-orange matches pH 2 on the chart: below 7 and far from 7, so very acidic."}, {"sec": 1, "t": "mcq", "topic": "Results table", "fig": "<table class=\"data\"><tr><th>Liquid</th><th>Universal indicator colour</th><th>pH</th></tr><tr><td>Lemon juice</td><td><i class=\"chip\" style=\"background:#EE3D23\"></i> red</td><td>2</td></tr><tr><td>Distilled water</td><td><i class=\"chip\" style=\"background:#4CB848\"></i> green</td><td>7</td></tr><tr><td>Hand soap</td><td><i class=\"chip\" style=\"background:#1A75BC\"></i> blue</td><td>10</td></tr><tr><td>Oven cleaner</td><td><i class=\"chip\" style=\"background:#5B2A86\"></i> purple</td><td>13</td></tr></table>", "q": "Look at the results. Which liquid is <b>slightly alkaline</b>?", "opts": ["Lemon juice", "Distilled water", "Hand soap", "Oven cleaner"], "ans": 2, "link": ["Acids, alkalis and neutralisation simulation", "https://school.taneski.com/science/g07/04-acids-alkalis-neutralisation/"], "why": "Alkaline = pH above 7. Hand soap (pH 10) is slightly alkaline; oven cleaner (pH 13) is very alkaline."}, {"sec": 1, "t": "mcq", "topic": "Properties of acids", "q": "Which of these is <b>NOT</b> a property of acids?", "opts": ["They have a pH below 7", "They turn blue litmus red", "They feel soapy", "Food acids taste sour"], "ans": 2, "link": ["Acids, alkalis and neutralisation simulation", "https://school.taneski.com/science/g07/04-acids-alkalis-neutralisation/"], "why": "Feeling soapy is a property of alkalis. Acids have pH below 7, turn litmus red and (in food) taste sour."}, {"sec": 1, "t": "match", "topic": "Indicators", "q": "Match each test to the colour you would see.", "rows": [["Litmus in an acid", "red"], ["Litmus in an alkali", "blue"], ["Universal indicator in pure water", "green"], ["Universal indicator in oven cleaner (pH 13)", "purple"]], "choices": ["red", "blue", "green", "purple", "orange"], "link": ["Acids, alkalis and neutralisation simulation", "https://school.taneski.com/science/g07/04-acids-alkalis-neutralisation/"], "why": "Litmus: red in acids, blue in alkalis. Universal indicator: green when neutral (pH 7), purple when very alkaline (pH 13)."}, {"sec": 1, "t": "mcq", "topic": "Dilute acids", "q": "Lots of water is added to vinegar (pH 3). What could the pH be now?", "opts": ["pH 1", "pH 3", "pH 5", "pH 9"], "ans": 2, "link": ["Acids, alkalis and neutralisation simulation", "https://school.taneski.com/science/g07/04-acids-alkalis-neutralisation/"], "why": "Adding water makes the acid more dilute: the pH goes up towards 7, but it never goes past 7. It is still an acid."}, {"sec": 1, "t": "tf", "topic": "Concentrated and dilute", "q": "True or false? <b>A dilute acid has fewer acid particles in each drop than a concentrated acid.</b>", "ans": true, "link": ["Acids, alkalis and neutralisation simulation", "https://school.taneski.com/science/g07/04-acids-alkalis-neutralisation/"], "why": "True. Dilute = the acid particles are spread through more water, so each drop has fewer of them."}, {"sec": 1, "t": "gap", "topic": "Acid rain", "text": "Burning coal in power stations releases {0}. It dissolves in the water in clouds and makes {1}, which harms lakes, trees and buildings.", "gaps": [[["sulfur dioxide", "oxygen", "water vapour"], 0], [["acid rain", "alkaline rain", "pure rain"], 0]], "link": null, "why": "Sulfur dioxide (and nitrogen oxides from cars) dissolve in rain water and make acids: acid rain."}, {"sec": 2, "t": "gap", "topic": "Neutralisation", "text": "Complete the word equation:  acid + alkali → {0} + {1}", "gaps": [[["sugar", "a salt", "hydrogen"], 1], [["water", "oxygen", "carbon dioxide"], 0]], "link": ["Acids, alkalis and neutralisation simulation", "https://school.taneski.com/science/g07/04-acids-alkalis-neutralisation/"], "why": "Neutralisation: acid + alkali → salt + water."}, {"sec": 2, "t": "mcq", "topic": "Neutralisation colours", "q": "Hydrochloric acid is added drop by drop to sodium hydroxide with universal indicator, until it is neutral. Which colours do you see, in order?", "opts": ["<i class=\"chip\" style=\"background:#5B2A86\"></i> purple → <i class=\"chip\" style=\"background:#1A75BC\"></i> blue → <i class=\"chip\" style=\"background:#4CB848\"></i> green", "<i class=\"chip\" style=\"background:#4CB848\"></i> green → <i class=\"chip\" style=\"background:#1A75BC\"></i> blue → <i class=\"chip\" style=\"background:#5B2A86\"></i> purple", "<i class=\"chip\" style=\"background:#E21F26\"></i> red → <i class=\"chip\" style=\"background:#F37021\"></i> orange → <i class=\"chip\" style=\"background:#4CB848\"></i> green", "<i class=\"chip\" style=\"background:#4CB848\"></i> green → <i class=\"chip\" style=\"background:#E21F26\"></i> red → <i class=\"chip\" style=\"background:#5B2A86\"></i> purple"], "ans": 0, "link": ["Acids, alkalis and neutralisation simulation", "https://school.taneski.com/science/g07/04-acids-alkalis-neutralisation/"], "why": "The alkali starts very alkaline (purple). The acid neutralises it: blue, then green at pH 7 (neutral)."}, {"sec": 2, "t": "order", "topic": "Making table salt", "q": "Put the steps for making table salt (sodium chloride) in order.", "steps": ["Measure sodium hydroxide into a beaker and add universal indicator", "Add hydrochloric acid drop by drop until the indicator is green", "Add charcoal, then filter the solution into an evaporating dish", "Heat gently until most of the water has evaporated: salt crystals form"], "shown": [3, 1, 0, 2], "link": ["Acids, alkalis and neutralisation simulation", "https://school.taneski.com/science/g07/04-acids-alkalis-neutralisation/"], "why": "Alkali + indicator → neutralise with acid until green → remove the colour (charcoal) and filter → evaporate the water to get the salt."}, {"sec": 2, "t": "match", "topic": "Naming salts", "q": "Which salt ending comes from each acid?", "rows": [["Hydrochloric acid", "…chloride"], ["Sulfuric acid", "…sulfate"], ["Nitric acid", "…nitrate"]], "choices": ["…chloride", "…sulfate", "…nitrate", "…sulfide"], "link": ["Salt naming simulation", "https://school.taneski.com/science/g07/01-salt-naming/"], "why": "Hydrochloric → chloride, sulfuric → sulfate, nitric → nitrate. (Sulfide comes from sulfur alone, not from sulfuric acid.)"}, {"sec": 2, "t": "mcq", "topic": "Naming salts", "q": "Complete:  nitric acid + potassium hydroxide → ………… + water", "opts": ["potassium nitrate", "potassium chloride", "nitric potassium", "potassium sulfate"], "ans": 0, "link": ["Salt naming simulation", "https://school.taneski.com/science/g07/01-salt-naming/"], "why": "The salt's first name is the metal from the alkali (potassium); the second name comes from the acid (nitric → nitrate)."}, {"sec": 2, "t": "match", "topic": "Neutralisation in real life", "q": "Match each problem to what neutralises it.", "rows": [["Bee sting (acidic)", "baking soda"], ["Wasp sting (alkaline)", "vinegar"], ["Too much stomach acid", "indigestion tablet"], ["Acidic soil on a farm", "lime"]], "choices": ["baking soda", "vinegar", "indigestion tablet", "lime", "lemon juice"], "link": ["Acids, alkalis and neutralisation simulation", "https://school.taneski.com/science/g07/04-acids-alkalis-neutralisation/"], "why": "An acid is neutralised by something alkaline (baking soda, indigestion tablet, lime); an alkali by an acid (vinegar)."}], SECS = ["A · Particles, changes and separating", "B · Acids, alkalis and the pH scale", "C · Neutralisation and salts"], L = "ABCDE", STORE = "g7-rev-chem-v1";
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const strip = (s) => String(s).replace(/<[^>]+>/g, "");
+  const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  let round = 0, qi = 0, A = [], V = [], name = "";
+  // V[i] = how question i is shown this round: option order (mcq), step order (order), choice order (match)
+  function newRound() {
+    round++;
+    V = Q.map((q) => ({
+      opts: q.t === "mcq" ? (round === 1 ? q.opts.map((_, k) => k) : shuffle(q.opts.map((_, k) => k))) : null,
+      order: q.t === "order" ? (round === 1 ? q.shown.slice() : shuffle(q.steps.map((_, k) => k))) : null,
+      choices: q.t === "match" ? (round === 1 ? q.choices.slice() : shuffle(q.choices)) : null,
+    }));
+    A = Q.map((q) => (q.t === "gap" ? q.gaps.map(() => null) : q.t === "match" ? q.rows.map(() => null) : q.t === "order" ? { seq: null } : null));
+    qi = 0;
+  }
+  const answered = (i) => { const q = Q[i], a = A[i];
+    if (q.t === "gap" || q.t === "match") return a.every((x) => x !== null);
+    if (q.t === "order") return a.seq !== null;
+    return a !== null; };
+  const partly = (i) => { const q = Q[i], a = A[i]; return (q.t === "gap" || q.t === "match") && a.some((x) => x !== null) && !answered(i); };
+  function isRight(i) {
+    const q = Q[i], a = A[i];
+    if (q.t === "mcq") return a === q.ans;
+    if (q.t === "tf") return a === q.ans;
+    if (q.t === "gap") return a.every((x, k) => x === q.gaps[k][1]);
+    if (q.t === "match") return a.every((x, k) => x === q.rows[k][1]);
+    if (q.t === "order") return a.seq !== null && a.seq.every((s, k) => s === k);
+  }
+  function answerText(i) {
+    const q = Q[i], a = A[i];
+    if (!answered(i)) return "(no answer)";
+    if (q.t === "mcq") return strip(q.opts[a]);
+    if (q.t === "tf") return a ? "True" : "False";
+    if (q.t === "gap") return a.map((x, k) => q.gaps[k][0][x]).join(" / ");
+    if (q.t === "match") return q.rows.map((r, k) => `${strip(r[0])} → ${a[k]}`).join("; ");
+    if (q.t === "order") return a.seq.map((s) => q.steps[s]).join(" → ");
+  }
+  function rightText(q) {
+    if (q.t === "mcq") return strip(q.opts[q.ans]);
+    if (q.t === "tf") return q.ans ? "True" : "False";
+    if (q.t === "gap") return q.gaps.map((g) => g[0][g[1]]).join(" / ");
+    if (q.t === "match") return q.rows.map((r) => `${strip(r[0])} → ${r[1]}`).join("; ");
+    if (q.t === "order") return q.steps.join(" → ");
+  }
+  function dots() {
+    $("dots").innerHTML = Q.map((_, k) => `<button class="dot${answered(k) ? " ans" : ""}${k === qi ? " now" : ""}" data-k="${k}" aria-label="Question ${k + 1}${answered(k) ? ", answered" : ""}">${k + 1}</button>`).join("");
+    $("dots").querySelectorAll(".dot").forEach((b) => b.addEventListener("click", () => { qi = +b.dataset.k; show(); }));
+    const n = Q.filter((_, k) => answered(k)).length;
+    $("count").textContent = `${n} of ${Q.length} answered`;
+  }
+  function show() {
+    const q = Q[qi], a = A[qi], v = V[qi], box = $("qbox");
+    let h = `<div class="sec">${SECS[q.sec]}</div><div class="qnum">Question ${qi + 1} of ${Q.length} · 1 mark</div>`;
+    if (q.fig) h += `<div class="fig">${q.fig}</div>`;
+    if (q.t === "gap") {
+      let k = 0;
+      h += `<div class="qtext">Choose the missing words.</div><div class="gaptext">` + q.text.replace(/\{(\d)\}/g, (_, n) => {
+        const g = q.gaps[+n];
+        return `<select data-g="${n}" aria-label="gap ${+n + 1}" class="${a[+n] !== null ? "set" : ""}"><option value="">choose…</option>${g[0].map((o, j) => `<option value="${j}" ${a[+n] === j ? "selected" : ""}>${esc(o)}</option>`).join("")}</select>`;
+      }) + `</div>`;
+    } else h += `<div class="qtext">${q.q}</div>`;
+    if (q.t === "mcq") h += `<div class="opts">${v.opts.map((o, k) => `<button class="opt" data-v="${o}" aria-pressed="${a === o}"><span class="l">${L[k]}</span><span>${q.opts[o]}</span></button>`).join("")}</div>`;
+    if (q.t === "tf") h += `<div class="tfrow"><button class="opt" data-tf="1" aria-pressed="${a === true}">✔ True</button><button class="opt" data-tf="0" aria-pressed="${a === false}">✘ False</button></div>`;
+    if (q.t === "match") h += q.rows.map((r, k) => `<div class="mrow"><span>${r[0]}</span><select data-m="${k}" aria-label="answer for ${esc(strip(r[0]))}" class="${a[k] !== null ? "set" : ""}"><option value="">choose…</option>${v.choices.map((c) => `<option ${a[k] === c ? "selected" : ""}>${esc(c)}</option>`).join("")}</select></div>`).join("");
+    if (q.t === "order") {
+      const seq = a.seq || v.order;
+      h += `<p class="hint">Use ▲ and ▼ to move the steps. ${a.seq ? "" : "When the order is right, press ✔ This is my order."}</p><ol class="olist">${seq.map((s, k) => `<li><span>${esc(q.steps[s])}</span><button data-up="${k}" ${k === 0 ? "disabled" : ""} aria-label="move up">▲</button><button data-dn="${k}" ${k === seq.length - 1 ? "disabled" : ""} aria-label="move down">▼</button></li>`).join("")}</ol>`;
+      if (!a.seq) h += `<div><button class="btn navy" id="okOrder">✔ This is my order</button></div>`;
+    }
+    box.innerHTML = h;
+    box.querySelectorAll("[data-v]").forEach((b) => b.addEventListener("click", () => { A[qi] = +b.dataset.v; show(); }));
+    box.querySelectorAll("[data-tf]").forEach((b) => b.addEventListener("click", () => { A[qi] = b.dataset.tf === "1"; show(); }));
+    box.querySelectorAll("[data-g]").forEach((s) => s.addEventListener("change", () => { A[qi][+s.dataset.g] = s.value === "" ? null : +s.value; show(); }));
+    box.querySelectorAll("[data-m]").forEach((s) => s.addEventListener("change", () => { A[qi][+s.dataset.m] = s.value === "" ? null : s.value; show(); }));
+    const move = (k, d) => { const seq = (A[qi].seq || V[qi].order).slice(); [seq[k], seq[k + d]] = [seq[k + d], seq[k]]; A[qi].seq = seq; show(); };
+    box.querySelectorAll("[data-up]").forEach((b) => b.addEventListener("click", () => move(+b.dataset.up, -1)));
+    box.querySelectorAll("[data-dn]").forEach((b) => b.addEventListener("click", () => move(+b.dataset.dn, 1)));
+    $("okOrder")?.addEventListener("click", () => { A[qi].seq = V[qi].order.slice(); show(); });
+    $("prev").disabled = qi === 0;
+    $("next").hidden = qi === Q.length - 1; $("finish2").hidden = qi !== Q.length - 1;
+    dots();
+  }
+  function finish() {
+    const missing = Q.map((_, k) => k).filter((k) => !answered(k));
+    if (missing.length && !confirm(`You have not answered ${missing.length} question${missing.length > 1 ? "s" : ""} (${missing.map((k) => k + 1).join(", ")}). Finish anyway?`)) return;
+    const right = Q.map((_, k) => isRight(k)), score = right.filter(Boolean).length;
+    $("test").hidden = true; $("result").hidden = false;
+    $("rName").textContent = name || "—"; $("rDate").textContent = new Date().toLocaleString();
+    $("rScore").textContent = `${score} / ${Q.length}`;
+    $("rMsg").textContent = score >= 17 ? "Excellent! You know this unit very well." : score >= 13 ? "Well done! Read the explanations for the ones you missed." : score >= 9 ? "Good effort. Go back to the simulations for the topics with ✘, then try again." : "Keep practising: use the simulations and the study guide, then try again.";
+    let best = 0; try { best = Math.max(+(localStorage.getItem(STORE) || 0), score); localStorage.setItem(STORE, best); } catch (e) { best = score; }
+    $("rBest").textContent = `Best score on this device: ${best} / ${Q.length}`;
+    const per = [0, 0, 0], tot = [0, 0, 0]; Q.forEach((q, k) => { tot[q.sec]++; if (right[k]) per[q.sec]++; });
+    $("rSecs").innerHTML = SECS.map((s, k) => `<li>${s}: <b>${per[k]} / ${tot[k]}</b></li>`).join("");
+    $("rList").innerHTML = Q.map((q, k) => `<li class="${right[k] ? "" : "no"}"><span class="h">${right[k] ? "✔" : "✘"} ${k + 1}. ${esc(q.topic)}</span>
+      <span>Your answer: ${esc(answerText(k))}</span>${right[k] ? "" : `<span><b>Right answer:</b> ${esc(rightText(q))}</span>`}
+      <span class="why">${q.why}</span>${q.link ? `<span class="noprint">▶ Practise: <a href="${q.link[1]}" target="_blank" rel="noopener">${esc(q.link[0])}</a></span>` : ""}</li>`).join("");
+    window.scrollTo(0, 0);
+  }
+  $("start").addEventListener("click", () => { name = $("name").value.trim().slice(0, 40); $("intro").hidden = true; $("test").hidden = false; newRound(); show(); });
+  $("prev").addEventListener("click", () => { if (qi > 0) { qi--; show(); window.scrollTo(0, 0); } });
+  $("next").addEventListener("click", () => { if (qi < Q.length - 1) { qi++; show(); window.scrollTo(0, 0); } });
+  $("finish").addEventListener("click", finish); $("finish2").addEventListener("click", finish);
+  $("print").addEventListener("click", () => window.print());
+  $("again").addEventListener("click", () => { $("result").hidden = true; $("test").hidden = false; newRound(); show(); window.scrollTo(0, 0); });
+  window.addEventListener("beforeunload", (e) => { if (!$("test").hidden && Q.some((_, k) => answered(k))) { e.preventDefault(); e.returnValue = ""; } });
+  window.__QUIZ = { Q, isRight, answered, get A() { return A; }, get V() { return V; }, get qi() { return qi; } };   // for the automatic tests only
+})();
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
