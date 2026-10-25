@@ -45,6 +45,19 @@ footer{max-width:1100px;margin:0 auto;padding:4px 16px 28px;color:var(--muted);f
 .ic{flex:none;width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .card .ic{color:var(--sc,var(--navy))}
 .block .ic{width:28px;height:28px}
+/* simulation thumbnails (24 Oct 2026, like the DP page): screenshot right of the button, top-right on phones */
+.card .row:has(> a.thumb){flex-wrap:nowrap;align-items:center;justify-content:space-between}
+.card .row:has(> a.thumb) > a.btn.primary{flex:0 1 auto;padding:10px 16px;white-space:nowrap}
+.card .row a.thumb{flex:0 1 120px;min-width:72px;line-height:0;border-radius:6px}
+.card .row a.thumb img{display:block;width:100%;height:auto;aspect-ratio:16/10;border:1px solid var(--line);border-radius:6px;background:#F5F8FB}
+.card .row a.thumb:hover img,.card .row a.thumb:focus-visible img{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+@media (max-width:759px){
+  .card{position:relative}
+  .card .row a.thumb{position:absolute;top:12px;right:14px;width:96px}
+  .card .row a.thumb img{width:96px;height:60px}
+  .card .row:has(> a.thumb) > a.btn.primary{flex:1 1 100%}
+  .card:has(a.thumb) > .tag,.card:has(a.thumb) > h2,.card:has(a.thumb) > p{margin-right:106px}
+}
 /* ---- subject accordion (24 Oct 2026, same as the DP theme accordion): one bar per subject, a line per unit with 4 kind buttons, cards open under the line ---- */
 [hidden]{display:none!important}
 .start-hint{max-width:1100px;margin:16px auto 0;padding:0 16px;color:var(--muted);font-size:1rem}
@@ -133,6 +146,15 @@ a.kb:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 <div class="subjects" id="subjects"></div>
 <!-- ---- end subject accordion ---- -->
 <main>
+  <div class="card" style="--sc:#1F3A5F">
+    <span class="tag">Simulation · Science skills</span>
+    <h2><svg class="ic" aria-hidden="true"><use href="#ic-skills"/></svg>Scientific method</h2>
+    <p>Choose a research question and do a whole lab report with Marie: hypothesis, variables, equipment, safety, method, results, average and range, graph, conclusion and evaluation. 5 experiments, practice rooms and a certificate.</p>
+    <div class="row">
+      <a class="btn primary" href="01-scientific-method/">▶ Open the simulation</a>
+      <a class="thumb" href="01-scientific-method/" title="Open the simulation"><img src="01-scientific-method/thumb.webp" width="120" height="75" loading="lazy" alt="Scientific method simulation"></a>
+    </div>
+  </div>
   <div class="card" style="--sc:#2055A3">
     <span class="tag">Study guide · Unit 1</span>
     <h2><svg class="ic" aria-hidden="true"><use href="#ic-guide"/></svg>Glossary · Energy words</h2>
