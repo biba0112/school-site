@@ -1,0 +1,1380 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Acids, Alkalis and Neutralisation Simulation</title>
+<!--
+  IB MYP 2 Sciences · Grade 7 · Chemistry Unit 1 Chemistry's Secrets Unlocked
+  Acids and alkalis · the pH scale · indicators · concentrated and dilute · neutralisation in the lab and in real life.
+  Goes with Workbook Activities 6–10 (pp. 11–18): what are acids and alkalis, testing with universal indicator
+  (Activity 7), red cabbage indicator (Activity 8), neutralising NaOH with HCl (Activity 9), neutralisation can be
+  helpful – stings, indigestion, toothpaste (Activity 10). Ideas from PhET "pH Scale" and "Acid-Base Solutions",
+  JavaLab "Neutralization reaction" and mechsimulator "Chemical mixing"; nothing copied.
+  Self-contained: no internet, no external libraries or fonts. Open in any modern browser.
+
+  The guide is Marie (named after Marie Curie), a scientist with particle spectacles (as in Simulation 02).
+
+  Simplifications (teacher notes, not shown to students):
+    · 💧 Add water is a teaching pattern (teacher, 26 Oct 2026): each press doubles the water, the acid/alkali particles in
+      one drop halve (12 → 6 → 3 → 1) and the pH moves one step towards 7 (half the remaining way once it is within 1.5
+      of 7, so it never reaches or passes 7). Real numbers differ: doubling the water moves the pH by only about 0.3.
+    · In the Change bench all 9 acid × alkali pairs are neutral after exactly 23 drops (sulfuric acid would really need
+      half as many) in both directions, and the pH-vs-drops curve is made gentler than a real titration curve so the colours in between
+      can be seen.
+    · Indigestion tablets and baking soda are called "bases (they work like alkalis)"; the wasp sting = alkaline school
+      rule (Workbook Activity 10) is kept, with a note on real first aid.
+    · Blood (really pH 7.35–7.45) is counted as neutral (teacher's choice).
+
+  File sections (same order as the simulation template):
+    1 STYLE     layout, colours
+    2 MARKUP    header · key · 3 tabs (Explore · Change: neutralise + real life · Quiz) · overlays (help, safety, guide, certificate)
+    3 CONFIG    indicator colour charts, 12 liquids, acids and alkalis, 5 real-life cards, quiz bank, guide cards
+    4 CHEMISTRY pure functions: indicator colours, pH after dilution, pH while neutralising, names (no drawing)
+    5 ENGINE    drawing helpers, Marie, sound, stars, badges, storage, questions (tip → answer)
+    6 EXPLORE   test with 3 indicators, read the pH, sort, add water + particle spectacles, Marie's guide
+    7 CHANGE    neutralisation bench (acid or alkali in the beaker, 3 × 3, drop by drop, pH graph) + 5 real-life cards
+    8 QUIZ      16 questions: 5 pH scale, 5 properties and dilution, 6 real life (first round is always the same)
+    9 UI        tabs, overlays, certificate, start
+-->
+<style>
+/* ============================ 1 STYLE ============================ */
+:root{
+  --navy:#1F3A5F; --accent:#E65100; --ink:#263238; --muted:#606A72;
+  --bg:#F2F5F9; --card:#FFFFFF; --line:#DDE6F0; --sunk:#EEF2F7; --soft-blue:#E3F2FD;
+  --star:#F9A825; --ok:#2E7D32; --bad:#C62828; --focus:#1565C0;
+  --acid:#D32F2F; --alk:#4527A0; --neu:#2E7D32;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;font-size:18px}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:1rem/1.45 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;min-height:100dvh}
+h2,h3{margin:0}
+p{margin:0}
+sub{font-size:.68em;line-height:0}
+button{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+/* header (as in every simulation) */
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);
+  display:flex;align-items:center;gap:12px;padding:8px 16px;flex-wrap:wrap;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header h1{font-size:1.25rem;margin:0;font-weight:600}
+header .sub{font-size:.85rem;opacity:.85}
+.sub a.home{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55);white-space:nowrap}
+header .grow{flex:1}
+.hbtns{display:flex;gap:6px;flex-wrap:wrap}
+.credit{text-align:right;font-size:.74rem;line-height:1.3;opacity:.92;white-space:nowrap}
+.credit a{color:#fff;text-decoration:underline}
+.btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;
+  min-height:44px;padding:6px 14px;cursor:pointer;touch-action:manipulation}
+.btn:hover{border-color:var(--navy)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.small{min-height:36px;padding:4px 10px;font-size:.9rem}
+header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5);white-space:nowrap}
+header .btn[aria-pressed="true"]{background:rgba(255,255,255,.18)}
+header .btn.safe{background:#FFD54F;color:#3E2A00;border-color:#FFD54F;font-weight:700}
+
+/* key bar */
+.keybar{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;padding:6px 16px;background:#fff;
+  border-bottom:1px solid var(--line);font-size:.84rem}
+.keybar .k{display:flex;align-items:center;gap:6px}
+.keybar .k i{display:inline-block;width:16px;height:16px;border-radius:4px;border:1px solid rgba(0,0,0,.2)}
+.keybar .tools{margin-left:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.keybar .sum{font-weight:700;color:var(--navy);white-space:nowrap}
+
+/* tabs + panels */
+main{flex:1;display:flex;flex-direction:column;gap:10px;padding:10px 16px 16px;min-height:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.tabs{display:flex;gap:4px;padding:0;overflow-x:auto;scrollbar-width:none}
+.tab{font:inherit;border:1px solid transparent;border-bottom:none;background:transparent;padding:8px 14px;
+  min-height:44px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--muted);font-weight:600;white-space:nowrap}
+.tab[aria-selected="true"]{background:#fff;border-color:var(--line);color:var(--navy);margin-bottom:-1px}
+.tab .tstar{font-size:.78rem;color:var(--star);margin-left:4px}
+.panel{display:flex;flex-direction:column;gap:10px;min-height:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0;display:flex;flex-direction:column}
+.card > h2{font-size:.95rem;padding:6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line);color:var(--navy);font-weight:600}
+.cb{padding:10px 12px;display:grid;gap:10px;align-content:start;min-height:0}
+.label{font-size:.75rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.hint{font-size:.85rem;color:var(--muted)}
+.grid3{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+.grid2{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:760px){
+  .grid3{grid-template-columns:minmax(240px,270px) minmax(0,1fr)} .grid3 > .side{grid-column:1/-1}
+  .grid2{grid-template-columns:minmax(220px,270px) minmax(0,1fr)}
+}
+@media (min-width:1400px){ .grid3{grid-template-columns:minmax(240px,260px) minmax(0,1fr) minmax(330px,380px)} .grid3 > .side{grid-column:auto} }
+.subsw{display:flex;gap:8px;flex-wrap:wrap}
+.subsw .chip{font-size:1.05rem;min-height:46px;padding:6px 18px;font-weight:600}
+
+/* Marie, the guide */
+.spexbar{display:flex;align-items:center;gap:10px;min-height:76px}
+.spex{width:72px;height:72px;flex:none}
+.bubble{position:relative;background:#fff;border:2px solid var(--navy);border-radius:14px;padding:8px 12px;
+  font-size:1rem;line-height:1.4;flex:1;min-width:0}
+.bubble::before{content:"";position:absolute;left:-11px;top:24px;border:10px solid transparent;border-right-color:var(--navy);border-left:0}
+.bubble::after{content:"";position:absolute;left:-7px;top:26px;border:8px solid transparent;border-right-color:#fff;border-left:0}
+.bubble.tip{background:#FFF8E1} .bubble.tip::after{border-right-color:#FFF8E1}
+.bubble.good{background:#E8F5E9} .bubble.good::after{border-right-color:#E8F5E9}
+.bubble.ans{background:var(--soft-blue)} .bubble.ans::after{border-right-color:var(--soft-blue)}
+.spex .lens{fill:#FFE0C2;fill-opacity:.45;transition:fill .3s}
+.spex.zoom .lens{fill:#4DD0E1;fill-opacity:.85;animation:glow .5s ease-in-out 3 alternate}
+@keyframes glow{to{fill:#FFF59D}}
+.spex .m{display:none} .spex[data-mood="talk"] .m-talk,.spex[data-mood="happy"] .m-happy,.spex[data-mood="think"] .m-think,
+.spex[data-mood="wow"] .m-wow,.spex[data-mood="hmm"] .m-hmm{display:inline}
+.spex[data-mood="hmm"] .brow{transform:translateY(-2px)}
+
+/* lists of things to choose (liquids, cards) */
+.chip{font:inherit;font-size:.86rem;border:1px solid var(--line);background:#fff;border-radius:99px;padding:4px 11px;
+  min-height:38px;cursor:pointer;display:inline-flex;gap:6px;align-items:center;line-height:1.2}
+.chip[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.shelf{display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+@media (max-width:759px){ .shelf,.cardlist{max-height:230px;overflow:auto;padding-right:4px} }
+.obj{font:inherit;display:flex;align-items:center;gap:8px;text-align:left;border:1px solid var(--line);background:#fff;
+  border-radius:10px;padding:5px 8px;min-height:48px;cursor:pointer;line-height:1.2;font-size:.92rem}
+.obj .em{font-size:1.5rem;width:30px;text-align:center;flex:none}
+.obj .st{margin-left:auto;color:var(--star);font-size:.75rem;white-space:nowrap}
+.obj .haz{width:18px;height:18px;flex:none}
+.obj[aria-pressed="true"]{border:2px solid var(--accent);background:#FFF3E0}
+.cardlist{display:grid;gap:6px}
+
+/* explore bench */
+.bench{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:640px){ .bench{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr)} }
+.vis{display:grid;gap:8px;align-content:start;justify-items:center}
+.pair{display:grid;gap:8px;grid-template-columns:1fr 1fr;align-items:end;width:100%}
+.view{display:grid;gap:4px;justify-items:center;text-align:center}
+.view .vl{font-size:.72rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.beakerSvg{width:100%;max-width:170px;display:block}
+.tileSvg{width:100%;max-width:420px;display:block}
+.drops{display:grid;gap:6px;grid-template-columns:repeat(3,minmax(0,1fr));width:100%;max-width:420px}
+.dropper{font:inherit;border:1px solid #B0BEC5;background:#fff;border-radius:10px;padding:4px 4px;min-height:52px;cursor:pointer;
+  display:grid;justify-items:center;gap:1px;font-size:.78rem;line-height:1.15;font-weight:600;text-align:center}
+.dropper .bot{width:22px;height:22px;border-radius:50% 50% 6px 6px;border:2px solid rgba(0,0,0,.25)}
+.dropper:disabled{opacity:.45;cursor:not-allowed}
+.lensbox{position:relative;border-radius:10px;min-height:120px;display:grid;place-items:center;background:var(--sunk);width:100%}
+.lensbox svg{width:100%;max-width:300px;display:block;transition:transform .6s ease,opacity .6s ease}
+.lensbox.off svg{transform:scale(.15);opacity:0}
+.lensbox .cover{position:absolute;inset:0;display:grid;place-items:center;gap:6px;text-align:center;padding:8px;align-content:center}
+.legend{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:.78rem;color:var(--muted);justify-content:center}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:4px;vertical-align:-1px;border:1px solid rgba(0,0,0,.25)}
+.dropAnim{animation:fall .45s ease-in}
+@keyframes fall{from{transform:translateY(-36px);opacity:1}to{transform:translateY(0);opacity:.2}}
+
+/* the pH scale */
+.phwrap{position:relative;padding-top:20px}
+.strip{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:2px}
+.phb{font:inherit;border:2px solid transparent;border-radius:6px;min-height:42px;padding:0;cursor:pointer;font-weight:700;font-size:.92rem;color:#fff;
+  text-shadow:0 1px 2px rgba(0,0,0,.45);touch-action:manipulation}
+.phb:disabled{cursor:default}
+.phb.right{border-color:#1B5E20;box-shadow:0 0 0 3px #A5D6A7}
+.phb.wrong{border-color:var(--bad);opacity:.5}
+.strip.ask .phb:not(:disabled):hover{transform:translateY(-2px)}
+.marker{position:absolute;top:0;transform:translateX(-50%);font-size:1.1rem;color:var(--navy);transition:left .9s ease;line-height:1;pointer-events:none}
+.phlabels{display:grid;grid-template-columns:6fr 1fr 7fr;gap:2px;font-size:.74rem;font-weight:700;text-align:center;margin-top:3px}
+.phlabels span{border-radius:4px;padding:1px 2px}
+.phlabels .a{background:#FFEBEE;color:var(--acid)} .phlabels .n{background:#E8F5E9;color:var(--neu)} .phlabels .b{background:#EDE7F6;color:var(--alk)}
+.phwords{display:grid;grid-template-columns:3fr 3fr 1fr 3fr 4fr;gap:2px;font-size:.72rem;color:var(--muted);margin-top:2px;text-align:center}
+
+/* answers */
+.cats{display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+.cat{font:inherit;border:1px solid #B0BEC5;background:#fff;border-radius:10px;padding:6px 10px;min-height:48px;cursor:pointer;font-weight:600;font-size:.95rem;line-height:1.2;text-align:left}
+.cat small{display:block;font-weight:500;color:var(--muted);font-size:.8rem}
+.cat.right{background:#E8F5E9;border:2px solid var(--ok)}
+.cat.wrong{background:#FFEBEE;border-color:var(--bad)}
+.cat:disabled{cursor:default}
+.cat .em{font-size:1.3rem;margin-right:4px}
+.feedback{min-height:2.4em;border-radius:10px;padding:8px 12px;background:var(--sunk)}
+.feedback:empty{display:none}
+.feedback.tip{background:#FFF8E1;border-left:4px solid #F9A825}
+.feedback.ans{background:var(--soft-blue);border-left:4px solid var(--focus)}
+.feedback.good{background:#E8F5E9;border-left:4px solid var(--ok)}
+.feedback.info{background:var(--sunk);border-left:4px solid #90A4AE}
+.didyou{font-size:.92rem;background:#F3E5F5;border-left:4px solid #8E24AA;border-radius:8px;padding:6px 10px}
+.safety{font-size:.88rem;background:#FFF8E1;border-left:4px solid #F9A825;border-radius:8px;padding:5px 10px;display:flex;gap:8px;align-items:center}
+.safety button{font:inherit;border:none;background:none;padding:0;cursor:pointer;flex:none;display:grid}
+.stars{color:var(--star);font-size:1.2rem;letter-spacing:2px}
+.stars .off{color:var(--line)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.read{font-size:1.05rem;background:var(--soft-blue);border-left:5px solid var(--navy);border-radius:10px;padding:8px 12px}
+.read b.big{font-size:1.3rem}
+.step{display:grid;gap:6px;align-content:start}
+
+/* guide cards (also Present mode) */
+.slide{display:grid;gap:10px}
+.slide h3{font-size:1.1rem;color:var(--navy)}
+.slide ul{margin:0;padding-left:1.2em;display:grid;gap:3px}
+.slidenav{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.slidenav .pg{font-size:.85rem;color:var(--muted)}
+.two{display:grid;gap:8px;grid-template-columns:1fr 1fr}
+.two > div{border-radius:10px;padding:8px 10px}
+.two .a{background:#FFEBEE} .two .b{background:#EDE7F6}
+.two h4{margin:0 0 4px;font-size:1rem}
+.indrow{display:grid;gap:4px;grid-template-columns:repeat(3,minmax(0,1fr));text-align:center;font-size:.8rem}
+.indrow i{display:block;height:22px;border-radius:6px;border:1px solid rgba(0,0,0,.15)}
+.minirow{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:1px}
+.minirow i{display:block;height:18px;border-radius:2px}
+.eq{font-size:1.05rem;font-weight:700;color:var(--navy);text-align:center;background:var(--sunk);border-radius:10px;padding:8px}
+
+/* change: neutralisation bench */
+.pick{display:grid;gap:6px}
+.pick .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.pick .row .label{min-width:84px}
+.tog{display:inline-flex;border:2px solid var(--navy);border-radius:99px;overflow:hidden;margin-right:6px}
+.tog button{font:inherit;font-size:20px;font-weight:700;border:none;background:#fff;color:var(--navy);padding:6px 16px;min-height:44px;cursor:pointer}
+.tog button[aria-pressed="true"].acid{background:var(--acid);color:#fff}
+.tog button[aria-pressed="true"].alk{background:var(--alk);color:#fff}
+.nbench{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:700px){ .nbench{grid-template-columns:minmax(200px,.8fr) minmax(0,1.2fr)} }
+#nBeaker{max-width:230px}
+.graphSvg{width:100%;max-width:480px;display:block}
+.nbtns{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.nbtns .btn{font-size:1.05rem;font-weight:600}
+#change .btn,#change .chip{font-size:1rem}
+
+/* change: real life */
+.xcard{font:inherit;display:flex;gap:8px;align-items:center;text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;padding:6px 8px;min-height:50px;cursor:pointer;line-height:1.2;font-size:.95rem}
+.xcard .em{font-size:1.5rem;flex:none;width:32px;text-align:center}
+.xcard .st{margin-left:auto;color:var(--star);font-size:.75rem;white-space:nowrap}
+.xcard[aria-pressed="true"]{border:2px solid var(--accent);background:#FFF3E0}
+.scene{display:grid;gap:10px;grid-template-columns:minmax(0,1fr);align-items:center}
+@media (min-width:620px){ .scene{grid-template-columns:150px minmax(0,1fr)} }
+.scene .big{font-size:4.6rem;line-height:1.1;width:140px;height:140px;border-radius:50%;background:var(--sunk);display:grid;place-items:center;margin:0 auto}
+.story{font-size:1.05rem}
+.doc{font-size:.88rem;background:#E0F2F1;border-left:4px solid #00897B;border-radius:8px;padding:6px 10px}
+
+/* quiz */
+.qhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.qhead h2{font-size:1.15rem;color:var(--navy)}
+.qbody{display:grid;gap:12px;max-width:1000px;width:100%;margin:0 auto}
+.qtext{font-size:1.2rem;font-weight:600;text-align:center}
+.qpic{display:grid;justify-items:center;gap:6px}
+.qpic .em{font-size:3.6rem;line-height:1.1}
+.swatch{width:110px;height:110px;border-radius:50%;border:3px solid rgba(0,0,0,.15);box-shadow:inset 0 -12px 0 rgba(255,255,255,.25)}
+.qpart{font-size:.78rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.05em;text-align:center}
+#qBody .cats{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+#qBody .cat{font-size:1.05rem;text-align:center;min-height:56px}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:.78rem;font-weight:600;color:var(--muted);background:#fff}
+.dot.now{border-color:var(--navy);color:var(--navy)}
+.dot.done{background:var(--star);border-color:var(--star);color:#3E2A00}
+.dot.zero{background:#CFD8DC;border-color:#CFD8DC;color:#37474F}
+.review{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.review li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;padding:7px 12px;border:1px solid var(--line);border-radius:10px}
+.score{font-size:2.6rem;font-weight:700;line-height:1;color:var(--navy)}
+
+/* overlays */
+.overlay{position:fixed;inset:0;background:rgba(31,58,95,.55);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+.overlay.on{display:flex}
+.overlay .box{background:#fff;border-radius:14px;max-width:760px;width:100%;max-height:92vh;overflow:auto;padding:16px 20px;display:grid;gap:10px}
+.overlay h3{margin:.1em 0 .2em;color:var(--navy)}
+.overlay li{margin:.2em 0}
+.rules{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.rules li{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:1.02rem}
+.rules .ic{font-size:1.8rem;width:44px;text-align:center;flex:none}
+.rules svg{width:40px;height:40px}
+#present .box{max-width:1200px;width:96vw;height:94vh;max-height:none;font-size:1.35rem;align-content:start}
+#present .slide h3{font-size:2rem}
+#present .spex{width:110px;height:110px}
+#present .bubble{font-size:1.35rem}
+#present .indrow,#present .phlabels{font-size:1rem}
+#present .minirow i{height:30px}
+.badges{display:flex;flex-wrap:wrap;gap:8px}
+.badge{display:grid;justify-items:center;gap:2px;width:118px;padding:8px 6px;border-radius:12px;border:2px dashed #CFD8DC;text-align:center;font-size:.8rem;color:#90A4AE}
+.badge .em{font-size:2rem;filter:grayscale(1);opacity:.45}
+.badge.on{border:2px solid var(--star);background:#FFFDE7;color:var(--ink)}
+.badge.on .em{filter:none;opacity:1}
+.cert{border:6px double var(--navy);border-radius:12px;padding:16px;text-align:center;display:grid;gap:8px}
+.cert .who{font-size:1.6rem;font-weight:700;color:var(--accent)}
+.word{font:inherit;min-height:40px;padding:4px 8px;border:1px solid #B0BEC5;border-radius:8px}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:12px;
+  z-index:90;box-shadow:0 8px 20px rgba(0,0,0,.25);font-weight:600;display:none}
+.toast.on{display:block;animation:pop .35s}
+@keyframes pop{from{transform:translate(-50%,20px);opacity:0}}
+footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
+
+/* bigger text, as in Simulations 01 and 02: 20 px for everything students read or press, labels at least 15 px */
+.card > h2{font-size:19px}
+.keybar{font-size:16px}
+main .btn,.overlay .btn,.cat,.obj,.xcard,.chip,.subsw .chip,#change .btn,#change .chip{font-size:20px}
+.cat small{font-size:16px}
+.dropper{font-size:17px;min-height:60px}
+.dropper .bot{width:26px;height:26px}
+.read,.feedback,.didyou,.doc,.safety,.bubble,.eq,.rules li{font-size:20px}
+.read b.big{font-size:24px}
+.story{font-size:21px}
+.slide{font-size:19px} .two h4{font-size:20px} .indrow{font-size:16px}
+.label,.view .vl{font-size:15px}
+.hint,.legend,.phwords,.phlabels{font-size:15px}
+.phb{font-size:18px;min-height:46px}
+.qtext{font-size:22px} #qBody .cat{font-size:20px} .qpart{font-size:15px}
+.badge{font-size:15px;width:140px}
+
+@media (max-width:1099px){ header .sub{font-size:.75rem} }
+@media (max-width:759px){
+  header h1{font-size:1.05rem}
+  .credit{order:3;flex-basis:100%;text-align:left;font-size:.7rem}
+  .credit br{display:none} .credit a{margin-left:6px}
+  .keybar{font-size:.76rem;gap:2px 10px}
+  .keybar .tools{margin-left:0}
+  .spex{width:56px;height:56px}
+  .bubble{font-size:17px}
+  .obj{font-size:17px}
+  .phwords,.phlabels{font-size:12px}
+  .hbtns .btn{min-height:38px;padding:4px 9px;font-size:.88rem}
+  .phb{font-size:13px;min-height:40px}
+}
+@media (max-width:599px){ .tab{padding:8px 10px} }
+@media print{ body *{visibility:hidden} #cert, #cert *{visibility:visible} #cert{position:absolute;inset:0;background:#fff} #cert .noprint{display:none} }
+@media (prefers-reduced-motion:reduce){ .spex.zoom .lens,.dropAnim{animation:none} .lensbox svg,.marker{transition:none} }
+</style>
+</head>
+<body>
+<!-- ============================ 2 MARKUP ============================ -->
+<header>
+  <div>
+    <h1>Acids, alkalis and neutralisation</h1>
+    <div class="sub"><a class="home" href="https://school.taneski.com/science/g07/#chemistry" title="Back to Grade 7 science">← All Grade 7 science</a> · IB MYP 2 · Unit 1 Chemistry's Secrets Unlocked · with Marie</div>
+  </div>
+  <div class="grow"></div>
+  <div class="hbtns">
+    <button class="btn safe" id="safeBtn" aria-label="Safety rules">🥽 Safety</button>
+    <button class="btn" id="certBtn">🏅 My badges</button>
+    <button class="btn" id="soundBtn" aria-pressed="false" aria-label="Sound on or off">🔇 Sound</button>
+    <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
+  </div>
+  <div class="credit">Biljana Taneska · Science teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
+</header>
+
+<div class="keybar" aria-label="Key">
+  <span class="k"><i style="background:#E21F26"></i>Acid: pH below 7</span>
+  <span class="k"><i style="background:#4CB848"></i>Neutral: pH 7</span>
+  <span class="k"><i style="background:#3A2C8C"></i>Alkali: pH above 7</span>
+  <div class="tools"><span class="sum" id="starSum">★ 0</span></div>
+</div>
+
+<main>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-explore" aria-selected="true" aria-controls="explore">1 · Explore<span class="tstar" data-ts="explore"></span></button>
+    <button class="tab" role="tab" id="tab-change" aria-selected="false" aria-controls="change">2 · Change<span class="tstar" data-ts="change"></span></button>
+    <button class="tab" role="tab" id="tab-quiz" aria-selected="false" aria-controls="quiz">3 · Quiz<span class="tstar" data-ts="quiz"></span></button>
+  </div>
+
+  <!-- EXPLORE: test, sort and dilute -->
+  <section class="panel" id="explore" role="tabpanel" aria-labelledby="tab-explore">
+    <div class="spexbar" data-spex="explore"></div>
+    <div class="grid3">
+      <div class="card">
+        <h2>1 · Choose a liquid</h2>
+        <div class="cb"><div class="shelf" id="shelf"></div></div>
+      </div>
+      <div class="card">
+        <h2 id="eTitle">2 · Test it</h2>
+        <div class="cb">
+          <div class="safety" id="eSafety" hidden></div>
+          <div class="bench">
+            <div class="vis">
+              <div class="pair">
+                <div class="view"><span class="vl" id="eVol">Sample</span><svg class="beakerSvg" id="eBeaker" viewBox="0 0 160 190" aria-label="The liquid in a beaker"></svg></div>
+                <div class="view"><span class="vl">👓 One drop</span>
+                  <div class="lensbox" id="eLens"><svg id="eParts" viewBox="0 0 220 150" aria-label="The particles in one drop"></svg></div>
+                  <span class="hint" id="eCount"></span>
+                </div>
+              </div>
+              <div class="legend" id="eLegend"><span><i style="background:#E53935"></i>acid particle</span><span><i style="background:#5E35B1"></i>alkali particle</span><span><i style="background:#BBDEFB" id="eSolvDot"></i><span id="eSolv">water</span> particle</span></div>
+              <div class="view" style="width:100%"><span class="vl">Spotting tile: add one drop of each indicator</span><svg class="tileSvg" id="eTile" viewBox="0 0 330 98" aria-label="Spotting tile with three wells"></svg></div>
+              <div class="drops" id="eDrops">
+                <button class="dropper" data-ind="ui"><span class="bot" style="background:linear-gradient(90deg,#E21F26,#F7EC13,#4CB848,#3A2C8C)"></span>Universal indicator</button>
+                <button class="dropper" data-ind="lit"><span class="bot" style="background:#8E5BA8"></span>Litmus</button>
+                <button class="dropper" data-ind="cab"><span class="bot" style="background:#6A4C9C"></span>Red cabbage</button>
+              </div>
+            </div>
+            <div class="step">
+              <div class="label">Universal indicator colour chart (pH scale)</div>
+              <div class="phwrap"><div class="marker" id="eMarker" hidden>▼</div><div class="strip" id="eStrip"></div></div>
+              <div class="phlabels"><span class="a">ACID</span><span class="n">7</span><span class="b">ALKALI</span></div>
+              <div class="phwords"><span>very acidic</span><span>slightly acidic</span><span>neutral</span><span>slightly alkaline</span><span>very alkaline</span></div>
+              <div class="read" id="eRead" aria-live="polite"></div>
+              <div id="eAsk2" hidden><div class="label" style="margin-bottom:6px">So it is…</div><div class="cats" id="eCats"></div></div>
+              <div class="feedback" id="eFb" aria-live="polite"></div>
+              <div class="didyou" id="eDid" hidden></div>
+              <div class="controls">
+                <button class="btn navy" id="eWater">💧 Add water (dilute it)</button>
+                <button class="btn" id="eNew">↺ New sample</button>
+                <button class="btn primary" id="eNext" hidden>Next liquid →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card side">
+        <h2>Marie's guide</h2>
+        <div class="cb">
+          <div id="guideSlide"></div>
+          <div class="slidenav">
+            <button class="btn small" id="gPrev">← Back</button>
+            <span class="pg" id="gPg"></span>
+            <button class="btn small" id="gNext">Next →</button>
+          </div>
+          <button class="btn navy" id="presentBtn">🖥 Present on the board</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHANGE: neutralise -->
+  <section class="panel" id="change" role="tabpanel" aria-labelledby="tab-change" hidden>
+    <div class="spexbar" data-spex="change"></div>
+    <div class="subsw"><button class="chip" data-sub="change" aria-pressed="true">⚗️ Neutralise</button><button class="chip" data-sub="life" aria-pressed="false">🐝 Real life</button></div>
+    <div class="card">
+      <h2>Neutralisation bench</h2>
+      <div class="cb">
+        <div class="safety"><button data-safety aria-label="Safety rules"><svg width="34" height="34" viewBox="0 0 64 64" aria-hidden="true"><use href="#goggles"/></svg></button><span>Eye protection and apron on! Lab acids and alkalis can hurt your eyes and skin. Wipe up spills and tell your teacher.</span></div>
+        <div class="pick">
+          <div class="row"><span class="label">🧪 Beaker</span><span class="tog" id="bTog"></span><span id="bChems" style="display:contents"></span><span class="hint">10 cm³, with universal indicator</span></div>
+          <div class="row"><span class="label">💧 Dropper</span><span class="tog" id="dTog"></span><span id="dChems" style="display:contents"></span></div>
+        </div>
+        <div class="nbench">
+          <div class="view"><svg class="beakerSvg" id="nBeaker" viewBox="0 0 160 230" aria-label="Beaker of alkali with universal indicator"></svg></div>
+          <div class="step">
+            <div class="read" id="nRead" aria-live="polite"></div>
+            <div class="nbtns">
+              <button class="btn primary" id="n1">💧 Add 1 drop</button>
+              <button class="btn primary" id="n5">💧💧 Add 5 drops</button>
+              <button class="btn" id="nReset">↺ Start again</button>
+            </div>
+            <div class="view"><span class="vl" id="nGTitle">pH while you add the acid</span><svg class="graphSvg" id="nGraph" viewBox="0 0 480 238" aria-label="Graph of pH against drops of acid"></svg></div>
+          </div>
+        </div>
+        <div id="nAsk" hidden><div class="label" style="margin-bottom:6px" id="nQ"></div><div class="cats" id="nCats"></div></div>
+        <div class="feedback" id="nFb" aria-live="polite"></div>
+        <div class="eq" id="nEq" hidden></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHANGE: real life (part of tab 2) -->
+  <section class="panel" id="life" role="tabpanel" aria-labelledby="tab-change" hidden>
+    <div class="spexbar" data-spex="life"></div>
+    <div class="subsw"><button class="chip" data-sub="change" aria-pressed="false">⚗️ Neutralise</button><button class="chip" data-sub="life" aria-pressed="true">🐝 Real life</button></div>
+    <div class="grid2">
+      <div class="card">
+        <h2>Neutralisation can help</h2>
+        <div class="cb"><div class="cardlist" id="lList"></div></div>
+      </div>
+      <div class="card">
+        <h2 id="lTitle">Problem</h2>
+        <div class="cb">
+          <div class="scene">
+            <div class="big" id="lEm"></div>
+            <div class="step"><p class="story" id="lStory"></p></div>
+          </div>
+          <div class="step">
+            <div class="label">pH</div>
+            <div class="phwrap"><div class="marker" id="lMarker">▼</div><div class="strip" id="lStrip"></div></div>
+            <div class="phlabels"><span class="a">ACID</span><span class="n">7</span><span class="b">ALKALI</span></div>
+          </div>
+          <div><div class="label" style="margin-bottom:6px" id="lQ"></div><div class="cats" id="lCats"></div></div>
+          <div class="feedback" id="lFb" aria-live="polite"></div>
+          <div class="doc" id="lDoc" hidden></div>
+          <div class="controls"><button class="btn primary" id="lNext" hidden>Next problem →</button></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="panel" id="quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden>
+    <div class="spexbar" data-spex="quiz"></div>
+    <div class="card" id="quizCard">
+      <div class="cb">
+        <div class="qhead"><h2 id="qTitle">Question 1 of 16</h2><div class="dots" id="qDots"></div></div>
+        <div class="qbody" id="qBody"></div>
+        <div class="feedback" id="qFb" aria-live="polite"></div>
+        <div class="controls"><button class="btn primary" id="qNext" hidden>Next question →</button></div>
+      </div>
+    </div>
+    <div class="card" id="qEnd" hidden>
+      <h2>Your result</h2>
+      <div class="cb">
+        <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:end">
+          <div><div class="score" id="qEndScore"></div><div class="hint">right first time</div></div>
+          <div><div class="score" style="color:var(--star)" id="qEndStars"></div><div class="hint">stars out of 48</div></div>
+        </div>
+        <p id="qEndMsg"></p>
+        <ul class="review" id="qReview"></ul>
+        <div class="controls"><button class="btn primary" id="qAgain">Play again (new questions)</button></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- shared drawings -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="goggles"><path d="M6 26 Q6 18 16 18 L48 18 Q58 18 58 26 L58 36 Q58 44 48 44 L40 44 Q36 44 34 39 Q32 35 30 39 Q28 44 24 44 L16 44 Q6 44 6 36Z" fill="#4FC3F7" stroke="#01579B" stroke-width="3"/>
+      <path d="M12 24 L26 24" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".8"/><path d="M2 30 L6 30 M58 30 L62 30" stroke="#01579B" stroke-width="4" stroke-linecap="round"/></g>
+    <g id="corrosive"><rect x="18" y="18" width="64" height="64" rx="4" transform="rotate(45 50 50)" fill="#fff" stroke="#D50000" stroke-width="7"/>
+      <path d="M30 26 l8 -6 l10 14 l-8 6z" fill="#263238"/><path d="M52 26 l8 -6 l10 14 l-8 6z" fill="#263238"/>
+      <circle cx="38" cy="45" r="2.6" fill="#263238"/><circle cx="37" cy="52" r="2.2" fill="#263238"/><circle cx="62" cy="45" r="2.6" fill="#263238"/><circle cx="63" cy="52" r="2.2" fill="#263238"/>
+      <path d="M24 64 q8 -6 20 -2 l0 6 q-8 4 -20 2z" fill="#263238"/><rect x="54" y="62" width="22" height="8" fill="#263238"/>
+      <path d="M22 74 L78 74" stroke="#263238" stroke-width="3"/></g>
+    <g id="flammable"><rect x="18" y="18" width="64" height="64" rx="4" transform="rotate(45 50 50)" fill="#fff" stroke="#D50000" stroke-width="7"/>
+      <path d="M50 22 C60 36 66 44 62 56 C59 66 41 66 38 56 C35 47 42 42 45 33 C47 42 52 44 50 22Z" fill="#263238"/>
+      <path d="M50 46 C55 53 55 58 52 61 C49 63 46 60 47 56 C48 53 50 51 50 46Z" fill="#fff"/><path d="M30 70 L70 70" stroke="#263238" stroke-width="4"/></g>
+    <g id="apron"><path d="M22 10 Q32 0 42 10" stroke="#37474F" stroke-width="3" fill="none"/>
+      <path d="M22 10 L42 10 L44 24 L54 27 L50 60 L14 60 L10 27 L20 24Z" fill="#64B5F6" stroke="#0D47A1" stroke-width="2.5" stroke-linejoin="round"/>
+      <rect x="24" y="36" width="16" height="11" rx="2" fill="#1E88E5" stroke="#0D47A1" stroke-width="2"/>
+      <path d="M11 27 L3 33 M53 27 L61 33" stroke="#37474F" stroke-width="3" stroke-linecap="round"/></g>
+    <g id="hair" transform="translate(-4 -6) scale(1.15)"><path d="M44 18 Q60 20 57 42 Q55 52 49 56 Q52 40 44 28Z" fill="#5D4037"/>
+      <circle cx="30" cy="32" r="16" fill="#F0CDB4"/><path d="M14 30 Q13 12 30 12 Q47 12 46 30 Q41 20 30 20 Q19 20 14 30Z" fill="#5D4037"/>
+      <rect x="43" y="17" width="7" height="9" rx="3" transform="rotate(20 46 21)" fill="#E91E63"/>
+      <circle cx="24" cy="32" r="1.8" fill="#4E342E"/><circle cx="36" cy="32" r="1.8" fill="#4E342E"/><path d="M25 39 Q30 43 35 39" stroke="#B5545C" stroke-width="2" fill="none" stroke-linecap="round"/></g>
+  </defs>
+</svg>
+
+<!-- overlays -->
+<div class="overlay" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="box">
+    <h3 id="helpTitle">How to use this simulation</h3>
+    <ol>
+      <li><b>Marie</b> is your guide. Her <b>particle spectacles</b> show the tiny particles inside things.</li>
+      <li><b>1 · Explore</b>: choose a liquid. Add a drop of each <b>indicator</b> to the spotting tile. Use the colour chart to
+        find the <b>pH</b>, then decide: acid, neutral or alkali? Press <b>💧 Add water</b> (any time): watch the particles in one drop and the pH change.
+        <b>Marie's guide</b> (right or below) explains everything.</li>
+      <li><b>2 · Change → ⚗️ Neutralise</b>: choose what is in the <b>beaker</b> (an alkali or an acid) – the <b>dropper</b> gets the opposite.
+        Add drops until the indicator is <b>green</b>.
+        <b>🐝 Real life</b>: help people with stings, a stomach ache, teeth and soil.</li>
+      <li><b>3 · Quiz</b>: 16 questions.</li>
+      <li><b>Wrong answer?</b> The first time you get a tip. The second time the simulation shows the answer.
+        Stars: right first time ★★★ · right after a tip ★★ · answer shown: no stars. Finish a part to win its <b>badge</b> (🏅 My badges).
+        Your progress is saved in this browser.</li>
+      <li><b>🥽 Safety</b> (top right) shows the lab safety rules.</li>
+    </ol>
+    <h3>The chemistry</h3>
+    <ul>
+      <li><b>pH scale</b>: below 7 = <b>acid</b> · 7 = <b>neutral</b> · above 7 = <b>alkali</b>. The further from 7, the more acidic or alkaline.</li>
+      <li><b>Indicator</b>: a substance that changes colour in acids and alkalis. Universal indicator shows the pH number.</li>
+      <li><b>Concentrated</b>: lots of acid (or alkali) in a little water. <b>Dilute</b>: a little acid (or alkali) in lots of water.
+        Adding water moves the pH closer to 7, but never past 7.</li>
+      <li><b>Neutralisation</b>: acid + alkali → salt + water. The pH moves to 7.</li>
+    </ul>
+    <p class="hint">The particle pictures are a model, not to scale: real liquids have far more particles. Marie's pH numbers are rounded.</p>
+    <p style="text-align:right"><button class="btn primary" data-close="help">Close</button></p>
+  </div>
+</div>
+
+<div class="overlay" id="safeOv" role="dialog" aria-modal="true" aria-labelledby="safeTitle">
+  <div class="box">
+    <h3 id="safeTitle">🥽 Safety rules in the lab</h3>
+    <ul class="rules">
+      <li><span class="ic"><svg viewBox="0 0 64 64"><use href="#goggles"/></svg></span><span><b>Wear eye protection</b> the whole time.</span></li>
+      <li><span class="ic"><svg viewBox="0 0 64 64"><use href="#apron"/></svg></span><span>Wear a <b>lab apron</b> (or lab coat) to protect your clothes and skin.</span></li>
+      <li><span class="ic"><svg viewBox="0 0 64 64"><use href="#hair"/></svg></span><span><b>Tie long hair back</b>, away from chemicals and flames.</span></li>
+      <li><span class="ic">🚫</span><span><b>Never taste or smell</b> chemicals. Never touch them with your fingers.</span></li>
+      <li><span class="ic"><svg viewBox="0 0 100 100"><use href="#corrosive"/></svg></span><span><b>Corrosive</b>: concentrated acids and alkalis (like oven cleaner) can burn skin and eyes.</span></li>
+      <li><span class="ic"><svg viewBox="0 0 100 100"><use href="#flammable"/></svg></span><span><b>Flammable</b>: alcohol catches fire easily. Keep it away from flames.</span></li>
+      <li><span class="ic">💧</span><span>Add drops <b>slowly</b> with a pipette. Use only small amounts.</span></li>
+      <li><span class="ic">🚿</span><span>On your skin or in your eyes? <b>Rinse with lots of cold water</b> and tell your teacher.</span></li>
+      <li><span class="ic">🧻</span><span><b>Wipe up spills</b> straight away and tell your teacher.</span></li>
+      <li><span class="ic">🧼</span><span><b>Wash your hands</b> after the lab.</span></li>
+    </ul>
+    <p style="text-align:right"><button class="btn primary" data-close="safeOv">Close</button></p>
+  </div>
+</div>
+
+<div class="overlay" id="present" role="dialog" aria-modal="true" aria-label="Marie's guide, presentation">
+  <div class="box">
+    <div class="spexbar" data-spex="present"></div>
+    <div id="presentSlide"></div>
+    <div class="slidenav">
+      <button class="btn" id="pPrev">← Back</button>
+      <span class="pg" id="pPg"></span>
+      <button class="btn primary" id="pNext">Next →</button>
+      <button class="btn" data-close="present">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="certOv" role="dialog" aria-modal="true" aria-label="My badges">
+  <div class="box" id="cert">
+    <div class="cert">
+      <div class="label">Certificate · Acids, alkalis and neutralisation</div>
+      <label class="noprint">Your name: <input class="word" id="certName" autocomplete="off" style="max-width:260px"></label>
+      <div class="who" id="certWho"></div>
+      <div id="certStars"></div>
+      <div class="badges" id="certBadges" style="justify-content:center"></div>
+      <div class="hint" id="certDate"></div>
+    </div>
+    <div class="controls noprint">
+      <button class="btn" id="certPrint">🖨 Print</button>
+      <button class="btn" id="resetAll">↺ Start again (delete my progress)</button>
+      <button class="btn primary" data-close="certOv">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+
+<footer>Acid: pH below 7 · Neutral: pH 7 · Alkali: pH above 7 · Adding water makes it dilute: the pH moves towards 7 · Acid + alkali → salt + water.</footer>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+
+  /* ============================ 3 CONFIG ============================ */
+  // universal indicator colour chart, pH 1–14 (index = pH)
+  const UI = [null, "#E21F26", "#EE3D23", "#F37021", "#F99D1C", "#F7EC13", "#C4D82E", "#4CB848",
+    "#169D4E", "#0E9A8D", "#1A75BC", "#264C9C", "#3A2C8C", "#5B2A86", "#6E2878"];
+  // red cabbage indicator, pH 1–14
+  const CAB = [null, "#D3123F", "#E0175E", "#D32A7C", "#B8398F", "#9A48A0", "#7F4FA8", "#6A57AE",
+    "#4069C0", "#2B86B8", "#269C93", "#3BA24F", "#7DB443", "#BFC733", "#F2C12E"];
+  const LITMUS = { acid: "#D32F2F", neutral: "#8E5BA8", alkali: "#1E5FB4" };
+  const IND = { ui: "Universal indicator", lit: "Litmus", cab: "Red cabbage" };
+
+  // Explore: 12 liquids (Workbook Activities 7 and 8, + blood and alcohol). own = the liquid's own colour;
+  // haz = hazard symbol (corrosive / flammable); parts = what the plain particles are (water unless said)
+  // blood is really pH 7.35–7.45; counted as neutral here (teacher's choice, 26 Oct 2026)
+  const LIQ = [
+    { id: "lemon", em: "🍋", name: "Lemon juice", pH: 2, own: "#FFF59D",
+      did: "Lemons taste <b>sour</b> because of citric acid. A sour taste is a sign of an acid (in food only – never taste lab chemicals!)." },
+    { id: "vinegar", em: "🫙", name: "Vinegar", pH: 3, own: "#FFF8E1",
+      did: "Vinegar is ethanoic acid in water. It cleans limescale off kettles and it makes chips taste sour." },
+    { id: "fizzy", em: "🫧", name: "Fizzy water", pH: 5, own: "#E3F2FD",
+      did: "The bubbles are carbon dioxide. Some of it dissolves and makes a weak acid, so fizzy water is slightly acidic." },
+    { id: "milk", em: "🥛", name: "Milk", pH: 6, own: "#FAFAFA",
+      did: "Fresh milk is only slightly acidic – very close to neutral. When milk goes sour, more acid is made." },
+    { id: "water", em: "💧", name: "Distilled water", pH: 7, own: "#E8F4FD",
+      did: "Pure water is <b>neutral</b>: not an acid and not an alkali. Tap water can be a little different because of what is dissolved in it." },
+    { id: "blood", em: "🩸", name: "Blood", pH: 7, own: "#8E1B1B",
+      did: "Blood is almost exactly <b>neutral</b> (a tiny bit above 7). Your body keeps its pH the same all the time – a big change would make you very ill. (We never test blood in class: this is Marie's model.)" },
+    { id: "alcohol", em: "🍶", name: "Alcohol (ethanol)", pH: 7, own: "#FAFDFF", haz: "flammable", parts: "alcohol",
+      did: "Alcohol (ethanol, as in hand sanitiser) is <b>neutral</b>. It is <b>flammable</b>: it catches fire easily, so keep it away from flames." },
+    { id: "toothpaste", em: "🪥", name: "Toothpaste (in water)", pH: 8, own: "#ECEFF1",
+      did: "Toothpaste is slightly alkaline. It neutralises the acid that bacteria make from sugar – acid that damages your teeth." },
+    { id: "soda", em: "🧁", name: "Baking soda (in water)", pH: 9, own: "#F5F5F5",
+      did: "Baking soda (sodium hydrogen carbonate) is a base. In water it is slightly alkaline. It is used in cakes and for bee stings." },
+    { id: "soap", em: "🧼", name: "Hand soap", pH: 10, own: "#F3E5F5",
+      did: "Soap is alkaline. Alkalis feel <b>soapy and slippery</b> – but never touch lab alkalis to test this!" },
+    { id: "bleach", em: "🧴", name: "Bleach", pH: 12, own: "#FFFDE7", haz: "corrosive",
+      did: "Bleach is very alkaline and <b>corrosive</b>: it can burn skin and eyes. Look for the hazard symbol on the bottle." },
+    { id: "oven", em: "🧽", name: "Oven cleaner", pH: 13, own: "#ECEFF1", haz: "corrosive",
+      did: "Oven cleaner contains sodium hydroxide, a strong alkali. It is very <b>corrosive</b>: always wear gloves and eye protection." },
+  ];
+  const MAX_WATER = 3;   // each 💧 Add water doubles the water (teaching pattern, see the notes at the top)
+  const VOLS = ["10 cm³", "20 cm³", "40 cm³", "80 cm³"];
+  const DROP = 30;       // particles drawn in one drop
+
+  // Change: acids and alkalis of the lesson (Workbook Activity 9 and the Salt naming simulation)
+  const ACIDS = [
+    { id: "hcl", name: "hydrochloric acid", f: "HCl", end: "chloride" },
+    { id: "h2so4", name: "sulfuric acid", f: "H₂SO₄", end: "sulfate" },
+    { id: "hno3", name: "nitric acid", f: "HNO₃", end: "nitrate" },
+  ];
+  const ALKS = [
+    { id: "naoh", name: "sodium hydroxide", metal: "sodium", f: "NaOH" },
+    { id: "koh", name: "potassium hydroxide", metal: "potassium", f: "KOH" },
+    { id: "caoh2", name: "calcium hydroxide", metal: "calcium", f: "Ca(OH)₂" },
+  ];
+  const NEUTRAL_AT = 23;   // drops of acid that neutralise 10 cm³ of alkali (the same for every pair: simplified)
+  const MAX_DROPS = 40;
+
+  // Change: real-life cards. ph = before, to = after the right remedy; opts = [id, emoji, text]
+  const LIFE = [
+    { id: "bee", em: "🐝", title: "Bee sting", ph: 5, to: 7, sting: true,
+      story: "Sam was stung by a <b>bee</b>. A bee sting is <b>acidic</b>.",
+      q: "What could you put on the sting to neutralise it?",
+      opts: [["soda", "🧁", "Baking soda paste"], ["vinegar", "🫙", "Vinegar"], ["lemon", "🍋", "Lemon juice"]], ans: "soda",
+      tip: "The sting is an acid. To neutralise an acid you need the opposite: something alkaline.",
+      why: "Baking soda is a base (it works like an alkali): it neutralises the acid in the sting. Vinegar and lemon juice are acids – they would not help." },
+    { id: "wasp", em: "🐝", title: "Wasp sting", ph: 9, to: 7, sting: true,
+      story: "Mia was stung by a <b>wasp</b>. In school books a wasp sting is <b>alkaline</b>.",
+      q: "What could you put on the sting to neutralise it?",
+      opts: [["vinegar", "🫙", "Vinegar"], ["soda", "🧁", "Baking soda paste"], ["soap", "🧼", "Soap"]], ans: "vinegar",
+      tip: "This sting is the opposite of a bee sting: it is alkaline. What neutralises an alkali?",
+      why: "Vinegar is an acid: it neutralises the alkali. Baking soda and soap are alkaline – they would make it worse." },
+    { id: "stomach", em: "🤢", title: "Indigestion", ph: 1, to: 3,
+      story: "Leo ate too much and has a stomach ache. His stomach makes acid to digest food – now there is <b>too much acid</b>.",
+      q: "What helps Leo?",
+      opts: [["tablet", "💊", "An indigestion tablet"], ["lemonade", "🥤", "A glass of lemonade"], ["vinegar", "🫙", "Vinegar on his food"]], ans: "tablet",
+      tip: "There is too much acid. Lemonade and vinegar are acids too…",
+      why: "Indigestion tablets contain a base (e.g. magnesium hydroxide) that neutralises the extra acid. The stomach stays a little acidic – it needs some acid to digest food." },
+    { id: "teeth", em: "🦷", title: "Tooth decay", ph: 5, to: 7,
+      story: "After sweets, bacteria in Ana's mouth turn sugar into <b>acid</b>. The acid attacks her teeth.",
+      q: "What should Ana do?",
+      opts: [["paste", "🪥", "Brush with toothpaste"], ["fizzy", "🥤", "Drink a fizzy drink"], ["sweet", "🍬", "Eat another sweet"]], ans: "paste",
+      tip: "The mouth is acidic. Which one is slightly alkaline?",
+      why: "Toothpaste is slightly alkaline: it neutralises the acid in the mouth. Fizzy drinks and sweets make more acid." },
+    { id: "soil", em: "🌱", title: "Acid soil", ph: 5, to: 7,
+      story: "A farmer's plants grow badly. The soil is too <b>acidic</b> (acid rain can do this too).",
+      q: "What should the farmer spread on the field?",
+      opts: [["lime", "🪨", "Lime (calcium hydroxide)"], ["vinegar", "🫙", "Vinegar"], ["lemon", "🍋", "Lemon juice"]], ans: "lime",
+      tip: "The soil is acidic – the farmer needs an alkali.",
+      why: "Lime is an alkali: it neutralises the acid in the soil, so plants can grow. Farmers also add lime to lakes hit by acid rain." },
+  ];
+  const STING_NOTE = "👩‍⚕️ This is the chemistry idea. In real life a doctor says: remove the sting, wash the skin and cool it with something cold.";
+
+  // Quiz bank: buttons only. part A = pH scale · B = properties and dilution · C = real life
+  // pic: {sw: pH colour swatch} or {em}; opts = [id, text]; ans = id
+  const QBANK = [
+    { id: "a-red", p: "A", sw: 1, text: "Universal indicator turned this colour. What is the pH?", opts: [["1", "pH 1"], ["7", "pH 7"], ["13", "pH 13"]], ans: "1",
+      tip: "Red is at the acid end of the colour chart.", why: "Red = pH 1: very acidic." },
+    { id: "a-green", p: "A", sw: 7, text: "Universal indicator turned this colour. What is the pH?", opts: [["2", "pH 2"], ["7", "pH 7"], ["12", "pH 12"]], ans: "7",
+      tip: "Green is in the middle of the colour chart.", why: "Green = pH 7: neutral." },
+    { id: "a-purple", p: "A", sw: 13, text: "Universal indicator turned this colour. What is the pH?", opts: [["3", "pH 3"], ["7", "pH 7"], ["13", "pH 13"]], ans: "13",
+      tip: "Purple is at the alkali end of the colour chart.", why: "Dark purple = pH 13: very alkaline." },
+    { id: "a-ph4", p: "A", em: "🧪", text: "A liquid has pH 4. It is…", opts: [["acid", "an acid"], ["neutral", "neutral"], ["alkali", "an alkali"]], ans: "acid",
+      tip: "Is 4 below or above 7?", why: "pH 4 is below 7, so it is an acid (slightly acidic)." },
+    { id: "a-ph10", p: "A", em: "🧪", text: "A liquid has pH 10. It is…", opts: [["acid", "an acid"], ["neutral", "neutral"], ["alkali", "an alkali"]], ans: "alkali",
+      tip: "Is 10 below or above 7?", why: "pH 10 is above 7, so it is an alkali." },
+    { id: "a-most", p: "A", em: "🍋", text: "Which liquid is the MOST acidic?", opts: [["2", "pH 2"], ["5", "pH 5"], ["6", "pH 6"]], ans: "2",
+      tip: "The further below 7, the more acidic.", why: "pH 2 is furthest below 7: the most acidic." },
+    { id: "a-mostalk", p: "A", em: "🧽", text: "Which liquid is the MOST alkaline?", opts: [["8", "pH 8"], ["11", "pH 11"], ["14", "pH 14"]], ans: "14",
+      tip: "The further above 7, the more alkaline.", why: "pH 14 is furthest above 7: the most alkaline." },
+    { id: "a-water", p: "A", em: "💧", text: "What is the pH of pure water?", opts: [["1", "pH 1"], ["7", "pH 7"], ["14", "pH 14"]], ans: "7",
+      tip: "Pure water is neither an acid nor an alkali.", why: "Pure water is neutral: pH 7." },
+    { id: "a-litmus", p: "A", em: "📄", text: "Litmus paper turns BLUE. The liquid is…", opts: [["acid", "an acid"], ["alkali", "an alkali"], ["neutral", "neutral"]], ans: "alkali",
+      tip: "Litmus: red in acids, blue in…", why: "Litmus turns blue in alkalis (and red in acids)." },
+    { id: "a-cabbage", p: "A", em: "🥬", text: "Red cabbage juice turns pink-red. The liquid is…", opts: [["acid", "an acid"], ["neutral", "neutral"], ["alkali", "an alkali"]], ans: "acid",
+      tip: "Red cabbage is purple in water. Look at Marie's guide, card 2.", why: "Red cabbage turns red or pink in acids (and green or yellow in alkalis)." },
+
+    { id: "b-dilute", p: "B", em: "🫙", text: "You add lots of water to vinegar. What happens to its pH?", opts: [["up", "It goes up, closer to 7"], ["down", "It goes down"], ["same", "It stays the same"]], ans: "up",
+      tip: "Try it in Explore: test vinegar, press 💧 Add water and test again.", why: "Water makes the acid dilute: the pH goes up towards 7. It is still an acid." },
+    { id: "b-cross", p: "B", em: "💧", text: "Can adding water turn an acid into an alkali?", opts: [["no", "No – the pH gets closer to 7, but never goes past it"], ["lots", "Yes, if you add lots of water"], ["yes", "Yes, always"]], ans: "no",
+      tip: "Water is neutral (pH 7). Can it add alkali particles?", why: "No. The acid particles are still there, just spread out. The pH gets closer and closer to 7, but never goes past 7." },
+    { id: "b-safer", p: "B", em: "🧪", text: "Which is LESS dangerous?", opts: [["dil", "A dilute acid"], ["conc", "A concentrated acid"], ["same", "Both are the same"]], ans: "dil",
+      tip: "Concentrated = lots of acid in a little water.", why: "A dilute acid has fewer acid particles in each drop, so it is less dangerous. (Still wear eye protection!)" },
+    { id: "b-parts", p: "B", em: "👓", text: "Compared with a concentrated acid, a dilute acid has…", opts: [["fewer", "fewer acid particles in each drop"], ["none", "no acid particles"], ["more", "more acid particles in each drop"]], ans: "fewer",
+      tip: "Look through Marie's particle spectacles when you add water.", why: "The same acid particles are spread through more water: fewer in each drop." },
+    { id: "b-conc", p: "B", em: "🧪", text: "What does 'concentrated acid' mean?", opts: [["lots", "Lots of acid in a little water"], ["water", "A little acid in lots of water"], ["ph7", "An acid with pH 7"]], ans: "lots",
+      tip: "Dilute is the opposite of concentrated.", why: "Concentrated = lots of acid in a little water. Dilute = a little acid in lots of water." },
+    { id: "b-soapy", p: "B", em: "🧼", text: "Which feels soapy and slippery?", opts: [["alkali", "An alkali"], ["acid", "An acid"], ["neutral", "Pure water"]], ans: "alkali",
+      tip: "Think of soap: is it an acid or an alkali?", why: "Alkalis feel soapy (soap is alkaline). Never touch lab chemicals to test this!" },
+    { id: "b-sour", p: "B", em: "🍋", text: "Lemons and vinegar taste sour. Sour is a sign of…", opts: [["acid", "an acid"], ["alkali", "an alkali"], ["neutral", "a neutral liquid"]], ans: "acid",
+      tip: "Lemon juice has pH 2.", why: "Acids taste sour (in food only – never taste lab chemicals)." },
+    { id: "b-corr", p: "B", svg: "corrosive", text: "Oven cleaner has this hazard symbol. What does it mean?", opts: [["burn", "Corrosive: it can burn skin and eyes"], ["boom", "It can explode"], ["safe", "It is safe to touch"]], ans: "burn",
+      tip: "Look at the picture: drops falling on a hand.", why: "Corrosive: concentrated acids and alkalis can burn skin and eyes. Wear gloves and eye protection." },
+    { id: "b-blue", p: "B", em: "🧪", text: "A liquid turns universal indicator blue-purple. It is…", opts: [["alkali", "an alkali"], ["acid", "an acid"], ["neutral", "neutral"]], ans: "alkali",
+      tip: "Blue and purple are at the right of the colour chart.", why: "Blue to purple = pH above 7: an alkali." },
+
+    { id: "c-bee", p: "C", em: "🐝", text: "A bee sting is acidic. What could you put on it?", opts: [["soda", "Baking soda paste"], ["vinegar", "Vinegar"], ["lemon", "Lemon juice"]], ans: "soda",
+      tip: "To neutralise an acid you need something alkaline.", why: "Baking soda is alkaline: it neutralises the acid. (Real first aid: remove the sting, wash, cool.)" },
+    { id: "c-wasp", p: "C", em: "🐝", text: "A wasp sting is alkaline. What could you put on it?", opts: [["vinegar", "Vinegar"], ["soda", "Baking soda paste"], ["soap", "Soap"]], ans: "vinegar",
+      tip: "To neutralise an alkali you need an acid.", why: "Vinegar is an acid: it neutralises the alkali. (Real first aid: wash, cool.)" },
+    { id: "c-stomach", p: "C", em: "💊", text: "Indigestion tablets help a stomach ache. What do they do?", opts: [["neut", "They neutralise extra stomach acid"], ["more", "They add more acid"], ["sugar", "They add sugar"]], ans: "neut",
+      tip: "A stomach ache like this comes from too much acid.", why: "Indigestion tablets contain a base that neutralises the extra acid." },
+    { id: "c-teeth", p: "C", em: "🪥", text: "Why is toothpaste slightly alkaline?", opts: [["neut", "To neutralise acid made by bacteria"], ["taste", "To make it taste sour"], ["colour", "To make teeth white"]], ans: "neut",
+      tip: "Bacteria turn sugar into acid. What does an alkali do to an acid?", why: "The alkali in toothpaste neutralises the acid that attacks teeth." },
+    { id: "c-soil", p: "C", em: "🌱", text: "A field has acidic soil. What should the farmer add?", opts: [["lime", "Lime (an alkali)"], ["vinegar", "Vinegar"], ["acid", "More acid rain"]], ans: "lime",
+      tip: "Acid soil needs to be neutralised.", why: "Lime is an alkali: it neutralises the acid soil." },
+    { id: "c-kettle", p: "C", em: "🫖", text: "Limescale in a kettle is a base. What cleans it off?", opts: [["vinegar", "Vinegar (an acid)"], ["soda", "Baking soda"], ["soap", "Soap"]], ans: "vinegar",
+      tip: "A base reacts with the opposite: an acid.", why: "Vinegar is an acid: it reacts with (neutralises) the limescale and dissolves it." },
+    { id: "c-lake", p: "C", em: "🏞️", text: "Acid rain made a lake too acidic for fish. What can people add?", opts: [["lime", "Lime"], ["vinegar", "Vinegar"], ["sugar", "Sugar"]], ans: "lime",
+      tip: "Which one is an alkali?", why: "Lime is an alkali: it neutralises the acid in the lake." },
+    { id: "c-made", p: "C", em: "⚗️", text: "An acid neutralises an alkali. What is made?", opts: [["salt", "A salt and water"], ["acid", "A stronger acid"], ["gas", "Only a gas"]], ans: "salt",
+      tip: "Remember the word equation from the Neutralise bench.", why: "Acid + alkali → salt + water." },
+  ];
+  const FIRST_ROUND = ["a-red", "a-ph4", "a-purple", "a-most", "a-litmus",
+    "b-dilute", "b-cross", "b-parts", "b-soapy", "b-corr",
+    "c-bee", "c-wasp", "c-stomach", "c-teeth", "c-soil", "c-made"];
+  const ROUND_MIX = { A: 5, B: 5, C: 6 };
+
+  /* ============================ 4 CHEMISTRY ============================ */
+  const EPS = 1e-6;
+  const kindOf = (pH) => (pH < 7 - EPS ? "acid" : pH > 7 + EPS ? "alkali" : "neutral");
+  const KIND = { acid: "Acid", neutral: "Neutral", alkali: "Alkali" };
+  function wordOf(pH) {   // the five groups of Workbook Activity 7
+    const k = kindOf(pH);
+    if (k === "neutral") return "neutral";
+    if (k === "acid") return pH <= 3.5 ? "very acidic" : "slightly acidic";
+    return pH >= 10.5 ? "very alkaline" : "slightly alkaline";
+  }
+  const hex2 = (c) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
+  const mix = (a, b, t) => "#" + hex2(a).map((v, i) => Math.round(v + (hex2(b)[i] - v) * t).toString(16).padStart(2, "0")).join("");
+  function chart(arr, pH) {
+    const p = Math.max(1, Math.min(14, pH)), lo = Math.floor(p), hi = Math.min(14, lo + 1);
+    return mix(arr[lo], arr[hi], p - lo);
+  }
+  function indColor(ind, pH) {
+    if (ind === "ui") return chart(UI, pH);
+    if (ind === "cab") return chart(CAB, pH);
+    return LITMUS[kindOf(pH)];
+  }
+  // pH after k presses of "add water": one step towards 7, or half the remaining way once within 1.5 (never reaches 7)
+  function dilutedPH(pH0, k) {
+    let d = Math.abs(pH0 - 7);
+    for (let i = 0; i < k; i++) d = d > 1.5 ? d - 1 : d / 2;
+    return pH0 < 7 ? 7 - d : 7 + d;
+  }
+  function pHtext(pH) {
+    if (Math.abs(pH - 7) < EPS) return "pH 7";
+    if (Math.abs(pH - 7) < 0.6) return `pH ${(Math.floor(pH * 10 + (pH > 7 ? 0.9999 : 0)) / 10).toFixed(1)} – just ${pH < 7 ? "below" : "above"} 7`;
+    return Math.abs(pH - Math.round(pH)) < 0.05 ? `pH ${Math.round(pH)}` : `pH about ${Math.round(pH)}`;
+  }
+  // pH in the beaker after d drops (gentle teaching curve, exactly 7 at NEUTRAL_AT)
+  // acidIn: acid in the beaker and alkali in the dropper (the same curve, mirrored about pH 7)
+  function titrPH(d, acidIn = false) {
+    const x = (NEUTRAL_AT - d) / NEUTRAL_AT;
+    const p = Math.max(1, 7 + 6 * Math.sign(x) * Math.pow(Math.abs(x), 0.45));
+    return acidIn ? 14 - p : p;
+  }
+  const saltOf = (acid, alk) => `${alk.metal} ${acid.end}`;
+  const wordEq = (acid, alk) => `${acid.name} + ${alk.name} → ${saltOf(acid, alk)} + water`;
+  // acid/alkali particles in one drop: more for liquids further from 7, halved by each "add water"
+  const dropCount = (pH0, k) => (Math.abs(pH0 - 7) < EPS ? 0 : Math.max(1, Math.round((2 * Math.abs(pH0 - 7) + 2) / Math.pow(2, k))));
+
+  /* ============================ 5 ENGINE ============================ */
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs = {}, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  const h = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+  function rng(seed) {
+    let a = typeof seed === "number" ? seed : [...String(seed)].reduce((s, c) => (Math.imul(s, 31) + c.charCodeAt(0)) | 0, 7);
+    return () => { a |= 0; a = (a + 0x6D2B79F5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  }
+  const shuffle = (arr, r = Math.random) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const reduced = () => window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const hazSvg = (kind, s = 20) => `<svg width="${s}" height="${s}" viewBox="0 0 100 100" aria-label="${kind}"><use href="#${kind}"/></svg>`;
+  const corrosiveSvg = (s) => hazSvg("corrosive", s);
+  const HAZ = { corrosive: "<b>Corrosive!</b> Marie wears gloves and eye protection. In the lab: only tiny amounts, and never on your skin.",
+    flammable: "<b>Flammable!</b> Alcohol catches fire easily. Keep it away from Bunsen burners and flames." };
+
+  // a beaker: level 0–1 of the glass, liquid colour, optional label and drop of indicator falling in
+  function drawBeaker(svg, { level, color, label, tall }) {
+    const H = tall ? 230 : 190, top = tall ? 50 : 14, bot = H - 12, L = 26, R = 134;
+    svg.replaceChildren();
+    const y = bot - (bot - top - 8) * level;
+    el("path", { d: `M${L} ${y} L${R} ${y} L${R} ${bot - 8} Q${R} ${bot} ${R - 8} ${bot} L${L + 8} ${bot} Q${L} ${bot} ${L} ${bot - 8}Z`, fill: color, style: "transition:fill .6s" }, svg);
+    el("ellipse", { cx: 80, cy: y, rx: (R - L) / 2, ry: 3, fill: "#fff", opacity: 0.35 }, svg);
+    el("path", { d: `M${L - 6} ${top} L${L} ${top + 4} L${L} ${bot - 8} Q${L} ${bot} ${L + 8} ${bot} L${R - 8} ${bot} Q${R} ${bot} ${R} ${bot - 8} L${R} ${top}`, fill: "none", stroke: "#78909C", "stroke-width": 3, "stroke-linejoin": "round" }, svg);
+    for (let i = 1; i <= 4; i++) el("line", { x1: R - 16, x2: R, y1: bot - i * (bot - top) / 5, y2: bot - i * (bot - top) / 5, stroke: "#B0BEC5", "stroke-width": 1.5 }, svg);
+    el("rect", { x: L + 6, y: top + 10, width: 6, height: bot - top - 30, rx: 3, fill: "#fff", opacity: 0.45 }, svg);
+    if (label) { const t = el("text", { x: 80, y: bot - 10, "text-anchor": "middle", "font-size": 14, "font-weight": 700, ...(tall ? { fill: "#fff", stroke: "#37474F", "stroke-width": 2.2, "paint-order": "stroke" } : { fill: "#37474F" }) }, svg); t.textContent = label; }
+    return { y };
+  }
+  function dropInto(svg, x, y, color) {
+    if (reduced()) return;
+    const d = el("circle", { cx: x, cy: y, r: 5, fill: color, class: "dropAnim" }, svg);
+    setTimeout(() => d.remove(), 460);
+  }
+  // particles inside the liquid: n acid/alkali particles, w water particles, box height grows with the water
+  function drawParticles(svg, { n, kind, w, H, seed, solvent = "water" }) {
+    svg.setAttribute("viewBox", `0 0 220 ${H}`);
+    svg.replaceChildren();
+    el("rect", { x: 1.5, y: 1.5, width: 217, height: H - 3, rx: 8, fill: "#fff", stroke: "#90A4AE", "stroke-width": 3 }, svg);
+    const r = rng(seed), pts = [], put = (rad) => {
+      for (let tries = 0; tries < 400; tries++) {
+        const x = 12 + r() * 196, y = 12 + r() * (H - 24);
+        if (pts.every((p) => Math.hypot(p.x - x, p.y - y) > p.rad + rad + 3)) { const p = { x, y, rad }; pts.push(p); return p; }
+      }
+      return null;
+    };
+    const col = kind === "acid" ? "#E53935" : "#5E35B1";
+    for (let i = 0; i < n; i++) { const p = put(7); if (p) el("circle", { cx: p.x, cy: p.y, r: 7, fill: col, stroke: "rgba(0,0,0,.3)" }, svg); }
+    for (let i = 0; i < w; i++) { const p = put(5.5); if (p) el("circle", { cx: p.x, cy: p.y, r: 5.5, fill: solvent === "water" ? "#BBDEFB" : "#FFE0B2", stroke: solvent === "water" ? "#64B5F6" : "#FB8C00" }, svg); }
+  }
+  // pH strip: 14 colour buttons (answers in Explore, display in Real life)
+  function stripButtons(box) {
+    box.replaceChildren();
+    for (let p = 1; p <= 14; p++) box.appendChild(h(`<button class="phb" data-v="${p}" style="background:${UI[p]}" disabled aria-label="pH ${p}">${p}</button>`));
+  }
+  const markerAt = (m, pH) => { m.hidden = false; m.style.left = ((Math.max(1, Math.min(14, pH)) - 0.5) / 14 * 100) + "%"; };
+
+  /* Marie, the guide */
+  const SPEX = `<svg class="spex" viewBox="0 0 100 100" data-mood="talk" aria-hidden="true">
+    <circle cx="50" cy="50" r="49" fill="#DCE3EA"/>
+    <path d="M24 47 Q20 15 50 13 Q80 14 77 47 L78 63 Q73 67 68 60 L32 60 Q27 66 22 61Z" fill="#3B2A22"/>
+    <path d="M10 100 Q12 76 50 71 Q88 76 90 100Z" fill="#7F8C6B"/>
+    <rect x="44.5" y="60" width="11" height="13" rx="3" fill="#E6BFA3"/>
+    <path d="M41 71 L50 86 L35 82Z" fill="#8E9B79" stroke="#6B775A" stroke-width="1"/><path d="M59 71 L50 86 L65 82Z" fill="#8E9B79" stroke="#6B775A" stroke-width="1"/>
+    <circle cx="50" cy="93" r="1.6" fill="#A1887F"/>
+    <circle cx="29.5" cy="47" r="4" fill="#E6BFA3"/><circle cx="70.5" cy="47" r="4" fill="#E6BFA3"/><circle cx="29.3" cy="52.5" r="1.4" fill="#26A69A"/>
+    <ellipse cx="50" cy="45" rx="20.5" ry="23" fill="#F0CDB4"/>
+    <path d="M29.5 41 Q29 20 45 18.5 Q63 16.5 72 30 Q74 38 72.5 47 Q67 34 57 31 Q49 29 45 25.5 Q39 31 29.5 41Z" fill="#3B2A22"/>
+    <path d="M44.5 19.5 Q47 23 45.5 27" stroke="#A8A29E" stroke-width="1.6" fill="none"/><path d="M50 21 Q63 21 70 32" stroke="#5A463C" stroke-width="1.2" fill="none"/>
+    <circle cx="37" cy="54" r="3.3" fill="#F48FB1" opacity=".35"/><circle cx="63" cy="54" r="3.3" fill="#F48FB1" opacity=".35"/>
+    <g class="brow" stroke="#3B2A22" stroke-width="1.6" fill="none" stroke-linecap="round"><path d="M35 35.5 q5 -2.5 10 -0.5"/><path d="M55 35 q5 -2 10 0.5"/></g>
+    <circle cx="41" cy="44" r="2.2" fill="#4E342E"/><circle cx="59" cy="44" r="2.2" fill="#4E342E"/>
+    <path d="M50 46 q-2.2 5 0 6.2" stroke="#D49F82" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <rect class="lens" x="32" y="37.5" width="16.5" height="13.5" rx="6" stroke="#B98A70" stroke-width="1.2"/>
+    <rect class="lens" x="51.5" y="37.5" width="16.5" height="13.5" rx="6" stroke="#B98A70" stroke-width="1.2"/>
+    <path d="M48.5 42 q1.5 -1.6 3 0 M32 41 L28 40 M68 41 L72 40" stroke="#B98A70" stroke-width="1.1" fill="none"/>
+    <ellipse class="m m-talk" cx="50" cy="58.5" rx="3.6" ry="2.6" fill="#B5545C"/>
+    <path class="m m-happy" d="M43 56.5 Q50 63.5 57 56.5Z" fill="#B5545C"/>
+    <path class="m m-think" d="M45.5 59 h8" stroke="#B5545C" stroke-width="2" stroke-linecap="round"/>
+    <circle class="m m-wow" cx="50" cy="59" r="3.2" fill="#B5545C"/>
+    <path class="m m-hmm" d="M44 59.5 q3 -2.2 6 0 t6 0" stroke="#B5545C" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>`;
+  function spexBar(name) {
+    const bar = document.querySelector(`[data-spex="${name}"]`);
+    if (bar && !bar.firstChild) { bar.innerHTML = SPEX + `<div class="bubble" aria-live="polite"></div>`; }
+    return bar;
+  }
+  function say(name, html, mood = "talk", cls = "") {
+    const bar = spexBar(name); if (!bar) return;
+    bar.querySelector(".spex").dataset.mood = mood;
+    const b = bar.querySelector(".bubble"); b.className = "bubble" + (cls ? " " + cls : ""); b.innerHTML = html;
+  }
+
+  /* sound: off by default; tiny tones made in the browser */
+  let actx = null;
+  function beep(f, d, type = "sine", v = 0.06, when = 0) {
+    if (!P.sound) return;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + when;
+      o.type = type; o.frequency.value = f; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + d + 0.02);
+    } catch (e) {}
+  }
+  const SND = {
+    drop: () => beep(1200, 0.06, "sine", 0.05),
+    star: () => { beep(660, 0.12); beep(990, 0.18, "sine", 0.06, 0.1); },
+    tip: () => beep(250, 0.22, "triangle", 0.07),
+    badge: () => [523, 659, 784, 1047].forEach((f, i) => beep(f, 0.18, "sine", 0.06, i * 0.11)),
+  };
+
+  /* progress: stars, badges – saved in this browser */
+  const STORE = "g7-aan-v1";
+  const P = { stars: { explore: {}, change: {}, life: {}, quiz: {} }, badges: {}, name: "", sound: false, seenIntro: false, quizRounds: 0 };
+  function save() { try { localStorage.setItem(STORE, JSON.stringify(P)); } catch (e) {} }
+  function load() {
+    try { const d = JSON.parse(localStorage.getItem(STORE) || "{}"); for (const k in d) if (k in P) P[k] = d[k]; for (const t of ["explore", "change", "life", "quiz"]) P.stars[t] = P.stars[t] || {}; } catch (e) {}
+  }
+  const starsOf = (st) => (st.revealed ? 0 : st.mistakes ? 2 : 3);
+  const starsHTML = (n, of = 3) => `<span class="stars" aria-label="${n} stars">${"★".repeat(n)}<span class="off">${"★".repeat(Math.max(0, of - n))}</span></span>`;
+  const tabStars = (t) => Object.values(P.stars[t]).reduce((s, n) => s + n, 0);
+  const BADGES = [
+    { tab: "explore", em: "🔍", name: "pH detective", how: "Test and sort all 12 liquids", got: () => LIQ.every((l) => l.id in P.stars.explore) },
+    { tab: "change", em: "⚗️", name: "Neutraliser", how: "Neutralise 3 different pairs", got: () => Object.keys(P.stars.change).length >= 3 },
+    { tab: "life", em: "🩹", name: "Helping chemist", how: "Solve all 5 real-life problems", got: () => LIFE.every((c) => c.id in P.stars.life) },
+    { tab: "quiz", em: "🏆", name: "Quiz master", how: "Finish one quiz round", got: () => P.quizRounds >= 1 },
+  ];
+  function toast(msg) { const t = $("toast"); t.innerHTML = msg; t.classList.remove("on"); void t.offsetWidth; t.classList.add("on"); clearTimeout(toast.k); toast.k = setTimeout(() => t.classList.remove("on"), 3200); }
+  function refreshStars() {
+    let total = 0;
+    for (const t in P.stars) total += tabStars(t);
+    for (const [t, n] of [["explore", tabStars("explore")], ["change", tabStars("change") + tabStars("life")], ["quiz", tabStars("quiz")]]) {
+      const s = document.querySelector(`[data-ts="${t}"]`); if (s) s.textContent = n ? "★" + n : ""; }
+    $("starSum").textContent = "★ " + total;
+    for (const b of BADGES) if (!P.badges[b.tab] && b.got()) {
+      P.badges[b.tab] = new Date().toISOString().slice(0, 10);
+      toast(`${b.em} New badge: <b>${b.name}</b>!`); SND.badge();
+      say(currentTab(), `${b.em} You won the <b>${b.name}</b> badge! See 🏅 My badges.`, "happy", "good");
+    }
+    save();
+  }
+  function addStars(tab, id, n) {
+    P.stars[tab][id] = Math.max(P.stars[tab][id] ?? -1, n);
+    if (n) SND.star();
+    refreshStars();
+  }
+
+  /* questions: 1st wrong → a tip, 2nd wrong → the answer is shown.
+     opts = [value, html]; with keep, the existing buttons in box are used (the pH strip) */
+  function ask({ box, fb, opts, correct, tip, answer, good, cls = "cat", spex, keep, onDone }) {
+    const st = { mistakes: 0, revealed: false, done: false };
+    let btns;
+    if (keep) { btns = [...box.querySelectorAll("button")]; btns.forEach((b) => { b.disabled = false; b.classList.remove("right", "wrong"); }); box.classList.add("ask"); }
+    else { box.replaceChildren(); btns = opts.map(([v, html]) => { const b = h(`<button class="${cls}" data-v="${v}">${html}</button>`); box.appendChild(b); return b; }); }
+    btns.forEach((b) => { b.onclick = () => pick(b.dataset.v, b); });
+    function finish() { st.done = true; box.classList.remove("ask"); btns.forEach((b) => (b.disabled = true)); onDone && onDone(st); }
+    function pick(v, b) {
+      if (st.done) return;
+      if (correct.includes(v)) {
+        b.classList.add("right");
+        fbSet(fb, "good", `✔ ${typeof good === "function" ? good(v) : good}`);
+        spex && say(spex, st.mistakes ? "Yes! You got it after the tip. ★★" : "Brilliant – right first time! ★★★", "happy", "good");
+        return finish();
+      }
+      st.mistakes++; b.classList.add("wrong"); b.disabled = true; SND.tip();
+      if (st.mistakes === 1) { fbSet(fb, "tip", "💡 Tip: " + (typeof tip === "function" ? tip(v) : tip)); spex && say(spex, "Hmm, not quite. Read my tip and try again!", "hmm", "tip"); }
+      else {
+        st.revealed = true;
+        btns.forEach((x) => correct.includes(x.dataset.v) && x.classList.add("right"));
+        fbSet(fb, "ans", "The answer: " + answer);
+        spex && say(spex, "Here is the answer – read why, and you'll get the next one!", "think", "ans");
+        finish();
+      }
+    }
+    return st;
+  }
+  function fbSet(e, cls, html) { e.className = "feedback " + cls; e.innerHTML = html; }
+
+  /* ============================ 6 EXPLORE ============================ */
+  // Marie's guide: 6 cards (also the first-visit intro and the Present mode)
+  const mini = (arr) => `<div class="minirow">${arr.slice(1).map((c, i) => `<i style="background:${c}" title="pH ${i + 1}"></i>`).join("")}</div>`;
+  const nums = `<div class="minirow" style="font-size:.7rem;text-align:center">${UI.slice(1).map((_, i) => `<span>${i + 1}</span>`).join("")}</div>`;
+  const SLIDES = [
+    { title: "1 · The pH scale", spex: "The <b>pH scale</b> tells us how acidic or alkaline a liquid is.",
+      body: `${mini(UI)}${nums}<div class="phlabels"><span class="a">ACID · below 7</span><span class="n">7</span><span class="b">ALKALI · above 7</span></div>
+        <ul><li>pH 1–3 <b>very acidic</b> · pH 4–6 <b>slightly acidic</b></li><li>pH 7 <b>neutral</b> (pure water)</li><li>pH 8–10 <b>slightly alkaline</b> · pH 11–14 <b>very alkaline</b></li></ul>` },
+    { title: "2 · Indicators", spex: "An <b>indicator</b> changes colour in acids and alkalis. Only universal indicator shows the pH number.",
+      body: `<div class="indrow"><b>Universal indicator</b><b>Litmus</b><b>Red cabbage</b></div>
+        ${[["In an acid", 2], ["Neutral", 7], ["In an alkali", 12]].map(([k, p]) => `<div><div class="label">${k} (pH ${p})</div><div class="indrow"><i style="background:${UI[p]}"></i><i style="background:${indColor("lit", p)}"></i><i style="background:${CAB[p]}"></i></div></div>`).join("")}
+        <p class="hint">Litmus: red in acids, blue in alkalis. Red cabbage: red-pink in acids, purple when neutral, green-yellow in alkalis.</p>` },
+    { title: "3 · Acids", spex: "Acids are in lemons, vinegar – and your stomach!",
+      body: `<div class="two"><div class="a"><h4>Properties of acids</h4><ul><li>pH <b>below 7</b></li><li>turn universal indicator red, orange or yellow</li><li>turn litmus <b>red</b></li><li>taste <b>sour</b> (food only!)</li><li>concentrated acids are <b>corrosive</b></li><li>neutralise alkalis</li></ul></div>
+        <div class="a"><h4>Examples</h4><ul><li>🍋 lemon juice (citric acid)</li><li>🫙 vinegar (ethanoic acid)</li><li>🤢 stomach acid (hydrochloric acid)</li><li>🧪 lab: hydrochloric, sulfuric, nitric acid</li></ul></div></div>` },
+    { title: "4 · Alkalis", spex: "Alkalis are the opposite of acids. An alkali is a <b>base</b> that dissolves in water.",
+      body: `<div class="two"><div class="b"><h4>Properties of alkalis</h4><ul><li>pH <b>above 7</b></li><li>turn universal indicator blue or purple</li><li>turn litmus <b>blue</b></li><li>feel <b>soapy</b> (never touch lab alkalis!)</li><li>concentrated alkalis are <b>corrosive</b> ${corrosiveSvg(22)}</li><li>neutralise acids</li></ul></div>
+        <div class="b"><h4>Examples</h4><ul><li>🧼 soap · 🪥 toothpaste</li><li>🧁 baking soda (a base)</li><li>🧴 bleach · 🧽 oven cleaner</li><li>🧪 lab: sodium hydroxide, calcium hydroxide (limewater)</li></ul></div></div>` },
+    { title: "5 · Concentrated or dilute?", spex: "Adding water does not take the acid away – it spreads it out!",
+      body: `<div class="two"><div class="a"><h4>Concentrated</h4><svg viewBox="0 0 220 110" id="sConc" style="width:100%"></svg><p>lots of acid particles in each drop</p></div>
+        <div class="a"><h4>Dilute</h4><svg viewBox="0 0 220 110" id="sDil" style="width:100%"></svg><p>more water: fewer acid particles in each drop</p></div></div>
+        <p>Add water → the pH moves <b>closer to 7</b> (an acid goes up, an alkali goes down) – but it <b>never goes past 7</b>. A dilute acid is still an acid.</p>` },
+    { title: "6 · Neutralisation", spex: "When an acid meets an alkali, they cancel each other out!",
+      body: `<div class="eq">acid + alkali → salt + water</div><div class="eq" style="font-weight:600">hydrochloric acid + sodium hydroxide → sodium chloride + water</div>
+        <ul><li>The pH moves to <b>7</b>: universal indicator turns <b>green</b>.</li><li>Add the acid <b>drop by drop</b> near the end, or you go past 7!</li>
+        <li>Neutralisation helps: 🐝 stings · 🤢 indigestion · 🦷 teeth · 🌱 acid soil.</li></ul>` },
+  ];
+  function renderSlide(holder, i) {
+    const s = SLIDES[i];
+    holder.innerHTML = `<div class="slide"><h3>${s.title}</h3>${s.body}</div>`;
+    holder.querySelectorAll("#sConc,#sDil").forEach((svg) => {
+      const dil = svg.id === "sDil";
+      drawParticles(svg, { n: dil ? 3 : 12, kind: "acid", w: dil ? 21 : 12, H: 110, seed: svg.id + i });
+      svg.setAttribute("viewBox", "0 0 220 110"); svg.removeAttribute("id");
+    });
+  }
+  let gi = 0, pi = 0;
+  function showGuide(i) { gi = Math.max(0, Math.min(SLIDES.length - 1, i)); renderSlide($("guideSlide"), gi); $("gPg").textContent = `${gi + 1} / ${SLIDES.length}`; $("gPrev").disabled = gi === 0; $("gNext").disabled = gi === SLIDES.length - 1; }
+  function showPresent(i) { pi = Math.max(0, Math.min(SLIDES.length - 1, i)); renderSlide($("presentSlide"), pi); $("pPg").textContent = `${pi + 1} / ${SLIDES.length}`;
+    $("pPrev").disabled = pi === 0; $("pNext").textContent = pi === SLIDES.length - 1 ? "Start →" : "Next →"; say("present", SLIDES[pi].spex, pi === 0 ? "happy" : "talk"); }
+  function openPresent(i = 0) { $("present").classList.add("on"); showPresent(i); }
+  $("gPrev").addEventListener("click", () => showGuide(gi - 1));
+  $("gNext").addEventListener("click", () => showGuide(gi + 1));
+  $("presentBtn").addEventListener("click", () => openPresent(gi));
+  $("pPrev").addEventListener("click", () => showPresent(pi - 1));
+  $("pNext").addEventListener("click", () => (pi === SLIDES.length - 1 ? closeOv("present") : showPresent(pi + 1)));
+
+  // the bench: E = the liquid being tested
+  const E = { liq: null, k: 0, wells: {}, sorted: false, st1: null, timer: 0 };
+  const curPH = () => dilutedPH(E.liq.pH, E.k);
+  function renderShelf() {
+    $("shelf").innerHTML = LIQ.map((l) => { const n = P.stars.explore[l.id];
+      return `<button class="obj" data-id="${l.id}" aria-pressed="${E.liq === l}"><span class="em">${l.em}</span><span>${l.name}</span>${l.haz ? hazSvg(l.haz, 20) : ""}<span class="st">${n != null ? "★".repeat(n) || "✓" : ""}</span></button>`; }).join("");
+    $("shelf").querySelectorAll(".obj").forEach((b) => b.addEventListener("click", () => selectLiq(b.dataset.id)));
+  }
+  function renderBench() {
+    const l = E.liq, pH = curPH();
+    drawBeaker($("eBeaker"), { level: 0.22 + 0.22 * E.k, color: l.own, label: VOLS[E.k] });
+    $("eVol").textContent = E.k ? `Water added ${E.k}×` : "Sample";
+    // spotting tile
+    const t = $("eTile"); t.replaceChildren();
+    el("rect", { x: 2, y: 4, width: 326, height: 88, rx: 14, fill: "#FAFAFA", stroke: "#B0BEC5", "stroke-width": 2 }, t);
+    ["ui", "lit", "cab"].forEach((ind, i) => {
+      const cx = 58 + i * 107, col = E.wells[ind] ? indColor(ind, pH) : l.own;
+      el("circle", { cx, cy: 40, r: 26, fill: "#ECEFF1", stroke: "#CFD8DC", "stroke-width": 2 }, t);
+      el("circle", { cx, cy: 40, r: 21, fill: col, style: "transition:fill .5s" }, t);
+      const tx = el("text", { x: cx, y: 86, "text-anchor": "middle", "font-size": 15, "font-weight": 700, fill: "#455A64" }, t); tx.textContent = { ui: "Universal", lit: "Litmus", cab: "Red cabbage" }[ind];
+    });
+    // particles
+    const kind = kindOf(l.pH), n = dropCount(l.pH, E.k);
+    const solv = l.parts || "water";
+    drawParticles($("eParts"), { n, kind, w: DROP - n, H: 150, seed: l.id + E.k, solvent: solv });
+    $("eCount").innerHTML = kind === "neutral" ? `no acid or alkali particles` : `<b>${n}</b> ${kind} particle${n === 1 ? "" : "s"} in this drop`;
+    $("eSolv").textContent = solv; $("eSolvDot").style.background = solv === "water" ? "#BBDEFB" : "#FFE0B2";
+    $("eLegend").children[0].hidden = kind !== "acid";
+    $("eLegend").children[1].hidden = kind !== "alkali";
+    $("eWater").disabled = E.k >= MAX_WATER;
+  }
+  function selectLiq(id) {
+    clearTimeout(E.timer); E.liq = LIQ.find((l) => l.id === id); E.k = 0; E.wells = {}; E.sorted = false; E.st1 = null;
+    renderShelf(); renderBench();
+    $("eTitle").textContent = `2 · Test it: ${E.liq.em} ${E.liq.name}`;
+    $("eSafety").hidden = !E.liq.haz;
+    if (E.liq.haz) $("eSafety").innerHTML = `<button data-safety aria-label="Safety rules">${hazSvg(E.liq.haz, 38)}</button><span>${HAZ[E.liq.haz]}</span>`;
+    stripButtons($("eStrip")); $("eMarker").hidden = true;
+    $("eRead").innerHTML = "Add a drop of <b>universal indicator</b> to the spotting tile.";
+    $("eAsk2").hidden = true; $("eFb").className = "feedback"; $("eFb").innerHTML = ""; $("eDid").hidden = true; $("eNext").hidden = true;
+    say("explore", `${E.liq.em} <b>${E.liq.name}</b>. Press <b>Universal indicator</b> to add a drop. Litmus and red cabbage are fun to try too!`, "talk");
+  }
+  function addIndicator(ind) {
+    if (!E.liq) return;
+    E.wells[ind] = true; renderBench(); SND.drop();
+    dropInto($("eTile"), 58 + ["ui", "lit", "cab"].indexOf(ind) * 107, 40, "#90A4AE");
+    const pH = curPH(), kind = kindOf(pH);
+    if (ind === "lit") say("explore", `Litmus turned <b>${kind === "acid" ? "red" : kind === "alkali" ? "blue" : "purple (no change)"}</b>. Litmus shows acid or alkali – but not the pH number.`, "wow");
+    if (ind === "cab") say("explore", `Red cabbage turned this colour. Compare it with Marie's guide, card 2.`, "wow");
+    if (ind !== "ui") return;
+    if (!E.sorted && !E.st1) askPH();
+    else if (E.sorted) showPH();
+  }
+  // the pH read from the chart: a whole number, kept on the right side of 7 (a diluted acid never reads 7)
+  function chartPH() {
+    const p = curPH(), k = kindOf(p);
+    return k === "acid" ? Math.min(6, Math.round(p)) : k === "alkali" ? Math.max(8, Math.round(p)) : 7;
+  }
+  function showPH() {
+    const pH = curPH();
+    markerAt($("eMarker"), pH);
+    $("eRead").innerHTML = `Universal indicator: <b class="big">${pHtext(pH)}</b> · ${wordOf(pH)}`;
+  }
+  function askPH(quiet) {
+    // question 1: read the pH from the colour chart (±1 is fine: neighbouring colours look alike)
+    const p = chartPH(), ok = [p - 1, p, p + 1].filter((x) => x >= 1 && x <= 14).map(String);
+    $("eRead").innerHTML = "<b>1 ·</b> Compare the colour with the chart. <b>Tap the pH</b> on the chart.";
+    if (!quiet) say("explore", "Look at the colour in the first well. Which colour on the chart matches it? Tap that pH number.", "think");
+    E.st1 = ask({ box: $("eStrip"), keep: true, fb: $("eFb"), correct: ok, spex: "explore",
+      tip: (v) => `Look again: the colour in the well is ${+v < p ? "further to the right (more towards alkali)" : "further to the left (more towards acid)"} on the chart.`,
+      answer: `pH ${p}.`, good: (v) => `pH ${p}${+v !== p ? ` (you said ${v} – close enough, the colours next to each other look alike)` : ""}.`,
+      onDone: () => { markerAt($("eMarker"), curPH()); askKind(); } });
+  }
+  function askKind() {
+    const l = E.liq, right = kindOf(l.pH), pt = pHtext(curPH()), w = wordOf(curPH());
+    $("eAsk2").hidden = false; $("eRead").innerHTML = `Universal indicator: <b class="big">${pt}</b>. <b>2 ·</b> Is it an acid, neutral or an alkali?`;
+    const st2 = ask({ box: $("eCats"), fb: $("eFb"), spex: "explore",
+      opts: [["acid", `Acid<small>pH below 7</small>`], ["neutral", `Neutral<small>pH 7</small>`], ["alkali", `Alkali<small>pH above 7</small>`]], correct: [right],
+      tip: () => `${pt} is ${right === "acid" ? "below" : right === "alkali" ? "above" : "exactly"} 7. Look at the labels under the chart.`,
+      answer: `<b>${KIND[right]}</b> – ${pt} is ${w}.`, good: `<b>${KIND[right]}</b> – ${pt} is ${w}.`,
+      onDone: (st) => {
+        const all = { mistakes: E.st1.mistakes + st.mistakes, revealed: E.st1.revealed || st.revealed };
+        E.sorted = true; addStars("explore", l.id, starsOf(all)); renderShelf(); renderBench();
+        $("eDid").hidden = false; $("eDid").innerHTML = "💡 " + l.did;
+        $("eNext").hidden = false;
+        if (E.k < MAX_WATER) E.timer = setTimeout(() => say("explore", right !== "neutral"
+          ? "Now press <b>💧 Add water</b>: watch the particles in one drop – and the pH!" : "Press <b>💧 Add water</b>: does the pH change? Or try another liquid!", "talk"), 1600);
+      } });
+    return st2;
+  }
+  $("eDrops").querySelectorAll(".dropper").forEach((b) => b.addEventListener("click", () => addIndicator(b.dataset.ind)));
+  $("eWater").addEventListener("click", () => {
+    if (E.k >= MAX_WATER || !E.liq) return;
+    clearTimeout(E.timer); E.k++; renderBench(); SND.drop();   // filled indicator wells recolour by themselves
+    const pH = curPH(), kind = kindOf(pH), more = E.k < MAX_WATER ? " Add more water!" : " That's enough water – see? It never goes past 7.";
+    say("explore", kind === "neutral" ? `More water, but neutral stays neutral: still <b>pH 7</b>.${E.k < MAX_WATER ? "" : " Try another liquid!"}`
+      : `More water → <b>fewer ${kind} particles</b> in each drop → the pH goes ${kind === "acid" ? "up" : "down"} towards 7. Now <b>${pHtext(pH)}</b>: still ${kind === "acid" ? "an acid" : "an alkali"}, just more <b>dilute</b>.${more}`, "wow");
+    if (E.sorted) showPH();
+    else if (E.st1) {
+      // the sorting questions start again for the new pH
+      E.st1 = null; $("eAsk2").hidden = true; $("eFb").className = "feedback"; $("eFb").innerHTML = ""; stripButtons($("eStrip")); askPH(true);
+    } else $("eRead").innerHTML = `Water added: now <b>${VOLS[E.k]}</b>. Add a drop of <b>universal indicator</b> to find the pH.`;
+  });
+  $("eNew").addEventListener("click", () => E.liq && selectLiq(E.liq.id));
+  $("eNext").addEventListener("click", () => { const i = LIQ.indexOf(E.liq); selectLiq(LIQ[(i + 1) % LIQ.length].id); });
+
+  /* ============================ 7 CHANGE ============================ */
+  // neutralisation bench: N = { acid, alk, acidIn (acid in the beaker?), d (drops), path (pH after each drop), done }
+  const N = { acid: ACIDS[0], alk: ALKS[0], acidIn: false, d: 0, path: [], done: false };
+  const pairId = () => N.acid.id + "-" + N.alk.id;
+  const inBeaker = () => (N.acidIn ? N.acid : N.alk), inDropper = () => (N.acidIn ? N.alk : N.acid);
+  const pHnow = (d) => titrPH(d, N.acidIn);
+  function renderPick() {
+    // the toggles: the beaker and the dropper always hold opposite kinds
+    const tog = (acidHere) => `<button class="alk" data-kind="alk" aria-pressed="${!acidHere}">Alkali</button><button class="acid" data-kind="acid" aria-pressed="${acidHere}">Acid</button>`;
+    $("bTog").innerHTML = tog(N.acidIn); $("dTog").innerHTML = tog(!N.acidIn);
+    const chems = (list, cur) => list.map((c) => `<button class="chip" data-chem="${c.id}" aria-pressed="${c === cur}">${c.name}</button>`).join("");
+    $("bChems").innerHTML = N.acidIn ? chems(ACIDS, N.acid) : chems(ALKS, N.alk);
+    $("dChems").innerHTML = N.acidIn ? chems(ALKS, N.alk) : chems(ACIDS, N.acid);
+    $("bTog").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { N.acidIn = b.dataset.kind === "acid"; resetN(); }));
+    $("dTog").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { N.acidIn = b.dataset.kind !== "acid"; resetN(); }));
+    document.querySelectorAll("#bChems [data-chem],#dChems [data-chem]").forEach((b) => b.addEventListener("click", () => {
+      const id = b.dataset.chem; N.acid = ACIDS.find((a) => a.id === id) || N.acid; N.alk = ALKS.find((a) => a.id === id) || N.alk; resetN(); }));
+  }
+  function renderN(anim) {
+    const pH = pHnow(N.d), svg = $("nBeaker");
+    const { y } = drawBeaker(svg, { level: 0.3 + 0.3 * (N.d / MAX_DROPS), color: chart(UI, pH), label: `${N.d} drops`, tall: true });
+    // the dropper above the beaker
+    el("rect", { x: 72, y: 0, width: 16, height: 30, rx: 4, fill: "#E1F5FE", stroke: "#78909C", "stroke-width": 2 }, svg);
+    el("path", { d: "M72 6 Q80 -4 88 6", fill: "#EF9A9A", stroke: "#78909C", "stroke-width": 2 }, svg);
+    el("path", { d: "M76 30 L80 42 L84 30Z", fill: "#E1F5FE", stroke: "#78909C", "stroke-width": 2 }, svg);
+    if (anim) dropInto(svg, 80, y - 6, "#B3E5FC");
+    const kind = kindOf(pH);
+    $("nRead").innerHTML = `Drops of ${inDropper().name}: <b>${N.d}</b> · pH meter: <b class="big">${pHtext(pH)}</b> · <b style="color:${kind === "acid" ? "var(--acid)" : kind === "alkali" ? "var(--alk)" : "var(--neu)"}">${kind === "neutral" ? "NEUTRAL" : wordOf(pH)}</b>`;
+    $("n1").disabled = $("n5").disabled = N.done || N.d >= MAX_DROPS || kind === (N.acidIn ? "alkali" : "acid");
+    $("nGTitle").textContent = `pH while you add the ${N.acidIn ? "alkali" : "acid"}`;
+    drawGraph();
+  }
+  function drawGraph() {
+    const g = $("nGraph"), X0 = 46, X1 = 470, Y0 = 195, Y1 = 12, sx = (d) => X0 + (X1 - X0) * d / MAX_DROPS, sy = (p) => Y0 - (Y0 - Y1) * (p - 1) / 13;
+    g.replaceChildren();
+    for (let p = 1; p <= 14; p++) el("rect", { x: X0 - 12, y: sy(p + 0.5), width: 8, height: (Y0 - Y1) / 13, fill: UI[p] }, g);
+    el("line", { x1: X0, x2: X1, y1: sy(7), y2: sy(7), stroke: "#4CB848", "stroke-width": 2, "stroke-dasharray": "6 4" }, g);
+    const t7 = el("text", { x: X1, y: sy(7) - 6, "text-anchor": "end", "font-size": 15, fill: "#2E7D32", "font-weight": 700 }, g); t7.textContent = "neutral (pH 7)";
+    el("path", { d: `M${X0} ${Y1} L${X0} ${Y0} L${X1} ${Y0}`, fill: "none", stroke: "#455A64", "stroke-width": 2 }, g);
+    for (const p of [1, 4, 7, 10, 13]) { const t = el("text", { x: X0 - 16, y: sy(p) + 5, "text-anchor": "end", "font-size": 15, fill: "#455A64" }, g); t.textContent = p; }
+    for (let d = 0; d <= MAX_DROPS; d += 10) { const t = el("text", { x: sx(d), y: Y0 + 18, "text-anchor": "middle", "font-size": 15, fill: "#455A64" }, g); t.textContent = d; }
+    const tx = el("text", { x: (X0 + X1) / 2, y: 236, "text-anchor": "middle", "font-size": 15, fill: "#455A64" }, g); tx.textContent = `drops of ${N.acidIn ? "alkali" : "acid"} added`;
+    const ty = el("text", { x: 4, y: 12, "font-size": 15, fill: "#455A64", "font-weight": 700 }, g); ty.textContent = "pH";
+    if (N.path.length > 1) el("polyline", { points: N.path.map((p, d) => `${sx(d).toFixed(1)},${sy(p).toFixed(1)}`).join(" "), fill: "none", stroke: "#1F3A5F", "stroke-width": 3, "stroke-linejoin": "round" }, g);
+    const last = N.path[N.path.length - 1]; el("circle", { cx: sx(N.d), cy: sy(last), r: 5, fill: chart(UI, last), stroke: "#1F3A5F", "stroke-width": 2 }, g);
+  }
+  function resetN() {
+    N.d = 0; N.path = [pHnow(0)]; N.done = false;
+    renderPick(); renderN(); $("nAsk").hidden = true; $("nEq").hidden = true; $("nFb").className = "feedback"; $("nFb").innerHTML = "";
+    say("change", N.acidIn
+      ? `The beaker has <b>${N.acid.name}</b> (an acid) with universal indicator: red. Add <b>${N.alk.name}</b> until it turns <b>green</b>!`
+      : `The beaker has <b>${N.alk.name}</b> (an alkali) with universal indicator: purple. Add <b>${N.acid.name}</b> until it turns <b>green</b>!`, "talk");
+  }
+  function addDrops(n) {
+    if (N.done) return;
+    for (let i = 0; i < n && N.d < MAX_DROPS; i++) {
+      N.d++; N.path.push(pHnow(N.d));
+    }
+    SND.drop(); renderN(true);
+    const pH = pHnow(N.d), kind = kindOf(pH), dropKind = N.acidIn ? "alkali" : "acid", startKind = N.acidIn ? "acid" : "alkali";
+    if (kind === "neutral") neutral();
+    else if (kind === dropKind) {
+      say("change", N.acidIn
+        ? "Oh no – <b>too much alkali</b>! It went past 7: the indicator is blue or purple – now it is alkaline. Press <b>↺ Start again</b> and add the last drops <b>one at a time</b>."
+        : "Oh no – <b>too much acid</b>! It went past 7: the indicator is yellow, orange or red – now it is acidic. Press <b>↺ Start again</b> and add the last drops <b>one at a time</b>.", "hmm", "tip");
+      SND.tip();
+    } else if (Math.abs(pH - 7) < 3.5) say("change", `Nearly there – it's turning ${N.acidIn ? "yellow-green" : "green-blue"}. Now add <b>1 drop</b> at a time!`, "wow");
+    else if (N.d > 0) say("change", `The colour is changing: the ${dropKind} is neutralising the ${startKind}. Keep going!`, "talk");
+  }
+  function neutral() {
+    N.done = true; renderN();
+    say("change", "<b>Green! pH 7 – neutral!</b> The acid and the alkali have neutralised each other. What has been made?", "happy", "good");
+    $("nAsk").hidden = false; $("nQ").textContent = "What is in the beaker now?";
+    ask({ box: $("nCats"), fb: $("nFb"), spex: "change",
+      opts: [["salt", "🧂 A salt and water"], ["acid", "🧪 A stronger acid"], ["nothing", "💨 Nothing – they disappeared"]], correct: ["salt"],
+      tip: "The atoms don't disappear: they make new substances. Remember Workbook Activity 9 – you made table salt!",
+      answer: "a <b>salt</b> and <b>water</b>.", good: "A salt and water!",
+      onDone: (st) => {
+        addStars("change", pairId(), starsOf(st));
+        $("nEq").hidden = false;
+        $("nEq").innerHTML = `${wordEq(N.acid, N.alk)}<br><span class="hint">The salt is <b>${saltOf(N.acid, N.alk)}</b>. Practise naming salts in the <a href="https://school.taneski.com/science/g07/01-salt-naming/" target="_blank" rel="noopener">Salt naming simulation</a>. Try another pair!</span>`;
+      } });
+  }
+  $("n1").addEventListener("click", () => addDrops(1));
+  $("n5").addEventListener("click", () => addDrops(5));
+  $("nReset").addEventListener("click", resetN);
+
+  // real-life cards
+  let lc = null;
+  function renderLList() {
+    $("lList").innerHTML = LIFE.map((c) => { const n = P.stars.life[c.id];
+      return `<button class="xcard" data-id="${c.id}" aria-pressed="${lc === c}"><span class="em">${c.em}</span><span>${c.title}</span><span class="st">${n != null ? "★".repeat(n) || "✓" : ""}</span></button>`; }).join("");
+    $("lList").querySelectorAll(".xcard").forEach((b) => b.addEventListener("click", () => selectLife(b.dataset.id)));
+  }
+  function selectLife(id) {
+    lc = LIFE.find((c) => c.id === id); renderLList();
+    $("lTitle").textContent = `${lc.em} ${lc.title}`; $("lEm").textContent = lc.em; $("lStory").innerHTML = lc.story;
+    stripButtons($("lStrip")); const m = $("lMarker"); m.style.transition = "none"; markerAt(m, lc.ph); void m.offsetWidth; m.style.transition = "";
+    $("lQ").textContent = lc.q; $("lDoc").hidden = true; $("lNext").hidden = true;
+    $("lFb").className = "feedback"; $("lFb").innerHTML = "";
+    say("life", `${lc.em} ${lc.title}: the pH is about <b>${lc.ph}</b> – ${kindOf(lc.ph) === "acid" ? "an acid" : "an alkali"}. What will neutralise it?`, "think");
+    ask({ box: $("lCats"), fb: $("lFb"), spex: "life", opts: shuffle(lc.opts).map(([v, em, t]) => [v, `<span class="em">${em}</span>${t}`]), correct: [lc.ans],
+      tip: lc.tip, answer: lc.why, good: lc.why,
+      onDone: (st) => {
+        addStars("life", lc.id, starsOf(st)); renderLList();
+        markerAt($("lMarker"), lc.to);
+        if (lc.sting) { $("lDoc").hidden = false; $("lDoc").textContent = STING_NOTE; }
+        $("lNext").hidden = false;
+      } });
+  }
+  $("lNext").addEventListener("click", () => { const i = LIFE.indexOf(lc); selectLife(LIFE[(i + 1) % LIFE.length].id); });
+
+  /* ============================ 8 QUIZ ============================ */
+  let QL = [], qi = 0, QR = [], roundNo = 0;
+  const PART = { A: "Part A · The pH scale", B: "Part B · Properties and dilution", C: "Part C · Real life" };
+  function newRound() {
+    roundNo++;
+    if (roundNo === 1) QL = FIRST_ROUND.map((id) => QBANK.find((q) => q.id === id));
+    else { QL = []; for (const [p, n] of Object.entries(ROUND_MIX)) QL.push(...shuffle(QBANK.filter((q) => q.p === p)).slice(0, n)); }
+    qi = 0; QR = [];
+    $("quizCard").hidden = false; $("qEnd").hidden = true;
+    loadQ();
+  }
+  function qDots() {
+    $("qDots").innerHTML = QL.map((_, k) => { const r = QR[k]; return `<span class="dot${k === qi ? " now" : ""}${r ? (r.n > 0 ? " done" : " zero") : ""}">${k + 1}</span>`; }).join("");
+  }
+  function loadQ() {
+    const q = QL[qi], body = $("qBody");
+    $("qTitle").textContent = `Question ${qi + 1} of ${QL.length}`; qDots();
+    $("qFb").className = "feedback"; $("qFb").innerHTML = ""; $("qNext").hidden = true; body.replaceChildren();
+    const pic = q.sw ? `<div class="swatch" style="background:${UI[q.sw]}" role="img" aria-label="indicator colour"></div>`
+      : q.svg ? `<svg width="110" height="110" viewBox="0 0 100 100" role="img" aria-label="corrosive hazard symbol"><use href="#${q.svg}"/></svg>` : `<div class="em">${q.em}</div>`;
+    body.appendChild(h(`<div class="qpic"><div class="qpart">${PART[q.p]}</div>${pic}<p class="qtext">${q.text}</p></div>`));
+    if (q.sw) body.appendChild(h(`<div style="max-width:560px;width:100%;margin:0 auto">${mini(UI)}${nums}</div>`));
+    const box = h(`<div class="cats"></div>`); body.appendChild(box);
+    const right = q.opts.find(([v]) => v === q.ans)[1];
+    ask({ box, fb: $("qFb"), spex: "quiz", opts: shuffle(q.opts, rng(q.id + (roundNo === 1 ? "" : Math.random()))), correct: [q.ans], tip: q.tip,
+      answer: `<b>${right}</b>. ${q.why}`, good: q.why,
+      onDone: (st) => { QR[qi] = { label: q.text, n: starsOf(st) }; qDots();
+        $("qNext").hidden = false; $("qNext").textContent = qi < QL.length - 1 ? "Next question →" : "See my result →"; } });
+    say("quiz", q.p === "A" ? "Remember: below 7 acid, 7 neutral, above 7 alkali." : q.p === "B" ? "Think about the particles!" : "Neutralise means: use the opposite.", "talk");
+  }
+  $("qNext").addEventListener("click", () => { if (qi < QL.length - 1) { qi++; loadQ(); } else endQuiz(); });
+  function endQuiz() {
+    const right = QR.filter((r) => r.n === 3).length, stars = QR.reduce((s, r) => s + r.n, 0);
+    $("quizCard").hidden = true; $("qEnd").hidden = false;
+    $("qEndScore").textContent = `${right}/${QL.length}`; $("qEndStars").textContent = `★ ${stars}`;
+    $("qEndMsg").textContent = stars >= 43 ? "Outstanding! You really know your acids and alkalis." : stars >= 32 ? "Well done! Look at the questions without ★★★ again." : "Good try! Read Marie's guide in Explore, then play again.";
+    $("qReview").innerHTML = QR.map((r, k) => `<li><span>${k + 1}. ${r.label}</span>${starsHTML(r.n)}</li>`).join("");
+    P.quizRounds++; addStars("quiz", "best", stars);
+    say("quiz", `Round finished: <b>★ ${stars}</b> out of 48!`, "happy", "good");
+  }
+  $("qAgain").addEventListener("click", newRound);
+
+  /* ============================ 9 UI ============================ */
+  const TABS = ["explore", "change", "quiz"];
+  let curTab = "explore", sub2 = "change";   // tab 2 has two parts: change (neutralise) and life
+  function currentTab() { return curTab === "change" ? sub2 : curTab; }
+  function showTab(which) {
+    curTab = which;
+    for (const t of TABS) $("tab-" + t).setAttribute("aria-selected", t === which);
+    $("explore").hidden = which !== "explore";
+    $("change").hidden = which !== "change" || sub2 !== "change"; $("life").hidden = which !== "change" || sub2 !== "life";
+    $("quiz").hidden = which !== "quiz";
+    if (which === "change" && sub2 === "life" && !lc) selectLife(LIFE[0].id);
+    if (which === "quiz" && !QL.length) newRound();
+  }
+  for (const t of TABS) $("tab-" + t).addEventListener("click", () => showTab(t));
+  document.querySelectorAll("[data-sub]").forEach((b) => b.addEventListener("click", () => {
+    sub2 = b.dataset.sub; document.querySelectorAll("[data-sub]").forEach((x) => x.setAttribute("aria-pressed", x.dataset.sub === sub2)); showTab("change");
+  }));
+  function closeOv(id) { $(id).classList.remove("on"); if (id === "present" && !P.seenIntro) { P.seenIntro = true; save(); } }
+  document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => closeOv(b.dataset.close)));
+  document.querySelectorAll(".overlay").forEach((o) => o.addEventListener("click", (e) => { if (e.target === o) closeOv(o.id); }));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { document.querySelectorAll(".overlay.on").forEach((o) => closeOv(o.id)); } });
+  document.addEventListener("click", (e) => { if (e.target.closest("[data-safety]")) $("safeOv").classList.add("on"); });
+  $("safeBtn").addEventListener("click", () => $("safeOv").classList.add("on"));
+  $("helpBtn").addEventListener("click", () => $("help").classList.add("on"));
+  $("soundBtn").addEventListener("click", () => { P.sound = !P.sound; save(); markSound(); if (P.sound) SND.star(); });
+  const markSound = () => { $("soundBtn").setAttribute("aria-pressed", P.sound); $("soundBtn").textContent = P.sound ? "🔊 Sound" : "🔇 Sound"; };
+
+  // certificate and badges
+  function renderCert() {
+    $("certName").value = P.name || "";
+    $("certWho").textContent = P.name || "Your name";
+    const total = Object.keys(P.stars).reduce((s, t) => s + tabStars(t), 0);
+    $("certStars").innerHTML = `<b style="font-size:1.4rem;color:var(--star)">★ ${total}</b> stars<br><span class="hint">Explore ★${tabStars("explore")} · Neutralise ★${tabStars("change")} · Real life ★${tabStars("life")} · Quiz ★${tabStars("quiz")}</span>`;
+    $("certBadges").innerHTML = BADGES.map((b) => `<div class="badge${P.badges[b.tab] ? " on" : ""}"><span class="em">${b.em}</span><b>${b.name}</b><span>${P.badges[b.tab] ? "won " + P.badges[b.tab] : b.how}</span></div>`).join("");
+    $("certDate").textContent = "Acids, alkalis and neutralisation · Grade 7 · " + new Date().toLocaleDateString();
+  }
+  $("certBtn").addEventListener("click", () => { renderCert(); $("certOv").classList.add("on"); });
+  $("certName").addEventListener("input", (e) => { P.name = e.target.value.slice(0, 40); $("certWho").textContent = P.name || "Your name"; save(); });
+  $("certPrint").addEventListener("click", () => window.print());
+  $("resetAll").addEventListener("click", () => {
+    if (!confirm("Delete all your stars and badges in this browser?")) return;
+    try { localStorage.removeItem(STORE); } catch (e) {}
+    location.reload();
+  });
+
+  // start
+  load(); markSound();
+  ["explore", "change", "life", "quiz"].forEach((t) => spexBar(t)); spexBar("present");
+  showGuide(0); renderLList(); resetN(); refreshStars();
+  selectLiq("lemon");
+  say("explore", "Hi, I'm <b>Marie</b>! Let's find out which liquids are <b>acids</b> and which are <b>alkalis</b>. Choose a liquid and add a drop of <b>universal indicator</b>.", "happy");
+  if (!P.seenIntro) openPresent(0);
+
+  // for the automatic tests only
+  window.__AAN = { UI, CAB, LIQ, ACIDS, ALKS, LIFE, QBANK, FIRST_ROUND, NEUTRAL_AT, MAX_DROPS, P, E, N,
+    kindOf, wordOf, indColor, dilutedPH, dropCount, pHtext, titrPH, saltOf, wordEq, showTab, selectLiq, addIndicator, addDrops, resetN, selectLife };
+})();
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
