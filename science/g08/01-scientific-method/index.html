@@ -430,13 +430,13 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
 
 <main>
   <div class="tabs" role="tablist">
-    <button class="tab" role="tab" id="tab-story" aria-selected="true" aria-controls="story">1 · <span class="full">Experiments</span><span class="short">Experiments</span><span class="tstar" data-ts="story"></span></button>
-    <button class="tab" role="tab" id="tab-practice" aria-selected="false" aria-controls="practice">2 · <span class="full">Practice rooms</span><span class="short">Practice</span><span class="tstar" data-ts="practice"></span></button>
+    <button class="tab" role="tab" id="tab-practice" aria-selected="true" aria-controls="practice">1 · <span class="full">Practice rooms</span><span class="short">Practice</span><span class="tstar" data-ts="practice"></span></button>
+    <button class="tab" role="tab" id="tab-story" aria-selected="false" aria-controls="story">2 · <span class="full">Experiments</span><span class="short">Experiments</span><span class="tstar" data-ts="story"></span></button>
     <button class="tab" role="tab" id="tab-cert" aria-selected="false" aria-controls="cert">3 · 🏅<span class="full"> Certificate</span></button>
   </div>
 
   <!-- STORY -->
-  <section class="panel" id="story" role="tabpanel" aria-labelledby="tab-story">
+  <section class="panel" id="story" role="tabpanel" aria-labelledby="tab-story" hidden>
     <div class="layout">
       <div class="card" id="pathCard">
         <h2>The 13 steps</h2>
@@ -456,7 +456,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   </section>
 
   <!-- PRACTICE -->
-  <section class="panel" id="practice" role="tabpanel" aria-labelledby="tab-practice" hidden>
+  <section class="panel" id="practice" role="tabpanel" aria-labelledby="tab-practice">
     <div class="card">
       <h2>Choose a room</h2>
       <div class="cb"><div class="rooms" id="rooms"></div></div>
@@ -497,11 +497,11 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
       You write the steps in a <b>lab report</b>.</p>
     <ul class="stepsmap" id="helpSteps"></ul>
     <ol>
-      <li><b>1 · Experiments</b>: <b>choose a research question</b> – 🎾 bouncing ball · 🚗 toy car on a ramp · 🔥 metal rods ·
+      <li><b>1 · Practice rooms</b>: 5 rooms: 🕵️ Variables detective · ⚖️ Judge the scientist · 📈 Graph doctor ·
+        🔎 Evaluator · 🧮 Data analyst (work with results tables). Start here to warm up!</li>
+      <li><b>2 · Experiments</b>: <b>choose a research question</b> – 🎾 bouncing ball · 🚗 toy car on a ramp · 🔥 metal rods ·
         🧊 ice on different materials · ☀️ flask colour. Do the 13 steps in order. At the end you get <b>📄 My lab report</b>
         to print. Then try another experiment!</li>
-      <li><b>2 · Practice rooms</b>: 5 rooms: 🕵️ Variables detective · ⚖️ Judge the scientist · 📈 Graph doctor ·
-        🔎 Evaluator · 🧮 Data analyst (work with results tables).</li>
       <li><b>3 · 🏅 Certificate</b>: type your name and print your certificate. 10 badges: one for each experiment and one for each room.</li>
       <li><b>Drag</b> a word or card to a gap or a box – or <b>tap it, then tap the place</b>.</li>
       <li><b>Uncertainty</b> = range ÷ 2. Write a result as <b>average ± uncertainty</b>, e.g. 11.0 ± 2.0 cm. On a graph it is an
@@ -2235,11 +2235,12 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     window.print();
   }
 
-  const TABS = ["story", "practice", "cert"];
-  let curTab = "story";
+  const TABS = ["practice", "story", "cert"];
+  let curTab = "practice", storyReady = false;
   function showTab(which) {
     curTab = which; unselect();
     for (const t of TABS) { $("tab-" + t).setAttribute("aria-selected", t === which); $(t).hidden = t !== which; }
+    if (which === "story" && !storyReady) { storyReady = true; if (P.exp && EXP_I[P.exp] != null) chooseExp(P.exp); else openPicker(); }
     if (which === "practice" && !room) openRoom(ROOMS[0].id);
     if (which === "cert") renderCert();
   }
@@ -2260,7 +2261,8 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   load(); markSound();
   ["story", "practice", "cert"].forEach((t) => spexBar(t));
   refreshStars(); badgeJustWon = false;
-  if (P.exp && EXP_I[P.exp] != null) chooseExp(P.exp); else openPicker();
+  showTab("practice");   // Practice rooms first (teacher, 25 Oct 2026); the Experiments tab is prepared when it is opened
+  say("practice", "Hi, I'm <b>Marie</b>! Warm up in the <b>practice rooms</b> – then do a whole experiment in <b>2 · Experiments</b>.", "happy");
   if (!P.seenIntro) $("help").classList.add("on");
 
   // for the automatic tests only
