@@ -125,6 +125,12 @@ a.kb:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
   .totop.on{display:flex}
 }
 /* ---- end subject accordion ---- */
+/* glossary language menu (26 Oct 2026): flag + language name in its own script, one PDF each */
+.langs{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:6px;margin-top:10px}
+.langs a.lang{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:64px;padding:6px 4px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--navy);text-decoration:none;font-weight:600;font-size:.92rem;text-align:center}
+.langs a.lang:hover,.langs a.lang:focus-visible{border-color:var(--sc,#6A1B9A);box-shadow:0 0 0 2px var(--sc,#6A1B9A)}
+.langs .fl{display:flex;gap:2px;align-items:center;height:28px}
+.langs .fl img{height:auto;display:block}
 </style>
 </head>
 <body>
@@ -176,6 +182,12 @@ a.kb:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
       <a class="btn primary" href="05-revision-quiz-chemistry/">✔ Start the quiz</a>
       <a class="btn ghost" href="05-revision-quiz-chemistry/quiz.pdf" data-goatcounter-click="download/science/g07/05-revision-quiz-chemistry/quiz.pdf">Printable (PDF)</a>
     </div>
+  </div>
+  <div class="card" style="--sc:#6A1B9A">
+    <span class="tag">Study guide · Unit 1</span>
+    <h2><svg class="ic" aria-hidden="true"><use href="#ic-guide"/></svg>Glossary · Chemistry words</h2>
+    <p>46 words of the unit with pictures, simple meanings and examples. Choose your language (the English words are in every version):</p>
+    <div class="langs" role="group" aria-label="Choose a language"><a class="lang" href="06-glossary-chemistry/glossary-en.pdf" lang="en" data-goatcounter-click="download/science/g07/06-glossary-chemistry/glossary-en.pdf" title="English"><span class="fl"><img src="06-glossary-chemistry/flags/gb.png" alt="" width="32"></span><span class="ln">English</span></a><a class="lang" href="06-glossary-chemistry/glossary-de.pdf" lang="de" data-goatcounter-click="download/science/g07/06-glossary-chemistry/glossary-de.pdf" title="Deutsch"><span class="fl"><img src="06-glossary-chemistry/flags/de.png" alt="" width="32"></span><span class="ln">Deutsch</span></a><a class="lang" href="06-glossary-chemistry/glossary-es.pdf" lang="es" data-goatcounter-click="download/science/g07/06-glossary-chemistry/glossary-es.pdf" title="Español"><span class="fl"><img src="06-glossary-chemistry/flags/es.png" alt="" width="32"></span><span class="ln">Español</span></a><a class="lang" href="06-glossary-chemistry/glossary-zh.pdf" lang="zh" data-goatcounter-click="download/science/g07/06-glossary-chemistry/glossary-zh.pdf" title="中文"><span class="fl"><img src="06-glossary-chemistry/flags/cn.png" alt="" width="32"></span><span class="ln">中文</span></a><a class="lang" href="06-glossary-chemistry/glossary-ar.pdf" lang="ar" dir="rtl" data-goatcounter-click="download/science/g07/06-glossary-chemistry/glossary-ar.pdf" title="العربية"><span class="fl"><img src="06-glossary-chemistry/flags/sa.png" alt="" width="32"></span><span class="ln">العربية</span></a><a class="lang" href="06-glossary-chemistry/glossary-bcms.pdf" lang="hr" data-goatcounter-click="download/science/g07/06-glossary-chemistry/glossary-bcms.pdf" title="BHS"><span class="fl"><img src="06-glossary-chemistry/flags/hr.png" alt="" width="22"><img src="06-glossary-chemistry/flags/rs.png" alt="" width="22"><img src="06-glossary-chemistry/flags/ba.png" alt="" width="22"></span><span class="ln">BHS</span></a><a class="lang" href="06-glossary-chemistry/glossary-ko.pdf" lang="ko" data-goatcounter-click="download/science/g07/06-glossary-chemistry/glossary-ko.pdf" title="한국어"><span class="fl"><img src="06-glossary-chemistry/flags/kr.png" alt="" width="32"></span><span class="ln">한국어</span></a><a class="lang" href="06-glossary-chemistry/glossary-ru.pdf" lang="ru" data-goatcounter-click="download/science/g07/06-glossary-chemistry/glossary-ru.pdf" title="Русский"><span class="fl"><img src="06-glossary-chemistry/flags/ru.png" alt="" width="32"></span><span class="ln">Русский</span></a><a class="lang" href="06-glossary-chemistry/glossary-it.pdf" lang="it" data-goatcounter-click="download/science/g07/06-glossary-chemistry/glossary-it.pdf" title="Italiano"><span class="fl"><img src="06-glossary-chemistry/flags/it.png" alt="" width="32"></span><span class="ln">Italiano</span></a><a class="lang" href="06-glossary-chemistry/glossary-ja.pdf" lang="ja" data-goatcounter-click="download/science/g07/06-glossary-chemistry/glossary-ja.pdf" title="日本語"><span class="fl"><img src="06-glossary-chemistry/flags/jp.png" alt="" width="32"></span><span class="ln">日本語</span></a></div>
   </div>
   <div class="card" style="--sc:#6A1B9A">
     <span class="tag">Study guide · Unit 1</span>
