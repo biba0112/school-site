@@ -8,22 +8,25 @@
   IB MYP 1 Sciences · Grade 6 · Physics · Unit 1 Thinking about Energy (folder "Unit 2 Thinking about Energy")
   States of matter · kinetic energy of the particles · changes of state. Planned with the teacher (grill-me, 26 Oct 2026),
   after the PhET simulation "States of Matter: Basics":
-    · guided parts + a free lab. 4 parts, each unlocks after the one before:
+    · a free lab + guided parts. Update 26 Oct 2026 (teacher, grill-me): tab 1 = Free lab (opens first, 6 "Try this"
+      challenges, Lab explorer badge = all 6), tab 2 = Parts; ALL parts and all 4 steps are open (any order); one screen on a
+      laptop: the jar on the left, the step on the right (questions one at a time), no page scrolling; on phones the jar +
+      slider stay at the top while the step scrolls under them. The 4 parts:
       1 Solid, liquid, gas            water: see each state, 🔧 push the lid (squash) and 🫙 pour into another jar;
                                       the properties table fills itself; Explain has a sort activity (cards → S / L / G)
       2 Melting and freezing          ice (0 °C), chocolate (about 34 °C), candle wax (about 60 °C)
       3 Evaporating, boiling, condensing   water: a few fast particles leave the surface below 100 °C, all boil at 100 °C
       4 Same rules, different substances   iron (melts 1538 °C, boils 2862 °C) compared with the others
     · each part: 1 Predict (one choice, no stars) → 2 Do (missions with the particle box; they tick themselves)
-      → 3 Explain (4 questions) → 4 Explore.
+      → 3 Explain (4 questions, one at a time) → 4 Explore.
     · the particle box (like PhET): hold the ❄️ / 🔥 slider to cool or heat (it springs back = no heat in or out),
       🌡 thermometer in °C, a "Kinetic energy" bar, a "Space used" bar, the state, and a change-of-state diagram
       (solid ⇄ liquid ⇄ gas: melting, freezing, evaporating / boiling, condensing) that lights up the change happening.
       Particles blue (cold) → red (hot); hotter = faster. Solid / Liquid / Gas buttons only in the free lab.
-    · tabs: 1 · Parts · 2 · 🔬 Free lab (always open, all 4 substances) · 3 · 🧠 Quiz (15 everyday situations,
-      always open) · 4 · 🏅 certificate "Matter Explorer" (6 badges: 4 parts + Lab explorer + Quiz champion).
+    · tabs: 1 · 🔬 Free lab (all 4 substances) · 2 · 🧪 Parts · 3 · 🧠 Quiz (15 everyday situations)
+      · 4 · 🏅 certificate "Matter Explorer" (6 badges: 4 parts + Lab explorer + Quiz champion).
     · Marie, stars 3/2/0 (tip → answer), Sound, 🗣 Read aloud, words explained on tap, link to the Glossary energy.
-    · Progress in localStorage "g6-matter-v1". Teacher mode: add ?teacher to the address to open all parts.
+    · Progress in localStorage "g6-matter-v1".
   Simplifications (teacher notes):
     · "Hotter = faster" (teacher's choice): the temperature keeps rising while a substance melts or boils. In reality it
       stays at the melting / boiling point until the change is finished (the energy goes into pulling the particles
@@ -42,7 +45,7 @@
 
   File sections:
     1 STYLE     layout (shared with the other Grade 6 simulations) + the particle lab
-    2 MARKUP    header · key words · 4 tabs (Parts · Free lab · Quiz · Certificate) · overlays
+    2 MARKUP    header · key words · 4 tabs (Free lab · Parts · Quiz · Certificate) · the lab box · overlays
     3 CONFIG    KEY, WORDS, SUBS (substances), SCENES (parts: predict, missions, tables, questions), QUIZ
     4 ENGINE    helpers, Marie, read aloud, sound, storage, judge (tip → answer), drag-or-tap, question types
     5 LAB       the particle box: temperature, particles (solid sites, liquid + gas physics), changes of state, drawing
@@ -351,31 +354,41 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
 }
 @media (prefers-reduced-motion:reduce){ .qpic span,.qpic svg *{animation:none!important} .toast.on,.shake{animation:none} .progress i{transition:none} .dtab tr.new td{animation:none} }
 /* the particle lab */
-.labbox{position:relative;display:grid;gap:8px;border:1px solid var(--line);border-radius:12px;padding:10px;background:#FBFCFE;min-width:0}
-.labgrid{display:grid;gap:10px;grid-template-columns:minmax(0,1fr);align-items:start}
-@media (min-width:1100px){ .labgrid{grid-template-columns:minmax(0,1.4fr) minmax(260px,1fr)} }
-.lableft,.labside{display:grid;gap:8px;min-width:0;align-content:start}
-#pcan{width:100%;height:auto;aspect-ratio:440/330;display:block;border-radius:10px;background:#fff;border:1px solid var(--line);touch-action:pan-y}
+/* the particle lab: [substances] / [jar + slider | readings] / [buttons | readings] */
+.labbox{display:grid;gap:8px;border:1px solid var(--line);border-radius:12px;padding:8px;background:#FBFCFE;min-width:0;
+  grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);grid-template-areas:"pick pick" "top side" "btns btns";align-items:start}
+.labhead{grid-area:pick;display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;justify-content:space-between}
+.jumps{display:flex;flex-wrap:wrap;gap:4px;align-items:center} .jumps .lead{font-size:14px;font-weight:700;color:var(--navy)}
+.jumps .btn{font-size:15px;min-height:36px;padding:2px 9px} .labtop{grid-area:top} .labside{grid-area:side} #labBtns{grid-area:btns}
+.labtop,.labside{display:grid;gap:6px;min-width:0;align-content:start}
+#pcan{width:100%;height:auto;aspect-ratio:440/330;display:block;margin:0 auto;border-radius:10px;background:#fff;border:1px solid var(--line);touch-action:pan-y}
+.labbox.off .labtop,.labbox.off #labBtns,.labbox.off .labhead{opacity:.4;pointer-events:none}
 .subpick{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .subpick .lead{font-size:15px;font-weight:700;color:var(--navy)}
-.subbtn{font:inherit;font-size:17px;border:1px solid var(--line);background:#fff;border-radius:99px;padding:4px 12px;min-height:40px;cursor:pointer;font-weight:600}
+.subbtn{font:inherit;font-size:16px;border:1px solid var(--line);background:#fff;border-radius:99px;padding:3px 11px;min-height:38px;cursor:pointer;font-weight:600}
 .subbtn[aria-pressed="true"]{border:2px solid var(--accent);background:#FFF3E0;color:var(--accent)}
 .subbtn:disabled{opacity:.45;cursor:not-allowed}
-.lever{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-size:18px;font-weight:700;
-  background:linear-gradient(90deg,#E3F2FD,#fff 45%,#fff 55%,#FFE0B2);border:1px solid var(--line);border-radius:12px;padding:6px 12px}
+.lever{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;font-size:17px;font-weight:700;
+  background:linear-gradient(90deg,#E3F2FD,#fff 45%,#fff 55%,#FFE0B2);border:1px solid var(--line);border-radius:12px;padding:4px 12px}
 .lever .cool{color:#1565C0} .lever .heat{color:#E65100}
-.lever input{width:100%;height:40px;accent-color:var(--accent);cursor:pointer;margin:0}
-.lhint{text-align:center}
-.statebig{display:flex;align-items:center;gap:10px;border:2px solid var(--navy);border-radius:12px;background:#fff;padding:6px 12px;min-height:64px}
-.statebig .se{font-size:38px;line-height:1}
-.statebig b{font-size:22px;color:var(--navy);display:block;line-height:1.1}
-.statebig small{font-size:15px;color:var(--muted)}
-.statebig .temp{margin-left:auto;font-size:24px;font-weight:800;color:#C62828;font-variant-numeric:tabular-nums;white-space:nowrap}
-.meter{display:grid;gap:3px;font-size:15px}
+.tbtn{font:inherit;font-size:16px;font-weight:800;border:2px solid currentColor;background:#fff;border-radius:10px;padding:4px 10px;min-height:42px;cursor:pointer;
+  touch-action:none;user-select:none;-webkit-user-select:none;white-space:nowrap}
+.tbtn:active,.tbtn.on{background:currentColor} .tbtn:active,.tbtn.on{color:#fff}
+.tbtn.cool:active,.tbtn.cool.on{background:#1565C0} .tbtn.heat:active,.tbtn.heat.on{background:#E65100}
+@media (max-width:599px){ .tbtn{font-size:14px;padding:4px 6px} }
+.lever input{width:100%;height:36px;accent-color:var(--accent);cursor:pointer;margin:0}
+#labBtns{justify-content:flex-start;gap:6px}
+#labBtns .btn{font-size:16px;min-height:40px;padding:4px 10px}
+.statebig{display:flex;align-items:center;gap:8px;border:2px solid var(--navy);border-radius:12px;background:#fff;padding:4px 10px;min-height:54px}
+.statebig .se{font-size:32px;line-height:1}
+.statebig b{font-size:19px;color:var(--navy);display:block;line-height:1.1}
+.statebig small{font-size:14px;color:var(--muted)}
+.statebig .temp{margin-left:auto;font-size:21px;font-weight:800;color:#C62828;font-variant-numeric:tabular-nums;white-space:nowrap}
+.meter{display:grid;gap:2px;font-size:14px}
 .meter .mh{display:flex;justify-content:space-between;gap:8px;align-items:baseline;flex-wrap:wrap}
-.meter .mh b{font-size:16px;color:var(--navy)}
+.meter .mh b{font-size:15px;color:var(--navy)}
 .meter .mt{font-weight:700;color:var(--ink)}
-.mbar{height:18px;background:var(--sunk);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
+.mbar{height:16px;background:var(--sunk);border-radius:99px;overflow:hidden;border:1px solid var(--line)}
 .mbar i{display:block;height:100%;width:0;border-radius:99px;transition:width .25s linear}
 #mKE{background:linear-gradient(90deg,hsl(215 75% 52%),hsl(290 70% 50%),hsl(360 78% 48%))}
 #mSP{background:#26A69A}
@@ -388,10 +401,8 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
 .cdia .ar.on.up path{stroke:#E65100} .cdia .ar.on.up polygon{fill:#E65100} .cdia .ar.on.up text{fill:#E65100}
 .cdia .ar.on.dn path{stroke:#1565C0} .cdia .ar.on.dn polygon{fill:#1565C0} .cdia .ar.on.dn text{fill:#1565C0}
 .cdia .ar.on text{font-weight:800}
-.labmsg{font-size:17px;line-height:1.35;background:#F3E5F5;border-left:5px solid #8E24AA;border-radius:10px;padding:6px 10px;min-height:2.6em}
+.labmsg{font-size:15px;line-height:1.3;background:#F3E5F5;border-left:5px solid #8E24AA;border-radius:10px;padding:6px 10px;min-height:2.4em}
 .labmsg.warn{background:#FFEBEE;border-left-color:var(--bad)}
-.labbox .cover{position:absolute;inset:0;background:rgba(242,245,249,.95);display:grid;place-items:center;text-align:center;font-size:20px;font-weight:700;
-  color:var(--navy);border-radius:12px;padding:12px;z-index:2}
 /* missions */
 .missions{display:grid;gap:6px;background:#FFFDE7;border:2px solid #FFE082;border-radius:12px;padding:8px 12px}
 .missions h4{font-size:17px;color:var(--navy)}
@@ -412,10 +423,73 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
 .tile.right{border-color:var(--ok);background:#E8F5E9}
 .tile.wrong{border-color:var(--bad);background:#FFEBEE}
 .bank .tile{white-space:normal}
-/* narrow screens: jar → state → meters → slider → buttons → diagram (the meters stay in view while heating) */
-@media (max-width:1099px){
-  .lableft,.labside{display:contents}
-  #pcan{order:1} .statebig{order:2} .labside .meter{order:3} .lever{order:4} .lhint{order:5} #labBtns{order:6} .cdia{order:7} .labmsg{order:8}
+/* the app: tabs fill the screen, the jar on the left, the task on the right; only the task box scrolls if it must */
+.split{display:grid;gap:10px;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);align-items:start;min-height:0}
+.task{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.tbody{display:grid;gap:10px;align-content:start;min-height:0}
+.pbar{display:flex;flex-wrap:wrap;gap:6px}
+.pbtn{font:inherit;display:flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:3px 8px;min-height:40px;cursor:pointer;font-size:14px;font-weight:700;line-height:1.1}
+.pbtn .em{font-size:1.15rem}
+.pbtn .st{color:var(--star);font-size:12px;white-space:nowrap}
+.pbtn[aria-current="true"]{border:2px solid var(--accent);background:#FFF3E0;color:var(--accent)}
+.pbtn.done{border-color:#A5D6A7}
+.phases .ph{font:inherit;font-size:15px;cursor:pointer}
+.phases .ph:hover{border-color:var(--navy)}
+.task .spexbar{min-height:0}
+.task .spex{width:58px;height:58px}
+.task .bubble{font-size:17px;padding:6px 10px}
+.task .q{font-size:18px}
+.task .cat,.task .tile{font-size:17px;min-height:44px}
+.task .feedback{font-size:17px}
+.task .what,.task .explore{font-size:17px;padding:6px 10px}
+.task .safety{font-size:15px}
+.qnav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.qnav .dot{cursor:pointer;font:inherit;font-size:14px;font-weight:700}
+.qnav .grow{flex:1}
+details.tbl summary{cursor:pointer;font-weight:700;color:var(--navy);font-size:15px;padding:2px 0}
+.task .dtab{font-size:15px} .task .dtab th{font-size:13px;padding:4px 6px} .task .dtab td{padding:3px 6px} .task .dtab td.txt{font-size:14px}
+.chal{display:grid;gap:6px}
+.task > *{flex-shrink:0}
+.task .stephead h3{font-size:19px}
+.task .bins{gap:6px} .task .bin{min-height:96px;padding:4px} .task .bin > b{font-size:16px}
+.task .tile{font-size:15px;padding:4px 8px;min-height:36px}
+.task .bank{min-height:48px;padding:6px;gap:6px}
+.task .result .big{font-size:1.8rem}
+@media (min-width:900px) and (min-height:540px){
+  html,body{height:100%}
+  header{padding-top:4px;padding-bottom:4px} header h1{font-size:1.1rem} .hbtns .btn{min-height:36px;padding:3px 10px;font-size:.9rem}
+  .keybar{padding:3px 16px} .kchip{min-height:30px;font-size:14px}
+  .tab{min-height:38px;padding:4px 12px;font-size:17px}
+  main{gap:6px;padding-top:6px}
+  .labside .meter .hint{display:none}
+  body{height:100dvh;overflow:hidden}
+  footer{display:none}
+  main{min-height:0;overflow:hidden;padding-bottom:10px}
+  .panel{flex:1;min-height:0;overflow:auto}
+  #scenes,#free{overflow:hidden}
+  .split{height:100%;align-items:stretch}
+  .lhome{min-height:0;overflow:auto}
+  .task{overflow:auto}
+  #pcan{width:min(100%,calc((100dvh - 300px) * 4 / 3))}
+}
+@media (min-width:900px) and (max-height:820px){
+  .cdia{max-height:118px} .statebig{min-height:46px} .statebig .se{font-size:26px} .statebig b{font-size:17px} .statebig .temp{font-size:18px}
+  .labmsg{font-size:14px;min-height:0} .task .spex{width:48px;height:48px} .task .bubble{font-size:16px}
+}
+@media (max-width:1250px) and (min-width:900px){
+  .labbox{grid-template-columns:minmax(0,1fr);grid-template-areas:"pick" "top" "btns" "side"}
+  .labside{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .labside .statebig{grid-column:1/-1}
+}
+/* phones and small tablets: one column; the jar + slider stay at the top while the task scrolls under them */
+@media (max-width:899px),(max-height:539px){
+  .split{grid-template-columns:minmax(0,1fr)}
+  .lhome,.labbox{display:contents}
+  .labhead,.labtop,.labside,#labBtns{grid-area:auto}
+  .split > .task{order:5}
+  .labtop{position:sticky;top:0;z-index:5;background:#FBFCFE;padding:6px 0 4px;border-bottom:2px solid var(--line);box-shadow:0 6px 10px -8px rgba(0,0,0,.3)}
+  #pcan{width:min(100%,calc(30dvh * 4 / 3))}
+  .labhead{order:-1}
   .labside .meter .hint{display:none}
 }
 @media (max-width:599px){ .bins{grid-template-columns:minmax(0,1fr)} .bin{min-height:80px} .statebig b{font-size:19px} .statebig .temp{font-size:20px} .lever{font-size:15px;gap:6px;padding:6px 8px} }
@@ -445,46 +519,33 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
 
 <main>
   <div class="tabs" role="tablist">
-    <button class="tab" role="tab" id="tab-scenes" aria-selected="true" aria-controls="scenes">1 · Parts<span class="tstar" data-ts="scenes"></span></button>
-    <button class="tab" role="tab" id="tab-free" aria-selected="false" aria-controls="free">2 · 🔬<span class="full"> Free lab</span></button>
+    <button class="tab" role="tab" id="tab-free" aria-selected="true" aria-controls="free">1 · 🔬 Free lab</button>
+    <button class="tab" role="tab" id="tab-scenes" aria-selected="false" aria-controls="scenes">2 · 🧪 Parts<span class="tstar" data-ts="scenes"></span></button>
     <button class="tab" role="tab" id="tab-quiz" aria-selected="false" aria-controls="quiz">3 · 🧠 Quiz<span class="tstar" data-ts="quiz"></span></button>
     <button class="tab" role="tab" id="tab-cert" aria-selected="false" aria-controls="cert">4 · 🏅<span class="full"> Certificate</span></button>
   </div>
 
-  <!-- PARTS -->
-  <section class="panel" id="scenes" role="tabpanel" aria-labelledby="tab-scenes">
-    <div class="layout">
-      <div class="card">
-        <h2>4 parts</h2>
-        <div class="cb">
-          <div class="progress" aria-hidden="true"><i id="prog"></i></div>
-          <div class="slist" id="slist"></div>
-          <div class="teach" id="teachNote" hidden>Teacher mode: all parts are open.</div>
-        </div>
-      </div>
-      <div class="card">
-        <h2 id="scCard">Part</h2>
-        <div class="cb">
-          <div class="stephead"><h3 id="scTitle"></h3><span class="of" id="scOf"></span><span id="scStars"></span></div>
-          <div class="phases" id="phases"></div>
-          <div class="spexbar" data-spex="scene"></div>
-          <div id="labHome"></div>
-          <div class="missions" id="missions" hidden></div>
-          <div class="tablewrap" id="tabWrap"><div class="tcap">📋 Results (the table fills itself)</div><table class="dtab" id="dtab"></table></div>
-          <div id="work" class="cb" style="padding:0"></div>
-        </div>
+  <!-- FREE LAB: the jar on the left, Marie and the "Try this" challenges on the right -->
+  <section class="panel" id="free" role="tabpanel" aria-labelledby="tab-free">
+    <div class="split">
+      <div class="lhome" id="freeHome"></div>
+      <div class="task">
+        <div class="spexbar" data-spex="free"></div>
+        <div class="tbody"><div class="missions" id="freeBadge"></div></div>
       </div>
     </div>
   </section>
 
-  <!-- FREE LAB -->
-  <section class="panel" id="free" role="tabpanel" aria-labelledby="tab-free" hidden>
-    <div class="card">
-      <h2>🔬 Free lab · try anything!</h2>
-      <div class="cb">
-        <div class="spexbar" data-spex="free"></div>
-        <div id="freeHome"></div>
-        <div class="missions" id="freeBadge"></div>
+  <!-- PARTS: the jar on the left; the part, its 4 steps and Marie on the right -->
+  <section class="panel" id="scenes" role="tabpanel" aria-labelledby="tab-scenes" hidden>
+    <div class="split">
+      <div class="lhome" id="labHome"></div>
+      <div class="task">
+        <div class="pbar" id="slist" role="group" aria-label="Choose a part"></div>
+        <div class="stephead"><h3 id="scTitle"></h3><span id="scStars"></span></div>
+        <div class="phases" id="phases" role="group" aria-label="Steps of this part"></div>
+        <div class="spexbar" data-spex="scene"></div>
+        <div class="tbody" id="work"></div>
       </div>
     </div>
   </section>
@@ -521,29 +582,25 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
 
 <!-- the particle lab: one box, moved between the Parts tab and the Free lab tab -->
 <div class="labbox" id="labbox">
-  <div class="subpick" id="subPick" role="group" aria-label="Choose a substance"></div>
-  <div class="labgrid">
-    <div class="lableft">
-      <canvas id="pcan" width="440" height="330" role="img" aria-label="The particles in a jar with a lid"></canvas>
-      <div class="lever"><span class="cool">❄️ Cool</span>
-        <input type="range" id="lever" min="-100" max="100" value="0" step="1" aria-label="Heat or cool. Hold the slider to the right to heat, to the left to cool. Let go to stop.">
-        <span class="heat">Heat 🔥</span></div>
-      <div class="hint lhint">Hold the slider to heat or cool – let go and it stops.</div>
-      <div class="controls" id="labBtns">
-        <button class="btn" id="bSquash">🔧 Push the lid</button>
-        <button class="btn" id="bPour">🫙 Pour into the tall jar</button>
-        <span id="jumpBtns" style="display:contents">
-          <button class="btn" data-j="s">🧊 Solid</button><button class="btn" data-j="l">💧 Liquid</button><button class="btn" data-j="g">💨 Gas</button>
-        </span>
-        <button class="btn" id="bReset">↺ Start again</button>
-      </div>
-    </div>
-    <div class="labside">
-      <div class="statebig" id="stateBig" aria-live="polite"></div>
-      <div class="meter"><div class="mh"><b>⚡ Kinetic energy</b><span class="mt" id="tKE"></span></div>
-        <div class="mbar" role="img" aria-label="Kinetic energy of the particles"><i id="mKE"></i></div><span class="hint">how fast the particles move</span></div>
-      <div class="meter"><div class="mh"><b>📦 Space used</b><span class="mt" id="tSP"></span></div>
-        <div class="mbar" role="img" aria-label="Space used by the particles"><i id="mSP"></i></div><span class="hint">how much of the jar the substance fills</span></div>
+  <div class="labhead"><div class="subpick" id="subPick" role="group" aria-label="Choose a substance"></div>
+    <span id="jumpBtns" class="jumps" role="group" aria-label="Jump to a state"><span class="lead">Jump to:</span><button class="btn" data-j="s">🧊 Solid</button><button class="btn" data-j="l">💧 Liquid</button><button class="btn" data-j="g">💨 Gas</button></span></div>
+  <div class="labtop">
+    <canvas id="pcan" width="440" height="330" role="img" aria-label="The particles in a jar with a lid"></canvas>
+    <div class="lever"><button type="button" class="tbtn cool" id="bCool" aria-label="Cool down: tap for a little, hold for more">▼ ❄️ Cool</button>
+      <input type="range" id="lever" min="-100" max="100" value="0" step="1" aria-label="Heat or cool. Hold the slider to the right to heat, to the left to cool. Let go to stop.">
+      <button type="button" class="tbtn heat" id="bHeat" aria-label="Heat up: tap for a little, hold for more">Heat 🔥 ▲</button></div>
+  </div>
+  <div class="controls" id="labBtns">
+    <button class="btn" id="bSquash">🔧 Push the lid</button>
+    <button class="btn" id="bPour">🫙 Pour</button>
+    <button class="btn" id="bReset">↺ Start again</button>
+  </div>
+  <div class="labside">
+    <div class="statebig" id="stateBig" aria-live="polite"></div>
+    <div class="meter"><div class="mh"><b>⚡ Kinetic energy</b><span class="mt" id="tKE"></span></div>
+      <div class="mbar" role="img" aria-label="Kinetic energy of the particles"><i id="mKE"></i></div><span class="hint">how fast the particles move</span></div>
+    <div class="meter"><div class="mh"><b>📦 Space used</b><span class="mt" id="tSP"></span></div>
+      <div class="mbar" role="img" aria-label="Space used by the particles"><i id="mSP"></i></div><span class="hint">how much of the jar the substance fills</span></div>
       <svg class="cdia" id="cdia" viewBox="0 0 330 150" role="img" aria-label="Changes of state: solid, liquid, gas">
         <g class="ar up" id="aM"><path d="M62 52 Q110 8 158 52"/><polygon points="158,52 146,46 154,38"/><text x="110" y="20" text-anchor="middle" font-size="13">melting</text></g>
         <g class="ar up" id="aE"><path d="M172 52 Q220 8 268 52"/><polygon points="268,52 256,46 264,38"/><text x="220" y="20" text-anchor="middle" font-size="13">evaporating / boiling</text></g>
@@ -554,9 +611,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
         <g class="bx" id="dG"><rect x="228" y="55" width="94" height="40" rx="10"/><text x="275" y="81" text-anchor="middle" font-size="16" font-weight="700" fill="#1F3A5F">💨 Gas</text></g>
       </svg>
       <div class="labmsg" id="labMsg" aria-live="polite"></div>
-    </div>
   </div>
-  <div class="cover" id="cover" hidden>🤔 Predict first!<br>What do you think will happen?</div>
 </div>
 
 <!-- overlays -->
@@ -567,19 +622,18 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
       only how close together they are and how they move is different. When you heat something, its particles get more
       <b>kinetic energy</b> (they move faster) – and it can change state!</p>
     <ol>
-      <li><b>The particle jar:</b> hold the slider to the right to <b>heat 🔥</b>, to the left to <b>cool ❄️</b>. Let go and it stops.
+      <li><b>The particle jar:</b> hold the slider to the right to <b>heat 🔥</b>, to the left to <b>cool ❄️</b> – or use the <b>▲ Heat</b> and <b>▼ Cool</b> buttons (tap = a little, hold = more). Let go and it stops.
         Watch the thermometer (°C), the particles, the <b>⚡ kinetic energy</b> bar and the <b>📦 space used</b> bar.
         🔧 <b>Push the lid</b> to try to squash it, 🫙 <b>Pour</b> it into another jar.</li>
-      <li><b>1 · Parts</b> (4 parts): 1 🧊 Solid, liquid, gas · 2 🍫 Melting and freezing · 3 ♨️ Evaporating, boiling and condensing ·
-        4 🔩 Same rules, different substances. The next part opens when you finish the one before.</li>
-      <li>In each part: <b>1 🤔 Predict</b> → <b>2 🧪 Do</b> (missions – they tick themselves, the table fills itself) →
-        <b>3 ✍️ Explain</b> (4 questions) → <b>4 🔍 Explore</b>.</li>
+      <li><b>1 · 🔬 Free lab</b>: all 4 substances, plus Solid / Liquid / Gas buttons. Try anything – and the 6 <b>Try this</b> challenges!</li>
+      <li><b>2 · 🧪 Parts</b> (choose any part): 1 🧊 Solid, liquid, gas · 2 🍫 Melting and freezing · 3 ♨️ Evaporating, boiling and condensing ·
+        4 🔩 Same rules, different substances. Each part has 4 steps (tap any step): <b>🤔 Predict</b> · <b>🧪 Do</b> (missions – they tick
+        themselves, the table fills itself) · <b>✍️ Explain</b> (4 questions, one at a time) · <b>🔍 Explore</b>.</li>
       <li><b>Drag</b> a word or card – or <b>tap it, then tap where it goes</b>.</li>
       <li><b>Wrong answer?</b> The first time you get a tip. The second time you see the answer.
         Stars: right first time ★★★ · after a tip ★★ · answer shown: no stars.</li>
       <li>Words with a <span class="wd" style="cursor:default">dotted line</span> – tap them to see what they mean.
         <b>🗣 Read aloud</b> reads Marie's words for you. 🔈 reads one question.</li>
-      <li><b>2 · 🔬 Free lab</b>: all 4 substances, plus Solid / Liquid / Gas buttons. Try anything!</li>
       <li><b>3 · 🧠 Quiz</b>: 15 questions about real life. <b>4 · 🏅 Certificate</b>: type your name and print it. Your progress is saved in this browser.</li>
     </ol>
     <p class="hint">New words? Use the <a href="https://school.taneski.com/science/g06/02-glossary-energy/glossary-en.pdf" target="_blank" rel="noopener">Glossary · Energy words</a> (also in 9 other languages on the Grade 6 page).</p>
@@ -667,7 +721,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   // table (head + rows, filled by the missions); pred (predict); q = 4 questions (mc · tf · gaps · num · sort · state)
   const SCENES = [
     {
-      id: "states", em: "🧊", name: "Solid, liquid, gas", topic: "Water in 3 states", badge: "State spotter",
+      id: "states", em: "🧊", name: "Solid, liquid, gas", short: "Solid · liquid · gas", topic: "Water in 3 states", badge: "State spotter",
       lab: { subs: ["water"], sub: "water", T: -10 },
       intro: `This jar holds <b>36 water ${w("particle", "particles")}</b>. Right now it is ice: a ${kw("solid")}. Try 🔧 <b>Push the lid</b> and 🫙 <b>Pour</b>. Then hold the slider to <b>heat</b> it, and test the ${kw("liquid")} and the ${kw("gas")} too!`,
       pred: { q: "Ice, liquid water and steam are all water. What is different between them?",
@@ -698,7 +752,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
       ],
     },
     {
-      id: "melt", em: "🍫", name: "Melting and freezing", topic: "Solid ⇄ liquid", badge: "Melt master",
+      id: "melt", em: "🍫", name: "Melting and freezing", short: "Melting", topic: "Solid ⇄ liquid", badge: "Melt master",
       lab: { subs: ["water", "chocolate", "wax"], sub: "water", T: -10 },
       intro: `Let's watch ${kw("melting")} and ${kw("freezing")} closely. Watch the ⚡ ${kw("ke", "kinetic energy")} bar and the particles while you heat. The table records each ${w("mp")}.`,
       pred: { q: "You heat an ice cube. What do you think happens to its particles?",
@@ -727,7 +781,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
       ],
     },
     {
-      id: "boil", em: "♨️", name: "Evaporating, boiling, condensing", topic: "Liquid ⇄ gas", badge: "Steam scientist",
+      id: "boil", em: "♨️", name: "Evaporating, boiling, condensing", short: "Boiling", topic: "Liquid ⇄ gas", badge: "Steam scientist",
       lab: { subs: ["water"], sub: "water", T: 20 },
       intro: `Now liquid water at 20 °C. Heat it slowly and watch the ${w("surface")}! Then make it boil, squash the gas and cool it again.`,
       pred: { q: "You keep heating water. What happens to its particles at 100 °C?",
@@ -756,7 +810,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
       ],
     },
     {
-      id: "iron", em: "🔩", name: "Same rules, different substances", topic: "Iron in a foundry", badge: "Iron smelter",
+      id: "iron", em: "🔩", name: "Same rules, different substances", short: "Iron", topic: "Iron in a foundry", badge: "Iron smelter",
       lab: { subs: ["iron"], sub: "iron", T: 20 },
       intro: `A ${w("substance")} we know as a solid: <b>iron</b>. In a foundry (an iron factory) it is melted and poured into moulds. Heat it – how hot must it get?`,
       pred: { q: "Iron is a solid in the classroom. What temperature do you need to melt it?",
@@ -963,7 +1017,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   function load() { try { const d = JSON.parse(localStorage.getItem(STORE) || "null"); for (const k in d || {}) if (k in P) P[k] = d[k]; P.sc = P.sc || {}; } catch (e) {} }
   const SP = (id) => (P.sc[id] = P.sc[id] || { pred: null, watched: false, stars: null });
   const isDone = (id) => SP(id).stars != null;
-  const unlocked = (i) => TEACHER || i === 0 || isDone(SCENES[i - 1].id);
+  const unlocked = () => true;                                   // all parts are open (teacher, 26 Oct 2026)
   const starsOf = (st) => (st.revealed ? 0 : st.mistakes ? 2 : 3);
   const meanStars = (sts) => Math.round(sts.reduce((s, st) => s + starsOf(st), 0) / Math.max(1, sts.length));
   const starsHTML = (n, of = 3) => `<span class="stars" aria-label="${n} stars">${"★".repeat(n)}<span class="off">${"★".repeat(Math.max(0, of - n))}</span></span>`;
@@ -1423,14 +1477,14 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     $("subPick").innerHTML = (subs.length > 1 ? `<span class="lead">Substance:</span>` : "") +
       subs.map((k) => `<button class="subbtn" data-sub="${k}" aria-pressed="false">${SUBS[k].em} ${SUBS[k].name}</button>`).join("");
     $("subPick").querySelectorAll(".subbtn").forEach((b) => (b.onclick = () => { if (LAB.enabled && b.dataset.sub !== LAB.sub) { setSub(b.dataset.sub); SND.click(); } }));
-    $("jumpBtns").hidden = !jumps; $("jumpBtns").style.display = jumps ? "contents" : "none";
+    $("jumpBtns").hidden = !jumps;
     setSub(sub, T);
     LAB.listener = listener;
     LAB.st = null;
   }
   function labEnable(on) {
-    LAB.enabled = on; $("cover").hidden = on;
-    ["lever", "bSquash", "bPour", "bReset"].forEach((id) => ($(id).disabled = !on));
+    LAB.enabled = on; $("labbox").classList.toggle("off", !on);
+    ["lever", "bSquash", "bPour", "bReset", "bHeat", "bCool"].forEach((id) => ($(id).disabled = !on));
     $("jumpBtns").querySelectorAll("button").forEach((b) => (b.disabled = !on || (b.dataset.j === "g" && SB().bp == null)));
     $("subPick").querySelectorAll("button").forEach((b) => (b.disabled = !on));
   }
@@ -1438,7 +1492,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     $("subPick").querySelectorAll(".subbtn").forEach((b) => b.setAttribute("aria-pressed", b.dataset.sub === LAB.sub));
     $("bSquash").textContent = LAB.push ? "↥ Let go of the lid" : "🔧 Push the lid";
     $("bSquash").setAttribute("aria-pressed", LAB.push);
-    $("bPour").textContent = LAB.jar === "wide" ? "🫙 Pour into the tall jar" : "🫙 Pour into the wide jar";
+    $("bPour").textContent = LAB.jar === "wide" ? "🫙 Pour → tall jar" : "🫙 Pour → wide jar";
     $("jumpBtns").querySelectorAll("button").forEach((b) => (b.disabled = !LAB.enabled || (b.dataset.j === "g" && SB().bp == null)));
   }
   $("bSquash").onclick = pushLid;
@@ -1457,6 +1511,27 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   }));
   lever.addEventListener("keydown", (e) => { if (/Arrow|Page|Home|End/.test(e.key)) lever.dataset.key = "1"; });
   document.addEventListener("pointerup", () => { if (LAB.lever) leverOff(); });
+  // ▲ Heat / ▼ Cool buttons: a tap changes the temperature a little (1/40 of the scale), holding heats / cools like the slider
+  function tempButton(btn, dir) {
+    let t0 = 0, held = 0;
+    const stop = () => {
+      if (!t0) return;
+      clearTimeout(held); btn.classList.remove("on");
+      if (performance.now() - t0 < 300 && LAB.enabled) {                 // a tap: one small step
+        const S = SB(); LAB.T = clamp(LAB.T + dir * (S.Tmax - S.Tmin) / 40, S.Tmin, S.Tmax);
+      }
+      t0 = 0; leverOff();
+    };
+    btn.addEventListener("pointerdown", (e) => {
+      if (!LAB.enabled || e.button > 0) return;
+      t0 = performance.now(); btn.classList.add("on");
+      try { btn.setPointerCapture(e.pointerId); } catch (er) {}
+      held = setTimeout(() => { lever.value = 60 * dir; LAB.lever = 0.6 * dir; }, 300);
+    });
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach((ev) => btn.addEventListener(ev, stop));
+    btn.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && LAB.enabled) { e.preventDefault(); const S = SB(); LAB.T = clamp(LAB.T + dir * (S.Tmax - S.Tmin) / 40, S.Tmin, S.Tmax); } });
+  }
+  tempButton($("bHeat"), 1); tempButton($("bCool"), -1);
 
   /* drawing */
   function sizeCanvas() {
@@ -1618,15 +1693,12 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   };
 
   let M = null;                                                          // the missions of the open part
-  function doStart(full) {
-    const d = DO[SC.id];
-    M = { d, done: {}, vals: {}, full, F: {} };                           // F = the states seen since the jar was last reset
-    if (full) [...d.missions, ...(d.extra || [])].forEach((m) => (M.done[m.id] = true));
-    renderMissions(); renderTable();
+  function doStart() {
+    M = { d: DO[SC.id], done: {}, vals: {}, F: {} };                      // F = the states seen since the jar was last reset
   }
+  // the missions box and the results table are drawn wherever they are on screen (#missions, #dtab)
   function renderMissions() {
-    const d = M.d, box = $("missions");
-    box.hidden = false;
+    const d = M.d, box = $("missions"); if (!box) return;
     const nOk = d.missions.filter((m) => M.done[m.id]).length;
     let html = `<h4>🎯 Missions · ${nOk} of ${d.missions.length} done</h4>`;
     if (d.groups) html += Object.entries(d.groups).map(([g, label]) => `<div class="mrow"><b>${label}</b>${d.missions.filter((m) => m.grp === g)
@@ -1637,17 +1709,21 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     }
     box.innerHTML = html;
   }
-  function renderTable() {
-    const d = M.d;
-    $("dtab").innerHTML = `<thead><tr>${d.head.map((x) => `<th>${x}</th>`).join("")}</tr></thead><tbody>${d.rows.map((r) => `<tr>${r.map((c, i) => {
+  // full = every cell shown (Explain and Explore); otherwise only the cells of the missions done
+  function renderTable(full) {
+    const d = M.d, tb = $("dtab"); if (!tb) return;
+    full = full ?? tb.dataset.full === "1"; tb.dataset.full = full ? "1" : "";
+    const V = full ? { e1: "60–99 °C", ...M.vals } : M.vals;
+    tb.innerHTML = `<thead><tr>${d.head.map((x) => `<th>${x}</th>`).join("")}</tr></thead><tbody>${d.rows.map((r) => `<tr>${r.map((c, i) => {
       const cls = (d.txt || []).includes(i) || i === 0 ? "txt" : "";
       if (typeof c === "string") return `<td class="${cls}">${c}</td>`;
-      const on = M.done[c.m], v = typeof c.v === "function" ? (on ? c.v(M.vals) : "") : c.v;
+      const on = full || M.done[c.m], v = typeof c.v === "function" ? (on ? c.v(V) : "") : c.v;
       return `<td class="${cls}${on ? "" : " wait"}" data-m="${c.m}">${on ? v : "–"}</td>`;
     }).join("")}</tr>`).join("")}</tbody>`;
   }
+  const tableHTML = (open) => `<details class="tbl tablewrap"${open ? " open" : ""}><summary>📋 Results table</summary><table class="dtab" id="dtab"></table></details>`;
   function onLab(e) {
-    if (!M || M.full || !LAB.enabled) return;
+    if (!M || !LAB.enabled) return;
     const d = M.d; let ticked = null, any = false;
     if (e.type === "sub") M.F = {};
     for (const m of [...d.missions, ...(d.extra || [])]) {
@@ -1657,147 +1733,185 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     if (e.type === "state") M.F[e.st] = true;
     if (!any) return;
     renderTable(); renderMissions();
-    $("dtab").querySelectorAll("td[data-m]").forEach((td) => { if (M.done[td.dataset.m] && !td.dataset.seen) { td.dataset.seen = "1"; td.parentNode.classList.remove("new"); void td.offsetWidth; td.parentNode.classList.add("new"); } });
+    if ($("dtab")) $("dtab").querySelectorAll("td[data-m]").forEach((td) => { if (M.done[td.dataset.m] && !td.dataset.seen) { td.dataset.seen = "1"; td.parentNode.classList.remove("new"); void td.offsetWidth; td.parentNode.classList.add("new"); } });
     if (!ticked) return;
     SND.star();
     const left = d.missions.filter((m) => !M.done[m.id]);
     if (!left.length) { setTimeout(() => doFinished(), 900); return; }
+    if (PH !== "watch") return;
     if (!d.groups) setTimeout(() => say("scene", `✔ Mission done! Next: ${left[0].text}`, "happy", "good"), 1600);
     else toast(`✔ ${ticked.chip.slice(3)} · ${d.groups[ticked.grp].replace(/ \(.*\)/, "")}`);
   }
   function doFinished() {
-    const s = SP(SC.id); if (s.watched) return;
-    s.watched = true; save();
-    showCompare($("work"), true);
+    const s = SP(SC.id), first = !s.watched;
+    s.watched = true; save(); showPhases(PH);
+    if (PH === "watch" && first) {
+      const work = $("work");
+      showCompare(work);
+      say("scene", (SP(SC.id).pred === SC.pred.ok ? "All missions done – and your prediction was right! " : "All missions done! Scientists often change their ideas after an experiment. ") + "Now answer 4 questions.", "wow", "good");
+      const nx = h(`<div class="controls nextq"><button class="btn primary">Next: ✍️ 4 questions →</button></div>`);
+      nx.querySelector("button").onclick = () => openPhase("explain");
+      work.append(nx); nx.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "nearest" });
+    }
   }
 
-  /* phases of a part: predict → do → explain → explore */
-  const PHASES = [["predict", "1 🤔 Predict"], ["watch", "2 🧪 Do"], ["explain", "3 ✍️ Explain"], ["explore", "4 🔍 Explore"]];
+  /* the 4 steps of a part (all open, any order): predict · do · explain · explore */
+  const PHASES = [["predict", "🤔 Predict"], ["watch", "🧪 Do"], ["explain", "✍️ Explain"], ["explore", "🔍 Explore"]];
+  const phaseDone = (k) => { const s = SP(SC.id); return k === "predict" ? !!s.pred : k === "watch" ? !!s.watched : k === "explain" ? s.stars != null : false; };
   function phaseOf(id) { const s = SP(id); return !s.pred ? "predict" : !s.watched ? "watch" : s.stars == null ? "explain" : "explore"; }
+  let PH = null;
   function showPhases(now) {
-    const i = PHASES.findIndex(([k]) => k === now);
-    $("phases").innerHTML = PHASES.map(([k, t], j) => `<span class="ph${j < i ? " done" : j === i ? " now" : ""}">${j < i ? "✔ " : ""}${t}</span>`).join("");
+    $("phases").innerHTML = PHASES.map(([k, t], j) => `<button type="button" class="ph${k === now ? " now" : phaseDone(k) ? " done" : ""}" data-ph="${k}" aria-pressed="${k === now}">${j + 1} ${phaseDone(k) && k !== now ? "✔ " : ""}${t}</button>`).join("");
+    $("phases").querySelectorAll("button").forEach((b) => (b.onclick = () => openPhase(b.dataset.ph)));
+  }
+  function openPhase(k) {
+    PH = k; showPhases(k); $("work").scrollTop = 0;
+    ({ predict: openPredict, watch: openWatch, explain: openExplain, explore: openExplore })[k]();
   }
   let SC = null;
-  function openScene(id) {
+  function openScene(id, phase) {
     SC = SCENES[SC_I[id]]; P.cur = id; save();
-    const i = SC_I[id];
-    $("scCard").textContent = `Part ${i + 1} · ${SC.topic}`;
-    $("scTitle").textContent = `${SC.em} ${SC.name}`;
-    $("scOf").textContent = `${i + 1} of ${SCENES.length}`;
+    $("scTitle").textContent = `Part ${SC_I[id] + 1} · ${SC.em} ${SC.name}`;
     $("scStars").innerHTML = isDone(id) ? starsHTML(SP(id).stars) : "";
     labSetup({ home: "labHome", subs: SC.lab.subs, sub: SC.lab.sub, T: SC.lab.T, jumps: false, ctxName: "scene", listener: onLab, say: (html, mood) => say("scene", html, mood) });
-    renderList();
-    const ph = phaseOf(id);
-    doStart(ph !== "predict" && ph !== "watch");
-    if (ph === "predict") openPredict(); else if (ph === "watch") openWatch(); else if (ph === "explain") openExplain(); else openExplore();
+    renderList(); doStart();
+    openPhase(phase || phaseOf(id));
   }
   const predText = (v) => (SC.pred.opts.find(([k]) => k === v) || [, "?"])[1];
 
   function openPredict() {
-    showPhases("predict"); labEnable(false); $("missions").hidden = true; $("tabWrap").hidden = true;
+    labEnable(false);
     say("scene", `Before you start, ${w("predict")}: what do you think will happen? It's OK to guess – scientists make predictions all the time!`, "think");
     const work = $("work"); work.replaceChildren();
     work.append(h(`<div class="what">🤔 <b>Predict:</b> ${SC.pred.q}</div>`));
     const grid = h(`<div class="cats wide"></div>`); work.append(grid);
-    const btns = SC.pred.opts.map(([v, t]) => { const b = h(`<button class="cat" aria-pressed="false" data-v="${v}">${t}</button>`); grid.append(b); return b; });
+    const now = SP(SC.id).pred;
+    const btns = SC.pred.opts.map(([v, t]) => { const b = h(`<button class="cat" aria-pressed="${v === now}" data-v="${v}">${t}</button>`); grid.append(b); return b; });
     btns.forEach((b) => (b.onclick = () => btns.forEach((x) => x.setAttribute("aria-pressed", x === b))));
-    const fb = h(`<div class="feedback"></div>`), go = h(`<div class="controls"><button class="btn primary">✔ This is my prediction</button></div>`);
+    const fb = h(`<div class="feedback"></div>`), go = h(`<div class="controls"><button class="btn primary">✔ This is my prediction → 🧪 Do</button></div>`);
     work.append(go, fb);
     go.querySelector("button").onclick = () => {
       const b = btns.find((x) => x.getAttribute("aria-pressed") === "true");
       if (!b) { fbSet(fb, "info", "Choose one answer first."); shake(grid); return; }
-      SP(SC.id).pred = b.dataset.v; save(); openWatch();
+      SP(SC.id).pred = b.dataset.v; save(); openPhase("watch");
     };
   }
   function openWatch() {
-    showPhases("watch"); labEnable(true); $("tabWrap").hidden = false;
-    doStart(false); LAB.st = null;                                       // the jar reports its state again
-    const work = $("work"); work.replaceChildren(h(`<div class="what">🧪 <b>Do:</b> complete the missions with the particle jar. They tick themselves, and the results table fills itself.
-      Hold the slider to heat 🔥 or cool ❄️ – and watch the particles, the ⚡ kinetic energy and the 📦 space used.</div>`), h(`<div class="safety">🥽 ${SC.safety}</div>`));
+    labEnable(true); LAB.st = null;                                      // the jar reports its state again
+    const work = $("work");
+    work.replaceChildren(h(`<div class="missions" id="missions"></div>`), h(tableHTML(true)), h(`<div class="safety">🥽 ${SC.safety}</div>`));
+    renderMissions(); renderTable(false);
+    if (SP(SC.id).watched && M.d.missions.every((m) => M.done[m.id])) showCompare(work);
     say("scene", SC.intro, "talk");
   }
-  function showCompare(work, fresh) {
+  function showCompare(work) {
     const pred = SP(SC.id).pred, right = pred === SC.pred.ok;
-    const box = h(`<div class="cmp what" style="background:#FFFDE7;border-color:#F9A825">
-      <div class="row"><b>🤔 You predicted:</b> ${predText(pred)} ${right ? "✔" : ""}</div>
-      <div class="row"><b>🧪 What happened:</b> ${SC.pred.seen}</div></div>`);
     work.querySelectorAll(".cmp, .nextq").forEach((x) => x.remove());
-    work.append(box);
-    if (fresh) {
-      say("scene", (right ? "All missions done – and your prediction was right! " : "All missions done! Scientists often change their ideas after an experiment. ") + "Now answer 4 questions.", right ? "wow" : "happy", "good");
-      const nx = h(`<div class="controls nextq"><button class="btn primary">Next: 4 questions →</button></div>`);
-      nx.querySelector("button").onclick = () => openExplain();
-      work.append(nx); nx.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "nearest" });
-    }
+    work.append(h(`<div class="cmp what" style="background:#FFFDE7;border-color:#F9A825">
+      ${pred ? `<div class="row"><b>🤔 You predicted:</b> ${predText(pred)} ${right ? "✔" : ""}</div>` : ""}
+      <div class="row"><b>🧪 What happened:</b> ${SC.pred.seen}</div></div>`));
   }
+  // Explain: 4 questions, one at a time (dots + ← →); the stars count when all 4 are answered
+  let QS = null;
   function openExplain() {
-    showPhases("explain"); labEnable(true); $("tabWrap").hidden = false;
-    if (!M.full) { M.full = true; [...M.d.missions, ...(M.d.extra || [])].forEach((m) => (M.done[m.id] = true)); renderMissions(); renderTable(); }
+    labEnable(true);
     const work = $("work"); work.replaceChildren();
-    showCompare(work, false);
-    work.append(h(`<div class="what">✍️ <b>Explain:</b> 4 questions. You can use the particle jar and the table at any time to find the answers.</div>`));
-    say("scene", "Four questions about this part. The table and the particles can help you!", "talk");
-    const box = h(`<div class="cb" style="padding:0"></div>`); work.append(box);
-    sequence(box, SC.q.map((q, n) => (c, d) => { c.append(qline(n + 1, q.q)); runQ(c, q, "scene", d); }), (sts) => finishScene(sts));
+    QS = { i: 0, sts: [], boxes: [] };
+    const nav = h(`<div class="qnav"><b>✍️ Explain</b><span class="dots" id="xDots"></span><span class="grow"></span>
+      <button class="btn small" data-a="prev" aria-label="Previous question">←</button><button class="btn small" data-a="next" aria-label="Next question">→</button></div>`);
+    const host = h(`<div class="cb" style="padding:0"></div>`);
+    work.append(nav, host, h(tableHTML(false)));
+    renderTable(true);
+    nav.querySelector('[data-a="prev"]').onclick = () => showQ(QS.i - 1);
+    nav.querySelector('[data-a="next"]').onclick = () => showQ(QS.i + 1);
+    QS.host = host;
+    say("scene", "Four questions about this part. Use the jar and the 📋 results table to help you!", "talk");
+    showQ(0);
+  }
+  function showQ(n) {
+    if (n < 0 || n >= SC.q.length) return;
+    QS.i = n;
+    if (!QS.boxes[n]) {
+      const q = SC.q[n], c = h(`<div class="part"></div>`); QS.boxes[n] = c; QS.host.append(c);
+      c.append(qline(n + 1, q.q));
+      runQ(c, q, "scene", (st) => {
+        QS.sts[n] = st; xDots();
+        const all = SC.q.every((_, k) => QS.sts[k]);
+        if (all) { setTimeout(() => finishScene(QS.sts), 500); return; }
+        const nx = SC.q.findIndex((_, k) => !QS.sts[k]);
+        const b = h(`<div class="controls"><button class="btn primary">Next question →</button></div>`);
+        b.querySelector("button").onclick = () => showQ(nx); c.append(b);
+      });
+    }
+    QS.boxes.forEach((c, k) => (c.hidden = k !== n));
+    xDots();
+  }
+  function xDots() {
+    $("xDots").innerHTML = SC.q.map((_, k) => { const st = QS.sts[k]; return `<button type="button" class="dot${k === QS.i ? " now" : ""}${st ? " s" + starsOf(st) : ""}" data-k="${k}" aria-label="Question ${k + 1}">${k + 1}</button>`; }).join("");
+    $("xDots").querySelectorAll("button").forEach((b) => (b.onclick = () => showQ(+b.dataset.k)));
   }
   function finishScene(sts) {
     const s = SP(SC.id), n = meanStars(sts), first = s.stars == null;
     s.stars = Math.max(s.stars ?? -1, n); save();
-    refreshStars(); showPhases("explore"); $("scStars").innerHTML = starsHTML(s.stars);
-    const work = $("work"), i = SC_I[SC.id], next = SCENES[i + 1];
+    refreshStars(); $("scStars").innerHTML = starsHTML(s.stars); showPhases(PH);
+    const work = $("work"), i = SC_I[SC.id], next = SCENES.find((sc, k) => k > i && !isDone(sc.id)) || SCENES.find((sc) => !isDone(sc.id));
+    QS.boxes.forEach((c) => (c.hidden = true));
     const res = h(`<div class="result"><div class="big">${SC.em} ${starsHTML(n)}</div>
-      <div style="font-size:20px">Well done! ${first ? `You won the <b>${SC.badge}</b> badge.` : ""}</div>
-      <div class="controls">${next ? `<button class="btn primary" data-a="next">Next: ${next.em} ${next.name} →</button>` : `<button class="btn primary" data-a="free">🔬 Now try the free lab →</button>`}
+      <div style="font-size:19px">Well done! ${first ? `You won the <b>${SC.badge}</b> badge.` : ""}</div>
+      <div class="controls">${next ? `<button class="btn primary" data-a="next">Next: ${next.em} ${next.name} →</button>` : `<button class="btn primary" data-a="quiz">🧠 Now take the quiz →</button>`}
       <button class="btn" data-a="explore">🔍 Explore this part</button></div></div>`);
-    res.querySelector('[data-a="explore"]').onclick = () => openScene(SC.id);
-    const nb = res.querySelector('[data-a="next"]'); if (nb) nb.onclick = () => { openScene(next.id); $("scenes").scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "start" }); };
-    const fb = res.querySelector('[data-a="free"]'); if (fb) fb.onclick = () => showTab("free");
-    work.append(res); res.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "nearest" });
-    say("scene", next ? "Great work, scientist! The next part is open." :
-      "You finished all 4 parts! Heating gives the particles more kinetic energy – and a substance can melt and boil. 🎉 Try the <b>free lab</b> and the <b>quiz</b>!", "happy", "good");
+    res.querySelector('[data-a="explore"]').onclick = () => openPhase("explore");
+    const nb = res.querySelector('[data-a="next"]'); if (nb) nb.onclick = () => openScene(next.id);
+    const qb = res.querySelector('[data-a="quiz"]'); if (qb) qb.onclick = () => showTab("quiz");
+    QS.host.append(res); res.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "nearest" });
+    say("scene", next ? "Great work, scientist! Choose the next part when you are ready." :
+      "You finished all 4 parts! Heating gives the particles more kinetic energy – and a substance can melt and boil. 🎉 Now try the <b>quiz</b>!", "happy", "good");
     renderList();
   }
   function openExplore() {
-    showPhases("explore"); labEnable(true); $("tabWrap").hidden = false;
-    const s = SP(SC.id), i = SC_I[SC.id], next = SCENES[i + 1];
-    const work = $("work"); work.replaceChildren();
-    work.append(h(`<div class="explore">🔍 <b>Explore:</b> heat and cool as much as you like. Push the lid, pour it into the other jar. What changes when the state changes? What stays the same?</div>`),
-      h(`<div class="safety">🥽 ${SC.safety}</div>`));
-    const c = h(`<div class="controls">${next ? `<button class="btn primary" data-a="next" ${unlocked(i + 1) ? "" : "disabled"}>Next: ${next.em} ${next.name} →</button>` : `<button class="btn primary" data-a="free">🔬 Free lab</button>`}
-      <button class="btn" data-a="again">↺ Answer the questions again</button></div>`);
-    const nb = c.querySelector('[data-a="next"]'); if (nb) nb.onclick = () => openScene(next.id);
-    const fb = c.querySelector('[data-a="free"]'); if (fb) fb.onclick = () => showTab("free");
-    c.querySelector('[data-a="again"]').onclick = () => openExplain();
-    work.append(c);
-    say("scene", `You have ${starsHTML(s.stars)} for this part. Play with the particle jar – watch the particles closely!`, "happy");
+    labEnable(true);
+    const s = SP(SC.id), work = $("work"); work.replaceChildren();
+    work.append(h(`<div class="explore">🔍 <b>Explore:</b> heat and cool as much as you like. Push the lid, pour it into the other jar. What changes when the state changes? What stays the same?</div>`));
+    showCompare(work);
+    work.append(h(tableHTML(true)), h(`<div class="safety">🥽 ${SC.safety}</div>`));
+    renderTable(true);
+    say("scene", s.stars != null ? `You have ${starsHTML(s.stars)} for this part. Play with the particle jar – watch the particles closely!` : "Play with the particle jar – watch the particles closely! When you are ready, answer the ✍️ Explain questions.", "happy");
   }
 
   /* ============================ 7 UI ============================ */
   function renderList() {
     $("slist").innerHTML = SCENES.map((sc, i) => {
-      const s = SP(sc.id), open = unlocked(i);
-      return `<button class="sitem${s.stars != null ? " done" : ""}" data-id="${sc.id}" ${open ? "" : "disabled"} aria-current="${SC && SC.id === sc.id}">
-        <span class="em">${sc.em}</span><span><b>${i + 1} · ${sc.name}</b><small>${sc.topic}</small></span>
-        <span class="st">${!open ? "🔒" : s.stars != null ? "★".repeat(s.stars) + "☆".repeat(3 - s.stars) : ""}</span></button>`;
+      const s = SP(sc.id);
+      return `<button class="pbtn${s.stars != null ? " done" : ""}" data-id="${sc.id}" aria-current="${SC && SC.id === sc.id}" title="${sc.name}">
+        <span class="em">${sc.em}</span><span>${i + 1} · ${sc.short}</span>${s.stars != null ? `<span class="st">${"★".repeat(s.stars)}${"☆".repeat(3 - s.stars)}</span>` : ""}</button>`;
     }).join("");
-    $("slist").querySelectorAll(".sitem").forEach((b) => (b.onclick = () => openScene(b.dataset.id)));
-    $("prog").style.width = (100 * SCENES.filter((sc) => isDone(sc.id)).length / SCENES.length) + "%";
+    $("slist").querySelectorAll(".pbtn").forEach((b) => (b.onclick = () => { if (!SC || b.dataset.id !== SC.id) openScene(b.dataset.id); }));
   }
 
-  /* the free lab: all 4 substances + Solid / Liquid / Gas buttons. Badge: melt all 4 substances here */
+  /* the free lab: all 4 substances + Solid / Liquid / Gas buttons, and 6 "Try this" challenges (they tick themselves).
+     Badge "Lab explorer" = all 6. */
+  const CHAL = [
+    { id: "c1", text: "🧊 Melt the ice.", test: (e) => e.type === "state" && e.st === "l" && LAB.sub === "water" },
+    { id: "c2", text: "♨️ Boil the water.", test: (e) => e.type === "state" && e.st === "g" && LAB.sub === "water" },
+    { id: "c3", text: "🔧 Squash a gas with the lid.", test: (e) => e.type === "test" && e.kind === "squash" && e.st === "g" && e.ok },
+    { id: "c4", text: "🫙 Pour a liquid into the tall jar.", test: (e) => e.type === "test" && e.kind === "pour" && e.st === "l" && LAB.jar === "tall" },
+    { id: "c5", text: "🍫 Melt the chocolate (and see what happens at 60 °C).", test: (e) => e.type === "state" && e.st === "l" && LAB.sub === "chocolate" },
+    { id: "c6", text: "🔩 Make iron boil.", test: (e) => e.type === "state" && e.st === "g" && LAB.sub === "iron" },
+  ];
   function renderFreeBadge() {
-    const n = SORDER.filter((k) => P.lab[k]).length;
-    $("freeBadge").innerHTML = `<h4>🔬 Lab explorer badge · ${n} of 4</h4><div class="mrow">Melt each substance here:
-      ${SORDER.map((k) => `<span class="chip${P.lab[k] ? " ok" : ""}">${P.lab[k] ? "✔" : "○"} ${SUBS[k].em} ${SUBS[k].name}</span>`).join("")}</div>`;
+    const n = CHAL.filter((c) => P.lab[c.id]).length, now = CHAL.find((c) => !P.lab[c.id]);
+    $("freeBadge").innerHTML = `<h4>🎯 Try this · ${n} of ${CHAL.length} done${n === CHAL.length ? " · 🔬 Lab explorer badge!" : ""}</h4>` +
+      CHAL.map((c, i) => `<div class="mis${P.lab[c.id] ? " ok" : c === now ? " now" : ""}"><span class="ck">${P.lab[c.id] ? "✔" : i + 1}</span><span>${c.text}</span></div>`).join("") +
+      `<div class="hint">Do all 6 to win the <b>🔬 Lab explorer</b> badge. Then try the 🧪 Parts!</div>`;
   }
   function openFree() {
     labSetup({ home: "freeHome", subs: SORDER, sub: "water", T: SUBS.water.start, jumps: true, ctxName: "free", say: (html, mood) => say("free", html, mood),
       listener: (e) => {
-        if (e.type === "change" && e.kind === "melting" && !P.lab[LAB.sub]) { P.lab[LAB.sub] = 1; save(); renderFreeBadge(); refreshStars(); }
+        const c = CHAL.find((c) => !P.lab[c.id] && c.test(e)); if (!c) return;
+        P.lab[c.id] = 1; save(); renderFreeBadge(); SND.star(); toast(`✔ ${c.text}`); refreshStars();
       } });
     labEnable(true); renderFreeBadge();
-    say("free", "Your own lab! Choose a substance, heat it, cool it, squash it, pour it – or jump straight to <b>Solid</b>, <b>Liquid</b> or <b>Gas</b>.", "happy");
+    say("free", "Welcome to the lab! Hold the slider to <b>heat 🔥</b> or <b>cool ❄️</b> the particles. Choose a substance, push the lid, pour it – or jump straight to <b>Solid</b>, <b>Liquid</b> or <b>Gas</b>.", "happy");
   }
 
   /* the quiz: one question at a time; stars of the current go in P.quiz.st, the best finished go in P.quiz.best */
@@ -1838,7 +1952,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   }
 
   const BADGES = [...SCENES.map((sc, i) => ({ id: sc.id, em: sc.em, name: sc.badge, how: `Part ${i + 1}`, got: () => isDone(sc.id) })),
-    { id: "lab", em: "🔬", name: "Lab explorer", how: "melt all 4 in the free lab", got: () => SORDER.every((k) => P.lab[k]) },
+    { id: "lab", em: "🔬", name: "Lab explorer", how: "the 6 free-lab challenges", got: () => CHAL.every((c) => P.lab[c.id]) },
     { id: "quiz", em: "🧠", name: "Quiz champion", how: "the quiz", got: () => P.quiz.best != null }];
   function refreshStars() {
     const n = totalStars(), a = sceneStars(), b = quizStars();
@@ -1881,7 +1995,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     location.reload();
   });
 
-  const TABS = ["scenes", "free", "quiz", "cert"];
+  const TABS = ["free", "scenes", "quiz", "cert"];
   let curTab = null;
   function showTab(which) {
     unselect(); leverOff();
@@ -1889,9 +2003,8 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     for (const t of TABS) { $("tab-" + t).setAttribute("aria-selected", t === which); $(t).hidden = t !== which; }
     if (which === "free" && was !== "free") openFree();
     if (which === "scenes" && was !== "scenes" && was) {                  // the jar goes back to the open part
-      const ph = phaseOf(SC.id);
       labSetup({ home: "labHome", subs: SC.lab.subs, sub: SC.lab.sub, T: SC.lab.T, jumps: false, ctxName: "scene", listener: onLab, say: (html, mood) => say("scene", html, mood) });
-      labEnable(ph !== "predict");
+      labEnable(PH !== "predict");
     }
     if (which === "quiz" && $("quizBox").dataset.n !== String(P.quiz.i)) openQuiz();
     if (which === "cert") renderCert();
@@ -1944,16 +2057,15 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   P.lab = P.lab || {};
   ["scene", "free", "quiz", "cert"].forEach((t) => spexBar(t));
   P.quiz = P.quiz || { i: 0, st: [], best: null };
-  if (TEACHER) $("teachNote").hidden = false;
   refreshStars();
-  const firstOpen = SCENES.find((sc, i) => unlocked(i) && !isDone(sc.id)) || SCENES[0];
-  showTab("scenes");
-  openScene(P.cur && SC_I[P.cur] != null && unlocked(SC_I[P.cur]) ? P.cur : firstOpen.id);
+  const firstOpen = SCENES.find((sc) => !isDone(sc.id)) || SCENES[0];
+  openScene(P.cur && SC_I[P.cur] != null ? P.cur : firstOpen.id);           // prepares the Parts tab
+  showTab("free");                                                         // the Free lab opens first
   requestAnimationFrame(lloop);
   if (!P.seenIntro) $("help").classList.add("on");
 
   // for the automatic tests only
-  window.__SM = { SCENES, QUIZ, SUBS, LAB, P, M: () => M, openScene, openQuiz, showTab, counts, stateOf, targets, lev, invLev, pour, pushLid, jump, setSub,
+  window.__SM = { SCENES, QUIZ, SUBS, LAB, P, M: () => M, openScene, openPhase, CHAL, openQuiz, showTab, counts, stateOf, targets, lev, invLev, pour, pushLid, jump, setSub,
     heatTo: (T) => { LAB.T = T; } };
 })();
 </script>
