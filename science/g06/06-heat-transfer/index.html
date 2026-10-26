@@ -55,7 +55,8 @@
   conductivity: glass ≈ 1, plastic ≈ 0.2, rubber ≈ 0.15, wood ≈ 0.12, wool ≈ 0.04, still air ≈ 0.025 W/(m·K)):
   none 100/65/30/0/0 · glass 100/80/58/36/15 · plastic 100/85/69/52/35 · rubber 100/88/75/60/45 · wood 100/89/77/63/50 ·
   glove 100/93/85/78/70 · trapped air 100/94/88/81/75. Particle model: no wrapper vs wool (fast air particles reach the
-  ice / still air trapped in the wool's pockets). The quiz has 2 more questions (woolly hat, cool box): 17 questions.
+  ice / still air trapped in the wool's pockets) in clear colours: hot air red, ice dark blue, still air orange; for this
+  experiment the particle diagram is a little smaller and its caption bigger. The quiz has 2 more questions (woolly hat, cool box): 17 questions.
   Self-contained: no internet, no external libraries or fonts. Open in any modern browser.
 
   File sections:
@@ -404,11 +405,14 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   .split > .task{order:5}
   .spex{width:54px;height:54px} .bubble{font-size:19px}
 }
-.task .ppanel{padding:6px 8px;gap:4px} .task .ppanel .bhead b{font-size:16px} .task .pcap{font-size:15px;min-height:0} .task .legend{font-size:13px}
+.task .ppanel{padding:6px 8px;gap:4px}
+.task .ppanel.lolly .pcap{font-size:18px;line-height:1.35;padding:6px 10px}
+.task .ppanel.lolly .legend{display:none} .task .ppanel .bhead b{font-size:16px} .task .pcap{font-size:15px;min-height:0} .task .legend{font-size:13px}
 @media (min-width:900px) and (min-height:540px){
   /* the particle model takes the height that is left under Marie (it shrinks, the page never scrolls) */
   .task .ppanel{flex:1 1 0;min-height:0;display:flex;flex-direction:column}
   .task #pcan{flex:1 1 0;height:0;min-height:90px;width:auto;max-width:100%;align-self:center}
+  .task .ppanel.lolly #pcan{max-width:70%}
 }
 @media (min-width:900px) and (max-height:760px){ .task .ppanel .bhead .hint,.task .legend span:last-child{display:none} .task .pcap{font-size:14px;line-height:1.3;padding:4px 8px} }
 @media (max-width:899px),(max-height:539px){ .task #pcan{max-width:min(100%,calc(30dvh * 360 / 300));margin:0 auto} }
@@ -1714,10 +1718,10 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     ctx.lineWidth = 1; ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.stroke();
   }
   // moving particles in a box: bounce off the walls; drift (px/s, + = down) wraps top ↔ bottom
-  function gas(key, b, n, T, dt, { r = 5, drift = 0, keep = null } = {}) {
+  function gas(key, b, n, T, dt, { r = 5, drift = 0, keep = null, col: fixedCol = null } = {}) {
     const G = (PG[key] = PG[key] || []);
     while (G.length < n) { const a = rnd(0, 2 * Math.PI); G.push({ x: rnd(b.x + r, b.x + b.w - r), y: rnd(b.y + r, b.y + b.h - r), dx: Math.cos(a), dy: Math.sin(a) }); }
-    const v = spd(T), col = tcol(T);
+    const v = spd(T), col = fixedCol || tcol(T);
     for (let i = 0; i < n; i++) {
       const q = G[i];
       q.x += q.dx * v * dt; q.y += (q.dy * v + drift) * dt;
@@ -1830,21 +1834,26 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
       const L = { x: 12, y: 30, w: 160, h: 220 }, R = { x: 188, y: 30, w: 160, h: 220 };
       cbox(L, "no wrapper", ""); cbox(R, "winter glove (wool)", "");
       // hot air particles everywhere in both boxes (30 °C)
-      gas("a1", L, 16, 30, dt, { r: 4.5 }); gas("a2", R, 16, 30, dt, { r: 4.5 });
+      gas("a1", L, 16, 30, dt, { r: 4.5, col: "#E53935" }); gas("a2", R, 16, 30, dt, { r: 4.5, col: "#E53935" });   // hot air: red
       // the wool: a thick ring with still, trapped air inside its pockets; inside the ring the air cannot reach the ice
       const wx = R.x + 22, wy = R.y + 62, ww = R.w - 44, wh = R.h - 70;
       ctx.fillStyle = "#5C6BC0"; ctx.fillRect(wx, wy, ww, wh);
       ctx.fillStyle = "#F7FAFD"; ctx.fillRect(wx + 18, wy + 18, ww - 36, wh - 18);
       for (let i = 0; i < 6; i++) for (let j = 0; j < 2; j++) {
-        solid(wx + 9, wy + 14 + i * 22, 3.5, "#C5CAE9", 0.4, now, i * 2 + j); solid(wx + ww - 9, wy + 14 + i * 22, 3.5, "#C5CAE9", 0.4, now, 20 + i);
+        solid(wx + 9, wy + 14 + i * 22, 3.5, "#FB8C00", 0.4, now, i * 2 + j); solid(wx + ww - 9, wy + 14 + i * 22, 3.5, "#FB8C00", 0.4, now, 20 + i);
       }
-      for (let i = 0; i < 5; i++) solid(wx + 22 + i * 16, wy + 9, 3.5, "#C5CAE9", 0.4, now, 40 + i);
-      iceBlock(L.x + 58, L.y + 150, S.left.none / 100, now);
-      iceBlock(R.x + 58, R.y + 150, S.left.glove / 100, now);
+      for (let i = 0; i < 5; i++) solid(wx + 22 + i * 16, wy + 9, 3.5, "#FB8C00", 0.4, now, 40 + i);
+      // the ice: strong dark-blue particles that vibrate in place (fewer as the lolly melts)
+      const ice = (x, y, f) => { const cells = []; for (let j = 0; j < 3; j++) for (let i = 0; i < 4; i++) cells.push([i, j]);
+        cells.sort((a, b) => (Math.abs(a[0] - 1.5) + Math.abs(a[1] - 1)) - (Math.abs(b[0] - 1.5) + Math.abs(b[1] - 1)));
+        cells.slice(0, Math.round(12 * clamp(f))).forEach(([i, j], k) => solid(x + i * 11, y + j * 11, 4.8, "#1565C0", 0.8, now, k)); };
+      ice(L.x + 58, L.y + 150, S.left.none / 100);
+      ice(R.x + 58, R.y + 150, S.left.glove / 100);
       ctext(`${Math.round(S.left.none)} % left`, L.x + 80, L.y + 214, { size: 13, w: 800, col: "#C62828", align: "center" });
       ctext(`${Math.round(S.left.glove)} % left`, R.x + 80, R.y + 214, { size: 13, w: 800, col: "#2E7D32", align: "center" });
-      ctext("red = hot air particles · lilac = still air trapped in the wool", 180, 272, { size: 12, w: 700, align: "center" });
-      ctext("blue = ice particles", 180, 290, { size: 12, w: 700, col: "#0277BD", align: "center" });
+      ctext("red = hot air (fast)", 92, 272, { size: 13, w: 800, col: "#C62828", align: "center" });
+      ctext("orange = still, trapped air", 268, 272, { size: 13, w: 800, col: "#E65100", align: "center" });
+      ctext("blue = ice particles", 180, 292, { size: 13, w: 800, col: "#1565C0", align: "center" });
     },
   };
   let plast = 0;
@@ -1923,6 +1932,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     SC = SCENES[SC_I[id]]; P.fcur = id; save();
     PL.p = 0; PL.cap = -1; PG = {}; lastCap = "";
     buildTable();
+    $("ppanel").classList.toggle("lolly", SC.id === "lolly");           // ice lolly: a smaller diagram, a bigger caption
     SC.lead = Math.max(0, Math.min(SC.P0 ?? 1, SC.narr[1][0]) - 150 / SC.dur);   // ▶ Play starts just before the first action
     setControls(true); render(); markPlay(); renderFree();
   }
