@@ -48,12 +48,20 @@
   big animation on the left, Marie (bigger text), the experiment picker and the particle model on the right;
   on phones the animation stays at the top. ▶ Play starts just before the first action (no still lead-in). Certificate =
   quiz only. Bigger key-word icons.
+  27 Oct 2026 (teacher, grill-me): new experiment 5 🍦 Ice lolly picnic (insulation). Deliberately NOT the class
+  "perfect cup" task (that is the students' summative assessment): 7 ice lollies at a picnic, air 30 °C, each in one
+  wrapper (shown as a cut-through drawing): none · glass jar · plastic box · rubber sleeve · wooden box · winter glove
+  (wool) · double wall with trapped air. % of the lolly left at 0/5/10/15/20 min (made simple, ranked by real thermal
+  conductivity: glass ≈ 1, plastic ≈ 0.2, rubber ≈ 0.15, wood ≈ 0.12, wool ≈ 0.04, still air ≈ 0.025 W/(m·K)):
+  none 100/65/30/0/0 · glass 100/80/58/36/15 · plastic 100/85/69/52/35 · rubber 100/88/75/60/45 · wood 100/89/77/63/50 ·
+  glove 100/93/85/78/70 · trapped air 100/94/88/81/75. Particle model: no wrapper vs wool (fast air particles reach the
+  ice / still air trapped in the wool's pockets). The quiz has 2 more questions (woolly hat, cool box): 17 questions.
   Self-contained: no internet, no external libraries or fonts. Open in any modern browser.
 
   File sections:
     1 STYLE     layout, the key-word colours
     2 MARKUP    header · key words · 3 tabs (Stations · Quiz · Certificate) · overlays (help, word pop-up)
-    3 CONFIG    KEY, WORDS, SCENES (states, tables, narration, questions), QUIZ (15 questions)
+    3 CONFIG    KEY, WORDS, SCENES (states, tables, narration, questions), QUIZ (17 questions)
     4 ENGINE    helpers, Marie, read aloud, sound, storage, judge (tip → answer), drag-or-tap, question types
     5 DRAW      the 6 labs (SVG, redrawn from the position p = 0…1)
     6 PARTICLES the particle model (canvas, its own clock)
@@ -357,7 +365,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
 .lhome{min-width:0}
 .stagebox{border:1px solid var(--line);border-radius:12px;padding:8px;background:#FBFCFE;min-width:0}
 .stagebox .controls .btn{font-size:17px;min-height:42px;padding:4px 11px}
-.stagebox .btn.play{min-width:112px}
+.stagebox .btn.play{min-width:100px}
 .task{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
 .task > *{flex-shrink:0}
 .spex{width:66px;height:66px}
@@ -367,7 +375,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
 .stagebox .controls{justify-content:space-between;align-items:center;row-gap:6px}
 .pbtns{display:flex;gap:6px;flex-wrap:wrap}
 .fpick{display:flex;flex-wrap:wrap;gap:6px}
-.fbtn{font:inherit;display:flex;align-items:center;gap:3px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:2px 7px;min-height:42px;cursor:pointer;font-size:15px;font-weight:800;color:var(--muted)}
+.fbtn{font:inherit;display:flex;align-items:center;gap:3px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:2px 5px;min-height:42px;cursor:pointer;font-size:15px;font-weight:800;color:var(--muted)}
 .fbtn .em{font-size:1.35rem}
 .fbtn[aria-current="true"]{border:2px solid var(--accent);background:#FFF3E0;color:var(--accent)}
 @media (min-width:900px) and (min-height:540px){
@@ -381,7 +389,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   .panel{flex:1;min-height:0;overflow:auto}
   #free{overflow:hidden}
   .split{height:100%;align-items:stretch;
-    grid-template-columns:min(62%, max(800px, calc((100dvh - 268px) * 600 / 340 + 20px))) minmax(0,1fr)}
+    grid-template-columns:min(64%, max(800px, calc((100dvh - 268px) * 600 / 340 + 20px))) minmax(0,1fr)}
   .lhome{min-height:0;overflow:hidden}
   .task{overflow:auto}
   .stagebox .stage{max-width:calc((100dvh - 268px) * 600 / 340);margin:0 auto}
@@ -483,7 +491,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     <div class="card">
       <h2>🧠 Quiz · heat in real life</h2>
       <div class="cb">
-        <div class="qhead"><span class="hint">15 questions about heat at home, at school and outside. Use what you learned at the stations!</span><div class="dots" id="qDots"></div></div>
+        <div class="qhead"><span class="hint">17 questions about heat at home, at school and outside. Use what you learned at the stations!</span><div class="dots" id="qDots"></div></div>
         <div class="spexbar" data-spex="quiz"></div>
         <div class="cb" id="quizBox" style="padding:0"></div>
       </div>
@@ -516,14 +524,14 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
       <b>conduction</b>, <b>convection</b> and <b>radiation</b>. And <b>temperature</b> is not the same as heat – you will see why!</p>
     <ol>
       <li><b>1 · 🔬 Free lab – our class experiments</b>: 1 ♨️ Heat or temperature? (2 parts) · 2 ⭐ the metal star · 3 🌀 the convection tube ·
-        4 ☀️ the bottles and 🔲 the Leslie cube. Choose one and press ▶ Play; use ⏸ Pause, 🐢 Slow motion and ↺ Replay.</li>
+        4 ☀️ the bottles and 🔲 the Leslie cube · 5 🍦 the ice lolly picnic (insulation). Choose one and press ▶ Play; use ⏸ Pause, 🐢 Slow motion and ↺ Replay.</li>
       <li>🔬 <b>The particle model</b> shows what happens inside: <b>blue = cold, red = hot</b>. Faster particles = higher temperature.</li>
       <li><b>Drag</b> a word into a gap – or <b>tap it, then tap the gap</b>.</li>
       <li><b>Wrong answer?</b> The first time you get a tip. The second time you see the answer.
         Stars: right first time ★★★ · after a tip ★★ · answer shown: no stars.</li>
       <li>Words with a <span class="wd" style="cursor:default">dotted line</span> – tap them to see what they mean.
         <b>🗣 Read aloud</b> reads Marie's words for you. 🔈 reads one question.</li>
-      <li><b>2 · 🧠 Quiz</b>: 15 questions about heat in real life. You can take it again – your best score counts.</li>
+      <li><b>2 · 🧠 Quiz</b>: 17 questions about heat in real life. You can take it again – your best score counts.</li>
       <li><b>3 · 🏅 Certificate</b>: type your name and print it. You win the <b>Quiz champion</b> badge when you finish the quiz. Your progress is saved in this browser.</li>
     </ol>
     <p class="hint">New words? Use the <a href="https://school.taneski.com/science/g06/02-glossary-energy/glossary-en.pdf" target="_blank" rel="noopener">Glossary · Energy words</a> (also in 9 other languages on the Grade 6 page).</p>
@@ -611,6 +619,17 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   const CUBE = { pour: [0.04, 0.14], win: (i) => [0.2 + 0.2 * i, 0.36 + 0.2 * i] };
   const ICE = { ts: [0, 1, 2, 3, 4, 5], cup: [60, 38, 20, 8, 1, 0], big: [60, 55, 51, 48, 47, 47],
     iceCup: [1, 0.75, 0.55, 0.38, 0.3, 0.27], iceBig: [1, 0.6, 0.25, 0, 0, 0], P2: 0.64 };
+  // the ice lolly picnic: % of each lolly left at 0, 5, 10, 15, 20 min (air 30 °C); arrows = how much heat gets in
+  const WRAP = [
+    { k: "none", name: "no wrapper", short: "none", em: "🍦", left: [100, 65, 30, 0, 0], arrows: 3 },
+    { k: "glass", name: "glass jar", short: "glass", em: "🫙", left: [100, 80, 58, 36, 15], arrows: 3 },
+    { k: "plastic", name: "plastic box", short: "plastic", em: "🥡", left: [100, 85, 69, 52, 35], arrows: 2 },
+    { k: "rubber", name: "rubber sleeve", short: "rubber", em: "⚫", left: [100, 88, 75, 60, 45], arrows: 2 },
+    { k: "wood", name: "wooden box", short: "wood", em: "🪵", left: [100, 89, 77, 63, 50], arrows: 2 },
+    { k: "glove", name: "winter glove (wool)", short: "glove", em: "🧤", left: [100, 93, 85, 78, 70], arrows: 1 },
+    { k: "air", name: "double wall with trapped air", short: "air layer", em: "🌬️", left: [100, 94, 88, 81, 75], arrows: 1 },
+  ];
+  const WTS = [0, 5, 10, 15, 20];
   const BOT = { ts: [0, 2, 4, 6], black: [20, 24, 28, 31], white: [20, 22, 24, 25], silver: [20, 21, 21, 22] };
 
   // lab time of a part: 0 … tmax between P0 and P1
@@ -883,11 +902,34 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
           : `Same water behind every face. The <b>${FACES[S.cur].name}</b> face sends out ${["the most", "a lot of", "little", "the least"][S.cur]} radiation (the wavy arrows).`;
       },
     },
+    {
+      id: "lolly", st: 5, part: "", em: "🍦", name: "Ice lolly picnic", topic: "Insulation", dur: 14000, badge: "Insulation expert",
+      P0: 0.06, P1: 0.92, tmax: 20, tunit: "min",
+      state(p) { const t = labT(this, p); return { t, on: p >= this.P0 && p < this.P1 + 0.02, left: Object.fromEntries(WRAP.map((wr) => [wr.k, lin(WTS, wr.left, t)])) }; },
+      table: { head: ["Time (min)", ...WRAP.map((wr) => wr.short)], rows: WTS.map((m, i) => ({ t: m, c: [m, ...WRAP.map((wr) => wr.left[i] + " %")] })) },
+      narr: [
+        [0, `A hot sunny picnic: the air is <b>30 °C</b>. Seven ice lollies straight from the freezer, each in a different wrapper. Which one will last longest? Press ▶ Play.`],
+        [0.06, `Heat moves from the hot air into the cold lollies. A wrapper can slow it down: a good ${w("insulator")} keeps the heat out.`],
+        [0.3, `The lolly with no wrapper melts fast. Glass lets the heat through quite easily too.`],
+        [0.55, `Plastic, rubber and wood are better insulators: their lollies melt more slowly.`],
+        [0.75, `The winter glove and the double wall are the best. Air that cannot move is a very good insulator – and wool is full of tiny pockets of trapped air!`],
+        [0.93, `20 minutes: the glove and the trapped air kept <b>70–75 %</b> of the lolly; with no wrapper it is all gone. Insulators keep heat out – and keep it in.`, "happy"],
+      ],
+      sfx: [[0.06, "click"], [0.62, "plop"]],
+      pred: { q: "Which wrapper keeps the ice lolly frozen the longest?", opts: WRAP.map((wr) => [wr.k, wr.name]), ok: "air", seen: "The trapped air (75 % left) and the winter glove (70 %) – no wrapper: all gone." },
+      q: [],
+      safety: "In real life: keep food cold in a cool box with thick walls – and never eat ice that has melted and frozen again.",
+      cap(p, S) {
+        return p < this.P0 ? "Hot air particles (30 °C) move fast. The ice particles are cold and only vibrate."
+          : S.t < 19.9 ? "<b>No wrapper:</b> fast air particles hit the ice and give it energy – it melts. <b>Wool:</b> the air is trapped in tiny pockets and can't move, so heat gets through very slowly."
+          : "The best insulators trap air. Trapped (still) air is a very poor conductor of heat.";
+      },
+    },
   ];
   const SC_I = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
   const scLabel = (sc) => `${sc.st}${sc.part}`;
 
-  // the quiz: 15 real-life situations, fixed order easy → hard. pic = emoji that move (CSS classes a-…)
+  // the quiz: 17 real-life situations, fixed order easy → hard. pic = emoji that move (CSS classes a-…)
   const A = (e, c = "") => `<span class="${c}">${e}</span>`, AR = `<span class="arr">➜</span>`, ST = (...x) => `<span class="stack">${x.join("")}</span>`;
   const CHIMNEY = `<svg viewBox="0 0 300 175" role="img" aria-label="Convection box with two chimneys">
     <rect x="40" y="72" width="220" height="82" rx="4" fill="#E1F5FE" stroke="#546E7A" stroke-width="3"/>
@@ -957,6 +999,15 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
         ["c", "There are no particles in a vacuum, so heat cannot cross it by conduction or convection."], ["d", "The vacuum makes the drink heavier."]],
       tip: "What do conduction and convection need to pass heat on?",
       why: "No particles = no conduction and no convection. (The shiny walls of the flask also reduce radiation.)" },
+    { type: "mc", pic: A("❄️", "a-sink") + A("🧶", "a-pulse") + A("🧒"), q: "On a cold winter day you wear a thick woolly hat. Why does it keep your head warm?", ok: "b",
+      opts: [["a", "Wool makes its own heat."], ["b", "Wool is full of trapped air. Trapped air is a very poor conductor, so heat leaves your head very slowly."],
+        ["c", "Wool stops the cold from getting in."], ["d", "Wool is a good conductor of heat."]],
+      tip: "Heat moves from your warm head to the cold air. What is wool full of?",
+      why: "Wool traps lots of air that cannot move. Still air is an insulator, so it slows down the heat leaving your head. (There is no “cold” moving in – only heat moving out.)" },
+    { type: "mc", pic: A("🏖️") + A("☀️", "a-spin") + A("🍦", "a-melt"), q: "You take ice lollies to the beach on a hot day. How will they stay frozen the longest?", ok: "c",
+      opts: [["a", "In a glass jar"], ["b", "In a thin metal tin"], ["c", "In a cool box with thick walls full of trapped air"], ["d", "With no wrapper, in a bag"]],
+      tip: "Think of the ice lolly picnic: which wrappers kept the most ice?",
+      why: "Thick walls with trapped air are a good insulator: they keep the heat of the hot air OUT. Insulators keep hot things hot and cold things cold." },
   ];
 
   /* ============================ 4 ENGINE ============================ */
@@ -1513,6 +1564,61 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     timer(svg, 14, 80, fmtT(sc, S.t));
   }
 
+  // the ice lolly picnic: 7 wrappers drawn cut through (the walls in section), lolly inside, heat arrows from the hot air
+  function lolly(svg, cx, f, tm, melting) {
+    const top = 268 - 74 * Math.max(0, f), wdt = 14 + 10 * Math.min(1, f * 1.5);
+    el("rect", { x: cx - 2.5, y: 262, width: 5, height: 24, rx: 2, fill: "#D7B98E" }, svg);                      // the stick
+    if (f > 0.005) {
+      el("rect", { x: cx - wdt / 2, y: top, width: wdt, height: 268 - top, rx: Math.min(7, wdt / 2), fill: "#F06292", stroke: "#C2185B", "stroke-width": 1.5 }, svg);
+      el("rect", { x: cx - wdt / 2 + 3, y: top + 4, width: 3, height: Math.max(0, 268 - top - 10), rx: 1.5, fill: "#fff", opacity: 0.6 }, svg);
+    }
+    const pud = 1 - Math.max(0, f);
+    if (pud > 0.02) el("ellipse", { cx, cy: 287, rx: 6 + 18 * pud, ry: 2 + 2.5 * pud, fill: "#F48FB1", opacity: 0.85 }, svg);   // the puddle
+    if (melting && f > 0.01) { const r = (tm / 700 + cx / 97) % 1; el("circle", { cx: cx + wdt / 2 - 3, cy: 268 + 16 * r, r: 2.4, fill: "#F06292", opacity: 1 - r }, svg); }
+  }
+  function wrapper(svg, cx, k) {
+    const x0 = cx - 31, x1 = cx + 31, y0 = 176, y1 = 290, T = 7;
+    const walls = (fill, stroke, op = 1) => [[x0, y0, T, y1 - y0], [x1 - T, y0, T, y1 - y0], [x0, y0, x1 - x0, T]].forEach(([x, y, w2, h2]) =>
+      el("rect", { x, y, width: w2, height: h2, fill, stroke, "stroke-width": 1, opacity: op }, svg));
+    if (k === "none") { el("ellipse", { cx, cy: 289, rx: 26, ry: 4, fill: "#ECEFF1", stroke: "#B0BEC5" }, svg); return; }
+    if (k === "glass") { walls("#B3E5FC", "#4FC3F7", 0.75); el("line", { x1: x0 + 3, y1: y0 + 14, x2: x0 + 3, y2: y1 - 14, stroke: "#fff", "stroke-width": 2 }, svg); }
+    if (k === "plastic") walls("#A5D6A7", "#43A047", 0.85);
+    if (k === "rubber") walls("#424242", "#212121");
+    if (k === "wood") { walls("#A1887F", "#6D4C41"); [x0 + 2, x1 - 5].forEach((x) => [200, 230, 260].forEach((y) => el("path", { d: `M${x} ${y} q2 6 0 12`, stroke: "#6D4C41", fill: "none" }, svg))); }
+    if (k === "glove") {
+      [[x0 - 5, y0 - 5, 12, y1 - y0 + 5], [x1 - 7, y0 - 5, 12, y1 - y0 + 5], [x0 - 5, y0 - 5, x1 - x0 + 10, 12]].forEach(([x, y, w2, h2]) =>
+        el("rect", { x, y, width: w2, height: h2, rx: 4, fill: "#5C6BC0", stroke: "#3949AB" }, svg));
+      for (let y = y0; y < y1 - 4; y += 9) [x0 + 1, x1 - 1].forEach((x) => el("circle", { cx: x, cy: y + 4, r: 2.2, fill: "#C5CAE9" }, svg));   // tiny air pockets
+      for (let x = x0 + 6; x < x1 - 4; x += 9) el("circle", { cx: x, cy: y0 + 1, r: 2.2, fill: "#C5CAE9" }, svg);
+    }
+    if (k === "air") {
+      walls("#CFD8DC", "#90A4AE");
+      [[x0 - 9, y0 - 9, 4, y1 - y0 + 9], [x1 + 5, y0 - 9, 4, y1 - y0 + 9], [x0 - 9, y0 - 9, x1 - x0 + 18, 4]].forEach(([x, y, w2, h2]) => el("rect", { x, y, width: w2, height: h2, fill: "#90A4AE" }, svg));
+      txt(svg, cx, y0 - 13, "air", { "text-anchor": "middle", "font-size": 11, "font-weight": 800, fill: "#546E7A" });
+    }
+  }
+  function drawLolly(svg, p, S, tm, sc) {
+    bg(svg, "#FFF8E1"); bench(svg, 292);
+    // the sun and the hot air
+    el("circle", { cx: 46, cy: 40, r: 22, fill: "#FFD54F", stroke: "#FFB300", "stroke-width": 3 }, svg);
+    for (let a = 0; a < 8; a++) { const r0 = 28, r1 = 38 + 3 * Math.sin(tm / 200 + a); el("line", { x1: 46 + r0 * Math.cos(a * Math.PI / 4), y1: 40 + r0 * Math.sin(a * Math.PI / 4), x2: 46 + r1 * Math.cos(a * Math.PI / 4), y2: 40 + r1 * Math.sin(a * Math.PI / 4), stroke: "#FFB300", "stroke-width": 3, "stroke-linecap": "round" }, svg); }
+    txt(svg, 86, 36, "hot sunny day", { "font-size": 15, "font-weight": 800, fill: "#E65100" });
+    txt(svg, 86, 54, "air: 30 °C", { "font-size": 14, "font-weight": 700, fill: "#BF360C" });
+    timer(svg, 478, 44, fmtT(sc, S.t));
+    const on = S.on ? clamp((p - sc.P0) / 0.03) : 0;
+    WRAP.forEach((wr, i) => {
+      const cx = 52 + i * 83, f = S.left[wr.k] / 100;
+      lolly(svg, cx, f, tm, S.on && f > 0 && f < 1);
+      wrapper(svg, cx, wr.k);
+      // heat arrows from the hot air: they get through a poor insulator; a good one stops them at the wall
+      for (let j = 0; j < wr.arrows; j++) {
+        const y = 196 + j * 26, len = wr.arrows === 1 ? 10 : wr.arrows === 2 ? 20 : 30;
+        wave(svg, cx - 41 - 10, y, cx - 41 + len, y, tm + j * 250, { op: 0.85 * on, amp: 3, wl: 10, w: 2.5 });
+      }
+      txt(svg, cx, 312, wr.short, { "text-anchor": "middle", "font-size": 14, "font-weight": 800, fill: "#fff" });
+      txt(svg, cx, 331, `${Math.round(S.left[wr.k])} % left`, { "text-anchor": "middle", "font-size": 13, "font-weight": 700, fill: f > 0.5 ? "#C8E6C9" : f > 0 ? "#FFE0B2" : "#FFCDD2" });
+    });
+  }
   function drawCube(svg, p, S, tm, sc) {
     bg(svg, "#EEF3F8"); bench(svg, 292);
     el("rect", { x: 176, y: 284, width: 230, height: 8, rx: 2, fill: "#607D8B" }, svg);
@@ -1565,7 +1671,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     txt(svg, 520, 316, "infrared thermometer", { "text-anchor": "middle", "font-size": 13, fill: "#EFEBE9" });
   }
 
-  const DRAW = { race: drawRace, ice: drawIce, star: drawStar, tube: drawTube, bottles: drawBottles, cube: drawCube };
+  const DRAW = { race: drawRace, ice: drawIce, star: drawStar, tube: drawTube, bottles: drawBottles, cube: drawCube, lolly: drawLolly };
   function drawLab(svg, sc, p) {
     const S = sc.state(p);
     svg.setAttribute("viewBox", "0 0 600 340"); svg.replaceChildren();
@@ -1720,6 +1826,26 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
       ctext(`face: ${F.name}`, 236, 280, { size: 13, w: 800, align: "left" });
       ctext("same water behind every face", 20, 284, { size: 12 });
     },
+    lolly(S, dt, now) {
+      const L = { x: 12, y: 30, w: 160, h: 220 }, R = { x: 188, y: 30, w: 160, h: 220 };
+      cbox(L, "no wrapper", ""); cbox(R, "winter glove (wool)", "");
+      // hot air particles everywhere in both boxes (30 °C)
+      gas("a1", L, 16, 30, dt, { r: 4.5 }); gas("a2", R, 16, 30, dt, { r: 4.5 });
+      // the wool: a thick ring with still, trapped air inside its pockets; inside the ring the air cannot reach the ice
+      const wx = R.x + 22, wy = R.y + 62, ww = R.w - 44, wh = R.h - 70;
+      ctx.fillStyle = "#5C6BC0"; ctx.fillRect(wx, wy, ww, wh);
+      ctx.fillStyle = "#F7FAFD"; ctx.fillRect(wx + 18, wy + 18, ww - 36, wh - 18);
+      for (let i = 0; i < 6; i++) for (let j = 0; j < 2; j++) {
+        solid(wx + 9, wy + 14 + i * 22, 3.5, "#C5CAE9", 0.4, now, i * 2 + j); solid(wx + ww - 9, wy + 14 + i * 22, 3.5, "#C5CAE9", 0.4, now, 20 + i);
+      }
+      for (let i = 0; i < 5; i++) solid(wx + 22 + i * 16, wy + 9, 3.5, "#C5CAE9", 0.4, now, 40 + i);
+      iceBlock(L.x + 58, L.y + 150, S.left.none / 100, now);
+      iceBlock(R.x + 58, R.y + 150, S.left.glove / 100, now);
+      ctext(`${Math.round(S.left.none)} % left`, L.x + 80, L.y + 214, { size: 13, w: 800, col: "#C62828", align: "center" });
+      ctext(`${Math.round(S.left.glove)} % left`, R.x + 80, R.y + 214, { size: 13, w: 800, col: "#2E7D32", align: "center" });
+      ctext("red = hot air particles · lilac = still air trapped in the wool", 180, 272, { size: 12, w: 700, align: "center" });
+      ctext("blue = ice particles", 180, 290, { size: 12, w: 700, col: "#0277BD", align: "center" });
+    },
   };
   let plast = 0;
   function ploop(t) {
@@ -1819,7 +1945,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     box.append(h(`<div class="qhead"><span class="qtype">${QTYPE[q.type]}</span><span class="of">Question ${n + 1} of ${QUIZ.length}</span></div>`),
       h(`<div class="qpic" aria-hidden="true">${q.pic}</div>`), qline(n + 1, q.q));
     const c = h(`<div class="part"></div>`); box.append(c);
-    say("quiz", n === 0 ? "Hi! 15 questions about heat in real life. Remember: heat always moves from hotter to colder!" : ["Next one! Read the situation carefully.", "Think: is it a solid, a liquid or gas that moves – or waves?", "Look at the picture – where is the heat going?"][n % 3], "talk");
+    say("quiz", n === 0 ? "Hi! 17 questions about heat in real life. Remember: heat always moves from hotter to colder!" : ["Next one! Read the situation carefully.", "Think: is it a solid, a liquid or gas that moves – or waves?", "Look at the picture – where is the heat going?"][n % 3], "talk");
     const done = (st) => {
       Z.st[n] = starsOf(st); Z.i = n + 1; save(); quizDots(); refreshStars();
       const last = Z.i >= QUIZ.length, nx = h(`<div class="controls"><button class="btn primary">${last ? "See my result →" : "Next question →"}</button></div>`);
@@ -1840,7 +1966,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     res.querySelector('[data-a="cert"]').onclick = () => showTab("cert");
     res.querySelector('[data-a="again"]').onclick = () => { Z.i = 0; Z.st = []; save(); openQuiz(); };
     $("quizBox").append(res);
-    say("quiz", now >= 40 ? "Fantastic – you really understand heat! 🎉" : now >= 30 ? "Well done! Try again to beat your best score." : "Good try! Play the experiments again in the free lab, then take the quiz once more.", "happy", "good");
+    say("quiz", now >= max - 5 ? "Fantastic – you really understand heat! 🎉" : now >= QUIZ.length * 2 ? "Well done! Try again to beat your best score." : "Good try! Play the experiments again in the free lab, then take the quiz once more.", "happy", "good");
   }
 
   const BADGES = [   // quiz only (teacher, 27 Oct 2026)
