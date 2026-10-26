@@ -981,14 +981,40 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
       .replace(/(\d)\s?°C/g, "$1 degrees Celsius").replace(/°C/g, "degrees Celsius").replace(/(\d)\s?s\b/g, "$1 seconds").replace(/(\d)\s?g\b/g, "$1 grams")
       .replace(/\s+/g, " ").trim();
   }
+  // voices load late in some browsers; keep the utterances referenced (Chrome drops them otherwise);
+  // speak in short sentences (Chrome stops long ones); wait a moment after cancel() (Chrome drops a speak() right after it)
+  let VOICES = [];
+  const loadVoices = () => { try { VOICES = speechSynthesis.getVoices() || []; } catch (e) {} };
+  if (canSpeak) { loadVoices(); try { speechSynthesis.addEventListener("voiceschanged", loadVoices); } catch (e) {} }
+  const pickVoice = () => {
+    if (!VOICES.length) loadVoices();
+    const en = VOICES.filter((x) => /^en([-_]|$)/i.test(x.lang));
+    return en.find((x) => /^en[-_]GB/i.test(x.lang) && x.localService) || en.find((x) => /^en[-_]GB/i.test(x.lang)) ||
+      en.find((x) => x.localService) || en[0] || VOICES.find((x) => x.default) || null;
+  };
+  const SPQ = [];
+  let spkTimer = 0, noVoiceShown = false;
   function speak(s) {
     if (!canSpeak) return;
     try {
-      speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(speakText(s)); u.lang = "en-GB"; u.rate = 0.9;
-      const vs = speechSynthesis.getVoices(), v = vs.find((x) => /^en[-_]GB/i.test(x.lang)) || vs.find((x) => /^en/i.test(x.lang));
-      if (v) u.voice = v;
-      speechSynthesis.speak(u);
+      const S = window.speechSynthesis, text = speakText(s);
+      if (!text) return;
+      const parts = (text.match(/[^.!?]+[.!?]*/g) || [text]).map((x) => x.trim()).filter(Boolean);
+      const go = () => {
+        try { S.resume(); } catch (e) {}
+        const v = pickVoice();
+        parts.forEach((t) => {
+          const u = new SpeechSynthesisUtterance(t);
+          if (v) { u.voice = v; u.lang = v.lang; } else u.lang = "en";
+          u.rate = 0.9; u.volume = 1;
+          u.onend = u.onerror = () => { const i = SPQ.indexOf(u); if (i >= 0) SPQ.splice(i, 1); };
+          SPQ.push(u); S.speak(u);
+        });
+        if (!v) setTimeout(() => { loadVoices(); if (!VOICES.length && !noVoiceShown) { noVoiceShown = true;
+          toast("🔈 This browser has no voice for reading aloud. Try Chrome or Edge, or check that the sound is on."); } }, 1500);
+      };
+      clearTimeout(spkTimer);
+      if (S.speaking || S.pending) { S.cancel(); SPQ.length = 0; spkTimer = setTimeout(go, 120); } else go();
     } catch (e) {}
   }
   const textOf = (node) => { const c = node.cloneNode(true); c.querySelectorAll(".spk, .qn").forEach((x) => x.remove()); return c.textContent; };
@@ -1972,7 +1998,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   const markSound = () => { $("soundBtn").setAttribute("aria-pressed", P.sound); $("soundBtn").textContent = P.sound ? "🔊 Sound" : "🔇 Sound"; };
   $("readBtn").addEventListener("click", () => {
     P.read = !P.read; save(); markRead();
-    if (P.read) { const b = document.querySelector('section:not([hidden]) .bubble'); if (b) speak(b.textContent); } else if (canSpeak) speechSynthesis.cancel();
+    if (P.read) { const b = document.querySelector('section:not([hidden]) .bubble'); if (b) speak(b.textContent); } else if (canSpeak) { clearTimeout(spkTimer); SPQ.length = 0; speechSynthesis.cancel(); }
   });
   const markRead = () => { $("readBtn").setAttribute("aria-pressed", P.read); $("readBtn").hidden = !canSpeak; };
 
