@@ -1,0 +1,1745 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Energy Transfers Simulation</title>
+<!--
+  IB MYP 1 Sciences · Grade 6 · Physics · Unit 1 Thinking about Energy (folder "Unit 2 Thinking about Energy")
+  Energy transfers and the law of conservation of energy. Planned with the teacher (grill-me, 26 Oct 2026):
+    · 6 animated scenes, easy → hard, each unlocks after the one before:
+      1 Kettle · 2 Torch · 3 Wind-up robot · 4 Bouncing ball · 5 Skateboarder · 6 Sun → apple tree → runner
+      (together all 9 forms of the unit slides: thermal, light, sound, elastic, gravitational, kinetic, electrical,
+      chemical, nuclear – same names, slides 9–19)
+    · each scene: 1 Predict (tap the forms you expect, no stars) → 2 Watch (animation + one live bar per form and a
+      TOTAL bar that never changes; play / pause / slow motion / replay) → 3 Explain (4 questions: build the energy
+      chain · where did the energy go? · name the form at a paused moment · missing joules, typed with the unit)
+      → 4 Explore (replay, tap a bar for its meaning and joules). No sliders (teacher: keep it simple).
+    · conservation only: no useful / wasted labels and no efficiency (that comes later in the unit, Sankey diagrams)
+    · round totals (1000 J, 100 J, 50 J), easy numbers; joules shown as whole numbers that always add up to the total
+    · Marie (same avatar as the Science skills simulation), stars 3/2/0 per question (tip → answer), Sound,
+      🗣 Read aloud (browser voice), words explained on tap, 🏅 certificate (name + 6 badges, A4 landscape).
+    · 2 · Quiz (teacher, 26 Oct 2026; always open, also as a pre-test): 15 everyday school / home situations in a fixed
+      order, easy → hard: 2 true/false · 3 tap the forms · 3 multiple choice · 4 energy chains · 3 missing joules; a big
+      emoji picture that moves (CSS) for each; tip → answer + a short "why", stars 3/2/0 (★ 45); retakes allowed, the best
+      score is kept; 7th badge "Quiz champion" when all 15 are done. 3 · 🏅 Certificate.
+    · Progress in localStorage "g6-energy-v1". Teacher mode: add ?teacher to the address to open all 6 scenes.
+  Simplifications (teacher notes, not all shown to students):
+    · The numbers are made simple, not measured: e.g. the kettle "gets 1000 J" (a real kettle needs much more to boil
+      water, so the thermometer has no numbers); the apple tree stores 100 J of 1000 J of light (a real plant stores
+      far less – the scene says so). Sound energy is shown bigger than in real life so that students can see it.
+    · Electrical energy in the torch wires is shown as a small amount "on its way" (20 J) between battery and bulb.
+    · Ball: no air resistance; at each bounce 9/10 of the lost energy becomes thermal, 1/10 sound.
+      Peaks 100 → 60 → 30 → 10 → 0 J. Skater: friction takes the same amount on each swing (250 J):
+      peaks 1000 → 750 → 500 → 250 → 0 J; height ∝ gravitational energy, kinetic = total − lost − gravitational.
+  Self-contained: no internet, no external libraries or fonts. Open in any modern browser.
+
+  File sections:
+    1 STYLE     layout, the 9 form colours
+    2 MARKUP    header · key (9 forms) · 3 tabs (Scenes · Quiz · Certificate) · overlays (help, word pop-up)
+    3 CONFIG    FORMS, WORDS, SCENES (energies, narration, questions), QUIZ (15 questions)
+    4 ENGINE    helpers, Marie, read aloud, sound, storage, judge (tip → answer), drag-or-tap, question types
+    5 DRAW      the 6 animations (SVG, redrawn every frame from the scene position p = 0…1)
+    6 PLAYER    bars, play / pause / slow, phases of a scene
+    7 UI        scene list, quiz, tabs, certificate, print, start
+-->
+<style>
+/* ============================ 1 STYLE ============================ */
+:root{
+  --navy:#1F3A5F; --accent:#E65100; --ink:#263238; --muted:#606A72;
+  --bg:#F2F5F9; --card:#FFFFFF; --line:#DDE6F0; --sunk:#EEF2F7; --soft-blue:#E3F2FD;
+  --star:#F9A825; --ok:#2E7D32; --bad:#C62828; --focus:#1565C0;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;font-size:18px}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:1rem/1.45 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;min-height:100dvh}
+h2,h3,h4{margin:0}
+p{margin:0}
+button{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+/* header (as in every simulation) */
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);
+  display:flex;align-items:center;gap:12px;padding:8px 16px;flex-wrap:wrap;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header h1{font-size:1.25rem;margin:0;font-weight:600}
+header .sub{font-size:.85rem;opacity:.85}
+.sub a.home{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55);white-space:nowrap}
+header .grow{flex:1}
+.hbtns{display:flex;gap:6px;flex-wrap:wrap}
+.credit{text-align:right;font-size:.74rem;line-height:1.3;opacity:.92;white-space:nowrap}
+.credit a{color:#fff;text-decoration:underline}
+.btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;
+  min-height:44px;padding:6px 14px;cursor:pointer;touch-action:manipulation}
+.btn:hover{border-color:var(--navy)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.small{min-height:36px;padding:4px 10px;font-size:.9rem}
+header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5);white-space:nowrap}
+header .btn[aria-pressed="true"]{background:rgba(255,255,255,.22);border-color:#fff}
+
+/* key bar: the 9 forms */
+.keybar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 16px;background:#fff;border-bottom:1px solid var(--line);font-size:15px}
+.keybar .lead{font-weight:700;color:var(--navy);margin-right:4px}
+.kchip{font:inherit;font-size:15px;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;border-radius:99px;
+  padding:3px 10px 3px 4px;cursor:pointer;min-height:34px}
+.kchip i{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:14px;background:var(--c)}
+.kchip:hover{border-color:var(--navy)}
+.keybar .tools{margin-left:auto;display:flex;align-items:center;gap:14px}
+.keybar .sum{font-weight:700;color:var(--navy);white-space:nowrap;font-size:17px}
+
+/* tabs + panels */
+main{flex:1;display:flex;flex-direction:column;gap:10px;padding:10px 16px 16px;min-height:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.tab{font:inherit;font-size:19px;border:1px solid transparent;border-bottom:none;background:transparent;padding:8px 14px;
+  min-height:44px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--muted);font-weight:600;white-space:nowrap}
+.tab[aria-selected="true"]{background:#fff;border-color:var(--line);color:var(--navy);margin-bottom:-1px}
+.tab .tstar{font-size:.78rem;color:var(--star);margin-left:4px}
+.panel{display:flex;flex-direction:column;gap:10px;min-height:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0;display:flex;flex-direction:column}
+.card > h2{font-size:19px;padding:6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line);color:var(--navy);font-weight:600}
+.cb{padding:12px 14px;display:grid;gap:12px;align-content:start;min-height:0}
+.label{font-size:15px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.hint{font-size:16px;color:var(--muted)}
+.layout{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:900px){ .layout{grid-template-columns:minmax(210px,240px) minmax(0,1fr)} }
+
+/* scene list */
+.slist{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:thin}
+@media (min-width:900px){ .slist{flex-direction:column;overflow:visible} }
+.sitem{font:inherit;display:flex;align-items:center;gap:8px;text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;
+  padding:6px 8px;min-height:54px;cursor:pointer;line-height:1.15;flex:none}
+.sitem .em{font-size:1.7rem;width:36px;text-align:center;flex:none}
+.sitem b{font-size:17px;display:block}
+.sitem small{font-size:13px;color:var(--muted)}
+.sitem .st{margin-left:auto;color:var(--star);font-size:13px;white-space:nowrap;padding-left:6px}
+.sitem[aria-current="true"]{border:2px solid var(--accent);background:#FFF3E0}
+.sitem.done{border-color:#A5D6A7}
+.sitem:disabled{opacity:.5;cursor:not-allowed}
+.progress{height:10px;background:var(--sunk);border-radius:99px;overflow:hidden}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--star),var(--accent));width:0;transition:width .5s}
+.teach{font-size:13px;color:#6A1B9A;font-weight:700}
+
+/* Marie, the guide */
+.spexbar{display:flex;align-items:center;gap:10px;min-height:76px}
+.spex{width:72px;height:72px;flex:none}
+.bubble{position:relative;background:#fff;border:2px solid var(--navy);border-radius:14px;padding:8px 12px;font-size:20px;line-height:1.4;flex:1;min-width:0}
+.bubble::before{content:"";position:absolute;left:-11px;top:24px;border:10px solid transparent;border-right-color:var(--navy);border-left:0}
+.bubble::after{content:"";position:absolute;left:-7px;top:26px;border:8px solid transparent;border-right-color:#fff;border-left:0}
+.bubble.tip{background:#FFF8E1} .bubble.tip::after{border-right-color:#FFF8E1}
+.bubble.good{background:#E8F5E9} .bubble.good::after{border-right-color:#E8F5E9}
+.bubble.ans{background:var(--soft-blue)} .bubble.ans::after{border-right-color:var(--soft-blue)}
+.spex .lens{fill:#FFE0C2;fill-opacity:.45}
+.spex .m{display:none} .spex[data-mood="talk"] .m-talk,.spex[data-mood="happy"] .m-happy,.spex[data-mood="think"] .m-think,
+.spex[data-mood="wow"] .m-wow,.spex[data-mood="hmm"] .m-hmm{display:inline}
+.spex[data-mood="hmm"] .brow{transform:translateY(-2px)}
+.spk{font:inherit;font-size:20px;border:1px solid #B0BEC5;background:#fff;border-radius:50%;width:42px;height:42px;cursor:pointer;flex:none;line-height:1;padding:0}
+.spk:hover{border-color:var(--navy)}
+.nospeech .spk{display:none}
+/* words explained on tap */
+.wd{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:help;border-bottom:2px dotted var(--focus);font-weight:inherit}
+.wd:hover{background:#E3F2FD}
+.wpop{position:fixed;z-index:85;width:min(340px,calc(100vw - 24px));background:#fff;border:2px solid var(--navy);border-radius:14px;
+  box-shadow:0 12px 30px rgba(0,0,0,.25);padding:10px 12px;display:grid;gap:8px;font-size:18px}
+.wpop .wh{display:flex;align-items:center;gap:8px;font-size:20px;font-weight:700;color:var(--navy)}
+.wpop .wh i{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-style:normal;background:var(--c,#E3F2FD)}
+.wpop .now{font-weight:700;color:var(--accent)}
+.wpop .controls{justify-content:flex-end}
+
+/* a scene */
+.stephead{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.stephead h3{font-size:24px;color:var(--navy)}
+.stephead .of{font-size:15px;color:var(--muted);font-weight:600}
+.phases{display:flex;flex-wrap:wrap;gap:6px}
+.ph{font-size:15px;font-weight:700;border-radius:99px;padding:4px 12px;background:var(--sunk);color:var(--muted);border:2px solid transparent}
+.ph.now{background:#FFF3E0;color:var(--accent);border-color:var(--accent)}
+.ph.done{background:#E8F5E9;color:var(--ok)}
+.stagewrap{display:grid;gap:12px;grid-template-columns:minmax(0,1fr);align-items:start}
+@media (min-width:1150px){ .stagewrap{grid-template-columns:minmax(0,1.4fr) minmax(300px,1fr)} }
+.stagecol{display:grid;gap:8px;min-width:0}
+.stage,.still{width:100%;display:block;border-radius:12px;border:1px solid var(--line);background:#fff}
+.still{max-width:520px;margin:0 auto}
+.timeline{height:8px;background:var(--sunk);border-radius:99px;overflow:hidden}
+.timeline i{display:block;height:100%;width:0;background:var(--navy)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+main .btn,.overlay .btn,.wpop .btn{font-size:19px}
+.btn.play{min-width:140px;font-weight:700}
+.btn[aria-pressed="true"]{background:#E3F2FD;border-color:var(--focus);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:34px;font-size:16px}
+.chips .lead{font-weight:700;color:var(--muted);font-size:14px;text-transform:uppercase;letter-spacing:.04em}
+.fchip{display:inline-flex;gap:4px;align-items:center;padding:3px 10px;border-radius:99px;background:var(--c);color:var(--fg);font-weight:700;font-size:15px;white-space:nowrap}
+.chips .to{color:var(--muted);font-weight:700}
+
+/* energy bars */
+.bars{position:relative;display:grid;gap:4px;align-content:start;border:1px solid var(--line);border-radius:12px;padding:10px;background:#FBFCFE;min-width:0}
+.bars .bhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.bars .bhead b{font-size:18px;color:var(--navy)}
+.erow{font:inherit;display:grid;grid-template-columns:148px minmax(0,1fr) 66px 14px;align-items:center;gap:6px;border:none;background:none;
+  padding:2px 4px;border-radius:8px;cursor:pointer;text-align:left;min-height:31px;width:100%}
+.erow:hover{background:#EEF2F7}
+.erow .bn{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btrack{height:20px;background:#E6EBF0;border-radius:6px;overflow:hidden;display:flex}
+.btrack i{display:block;height:100%;width:0;background:var(--c);flex:none}
+.erow .bv,.trow .bv{font-size:16px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.erow .ar{font-size:12px;color:var(--muted);text-align:center}
+.erow.zero .bn,.erow.zero .bv{color:#9AA5AE;font-weight:500}
+.trow{display:grid;grid-template-columns:148px minmax(0,1fr) 66px 14px;align-items:center;gap:6px;border-top:2px solid var(--navy);padding:6px 4px 0;margin-top:4px}
+.trow .bn{font-size:17px;font-weight:800;color:var(--navy)}
+.trow .btrack{height:30px;border:2px solid var(--navy)}
+.trow .bv{color:var(--navy);font-size:17px}
+.trow .ok{color:var(--ok);font-weight:800}
+.law{font-size:16px;background:#E8F5E9;border-left:5px solid var(--ok);border-radius:10px;padding:6px 10px;line-height:1.35}
+.cover{position:absolute;inset:0;background:rgba(242,245,249,.95);display:grid;place-items:center;text-align:center;font-size:20px;font-weight:700;
+  color:var(--navy);border-radius:12px;padding:12px;z-index:2}
+
+/* questions */
+.what{font-size:19px;background:#F3E5F5;border-left:5px solid #8E24AA;border-radius:10px;padding:8px 12px}
+.part{display:grid;gap:10px;border-top:1px dashed var(--line);padding-top:12px}
+.part:first-child{border-top:none;padding-top:0}
+.q{font-size:20px;font-weight:600;display:flex;gap:8px;align-items:flex-start}
+.q > span{flex:1}
+.qn{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;font-size:16px;margin-right:6px;vertical-align:2px}
+.feedback{font-size:20px;min-height:2.4em;border-radius:10px;padding:8px 12px;background:var(--sunk)}
+.feedback:empty{display:none}
+.feedback.tip{background:#FFF8E1;border-left:4px solid #F9A825}
+.feedback.ans{background:var(--soft-blue);border-left:4px solid var(--focus)}
+.feedback.good{background:#E8F5E9;border-left:4px solid var(--ok)}
+.feedback.info{background:var(--sunk);border-left:4px solid #90A4AE}
+.stars{color:var(--star);font-size:1.2rem;letter-spacing:2px}
+.stars .off{color:var(--line)}
+.cats{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.cat{font:inherit;font-size:19px;border:1px solid #B0BEC5;background:#fff;border-radius:10px;padding:8px 12px;min-height:52px;cursor:pointer;font-weight:600;line-height:1.25;text-align:left}
+.cat.right{background:#E8F5E9;border:2px solid var(--ok)}
+.cat.wrong{background:#FFEBEE;border-color:var(--bad)}
+.cat:disabled{cursor:default}
+.cats.wide{grid-template-columns:minmax(0,1fr)}
+.cat .fi{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--c);margin-right:6px;font-size:16px;vertical-align:-6px}
+/* drag or tap */
+.tile{font:inherit;font-size:19px;border:2px solid #90A4AE;border-left:10px solid var(--c,#90A4AE);background:#fff;border-radius:10px;padding:6px 12px;min-height:46px;
+  cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;line-height:1.2;font-weight:600;white-space:nowrap}
+.tile.sel{outline:3px solid var(--focus);outline-offset:2px;background:#E3F2FD}
+.tile.lifting{opacity:.35}
+.drag-ghost{position:fixed;z-index:80;pointer-events:none;transform:translate(-50%,-60%) rotate(-3deg);box-shadow:0 10px 24px rgba(0,0,0,.25)}
+.bank{display:flex;flex-wrap:wrap;gap:8px;min-height:62px;padding:8px;border:2px dashed #CFD8DC;border-radius:12px;background:#FAFBFC}
+.bank.hot{border-color:var(--focus)}
+.chain{display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:#FFFDE7;border-radius:12px;padding:10px 12px;border:1px solid #FFE082}
+.chain .grp{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px;padding:4px;border-radius:12px;background:rgba(255,255,255,.6)}
+.chain .to,.chain .plus{font-size:24px;font-weight:800;color:var(--navy)}
+.slot{font:inherit;display:inline-flex;align-items:center;justify-content:center;min-width:150px;min-height:52px;padding:0 4px;
+  border:2px dashed #90A4AE;border-radius:10px;background:#fff;cursor:pointer;line-height:1.2}
+.slot.hot{border-color:var(--focus);background:#E3F2FD}
+.slot .tile{margin:2px 0;cursor:pointer}
+.slot.wrong{border-color:var(--bad);border-style:solid;background:#FFEBEE}
+.slot.right{border-color:var(--ok);border-style:solid;background:#E8F5E9}
+/* predict */
+.pickgrid{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.pk{font:inherit;font-size:18px;display:grid;justify-items:center;gap:2px;text-align:center;border:2px solid var(--line);background:#fff;
+  border-radius:12px;padding:8px 6px;min-height:96px;cursor:pointer;line-height:1.2;font-weight:600}
+.pk .em{font-size:1.5rem;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--c)}
+.pk[aria-pressed="true"]{border-color:var(--focus);background:#E3F2FD;box-shadow:0 0 0 2px var(--focus)}
+.pickgrid.pred .pk[aria-pressed="true"]::after{content:"✔ I think so";font-size:13px;color:var(--focus)}
+.pk.right{border-color:var(--ok)!important;background:#E8F5E9!important;box-shadow:none}
+.pk.wrong{border-color:var(--bad)!important;background:#FFEBEE!important;box-shadow:none}
+.pk:disabled{cursor:default}
+/* quiz */
+.qhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.qtype{font-size:15px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#6A1B9A;background:#F3E5F5;border-radius:99px;padding:3px 12px}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:14px;font-weight:700;color:var(--muted);background:#fff}
+.dot.now{border-color:var(--navy);color:var(--navy)}
+.dot.s3{background:var(--star);border-color:var(--star);color:#3E2A00} .dot.s2{background:#FFE082;border-color:#FFCA28;color:#3E2A00} .dot.s0{background:#ECEFF1;border-color:#B0BEC5}
+.qpic{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:6px 18px;font-size:64px;line-height:1.1;min-height:130px;
+  background:linear-gradient(#FAFCFF,#EAF1F8);border:1px solid var(--line);border-radius:14px;padding:12px;overflow:hidden}
+.qpic span{display:inline-block}
+.qpic .arr{font-size:34px;color:#90A4AE;font-weight:800}
+.qpic .stack{display:inline-flex;flex-direction:column;align-items:center;line-height:1}
+.qpic .sm{font-size:.6em}
+@keyframes a-spin{to{transform:rotate(360deg)}} .a-spin{animation:a-spin 1.4s linear infinite}
+@keyframes a-flick{0%{transform:scale(1) rotate(-3deg);opacity:1}100%{transform:scale(1.12) rotate(3deg);opacity:.8}} .a-flick{animation:a-flick .22s ease-in-out infinite alternate}
+@keyframes a-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}} .a-bounce{animation:a-bounce 1s ease-in-out infinite}
+@keyframes a-pulse{50%{transform:scale(1.13)}} .a-pulse{animation:a-pulse 1.2s ease-in-out infinite}
+@keyframes a-float{0%{transform:translateY(16px);opacity:0}30%{opacity:1}100%{transform:translateY(-28px);opacity:0}} .a-float{animation:a-float 1.6s ease-out infinite;font-size:.62em}
+@keyframes a-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px) rotate(-5deg)}75%{transform:translateX(4px) rotate(5deg)}} .a-shake{animation:a-shake .18s linear infinite}
+@keyframes a-glow{50%{filter:drop-shadow(0 0 14px #FFD600) drop-shadow(0 0 4px #FFEA00)}} .a-glow{animation:a-glow 1.4s ease-in-out infinite}
+@keyframes a-slide{0%{transform:translateX(-26px)}100%{transform:translateX(26px)}} .a-slide{animation:a-slide 1.2s ease-in-out infinite alternate}
+@keyframes a-down{0%{transform:translate(-26px,-30px)}100%{transform:translate(26px,26px)}} .a-down{animation:a-down 1.6s ease-in infinite}
+@keyframes a-off{0%,45%{filter:drop-shadow(0 0 14px #FFD600);opacity:1}55%,100%{filter:grayscale(1);opacity:.45}} .a-off{animation:a-off 3s infinite}
+.a-delay{animation-delay:.6s}
+.cats.tf{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cats.tf .cat{text-align:center;font-size:24px}
+.qlist{display:grid;gap:4px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));font-size:16px;text-align:left;width:100%}
+.qlist div{background:#fff;border:1px solid var(--line);border-radius:8px;padding:3px 8px;display:flex;justify-content:space-between;gap:8px}
+.qlist .stars{font-size:15px}
+@media (max-width:599px){ .qpic{font-size:48px;min-height:100px} }
+.cmp{display:grid;gap:6px}
+.cmp .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:17px}
+.cmp .row > b{min-width:190px}
+.num{font:inherit;font-size:21px;width:150px;min-height:46px;padding:4px 8px;border:2px solid #90A4AE;border-radius:8px;text-align:center}
+.num.right{border-color:var(--ok);background:#E8F5E9}
+.num.wrong{border-color:var(--bad);background:#FFEBEE}
+.numrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:20px}
+.result{display:grid;gap:10px;justify-items:center;text-align:center;background:#FFFDE7;border:2px solid #FFE082;border-radius:14px;padding:12px}
+.result .big{font-size:2.2rem}
+.explore{font-size:19px;background:#E3F2FD;border-left:5px solid var(--focus);border-radius:10px;padding:8px 12px}
+
+/* certificate */
+.certwrap{display:grid;gap:12px;justify-items:center}
+.sheet{width:100%;max-width:1000px;aspect-ratio:297/210;border:10px double var(--navy);border-radius:16px;background:#fff;
+  padding:3% 4%;display:grid;grid-template-rows:auto auto auto 1fr auto;gap:1.2%;text-align:center;position:relative;container-type:inline-size;overflow:hidden}
+.sheet .t1{font-size:max(15px,1.9cqw);letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.sheet .t2{font-size:max(26px,4.6cqw);font-weight:800;color:var(--navy);line-height:1.1}
+.sheet .who{font-size:max(24px,4.2cqw);font-weight:700;color:var(--accent);border-bottom:2px solid var(--line);padding:0 4%;justify-self:center;min-width:50%}
+.sheet .for{font-size:max(14px,1.8cqw)}
+.sheet .law2{font-size:max(13px,1.6cqw);color:var(--ok);font-weight:700}
+.sheet .badges{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1.2cqw;align-content:center}
+.sheet .foot{display:flex;justify-content:space-between;align-items:end;font-size:max(12px,1.5cqw);color:var(--muted);gap:10px}
+.sheet .foot .sig{border-top:1px solid #90A4AE;padding-top:2px;min-width:30%}
+.sheet .marie{position:absolute;right:3%;top:4%;width:12%}
+.sheet .seal{position:absolute;left:3%;top:4%;width:11%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#FFE082,#F9A825);
+  display:grid;place-items:center;font-size:max(14px,2.4cqw);font-weight:800;color:#5D4037;box-shadow:0 0 0 4px #FFF8E1,0 0 0 6px #F9A825}
+.badge{display:grid;justify-items:center;gap:1px;padding:.6cqw .3cqw;border-radius:12px;border:2px dashed #CFD8DC;text-align:center;font-size:max(11px,1.35cqw);color:#90A4AE;line-height:1.15}
+.badge .em{font-size:max(22px,3.6cqw);filter:grayscale(1);opacity:.4;line-height:1.1}
+.badge.on{border:2px solid var(--star);background:#FFFDE7;color:var(--ink)}
+.badge.on .em{filter:none;opacity:1}
+.badge .how{font-size:max(10px,1.1cqw);color:var(--muted)}
+.word{font:inherit;font-size:20px;min-height:44px;padding:4px 8px;border:1px solid #B0BEC5;border-radius:8px}
+
+/* overlays */
+.overlay{position:fixed;inset:0;background:rgba(31,58,95,.55);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+.overlay.on{display:flex}
+.overlay .box{background:#fff;border-radius:14px;max-width:780px;width:100%;max-height:92vh;overflow:auto;padding:16px 20px;display:grid;gap:10px;font-size:19px}
+.overlay h3{margin:.1em 0 .2em;color:var(--navy)}
+.overlay li{margin:.25em 0}
+.toast{position:fixed;left:50%;top:14px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:12px;
+  z-index:90;box-shadow:0 8px 20px rgba(0,0,0,.25);font-weight:600;display:none;font-size:19px}
+.toast.on{display:block;animation:pop .35s}
+@keyframes pop{from{transform:translate(-50%,-20px);opacity:0}}
+.shake{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
+#printArea{display:none}
+
+@media (max-width:1099px){ header .sub{font-size:.75rem} }
+@media (max-width:759px){
+  header h1{font-size:1.05rem}
+  .credit{order:3;flex-basis:100%;text-align:left;font-size:.7rem}
+  .credit br{display:none} .credit a{margin-left:6px}
+  .keybar{font-size:14px;gap:4px;padding:6px 10px}
+  .keybar .lead{display:none}
+  .kchip .kn{display:none} .kchip{padding:3px}
+  .spex{width:56px;height:56px}
+  .bubble{font-size:18px}
+  .hbtns .btn{min-height:38px;padding:4px 9px;font-size:.88rem}
+  .tile,.cat{font-size:17px}
+  .slot{min-width:120px}
+  .stephead h3{font-size:21px}
+  .erow,.trow{grid-template-columns:118px minmax(0,1fr) 58px 10px;gap:4px}
+  .erow .bn{font-size:14px}
+  .sheet .marie{display:none}
+  .sheet .badges{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .sheet{aspect-ratio:auto}
+  .cmp .row > b{min-width:0;flex-basis:100%}
+}
+@media (max-width:599px){ .tab .full{display:none} .tab{padding:8px 10px;font-size:17px} .q{font-size:18px} .bubble{font-size:17px} }
+@media print{
+  body{background:#fff;display:block}
+  body > *:not(#printArea){display:none!important}
+  #printArea{display:block}
+  #printArea .sheet{max-width:none;width:100%;aspect-ratio:auto;height:180mm;border-width:8px}
+  #printArea .sheet .marie{display:block} #printArea .sheet .badges{grid-template-columns:repeat(7,minmax(0,1fr))}
+  #printArea .badge{font-size:11pt} #printArea .badge .em{font-size:28pt} #printArea .badge .how{font-size:8pt}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media (prefers-reduced-motion:reduce){ .qpic span{animation:none!important} .toast.on,.shake{animation:none} .progress i{transition:none} }
+</style>
+</head>
+<body>
+<!-- ============================ 2 MARKUP ============================ -->
+<header>
+  <div>
+    <h1>Energy transfers</h1>
+    <div class="sub"><a class="home" href="https://school.taneski.com/science/g06/#physics" title="Back to Grade 6 science">← All Grade 6 science</a> · IB MYP 1 · Physics · Unit 1 Thinking about Energy · with Marie</div>
+  </div>
+  <div class="grow"></div>
+  <div class="hbtns">
+    <button class="btn" id="readBtn" aria-pressed="false" aria-label="Read aloud on or off">🗣 Read aloud</button>
+    <button class="btn" id="soundBtn" aria-pressed="false" aria-label="Sound on or off">🔇 Sound</button>
+    <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
+  </div>
+  <div class="credit">Biljana Taneska · Science teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
+</header>
+
+<div class="keybar" aria-label="The 9 forms of energy">
+  <span class="lead">9 forms of energy:</span>
+  <span id="keyChips" style="display:contents"></span>
+  <div class="tools"><span class="sum" id="starSum">★ 0</span></div>
+</div>
+
+<main>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-scenes" aria-selected="true" aria-controls="scenes">1 · Scenes<span class="tstar" data-ts="scenes"></span></button>
+    <button class="tab" role="tab" id="tab-quiz" aria-selected="false" aria-controls="quiz">2 · 🧠 Quiz<span class="tstar" data-ts="quiz"></span></button>
+    <button class="tab" role="tab" id="tab-cert" aria-selected="false" aria-controls="cert">3 · 🏅<span class="full"> Certificate</span></button>
+  </div>
+
+  <!-- SCENES -->
+  <section class="panel" id="scenes" role="tabpanel" aria-labelledby="tab-scenes">
+    <div class="layout">
+      <div class="card">
+        <h2>6 scenes</h2>
+        <div class="cb">
+          <div class="progress" aria-hidden="true"><i id="prog"></i></div>
+          <div class="slist" id="slist"></div>
+          <div class="teach" id="teachNote" hidden>Teacher mode: all scenes are open.</div>
+        </div>
+      </div>
+      <div class="card">
+        <h2 id="scCard">Scene</h2>
+        <div class="cb">
+          <div class="stephead"><h3 id="scTitle"></h3><span class="of" id="scOf"></span><span id="scStars"></span></div>
+          <div class="phases" id="phases"></div>
+          <div class="spexbar" data-spex="scene"></div>
+          <div class="stagewrap">
+            <div class="stagecol">
+              <svg class="stage" id="stage" viewBox="0 0 600 340" role="img" aria-label="Animation of the scene"></svg>
+              <div class="timeline" aria-hidden="true"><i id="tl"></i></div>
+              <div class="controls">
+                <button class="btn navy play" id="bPlay">▶ Play</button>
+                <button class="btn" id="bSlow" aria-pressed="false">🐢 Slow motion</button>
+                <button class="btn" id="bReplay">↺ Replay</button>
+              </div>
+              <div class="chips" id="chips" aria-live="polite"></div>
+            </div>
+            <div class="bars" id="bars">
+              <div class="bhead"><b>Energy in joules (J)</b><span class="hint">Tap a bar to see what it means.</span></div>
+              <div id="erows" style="display:grid;gap:2px"></div>
+              <div class="trow"><span class="bn">TOTAL</span><span class="btrack" id="tTrack"></span><span class="bv" id="tVal">0 J</span><span></span></div>
+              <div class="law">⚖️ <b>The law of conservation of energy:</b> energy cannot be made or destroyed. It only changes from one form to another.
+                <span class="ok">The TOTAL always stays the same.</span></div>
+              <div class="cover" id="cover">🤔 Predict first!<br>Tap the forms of energy you think you will see.</div>
+            </div>
+          </div>
+          <div id="work" class="cb" style="padding:0"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="panel" id="quiz" role="tabpanel" aria-labelledby="tab-quiz" hidden>
+    <div class="card">
+      <h2>🧠 Quiz · energy in real life</h2>
+      <div class="cb">
+        <div class="qhead"><span class="hint">15 questions about energy at home and at school. Use what you learned in the scenes!</span><div class="dots" id="qDots"></div></div>
+        <div class="spexbar" data-spex="quiz"></div>
+        <div class="cb" id="quizBox" style="padding:0"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CERTIFICATE -->
+  <section class="panel" id="cert" role="tabpanel" aria-labelledby="tab-cert" hidden>
+    <div class="card">
+      <h2>My certificate</h2>
+      <div class="cb certwrap">
+        <div class="spexbar" data-spex="cert" style="width:100%"></div>
+        <label class="numrow">Your name: <input class="word" id="certName" autocomplete="off" maxlength="40" style="max-width:300px"></label>
+        <div class="sheet" id="certSheet"></div>
+        <div class="controls">
+          <button class="btn primary" id="certPrint">🖨 Print my certificate</button>
+          <button class="btn" id="resetAll">↺ Start again (delete my progress)</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer>Energy transfers · Grade 6 Physics · the numbers are made simple so that you can add them up.</footer>
+
+<!-- overlays -->
+<div class="overlay" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="box">
+    <h3 id="helpTitle">How to use this simulation</h3>
+    <p><b>Energy</b> makes things happen. We measure it in <b>joules (J)</b>. There are <b>9 forms</b> of energy (the coloured
+      buttons at the top – tap one to see what it means).</p>
+    <p class="law">⚖️ <b>The law of conservation of energy:</b> energy cannot be made or destroyed. It only changes from one form to another.
+      The total always stays the same.</p>
+    <ol>
+      <li><b>6 scenes</b>: 🫖 kettle · 🔦 torch · 🤖 wind-up robot · 🎾 bouncing ball · 🛹 skateboarder · ☀️ Sun → apple → runner.
+        A new scene opens when you finish the one before.</li>
+      <li>In each scene: <b>1 🤔 Predict</b> (tap the forms you think you will see – it's OK to guess) →
+        <b>2 👀 Watch</b> (▶ Play, ⏸ Pause, 🐢 Slow motion; watch the bars change) →
+        <b>3 ✍️ Explain</b> (4 questions) → <b>4 🔍 Explore</b> (play it again and tap the bars).</li>
+      <li><b>Drag</b> a tile into a gap – or <b>tap it, then tap the gap</b>.</li>
+      <li><b>Wrong answer?</b> The first time you get a tip. The second time you see the answer.
+        Stars: right first time ★★★ · after a tip ★★ · answer shown: no stars.</li>
+      <li>Words with a <span class="wd" style="cursor:default">dotted line</span> – tap them to see what they mean.
+        <b>🗣 Read aloud</b> reads Marie's words for you. 🔈 reads one question.</li>
+      <li><b>2 · 🧠 Quiz</b>: 15 questions about energy in real life, at home and at school. You can take it again – your best score counts.</li>
+      <li><b>3 · 🏅 Certificate</b>: type your name and print it. You win a badge for each scene and one for the quiz. Your progress is saved in this browser.</li>
+    </ol>
+    <p class="hint">New words? Use the <a href="https://school.taneski.com/science/g06/02-glossary-energy/glossary-en.pdf" target="_blank" rel="noopener">Glossary · Energy words</a> (also in 9 other languages on the Grade 6 page).</p>
+    <p style="text-align:right"><button class="btn primary" data-close="help">Let's start!</button></p>
+  </div>
+</div>
+
+<div class="wpop" id="wpop" role="dialog" aria-label="Meaning" hidden>
+  <div class="wh" id="wpHead"></div>
+  <div id="wpTxt"></div>
+  <div class="controls"><button class="btn small" id="wpSpk" aria-label="Read aloud">🔈 Read</button><button class="btn small navy" id="wpOk">OK</button></div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+<div id="printArea"></div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+
+  /* ============================ 3 CONFIG ============================ */
+  // the 9 forms – names and order as in the unit slides (slide 19); one colour + icon in every scene
+  const FORMS = {
+    thermal:       { label: "Thermal (heat)", tile: "thermal",       em: "🔥", col: "#E53935", fg: "#fff", mean: "The energy of hot things. The hotter something is, the more thermal energy it has." },
+    light:         { label: "Light",          tile: "light",         em: "💡", col: "#FFD600", fg: "#3E2A00", mean: "Energy given out by luminous things, like the Sun, lamps and candles." },
+    sound:         { label: "Sound",          tile: "sound",         em: "🎵", col: "#EC407A", fg: "#fff", mean: "Energy given out by things that vibrate (shake very fast), like speakers, drums and voices." },
+    elastic:       { label: "Elastic",        tile: "elastic",       em: "🏹", col: "#8E24AA", fg: "#fff", mean: "The energy of things that are stretched, squashed or twisted, like springs and rubber bands." },
+    gravitational: { label: "Gravitational",  tile: "gravitational", em: "⛰️", col: "#43A047", fg: "#fff", mean: "The energy of things that are high up and can fall. The higher it is, the more gravitational energy." },
+    kinetic:       { label: "Kinetic",        tile: "kinetic",       em: "🏃", col: "#1E88E5", fg: "#fff", mean: "The energy of moving things. The faster it moves, the more kinetic energy." },
+    electrical:    { label: "Electrical",     tile: "electrical",    em: "⚡", col: "#FB8C00", fg: "#fff", mean: "Energy carried by an electric current in a wire." },
+    chemical:      { label: "Chemical",       tile: "chemical",      em: "🧪", col: "#00897B", fg: "#fff", mean: "Energy stored in food, fuels and batteries. A chemical reaction lets it out." },
+    nuclear:       { label: "Nuclear",        tile: "nuclear",       em: "⚛️", col: "#6D4C41", fg: "#fff", mean: "Energy stored in the centre of atoms. It is let out in the Sun and in nuclear power stations." },
+  };
+  const ORDER = ["thermal", "light", "sound", "elastic", "gravitational", "kinetic", "electrical", "chemical", "nuclear"];
+  const fname = (f) => FORMS[f].label + " energy";
+
+  // words explained on tap (own simple wording)
+  const WORDS = {
+    energy: ["energy", "What makes things happen: move, get hot, light up or make a sound. We measure it in joules (J)."],
+    joule: ["joule (J)", "The unit of energy. 1 J is about the energy you need to lift an apple up 1 metre."],
+    form: ["form of energy", "A type of energy, like light or sound. There are 9 forms."],
+    transfer: ["energy transfer", "When energy changes from one form to another, or moves from one thing to another."],
+    conservation: ["law of conservation of energy", "Energy cannot be made or destroyed. It only changes from one form to another. The total stays the same."],
+    total: ["total", "Everything added together."],
+    destroyed: ["destroyed", "Gone for ever. Energy is never destroyed!"],
+    stored: ["stored", "Kept inside, ready to be used later."],
+    friction: ["friction", "A force between two surfaces that rub together. It slows things down and makes them warm."],
+    vibrate: ["vibrate", "To move backwards and forwards very fast."],
+    luminous: ["luminous", "Gives out its own light, like the Sun or a lamp."],
+    current: ["electric current", "A flow of electric charge through a wire."],
+    battery: ["battery", "It stores chemical energy. In a circuit it gives electrical energy."],
+    spring: ["spring", "A coil of metal. When you twist, stretch or squash it, it stores elastic energy."],
+    element: ["heating element", "The metal part inside a kettle that gets very hot when electricity flows through it."],
+    surroundings: ["surroundings", "Everything around: the air, the table, the room."],
+    predict: ["predict", "Say what you think will happen, before you see it."],
+    socket: ["socket", "The place in the wall where you plug in a cable to get electricity."],
+    flat: ["flat battery", "A battery that has no chemical energy left to give."],
+  };
+  const w = (k, label) => `<button type="button" class="wd" data-w="${k}">${label || WORDS[k][0]}</button>`;
+  const f = (k, label) => `<button type="button" class="wd" data-f="${k}">${label || FORMS[k].label.toLowerCase()}</button>`;
+
+  /* ---- the ball: bounce timing (computed once). Peaks of gravitational energy 100 → 60 → 30 → 10 → 0 J ---- */
+  const BALL = (() => {
+    const H = [1, 0.6, 0.3, 0.1, 0], C = 0.16, segs = [];
+    let wsum = 0;
+    for (let i = 0; i < 4; i++) {
+      segs.push({ type: "fall", i, w: Math.sqrt(H[i]) }, { type: "contact", i, w: C });
+      if (H[i + 1] > 0) segs.push({ type: "rise", i, w: Math.sqrt(H[i + 1]) });
+    }
+    segs.forEach((s) => (wsum += s.w));
+    const P0 = 0.06, P1 = 0.9; let at = P0;
+    segs.forEach((s) => { s.p0 = at; at += (s.w / wsum) * (P1 - P0); s.p1 = at; });
+    return { H, segs, P0, P1, contacts: segs.filter((s) => s.type === "contact") };
+  })();
+  const ballX = (p) => 190 + 280 * clamp((p - BALL.P0) / (BALL.P1 - BALL.P0));
+
+  /* ---- the skater: 4 swings, each loses 250 J to friction ---- */
+  const SKATE = { E: [1000, 750, 500, 250, 0], P0: 0.04, SW: 0.205 };
+  SKATE.a = SKATE.E.map((e) => Math.sqrt(e / 1000));
+
+  // a scene: total J, duration (ms at normal speed), state(p) → {E, …}, draw(svg, p, S), narration [p, html, mood],
+  // sfx [p, sound], questions: chain (stages of forms), where (multiple choice), name (form at a paused moment), missing (J)
+  const SCENES = [
+    {
+      id: "kettle", em: "🫖", name: "Kettle", total: 1000, dur: 11000, badge: "Kettle expert",
+      keys: [[0, { electrical: 1000 }], [0.1, { electrical: 1000 }], [0.9, { thermal: 980, sound: 20 }]],
+      narr: [
+        [0, `This kettle is plugged in. It will get <b>1000 J</b> of ${f("electrical")} energy from the ${w("socket")}. Press ▶ Play.`],
+        [0.1, `Click! The kettle is on. Electrical energy flows along the cable.`],
+        [0.24, `The hot ${w("element", "element")} heats the water. Electrical energy changes into ${f("thermal")} energy. The thermometer goes up!`],
+        [0.5, `Listen! The bubbles make the kettle ${w("vibrate")} and rumble. A little energy changes into ${f("sound")} energy.`],
+        [0.9, `Click – the kettle is off. 980 J thermal + 20 J sound = <b>1000 J</b>. The total is the same!`, "happy"],
+      ],
+      sfx: [[0.1, "click"], [0.9, "click"]],
+      q: {
+        chain: { q: "Build the energy chain of the kettle.", stages: [["electrical"], ["thermal", "sound"]], traps: ["chemical", "light"],
+          tip: "The kettle gets its energy from the socket. Then look at the two bars that grow." },
+        where: { q: "The kettle is off. There is no more electrical energy. Where is it now?",
+          opts: [["a", "It was used up. It is gone."], ["b", "Most of it is thermal energy in the hot water. A little became sound energy."],
+            ["c", "It went back into the socket."], ["d", "The heat destroyed it."]], ok: "b",
+          tip: "Energy cannot be used up or destroyed. Look at the bars at the end: which ones are full?",
+          good: "Energy is never used up. It changed into thermal energy and sound energy." },
+        name: { q: "Look at the cable (the yellow arrow). Which form of energy flows along it?", p: 0.5, mark: [440, 256, -1, -1],
+          ok: "electrical", opts: ["electrical", "chemical", "thermal", "light"], tip: "The cable is a wire. What does a wire carry from the socket?" },
+        missing: { q: "The kettle gets 1000 J of electrical energy. 20 J changes into sound energy. How much changes into thermal energy?", value: 980,
+          tip: "The total stays the same: 1000 J = 20 J + ? So work out 1000 − 20." },
+      },
+    },
+    {
+      id: "torch", em: "🔦", name: "Torch", total: 100, dur: 11000, badge: "Torch expert",
+      keys: [[0, { chemical: 100 }], [0.12, { chemical: 100 }], [0.25, { chemical: 75, electrical: 20, light: 1, thermal: 4 }],
+        [0.75, { chemical: 20, electrical: 20, light: 12, thermal: 48 }], [0.88, { light: 20, thermal: 80 }]],
+      narr: [
+        [0, `This torch has a ${w("battery")}. It ${w("stored", "stores")} <b>100 J</b> of ${f("chemical")} energy. Press ▶ Play.`],
+        [0.12, `Click! The torch is on. In the battery, chemical energy changes into ${f("electrical")} energy in the wires.`],
+        [0.3, `The bulb glows. Electrical energy changes into ${f("light")} energy … and ${f("thermal")} energy: the bulb gets hot!`],
+        [0.6, `Watch the battery: its chemical energy goes down. Light and thermal energy go up.`],
+        [0.88, `The battery is ${w("flat")}. 20 J light + 80 J thermal = <b>100 J</b>. No energy was lost!`, "happy"],
+      ],
+      sfx: [[0.12, "click"], [0.88, "click"]],
+      q: {
+        chain: { q: "Build the energy chain of the torch.", stages: [["chemical"], ["electrical"], ["light", "thermal"]], traps: ["sound", "nuclear"],
+          tip: "Start in the battery. What flows in the wires? What comes out of the bulb?" },
+        where: { q: "The battery is flat. Where did its 100 J of chemical energy go?",
+          opts: [["a", "It disappeared when the battery went flat."], ["b", "It changed into light energy and thermal energy."],
+            ["c", "It is still in the battery."], ["d", "The bulb destroyed it."]], ok: "b",
+          tip: "Energy never disappears. Look at the bars at the end: which ones are full now?",
+          good: "The chemical energy changed into light and thermal energy: 20 J + 80 J = 100 J." },
+        name: { q: "Look at the bright spot on the wall (the yellow arrow). Which form of energy makes it?", p: 0.5, mark: [548, 190, -1, -1],
+          ok: "light", opts: ["light", "sound", "electrical", "kinetic"], tip: "We can see it with our eyes. Which form of energy do our eyes see?" },
+        missing: { q: "The battery gives 100 J of energy. 20 J changes into light energy. How much changes into thermal energy?", value: 80,
+          tip: "100 J = 20 J + ? So work out 100 − 20." },
+      },
+    },
+    {
+      id: "toy", em: "🤖", name: "Wind-up robot", total: 50, dur: 11000, badge: "Robot expert",
+      keys: [[0, { elastic: 50 }], [0.12, { elastic: 50 }], [0.2, { elastic: 43, kinetic: 5, thermal: 1.8, sound: 0.2 }],
+        [0.77, { elastic: 7, kinetic: 5, thermal: 34.2, sound: 3.8 }], [0.85, { thermal: 45, sound: 5 }]],
+      narr: [
+        [0, `Marie has wound up the toy robot. Its twisted ${w("spring")} stores <b>50 J</b> of ${f("elastic")} energy. Press ▶ Play.`],
+        [0.12, `Off it goes! The spring unwinds. Elastic energy changes into ${f("kinetic")} energy: the robot moves.`],
+        [0.38, `Click, click! The gears make ${f("sound")} energy. ${w("friction", "Friction")} in the gears makes ${f("thermal")} energy.`],
+        [0.85, `The robot stopped. Its energy is not ${w("destroyed")}: 45 J thermal + 5 J sound = <b>50 J</b>.`, "happy"],
+      ],
+      sfx: (() => { const a = []; for (let p = 0.14; p < 0.84; p += 0.035) a.push([p, "tick"]); return a; })(),
+      q: {
+        chain: { q: "Build the energy chain of the wind-up robot.", stages: [["elastic"], ["kinetic", "sound", "thermal"]], traps: ["chemical", "light"],
+          tip: "Start with the twisted spring. Then: the robot moves, you hear clicks, and the gears get warm." },
+        where: { q: "The robot stopped moving. What happened to its energy?",
+          opts: [["a", "It was used up, so the robot stopped."], ["b", "It went back into the spring."],
+            ["c", "It changed into thermal energy and sound energy. The robot and the air are a tiny bit warmer."], ["d", "It changed into gravitational energy."]], ok: "c",
+          tip: "Energy is never used up. What did you hear, and what got warmer?",
+          good: "The energy is still there – as thermal energy and sound energy in the surroundings." },
+        name: { q: "Look at the twisted spring inside the robot, before it starts (the yellow arrow). Which form of energy does it store?", p: 0.04, mark: [140, 205, 1, -1],
+          ok: "elastic", opts: ["elastic", "kinetic", "chemical", "gravitational"], tip: "The spring is twisted, like a stretched rubber band." },
+        missing: { q: "The spring stored 50 J. At the end there are 45 J of thermal energy. How much sound energy was made?", value: 5,
+          tip: "50 J = 45 J + ? So work out 50 − 45." },
+      },
+    },
+    {
+      id: "ball", em: "🎾", name: "Bouncing ball", total: 100, dur: 12000, badge: "Bounce expert",
+      narr: [
+        [0, `Marie holds a ball up high. It has <b>100 J</b> of ${f("gravitational")} energy. Press ▶ Play.`],
+        [BALL.P0, `She lets go! As the ball falls, gravitational energy changes into ${f("kinetic")} energy. Faster and faster!`],
+        [BALL.contacts[0].p0, `Squash! The ball hits the floor. Kinetic energy changes into ${f("elastic")} energy … and back into kinetic energy.`],
+        [BALL.contacts[0].p1, `Thud! Some energy changes into ${f("sound")} and ${f("thermal")} energy. So the ball cannot go back up as high.`],
+        [BALL.contacts[1].p0, `Each bounce is lower: at every bounce, some more energy changes into thermal and sound energy.`],
+        [BALL.P1, `The ball stopped. 90 J thermal + 10 J sound = <b>100 J</b>. The total is the same!`, "happy"],
+      ],
+      sfx: BALL.contacts.map((c, i) => [c.p0, "thud" + i]),
+      q: {
+        chain: { q: "Build the energy chain: the ball falls and squashes on the floor.", stages: [["gravitational"], ["kinetic"], ["elastic"]], traps: ["chemical", "electrical", "light"],
+          tip: "High up → falling (moving) → squashed." },
+        where: { q: "Each bounce is lower than the one before. Why?",
+          opts: [["a", "Some energy disappears at each bounce."], ["b", "At each bounce, some energy changes into thermal energy and sound energy."],
+            ["c", "Gravity gets stronger."], ["d", "The ball gets heavier."]], ok: "b",
+          tip: "Energy never disappears. What did you hear at each bounce?",
+          good: "Thud! Some energy becomes sound and thermal energy, so less is left to go back up." },
+        name: { q: "The ball is squashed on the floor and stops for a moment (the yellow arrow). Which form of energy does it have now?",
+          p: (BALL.contacts[0].p0 + BALL.contacts[0].p1) / 2, mark: [ballX((BALL.contacts[0].p0 + BALL.contacts[0].p1) / 2), 286, 1, -1],
+          ok: "elastic", opts: ["elastic", "kinetic", "gravitational", "chemical"], tip: "The ball is squashed, like a squeezed spring. It is not moving at this moment." },
+        missing: { q: "At the start the ball has 100 J. After the first bounce, at its highest point, it has 60 J of gravitational energy. How much energy changed into thermal and sound energy in that bounce?", value: 40,
+          tip: "100 J = 60 J + ? So work out 100 − 60." },
+      },
+    },
+    {
+      id: "skate", em: "🛹", name: "Skateboarder", total: 1000, dur: 13000, badge: "Skate expert",
+      narr: [
+        [0, `Lea waits at the top of the ramp with <b>1000 J</b> of ${f("gravitational")} energy. Press ▶ Play.`],
+        [0.05, `Down she goes! Gravitational energy changes into ${f("kinetic")} energy. She is fastest at the bottom.`],
+        [0.16, `Up the other side: kinetic energy changes back into gravitational energy. She slows down.`],
+        [0.27, `She does not get as high as at the start! ${w("friction", "Friction")} on the wheels and the air make ${f("thermal")} energy and ${f("sound")} energy.`],
+        [0.55, `Back and forth: gravitational → kinetic → gravitational … Each time a bit more becomes thermal and sound energy.`],
+        [0.86, `Lea stopped at the bottom. 900 J thermal + 100 J sound = <b>1000 J</b>. No energy was destroyed.`, "happy"],
+      ],
+      sfx: [],
+      q: {
+        chain: { q: "Build the energy chain: Lea rolls down the ramp and up the other side.", stages: [["gravitational"], ["kinetic"], ["gravitational"]], traps: ["elastic", "chemical"],
+          tip: "High up → fast at the bottom → high up again." },
+        where: { q: "Lea stopped at the bottom of the ramp. Where did her 1000 J go?",
+          opts: [["a", "Friction changed it into thermal energy and sound energy: the wheels, the ramp and the air are warmer."], ["b", "Friction destroyed it."],
+            ["c", "It is still gravitational energy."], ["d", "She used it all up."]], ok: "a",
+          tip: "Friction does not destroy energy. Look at the bars at the end.",
+          good: "Friction changed the energy into thermal and sound energy in the surroundings." },
+        name: { q: "Lea is at the bottom of the ramp, going fast (the yellow arrow). Which form of energy is the biggest now?", p: 0.147, mark: [300, 262, 1, -1],
+          ok: "kinetic", opts: ["kinetic", "gravitational", "elastic", "light"], tip: "She is low down (little gravitational energy) and she moves fast." },
+        missing: { q: "Lea starts with 1000 J. On the other side, at her highest point, she has 750 J of gravitational energy. How much energy changed into thermal and sound energy?", value: 250,
+          tip: "1000 J = 750 J + ? So work out 1000 − 750." },
+      },
+    },
+    {
+      id: "sun", em: "☀️", name: "Sun → apple → runner", total: 1000, dur: 14000, badge: "Sun tracker",
+      keys: [[0, { nuclear: 1000 }], [0.05, { nuclear: 1000 }], [0.28, { light: 1000 }], [0.44, { chemical: 100, thermal: 900 }],
+        [0.58, { chemical: 100, thermal: 900 }], [0.63, { chemical: 80, kinetic: 15, thermal: 905 }],
+        [0.86, { kinetic: 15, thermal: 975, sound: 10 }], [0.92, { thermal: 990, sound: 10 }]],
+      narr: [
+        [0, `Deep inside the Sun, ${f("nuclear")} energy is stored. We follow <b>1000 J</b> of it. Press ▶ Play.`],
+        [0.05, `The Sun is ${w("luminous")}. Nuclear energy changes into ${f("light")} energy. The light travels to the Earth.`],
+        [0.29, `The apple tree's leaves use light to make food. 100 J changes into ${f("chemical")} energy in the apple. The rest warms the leaves and the ground (${f("thermal")} energy). <small>(A real plant stores much less – the numbers are made simple.)</small>`],
+        [0.46, `Mia picks the apple and eats it. Now the chemical energy is in her body.`],
+        [0.6, `Mia runs! Chemical energy changes into ${f("kinetic")} energy and thermal energy – she gets warm. Her feet make ${f("sound")}.`],
+        [0.9, `Mia stops. Almost all the energy is now thermal energy in the ${w("surroundings")}. 990 J + 10 J = <b>1000 J</b>.`, "happy"],
+      ],
+      sfx: [],
+      q: {
+        chain: { q: "Build the energy chain from the Sun to the runner.", stages: [["nuclear"], ["light"], ["chemical"], ["kinetic", "thermal"]], traps: ["elastic", "electrical"],
+          tip: "Inside the Sun → sunlight → food in the apple → Mia runs and gets warm." },
+        where: { q: "At the end, where is almost all the energy?",
+          opts: [["a", "Back in the Sun."], ["b", "It was destroyed when Mia stopped."], ["c", "Still in the apple."],
+            ["d", "Thermal energy, spread out in the surroundings (the air, the ground, Mia's body)."]], ok: "d",
+          tip: "Look at the biggest bar at the end.",
+          good: "In the end, almost all energy becomes thermal energy, spread out in the surroundings." },
+        name: { q: "Look at the apple on the tree (the yellow arrow). Which form of energy does it store?", p: 0.42, mark: [276, 184, 1, -1],
+          ok: "chemical", opts: ["chemical", "light", "nuclear", "kinetic"], tip: "An apple is food. Which form of energy is stored in food?" },
+        missing: { q: "The tree gets 1000 J of light energy. The apple stores 100 J as chemical energy. How much changes into thermal energy?", value: 900,
+          tip: "1000 J = 100 J + ? So work out 1000 − 100." },
+      },
+    },
+  ];
+  const SC_I = Object.fromEntries(SCENES.map((s, i) => [s.id, i]));
+
+  // the quiz: 15 real-life situations, fixed order easy → hard. pic = emoji that move (CSS classes a-…)
+  const A = (e, c = "") => `<span class="${c}">${e}</span>`, AR = `<span class="arr">➜</span>`, ST = (...x) => `<span class="stack">${x.join("")}</span>`;
+  const QTYPE = { tf: "True or false?", tap: "Tap the forms", mc: "Choose the answer", chain: "Energy chain", joules: "Missing joules" };
+  const QUIZ = [
+    { type: "tf", pic: A("👆") + A("💡", "a-off"), q: "True or false? When you switch off the classroom lamp, its energy is destroyed.", ok: "f",
+      tip: "Remember the law of conservation of energy: can energy be destroyed?",
+      why: "Energy is never destroyed. While the lamp was on, it changed electrical energy into light and thermal energy, which spread out into the room. When you switch it off, no more electrical energy flows in." },
+    { type: "tf", pic: ST(A("📕", "a-bounce"), A("🗄️")), q: "True or false? A book on a high shelf has gravitational energy.", ok: "t",
+      tip: "Which form of energy do things have when they are high up and can fall?",
+      why: "Anything high up that can fall has gravitational energy. If the book falls, its gravitational energy changes into kinetic energy." },
+    { type: "tap", pic: A("🎂") + ST(A("✨", "a-float"), A("🕯️", "a-flick")) + A("♨️", "a-float a-delay"),
+      q: "You light the candles on a birthday cake. Which forms of energy does a burning candle give out? Tap all.", need: ["light", "thermal"],
+      tip: "What can you see, and what can you feel when your hand is near the flame?",
+      why: "The wax stores chemical energy. When it burns, it gives out light energy and thermal energy." },
+    { type: "tap", pic: A("🔌") + AR + ST(A("♨️", "a-float"), A("🍞", "a-shake")) + A("🔴", "a-pulse sm"),
+      q: "You make toast. The wires inside the toaster glow red, the bread gets hot and the toaster ticks. Which forms of energy does the toaster change its electrical energy into? Tap all.", need: ["thermal", "light", "sound"],
+      tip: "There are three clues: it glows red, it gets hot, and you hear it.",
+      why: "Electrical energy changes into thermal energy (hot), light energy (the red glow) and sound energy (the ticking)." },
+    { type: "tap", pic: A("🎸", "a-shake") + A("🎵", "a-float") + A("🎶", "a-float a-delay"),
+      q: "In music class you pull a guitar string to one side and let go. Which forms of energy are there? Tap all.", need: ["elastic", "kinetic", "sound"], also: ["thermal"],
+      tip: "The pulled string is stretched. Then it moves fast backwards and forwards. And you hear it!",
+      why: "The pulled string is stretched (elastic energy). When you let go, it vibrates (kinetic energy) and makes sound energy. (A tiny bit becomes thermal energy too.)" },
+    { type: "mc", pic: A("🔌") + AR + A("📱", "a-pulse") + A("♨️", "a-float"), q: "Your phone gets warm while it is charging. What is happening?", ok: "b",
+      opts: [["a", "The battery is making new energy."], ["b", "Electrical energy changes into chemical energy in the battery – and some into thermal energy, so the phone gets warm."],
+        ["c", "The phone is destroying energy."], ["d", "The phone is taking thermal energy out of the air."]],
+      tip: "Energy cannot be made or destroyed – it only changes form. Which form does a battery store?",
+      why: "The charger gives electrical energy. Most is stored as chemical energy in the battery; some changes into thermal energy." },
+    { type: "mc", pic: ST(A("🧒", "a-down"), A("📐")), q: "You go down the playground slide. Where are you fastest – where do you have the most kinetic energy?", ok: "c",
+      opts: [["a", "At the top, before you start"], ["b", "Halfway down"], ["c", "At the bottom of the slide"], ["d", "It is the same everywhere"]],
+      tip: "As you go down, gravitational energy changes into kinetic energy. Where has the most changed?",
+      why: "The lower you are, the more gravitational energy has changed into kinetic energy – so you are fastest at the bottom (like Lea on the ramp)." },
+    { type: "mc", pic: A("☀️", "a-spin") + AR + A("🏫") + AR + A("⚡", "a-flick"), q: "Our school has solar panels on the roof. They make electricity from sunlight. Where did this energy start?", ok: "a",
+      opts: [["a", "As nuclear energy inside the Sun"], ["b", "As chemical energy in the solar panels"], ["c", "As electrical energy in the clouds"], ["d", "As thermal energy in the roof"]],
+      tip: "Think of scene 6: which form of energy is stored deep inside the Sun?",
+      why: "Nuclear energy in the Sun → light energy → (solar panel) → electrical energy." },
+    { type: "chain", pic: A("💇") + A("💨", "a-slide") + A("♨️", "a-float") + A("🎵", "a-float a-delay"),
+      q: "You dry your hair with a hair dryer. It blows hot air and it is noisy. Build its energy chain.", stages: [["electrical"], ["thermal", "kinetic", "sound"]], traps: ["chemical", "light"],
+      tip: "It is plugged in. Then look for three things: hot, moving air, noise.",
+      why: "The hair dryer changes electrical energy into thermal energy (hot), kinetic energy (moving air) and sound energy." },
+    { type: "chain", pic: A("🔔", "a-shake") + A("🎵", "a-float") + A("🏫"),
+      q: "Ring! The electric school bell rings at the end of the lesson: a little hammer hits the bell very fast. Build the energy chain.", stages: [["electrical"], ["kinetic"], ["sound"]], traps: ["chemical", "nuclear"],
+      tip: "Electricity makes the hammer move. What do you hear?",
+      why: "Electrical energy → kinetic energy (the moving hammer) → sound energy (the ringing bell)." },
+    { type: "chain", pic: A("🚲", "a-slide") + A("⚙️", "a-spin") + AR + A("💡", "a-glow"),
+      q: "Your bicycle light has no battery. A dynamo on the turning wheel makes electricity. Build the energy chain from the turning wheel to the bright, warm bulb.", stages: [["kinetic"], ["electrical"], ["light", "thermal"]], traps: ["chemical", "sound"],
+      tip: "The wheel is moving. The dynamo makes electricity. What comes out of the bulb?",
+      why: "Kinetic energy of the wheel → electrical energy (dynamo) → light energy + thermal energy (bulb)." },
+    { type: "chain", pic: A("✋") + A("➰", "a-pulse") + A("💨", "a-slide"),
+      q: "You stretch a rubber band and let it go (never aim at people!). It flies across the room. Build the energy chain: stretched → flying.", stages: [["elastic"], ["kinetic"]], traps: ["gravitational", "chemical", "electrical"],
+      tip: "Which form do stretched things have? Which form do moving things have?",
+      why: "The stretched rubber band has elastic energy. When you let go, it changes into kinetic energy." },
+    { type: "joules", pic: A("🔌") + AR + A("💡", "a-glow") + A("♨️", "a-float sm"),
+      q: "An LED lamp in the classroom gets 100 J of electrical energy. 75 J changes into light energy. How much changes into thermal energy?", value: 25,
+      tip: "The total stays the same: 100 J = 75 J + ? So work out 100 − 75.",
+      why: "100 J − 75 J = 25 J of thermal energy. 75 J + 25 J = 100 J." },
+    { type: "joules", pic: A("🍌") + AR + A("🚴", "a-slide") + A("♨️", "a-float"),
+      q: "You eat a banana for breakfast and cycle to school. Your body uses 500 J of chemical energy from the banana. 100 J becomes kinetic energy. The rest makes you warm. How much thermal energy is that?", value: 400,
+      tip: "500 J = 100 J + ? So work out 500 − 100.",
+      why: "500 J − 100 J = 400 J of thermal energy. That is why you get warm when you cycle!" },
+    { type: "joules", pic: A("⚡") + AR + A("🍲", "a-pulse") + A("♨️", "a-float") + A("🎵", "a-float a-delay"),
+      q: "A microwave oven gets 1000 J of electrical energy. 700 J heats your soup and 50 J becomes sound (the hum). The rest warms the oven and the air. How much is that?", value: 250,
+      tip: "1000 J = 700 J + 50 J + ? So work out 1000 − 700 − 50.",
+      why: "1000 J − 700 J − 50 J = 250 J. 700 J + 50 J + 250 J = 1000 J – the total stays the same." },
+  ];
+
+  /* ============================ 4 ENGINE ============================ */
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs = {}, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  const txt = (svg, x, y, s, attrs = {}) => { const t = el("text", { x, y, "font-size": 14, fill: "#37474F", "font-family": "Segoe UI, Calibri, Arial, sans-serif", ...attrs }, svg); t.textContent = s; return t; };
+  const h = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+  const shuffle = (arr) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  function clamp(v, a = 0, b = 1) { return Math.max(a, Math.min(b, v)); }
+  const reduced = () => window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const shake = (e) => { e.classList.remove("shake"); void e.offsetWidth; e.classList.add("shake"); };
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const lerpCol = (a, b, t) => {
+    const p = (c) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16)), A = p(a), B = p(b);
+    return "#" + A.map((v, i) => Math.round(v + (B[i] - v) * clamp(t)).toString(16).padStart(2, "0")).join("");
+  };
+  const TEST = /[?&]test\b/.test(location.search);
+  const TEACHER = /[?&]teacher\b/.test(location.search);
+
+  /* Marie, the guide (same drawing as the Grade 6 Science skills simulation) */
+  const SPEX = `<svg class="spex" viewBox="0 0 100 100" data-mood="talk" aria-hidden="true">
+    <circle cx="50" cy="50" r="49" fill="#DCE3EA"/>
+    <path d="M24 47 Q20 15 50 13 Q80 14 77 47 L78 63 Q73 67 68 60 L32 60 Q27 66 22 61Z" fill="#3B2A22"/>
+    <path d="M10 100 Q12 76 50 71 Q88 76 90 100Z" fill="#7F8C6B"/>
+    <rect x="44.5" y="60" width="11" height="13" rx="3" fill="#E6BFA3"/>
+    <path d="M41 71 L50 86 L35 82Z" fill="#8E9B79" stroke="#6B775A" stroke-width="1"/><path d="M59 71 L50 86 L65 82Z" fill="#8E9B79" stroke="#6B775A" stroke-width="1"/>
+    <circle cx="50" cy="93" r="1.6" fill="#A1887F"/>
+    <circle cx="29.5" cy="47" r="4" fill="#E6BFA3"/><circle cx="70.5" cy="47" r="4" fill="#E6BFA3"/><circle cx="29.3" cy="52.5" r="1.4" fill="#26A69A"/>
+    <ellipse cx="50" cy="45" rx="20.5" ry="23" fill="#F0CDB4"/>
+    <path d="M29.5 41 Q29 20 45 18.5 Q63 16.5 72 30 Q74 38 72.5 47 Q67 34 57 31 Q49 29 45 25.5 Q39 31 29.5 41Z" fill="#3B2A22"/>
+    <path d="M44.5 19.5 Q47 23 45.5 27" stroke="#A8A29E" stroke-width="1.6" fill="none"/><path d="M50 21 Q63 21 70 32" stroke="#5A463C" stroke-width="1.2" fill="none"/>
+    <circle cx="37" cy="54" r="3.3" fill="#F48FB1" opacity=".35"/><circle cx="63" cy="54" r="3.3" fill="#F48FB1" opacity=".35"/>
+    <g class="brow" stroke="#3B2A22" stroke-width="1.6" fill="none" stroke-linecap="round"><path d="M35 35.5 q5 -2.5 10 -0.5"/><path d="M55 35 q5 -2 10 0.5"/></g>
+    <circle cx="41" cy="44" r="2.2" fill="#4E342E"/><circle cx="59" cy="44" r="2.2" fill="#4E342E"/>
+    <path d="M50 46 q-2.2 5 0 6.2" stroke="#D49F82" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <rect class="lens" x="32" y="37.5" width="16.5" height="13.5" rx="6" stroke="#B98A70" stroke-width="1.2"/>
+    <rect class="lens" x="51.5" y="37.5" width="16.5" height="13.5" rx="6" stroke="#B98A70" stroke-width="1.2"/>
+    <path d="M48.5 42 q1.5 -1.6 3 0 M32 41 L28 40 M68 41 L72 40" stroke="#B98A70" stroke-width="1.1" fill="none"/>
+    <ellipse class="m m-talk" cx="50" cy="58.5" rx="3.6" ry="2.6" fill="#B5545C"/>
+    <path class="m m-happy" d="M43 56.5 Q50 63.5 57 56.5Z" fill="#B5545C"/>
+    <path class="m m-think" d="M45.5 59 h8" stroke="#B5545C" stroke-width="2" stroke-linecap="round"/>
+    <circle class="m m-wow" cx="50" cy="59" r="3.2" fill="#B5545C"/>
+    <path class="m m-hmm" d="M44 59.5 q3 -2.2 6 0 t6 0" stroke="#B5545C" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>`;
+  function spexBar(name) {
+    const bar = document.querySelector(`[data-spex="${name}"]`);
+    if (bar && !bar.firstChild) bar.innerHTML = SPEX + `<div class="bubble" aria-live="polite"></div><button class="spk" type="button" aria-label="Read Marie's words aloud" title="Read aloud">🔈</button>`;
+    return bar;
+  }
+  function say(name, html, mood = "talk", cls = "") {
+    const bar = spexBar(name); if (!bar) return;
+    bar.querySelector(".spex").dataset.mood = mood;
+    const b = bar.querySelector(".bubble"); b.className = "bubble" + (cls ? " " + cls : ""); b.innerHTML = html;
+    if (P.read && !bar.closest("[hidden]")) speak(b.textContent);
+  }
+
+  /* read aloud: the browser's own voice (works offline on most devices) */
+  const canSpeak = "speechSynthesis" in window && typeof SpeechSynthesisUtterance !== "undefined";
+  if (!canSpeak) document.documentElement.classList.add("nospeech");
+  function speakText(s) {
+    return s.replace(/\p{Extended_Pictographic}|️|[★▶⏸↺]/gu, " ").replace(/[→➜]/g, " changes into ").replace(/−/g, " minus ")
+      .replace(/(\d)\s?J\b/g, "$1 joules").replace(/\s+/g, " ").trim();
+  }
+  function speak(s) {
+    if (!canSpeak) return;
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(speakText(s)); u.lang = "en-GB"; u.rate = 0.9;
+      const vs = speechSynthesis.getVoices(), v = vs.find((x) => /^en[-_]GB/i.test(x.lang)) || vs.find((x) => /^en/i.test(x.lang));
+      if (v) u.voice = v;
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  const textOf = (node) => { const c = node.cloneNode(true); c.querySelectorAll(".spk, .qn").forEach((x) => x.remove()); return c.textContent; };
+
+  /* sound: off by default; tiny tones made in the browser */
+  let actx = null;
+  function beep(fq, d, type = "sine", v = 0.06, when = 0) {
+    if (!P.sound) return;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + when;
+      o.type = type; o.frequency.value = fq; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + d + 0.02);
+    } catch (e) {}
+  }
+  const SND = {
+    click: () => beep(1400, 0.04, "square", 0.04),
+    tick: () => beep(2200, 0.02, "square", 0.02),
+    thud: (i) => beep(110, 0.14, "triangle", 0.1 * (1 - i * 0.22)),
+    star: () => { beep(660, 0.12); beep(990, 0.18, "sine", 0.06, 0.1); },
+    tip: () => beep(250, 0.22, "triangle", 0.07),
+    badge: () => [523, 659, 784, 1047].forEach((fq, i) => beep(fq, 0.18, "sine", 0.06, i * 0.11)),
+  };
+
+  /* progress: saved in this browser */
+  const STORE = "g6-energy-v1";
+  const P = { sc: {}, cur: null, quiz: { i: 0, st: [], best: null }, badges: {}, name: "", sound: false, read: false, seenIntro: false };
+  function save() { try { localStorage.setItem(STORE, JSON.stringify(P)); } catch (e) {} }
+  function load() { try { const d = JSON.parse(localStorage.getItem(STORE) || "null"); for (const k in d || {}) if (k in P) P[k] = d[k]; P.sc = P.sc || {}; } catch (e) {} }
+  const SP = (id) => (P.sc[id] = P.sc[id] || { pred: null, watched: false, stars: null });
+  const isDone = (id) => SP(id).stars != null;
+  const unlocked = (i) => TEACHER || i === 0 || isDone(SCENES[i - 1].id);
+  const starsOf = (st) => (st.revealed ? 0 : st.mistakes ? 2 : 3);
+  const meanStars = (sts) => Math.round(sts.reduce((s, st) => s + starsOf(st), 0) / Math.max(1, sts.length));
+  const starsHTML = (n, of = 3) => `<span class="stars" aria-label="${n} stars">${"★".repeat(n)}<span class="off">${"★".repeat(Math.max(0, of - n))}</span></span>`;
+  const sceneStars = () => SCENES.reduce((s, sc) => s + (SP(sc.id).stars || 0), 0);
+  const quizNow = () => P.quiz.st.reduce((a, n) => a + (n || 0), 0);
+  const quizStars = () => Math.max(P.quiz.best || 0, P.quiz.i >= QUIZ.length ? quizNow() : 0);
+  const totalStars = () => sceneStars() + quizStars();
+  function toast(msg) { const t = $("toast"); t.innerHTML = msg; t.classList.remove("on"); void t.offsetWidth; t.classList.add("on"); clearTimeout(toast.k); toast.k = setTimeout(() => t.classList.remove("on"), 3400); }
+
+  /* judge: one answer = one judge. 1st wrong → a tip, 2nd wrong → reveal() shows the answer. */
+  function judge({ fb, spex, tip, answer, good, reveal, onDone }) {
+    const st = { mistakes: 0, revealed: false, done: false };
+    return {
+      st,
+      ok(extra = "") {
+        if (st.done) return; st.done = true;
+        fbSet(fb, "good", `✔ ${good}${extra}`);
+        spex && say(spex, st.mistakes ? "Yes! You got it after the tip. ★★" : "Brilliant – right first time! ★★★", "happy", "good");
+        SND.star();
+        onDone && onDone(st);
+      },
+      bad(tipOverride) {
+        if (st.done) return;
+        st.mistakes++; SND.tip();
+        if (st.mistakes === 1) {
+          fbSet(fb, "tip", "💡 Tip: " + (tipOverride || tip));
+          spex && say(spex, "Hmm, not quite. Read my tip and try again!", "hmm", "tip");
+        } else {
+          st.revealed = true; st.done = true;
+          reveal && reveal();
+          fbSet(fb, "ans", "The answer: " + answer);
+          spex && say(spex, "Here is the answer – read why, and you'll get the next one!", "think", "ans");
+          onDone && onDone(st);
+        }
+      },
+    };
+  }
+  function fbSet(e, cls, html) { e.className = "feedback " + cls; e.innerHTML = html; }
+  const qline = (n, html) => h(`<p class="q"><span><span class="qn">${n}</span>${html}</span><button class="spk" type="button" aria-label="Read the question aloud" title="Read aloud">🔈</button></p>`);
+  const formBtn = (k) => `<span class="fi" style="--c:${FORMS[k].col}">${FORMS[k].em}</span>${FORMS[k].label}`;
+
+  /* multiple choice. opts = [value, html]; correct = value */
+  function ask({ box, opts, correct, tip, answer, good, spex, cls = "", onDone }) {
+    const wrap = h(`<div class="cats ${cls}"></div>`), fb = h(`<div class="feedback" aria-live="polite"></div>`);
+    box.append(wrap, fb);
+    const btns = opts.map(([v, html]) => { const b = h(`<button class="cat" data-v="${v}">${html}</button>`); wrap.appendChild(b); return b; });
+    if (TEST) btns.forEach((b) => b.dataset.v === correct && (b.dataset.ok = "1"));
+    const J = judge({ fb, spex, tip, answer, good, onDone: (st) => { btns.forEach((b) => (b.disabled = true)); onDone && onDone(st); },
+      reveal: () => btns.forEach((x) => x.dataset.v === correct && x.classList.add("right")) });
+    btns.forEach((b) => (b.onclick = () => {
+      if (J.st.done) return;
+      if (b.dataset.v === correct) { b.classList.add("right"); J.ok(); }
+      else { b.classList.add("wrong"); b.disabled = true; J.bad(); }
+    }));
+    return J.st;
+  }
+
+  /* drag, or tap then tap. Items: .tile. Targets: anything matching targetSel. */
+  let SEL = null;
+  function unselect() { if (SEL) SEL.classList.remove("sel"); SEL = null; }
+  function draggable(item, targetSel, drop) {
+    item.addEventListener("click", (e) => {
+      if (item.dataset.dragged) { delete item.dataset.dragged; e.stopPropagation(); return; }
+      if (item.dataset.locked) return;
+      e.stopPropagation();
+      if (item.closest(".slot") && !SEL) { drop(item, null); return; }      // tap a filled gap: the tile goes back
+      const same = SEL === item; unselect();
+      if (!same) { SEL = item; item.classList.add("sel"); }
+    });
+    item.addEventListener("pointerdown", (e) => {
+      if (e.button > 0 || item.dataset.locked) return;
+      const sx = e.clientX, sy = e.clientY;
+      let ghost = null, hot = null;
+      try { item.setPointerCapture(e.pointerId); } catch (er) {}
+      const at = (x, y) => { const t = document.elementFromPoint(x, y); return t && t.closest(targetSel); };
+      const move = (ev) => {
+        if (!ghost && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 6) {
+          ghost = item.cloneNode(true); ghost.classList.add("drag-ghost"); ghost.classList.remove("sel");
+          document.body.appendChild(ghost); item.classList.add("lifting");
+        }
+        if (!ghost) return;
+        ghost.style.left = ev.clientX + "px"; ghost.style.top = ev.clientY + "px";
+        const s = at(ev.clientX, ev.clientY);
+        if (s !== hot) { hot && hot.classList.remove("hot"); hot = s; hot && hot.classList.add("hot"); }
+      };
+      const up = (ev) => {
+        item.removeEventListener("pointermove", move); item.removeEventListener("pointerup", up); item.removeEventListener("pointercancel", up);
+        if (!ghost) return;
+        item.dataset.dragged = "1"; setTimeout(() => delete item.dataset.dragged, 0);
+        ghost.remove(); item.classList.remove("lifting"); hot && hot.classList.remove("hot");
+        const s = ev.type === "pointerup" && at(ev.clientX, ev.clientY);
+        if (s) { unselect(); drop(item, s); }
+      };
+      item.addEventListener("pointermove", move); item.addEventListener("pointerup", up); item.addEventListener("pointercancel", up);
+    });
+  }
+
+  /* energy chain: stages = [[form], [form, form]…]; the forms inside one stage may go in any order */
+  const tileHTML = (k) => `<button class="tile" data-v="${k}" style="--c:${FORMS[k].col}">${FORMS[k].em} ${FORMS[k].tile}</button>`;
+  function chainQ({ box, stages, traps, tip, why = "", spex, onDone }) {
+    const row = h(`<div class="chain" aria-label="Energy chain"></div>`), bank = h(`<div class="bank" aria-label="Energy tiles"></div>`);
+    const chk = h(`<div class="controls"><button class="btn navy">✔ Check</button></div>`), fb = h(`<div class="feedback" aria-live="polite"></div>`);
+    const slots = [];
+    stages.forEach((g, gi) => {
+      if (gi) row.append(h(`<span class="to" aria-label="changes into">➜</span>`));
+      const grp = h(`<span class="grp"></span>`);
+      g.forEach((_, k) => { if (k) grp.append(h(`<span class="plus">+</span>`)); const s = h(`<span class="slot" role="button" tabindex="0" aria-label="gap"></span>`); s.dataset.g = gi; grp.append(s); slots.push(s); });
+      row.append(grp);
+    });
+    box.append(row, h(`<div class="hint">Drag a tile into each gap – or tap a tile, then tap a gap. <b>+</b> means "and".</div>`), bank, chk, fb);
+    const tiles = shuffle([...stages.flat(), ...traps]).map((k) => { const t = h(tileHTML(k)); bank.appendChild(t); return t; });
+    const place = (t, target) => {
+      if (J.st.done) return;
+      if (!target || target === bank) { bank.appendChild(t); return; }
+      const slot = target.closest(".slot"); if (!slot) return;
+      const old = slot.querySelector(".tile"); if (old && old !== t) bank.appendChild(old);
+      slot.classList.remove("wrong"); slot.appendChild(t);
+    };
+    tiles.forEach((t) => draggable(t, ".slot, .bank", place));
+    slots.forEach((s) => s.addEventListener("click", () => { if (SEL && !s.contains(SEL)) { const t = SEL; unselect(); place(t, s); } }));
+    bank.addEventListener("click", () => { if (SEL) { const t = SEL; unselect(); place(t, bank); } });
+    const val = (s) => s.querySelector(".tile")?.dataset.v;
+    const groupOK = (gi) => { const got = slots.filter((s) => +s.dataset.g === gi).map(val).sort().join(); return got === stages[gi].slice().sort().join(); };
+    const chainText = stages.map((g) => g.map((k) => FORMS[k].tile).join(" + ")).join(" → ");
+    const J = judge({ fb, spex, tip, answer: `<b>${chainText}</b>. ${why}`, good: `<b>${chainText}</b>. ${why}`,
+      onDone: (st) => { chk.hidden = true; tiles.forEach((t) => (t.dataset.locked = "1")); onDone && onDone(st); },
+      reveal: () => {
+        slots.forEach((s) => { const t = s.querySelector(".tile"); if (t) bank.appendChild(t); });
+        const used = new Set();
+        stages.forEach((g, gi) => slots.filter((s) => +s.dataset.g === gi).forEach((s, k) => {
+          const t = tiles.find((x) => !used.has(x) && x.dataset.v === g[k]); used.add(t); s.appendChild(t); s.classList.remove("wrong"); s.classList.add("right");
+        }));
+      } });
+    chk.querySelector("button").onclick = () => {
+      if (slots.some((s) => !val(s))) { fbSet(fb, "info", "Fill every gap first."); shake(row); return; }
+      const bad = stages.map((_, gi) => gi).filter((gi) => !groupOK(gi));
+      if (!bad.length) { slots.forEach((s) => s.classList.add("right")); return J.ok(); }
+      const wrongSlots = slots.filter((s) => bad.includes(+s.dataset.g));
+      wrongSlots.forEach((s) => s.classList.add("wrong"));
+      if (J.st.mistakes === 0) setTimeout(() => wrongSlots.forEach((s) => { const t = s.querySelector(".tile"); if (!J.st.done && t) { bank.appendChild(t); s.classList.remove("wrong"); } }), 900);
+      J.bad();
+    };
+    return J.st;
+  }
+
+  /* tap the forms: need = all of these; also = may be tapped too (not wrong) */
+  function tapQ({ box, need, also = [], tip, why, spex, onDone }) {
+    const grid = h(`<div class="pickgrid"></div>`), chk = h(`<div class="controls"><button class="btn navy">✔ Check</button></div>`), fb = h(`<div class="feedback" aria-live="polite"></div>`);
+    box.append(grid, chk, fb);
+    const pks = ORDER.map((k) => { const b = h(`<button class="pk" aria-pressed="false" data-f="${k}"><span class="em" style="--c:${FORMS[k].col}">${FORMS[k].em}</span><span>${FORMS[k].label}</span></button>`); grid.append(b); return b; });
+    if (TEST) pks.forEach((b) => need.includes(b.dataset.f) && (b.dataset.ok = "1"));
+    pks.forEach((b) => (b.onclick = () => { if (J.st.done) return; b.classList.remove("wrong"); b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") !== "true"); }));
+    const names = need.map((k) => FORMS[k].label.toLowerCase()).join(" + ");
+    const J = judge({ fb, spex, tip, answer: `<b>${names}</b>. ${why}`, good: `<b>${names}</b>. ${why}`,
+      onDone: (st) => { chk.hidden = true; pks.forEach((b) => (b.disabled = true)); onDone && onDone(st); },
+      reveal: () => pks.forEach((b) => { const on = need.includes(b.dataset.f); b.setAttribute("aria-pressed", on); b.classList.remove("wrong"); b.classList.toggle("right", on); }) });
+    chk.querySelector("button").onclick = () => {
+      const sel = pks.filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.f);
+      if (!sel.length) { fbSet(fb, "info", "Tap the forms of energy first."); shake(grid); return; }
+      const missing = need.filter((k) => !sel.includes(k)), extra = sel.filter((k) => !need.includes(k) && !also.includes(k));
+      if (!missing.length && !extra.length) { pks.forEach((b) => need.includes(b.dataset.f) && b.classList.add("right")); return J.ok(); }
+      pks.forEach((b) => extra.includes(b.dataset.f) && b.classList.add("wrong"));
+      J.bad((extra.length ? "The red one is not right. " : "") + (missing.length ? `You missed ${missing.length === 1 ? "one" : missing.length}. ` : "") + tip);
+    };
+    return J.st;
+  }
+
+  /* missing joules: the number AND the unit (J) */
+  function joulesQ({ box, value, tip, why, spex, onDone }) {
+    const row = h(`<div class="numrow"><input class="num" autocomplete="off" placeholder="e.g. 5 J" aria-label="Your answer with the unit"><button class="btn navy">✔ Check</button></div>`);
+    const fb = h(`<div class="feedback" aria-live="polite"></div>`);
+    box.append(row, h(`<div class="hint">Type the number <b>and</b> the unit of energy.</div>`), fb);
+    const inp = row.querySelector("input"), btn = row.querySelector("button");
+    if (TEST) inp.dataset.val = value + " J";
+    const J = judge({ fb, spex, tip, answer: `<b>${value} J</b>. ${why || "The total stays the same."}`, good: `<b>${value} J</b>. ${why || "The total stays the same!"}`,
+      onDone: (st) => { inp.disabled = true; btn.hidden = true; onDone && onDone(st); },
+      reveal: () => { inp.value = value + " J"; inp.classList.remove("wrong"); inp.classList.add("right"); } });
+    const go = () => {
+      const m = inp.value.trim().match(/^(-?\d+(?:[.,]\d+)?)\s*(.*)$/);
+      if (!m) { fbSet(fb, "info", "Type a number first, then the unit."); inp.focus(); return; }
+      const v = parseFloat(m[1].replace(",", ".")), unit = m[2].trim().replace(/\.$/, "");
+      const unitOK = /^(j|joules?)$/i.test(unit);
+      if (Math.abs(v - value) < 1e-9) {
+        if (!unitOK) { fbSet(fb, "info", unit ? `✔ The number is right! But “${esc(unit)}” is not the unit of energy. Energy is measured in <b>joules (J)</b>.` : `✔ The number is right! Now add the unit of energy after it: <b>J</b> (joules).`); inp.focus(); return; }
+        inp.classList.remove("wrong"); inp.classList.add("right"); J.ok();
+      } else { inp.classList.add("wrong"); J.bad(); inp.select(); }
+    };
+    btn.onclick = go; inp.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
+    return J.st;
+  }
+
+  /* run parts one after another inside box; each part(container, done) calls done(st) */
+  function sequence(box, parts, onAll) {
+    const sts = [];
+    const next = (i) => {
+      if (i >= parts.length) return onAll(sts);
+      const c = h(`<div class="part"></div>`); box.appendChild(c);
+      parts[i](c, (st) => { sts.push(st); setTimeout(() => next(i + 1), 450); });
+      if (i > 0) setTimeout(() => c.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "nearest" }), 60);
+    };
+    next(0);
+  }
+
+  /* energies */
+  function keyState(keys, p) {
+    const E = {};
+    if (p <= keys[0][0]) return { ...keys[0][1] };
+    for (let i = 0; i < keys.length - 1; i++) {
+      const [p0, a] = keys[i], [p1, b] = keys[i + 1];
+      if (p <= p1) { const t = (p - p0) / (p1 - p0); ORDER.forEach((k) => (E[k] = (a[k] || 0) + ((b[k] || 0) - (a[k] || 0)) * t)); return E; }
+    }
+    return { ...keys[keys.length - 1][1] };
+  }
+  const lostSplit = (E, lost) => { E.thermal = 0.9 * lost; E.sound = 0.1 * lost; return E; };
+  function ballState(p) {
+    const H = BALL.H;
+    if (p < BALL.P0) return { y: 1, sq: 0, E: { gravitational: 100 } };
+    const s = BALL.segs.find((g) => p < g.p1);
+    if (!s) return { y: 0, sq: 0, E: lostSplit({}, 100) };
+    const t = (p - s.p0) / (s.p1 - s.p0), E = {};
+    let y = 0, sq = 0, mech;
+    if (s.type === "fall") { mech = 100 * H[s.i]; y = H[s.i] * (1 - t * t); E.gravitational = 100 * y; E.kinetic = mech - E.gravitational; }
+    else if (s.type === "rise") { mech = 100 * H[s.i + 1]; y = H[s.i + 1] * (1 - (1 - t) * (1 - t)); E.gravitational = 100 * y; E.kinetic = mech - E.gravitational; }
+    else { mech = 100 * H[s.i] - 100 * (H[s.i] - H[s.i + 1]) * t; sq = Math.sin(Math.PI * t); E.elastic = mech * sq; E.kinetic = mech - E.elastic; }
+    return { y, sq, E: lostSplit(E, 100 - mech) };
+  }
+  function skateState(p) {
+    const { E: PK, a, P0, SW } = SKATE, n = PK.length - 1;
+    if (p < P0) return { s: -1, dir: 1, E: { gravitational: 1000 } };
+    const i = Math.floor((p - P0) / SW);
+    if (i >= n) return { s: 0, dir: 1, E: lostSplit({}, 1000) };
+    const t = (p - P0 - i * SW) / SW, u = (1 - Math.cos(Math.PI * t)) / 2;
+    const start = (i % 2 ? 1 : -1) * a[i], end = (i % 2 ? -1 : 1) * a[i + 1];
+    const s = start + (end - start) * u, mech = PK[i] - (PK[i] - PK[i + 1]) * u;
+    const E = { gravitational: 1000 * s * s };
+    E.kinetic = Math.max(0, mech - E.gravitational);
+    return { s, dir: Math.sign(end - start), E: lostSplit(E, 1000 - mech) };
+  }
+  const stateOf = (sc, p) => (sc.id === "ball" ? ballState(p) : sc.id === "skate" ? skateState(p) : { E: keyState(sc.keys, p) });
+  // whole joules that always add up to the total (largest remainder)
+  function roundE(E, total) {
+    const rows = ORDER.map((k) => { const v = Math.max(0, E[k] || 0), fl = Math.floor(v + 1e-6); return { k, fl, fr: v - fl }; });
+    let rem = total - rows.reduce((s, r) => s + r.fl, 0);
+    rows.slice().sort((x, y) => y.fr - x.fr).forEach((r) => { if (rem > 0 && r.fr > 1e-6) { r.fl++; rem--; } });
+    return Object.fromEntries(rows.map((r) => [r.k, r.fl]));
+  }
+  // the forms a scene uses (bigger than 0.5 J at some moment), in the order they first appear
+  function formsIn(sc) {
+    const first = {};
+    for (let i = 0; i <= 400; i++) { const p = i / 400, E = stateOf(sc, p).E; ORDER.forEach((k) => { if ((E[k] || 0) > 0.5 && first[k] == null) first[k] = p; }); }
+    return Object.keys(first).sort((x, y) => first[x] - first[y]);
+  }
+
+  /* ============================ 5 DRAW ============================ */
+  function soundArcs(svg, x, y, dir, op, tm) {
+    if (op <= 0.02) return;
+    for (let i = 0; i < 3; i++) {
+      const r = 8 + ((tm / 70 + i * 9) % 27), o = op * (1 - (r - 8) / 27);
+      el("path", { d: `M${x + dir * r * 0.64} ${y - r * 0.77} A${r} ${r} 0 0 ${dir > 0 ? 1 : 0} ${x + dir * r * 0.64} ${y + r * 0.77}`, fill: "none", stroke: "#EC407A", "stroke-width": 3, "stroke-linecap": "round", opacity: o }, svg);
+    }
+  }
+  function heatWaves(svg, x, y, n, op, tm) {
+    if (op <= 0.02) return;
+    for (let i = 0; i < n; i++) {
+      const x0 = x + i * 12; let d = `M${x0} ${y}`;
+      for (let j = 1; j <= 6; j++) d += ` L${x0 + Math.sin(j * 1.3 + tm / 180 + i) * 4} ${y - j * 6}`;
+      el("path", { d, fill: "none", stroke: "#E53935", "stroke-width": 2.5, "stroke-linecap": "round", opacity: op }, svg);
+    }
+  }
+  function dotsAlong(svg, path, tm, col, gap, speed) {
+    const L = path.getTotalLength(); if (!L) return;
+    for (let d = (tm * speed) % gap; d < L; d += gap) { const pt = path.getPointAtLength(d); el("circle", { cx: pt.x, cy: pt.y, r: 3.6, fill: col, stroke: "#E65100", "stroke-width": 1 }, svg); }
+  }
+  const bg = (svg, col) => el("rect", { x: 0, y: 0, width: 600, height: 340, fill: col }, svg);
+
+  function drawKettle(svg, p, S, tm) {
+    const E = S.E, on = p >= 0.1 && p < 0.9;
+    const heat = on ? clamp((p - 0.1) / 0.08) : p >= 0.9 ? clamp(1 - (p - 0.9) / 0.08) : 0, warm = clamp((E.thermal || 0) / 980);
+    bg(svg, "#FFF8E1");
+    for (let y = 40; y < 268; y += 46) el("line", { x1: 0, x2: 600, y1: y, y2: y, stroke: "#FFECB3", "stroke-width": 2 }, svg);
+    el("rect", { x: 0, y: 268, width: 600, height: 72, fill: "#A1887F" }, svg); el("rect", { x: 0, y: 268, width: 600, height: 8, fill: "#8D6E63" }, svg);
+    el("rect", { x: 500, y: 140, width: 56, height: 64, rx: 8, fill: "#ECEFF1", stroke: "#90A4AE", "stroke-width": 2 }, svg);
+    el("rect", { x: 510, y: 160, width: 36, height: 26, rx: 5, fill: "#37474F" }, svg);
+    txt(svg, 528, 224, "socket", { "text-anchor": "middle", "font-size": 15, fill: "#6D4C41", "font-weight": 700 });
+    const cable = el("path", { d: "M528 186 C528 248 480 256 430 256 L322 256", fill: "none", stroke: "#37474F", "stroke-width": 6, "stroke-linecap": "round" }, svg);
+    if (on) dotsAlong(svg, cable, tm, "#FFB300", 26, 0.09);
+    el("rect", { x: 142, y: 246, width: 180, height: 22, rx: 6, fill: "#37474F" }, svg);
+    el("circle", { cx: 304, cy: 257, r: 4.5, fill: on ? "#FF1744" : "#78909C" }, svg);
+    el("path", { d: "M288 128 Q342 132 336 190 Q332 232 300 240", fill: "none", stroke: "#455A64", "stroke-width": 11, "stroke-linecap": "round" }, svg);
+    el("path", { d: "M176 128 L136 104 L142 96 L180 116 Z", fill: "#CFD8DC", stroke: "#546E7A", "stroke-width": 2 }, svg);
+    el("path", { d: "M160 246 L176 110 Q231 96 286 110 L302 246 Z", fill: "#E1F5FE", stroke: "#546E7A", "stroke-width": 3 }, svg);
+    const wp = "M174 138 L288 138 L300 244 L162 244 Z";
+    el("path", { d: wp, fill: "#90CAF9" }, svg);
+    if (warm > 0) el("path", { d: wp, fill: "#FF7043", opacity: 0.38 * warm }, svg);
+    let zz = "M176 236", up = true; for (let x = 181.5; x <= 287; x += 5.5) { zz += ` L${x} ${up ? 228 : 236}`; up = !up; }
+    el("path", { d: zz, fill: "none", stroke: lerpCol("#78909C", "#FF3D00", heat), "stroke-width": 4, "stroke-linejoin": "round" }, svg);
+    const nb = Math.round(heat * (3 + 12 * warm));
+    for (let k = 0; k < nb; k++) {
+      const ph = ((tm / 1000) * (0.7 + (k % 3) * 0.25) + k * 0.379) % 1;
+      el("circle", { cx: 182 + ((k * 37) % 100) + Math.sin(ph * 9 + k) * 3, cy: 230 - ph * 88, r: 2 + (k % 3) * 1.2, fill: "none", stroke: "#fff", "stroke-width": 1.6 }, svg);
+    }
+    el("path", { d: "M186 108 Q231 90 276 108 Z", fill: "#78909C" }, svg);
+    el("rect", { x: 224, y: 88, width: 14, height: 8, rx: 3, fill: "#455A64" }, svg);
+    el("rect", { x: 258, y: 66, width: 10, height: 172, rx: 5, fill: "#fff", stroke: "#90A4AE", "stroke-width": 1.5 }, svg);
+    const lh = 20 + 120 * warm;
+    el("rect", { x: 261, y: 232 - lh, width: 4, height: lh, fill: "#E53935" }, svg);
+    el("circle", { cx: 263, cy: 234, r: 7, fill: "#E53935" }, svg);
+    if (warm > 0.5) {
+      const op = (warm - 0.5) * 2 * (p < 0.9 ? 1 : clamp(1 - (p - 0.9) / 0.1));
+      for (let k = 0; k < 4; k++) { const rise = (tm / 28 + k * 12) % 48; el("circle", { cx: 132 - k * 5 + Math.sin(rise / 8 + k) * 4, cy: 92 - rise, r: 6 + rise / 7, fill: "#fff", stroke: "#CFD8DC", opacity: op * (1 - rise / 48) }, svg); }
+    }
+    if (on) soundArcs(svg, 118, 190, -1, 0.85 * Math.min(1, warm * 3), tm);
+  }
+
+  function drawTorch(svg, p, S, tm) {
+    const E = S.E, on = p >= 0.12 && p < 0.88, glow = on ? clamp((p - 0.12) / 0.03) : 0, cf = clamp((E.chemical || 0) / 100);
+    bg(svg, "#1C2833");
+    el("rect", { x: 548, y: 0, width: 52, height: 262, fill: "#34495E" }, svg);
+    el("rect", { x: 0, y: 262, width: 600, height: 78, fill: "#5D4037" }, svg); el("rect", { x: 0, y: 262, width: 600, height: 7, fill: "#6D4C41" }, svg);
+    txt(svg, 574, 30, "wall", { "text-anchor": "middle", "font-size": 13, fill: "#B0BEC5" });
+    if (glow > 0) {
+      el("path", { d: "M292 176 L548 60 L548 310 L292 236 Z", fill: "#FFF59D", opacity: 0.3 * glow }, svg);
+      el("ellipse", { cx: 548, cy: 185, rx: 10, ry: 118, fill: "#FFFDE7", opacity: 0.65 * glow }, svg);
+      for (let k = 0; k < 10; k++) { const t = ((tm / 1300) + k / 10) % 1, x = 300 + t * 236, y = 206 + ((k % 5) - 2) * t * 26; el("line", { x1: x, y1: y, x2: x + 12, y2: y + ((k % 5) - 2) * 1.3, stroke: "#FFEB3B", "stroke-width": 3, "stroke-linecap": "round", opacity: glow }, svg); }
+    }
+    el("rect", { x: 60, y: 180, width: 192, height: 52, rx: 14, fill: "#1565C0", stroke: "#0D47A1", "stroke-width": 2 }, svg);
+    el("rect", { x: 72, y: 188, width: 160, height: 36, rx: 6, fill: "#ECEFF1", stroke: "#0D47A1", "stroke-width": 1 }, svg);
+    [78, 148].forEach((cx) => {
+      el("rect", { x: cx, y: 193, width: 64, height: 26, rx: 4, fill: "#37474F" }, svg);
+      if (cf > 0) el("rect", { x: cx + 3, y: 196, width: 58 * cf, height: 20, rx: 2, fill: lerpCol("#E53935", "#43A047", cf) }, svg);
+      el("rect", { x: cx + 64, y: 200, width: 4, height: 12, fill: "#90A4AE" }, svg);
+    });
+    const wire = el("path", { d: "M216 206 L272 206", fill: "none", stroke: "#B0BEC5", "stroke-width": 2 }, svg);
+    if (on) dotsAlong(svg, wire, tm, "#FFB300", 14, 0.06);
+    txt(svg, 150, 251, "battery", { "text-anchor": "middle", "font-size": 14, fill: "#CFD8DC", "font-weight": 700 });
+    el("path", { d: "M250 180 L294 164 L294 248 L250 232 Z", fill: "#1976D2", stroke: "#0D47A1", "stroke-width": 2 }, svg);
+    if (glow > 0) el("circle", { cx: 282, cy: 206, r: 30, fill: "#FFEE58", opacity: 0.45 * glow }, svg);
+    el("circle", { cx: 282, cy: 206, r: 10, fill: glow > 0 ? "#FFF59D" : "#B0BEC5", stroke: "#90A4AE" }, svg);
+    el("path", { d: "M277 210 L279 202 L282 210 L285 202 L287 210", fill: "none", stroke: glow > 0 ? "#FF6F00" : "#607D8B", "stroke-width": 1.5 }, svg);
+    el("rect", { x: 196, y: 171, width: 26, height: 11, rx: 4, fill: on ? "#43A047" : "#90A4AE" }, svg);
+    heatWaves(svg, 262, 156, 3, glow * 0.85, tm);
+  }
+
+  function drawToy(svg, p, S, tm) {
+    const E = S.E;
+    const v = p < 0.12 ? 0 : p < 0.77 ? 1 : p < 0.85 ? 1 - (p - 0.77) / 0.08 : 0;
+    const pos = p < 0.12 ? 0 : p < 0.77 ? p - 0.12 : p < 0.85 ? 0.65 + (p - 0.77) - (p - 0.77) ** 2 / 0.16 : 0.69;
+    const x = 140 + (pos / 0.69) * 330, sw = v * Math.sin((tm / 1000) * 2 * Math.PI * 2.2);
+    bg(svg, "#F1F8E9");
+    el("rect", { x: 0, y: 262, width: 600, height: 78, fill: "#BCAAA4" }, svg); el("rect", { x: 0, y: 262, width: 600, height: 7, fill: "#A1887F" }, svg);
+    [-1, 1].forEach((sd) => {
+      const g = el("g", { transform: `rotate(${sd * sw * 22} ${x + sd * 13} 234)` }, svg);
+      el("rect", { x: x + sd * 13 - 6, y: 232, width: 12, height: 26, rx: 4, fill: "#607D8B" }, g);
+      el("rect", { x: x + sd * 13 - 9, y: 255, width: 20, height: 7, rx: 3, fill: "#455A64" }, g);
+      const a = el("g", { transform: `rotate(${-sd * sw * 28} ${x + sd * 38} 186)` }, svg);
+      el("rect", { x: x + sd * 38 - 5, y: 184, width: 10, height: 34, rx: 5, fill: "#64B5F6", stroke: "#1565C0", "stroke-width": 1.5 }, a);
+    });
+    el("rect", { x: x - 34, y: 172, width: 68, height: 64, rx: 12, fill: "#90CAF9", stroke: "#1565C0", "stroke-width": 2.5 }, svg);
+    el("circle", { cx: x, cy: 205, r: 20, fill: "#fff", stroke: "#1565C0", "stroke-width": 2 }, svg);
+    const turns = 1 + 3 * clamp((E.elastic || 0) / 50), rot = -pos * 30, tmax = turns * 2 * Math.PI;
+    let d = ""; for (let t = 0; t <= tmax; t += 0.2) { const r = 3 + 14 * t / tmax; d += `${d ? " L" : "M"}${(x + r * Math.cos(t + rot)).toFixed(1)} ${(205 + r * Math.sin(t + rot)).toFixed(1)}`; }
+    el("path", { d, fill: "none", stroke: "#8E24AA", "stroke-width": 2 }, svg);
+    el("rect", { x: x - 24, y: 134, width: 48, height: 38, rx: 9, fill: "#BBDEFB", stroke: "#1565C0", "stroke-width": 2.5 }, svg);
+    el("circle", { cx: x - 9, cy: 150, r: 4.5, fill: "#263238" }, svg); el("circle", { cx: x + 9, cy: 150, r: 4.5, fill: "#263238" }, svg);
+    el("rect", { x: x - 10, y: 160, width: 20, height: 4, rx: 2, fill: "#1565C0" }, svg);
+    el("line", { x1: x, y1: 134, x2: x, y2: 120, stroke: "#1565C0", "stroke-width": 3 }, svg); el("circle", { cx: x, cy: 117, r: 5, fill: "#E53935" }, svg);
+    el("rect", { x: x - 46, y: 199, width: 12, height: 6, fill: "#FFB300" }, svg);
+    el("ellipse", { cx: x - 54, cy: 202, rx: 6, ry: 2 + 14 * Math.abs(Math.cos(pos * 25)), fill: "#FFC107", stroke: "#E65100", "stroke-width": 1.5 }, svg);
+    if (p < 0.12) txt(svg, x - 30, 168, "↻ wound up!", { "text-anchor": "end", "font-size": 15, "font-weight": 700, fill: "#8E24AA" });
+    if (v > 0.05) {
+      txt(svg, x + 48, 160 + (Math.floor(tm / 250) % 2) * 14, "click", { "font-size": 15, "font-weight": 700, fill: "#EC407A", opacity: v });
+      soundArcs(svg, x + 44, 205, 1, 0.8 * v, tm);
+    }
+    heatWaves(svg, x - 12, 112, 3, clamp((E.thermal || 0) / 45) * 0.7 * (p < 0.85 ? 1 : clamp(1 - (p - 0.85) / 0.12)), tm);
+  }
+
+  function drawBall(svg, p, S, tm) {
+    const FL = 300, TOP = 60, R = 18, yPix = (y) => FL - y * (FL - TOP);
+    bg(svg, "#E3F2FD");
+    el("rect", { x: 0, y: FL, width: 600, height: 40, fill: "#BCAAA4" }, svg); el("rect", { x: 0, y: FL, width: 600, height: 5, fill: "#A1887F" }, svg);
+    el("rect", { x: 40, y: TOP - 4, width: 26, height: FL - TOP + 4, fill: "#FFF59D", stroke: "#F9A825" }, svg);
+    for (let k = 0; k <= 10; k++) el("line", { x1: 40, x2: 40 + (k % 5 ? 8 : 14), y1: yPix(k / 10), y2: yPix(k / 10), stroke: "#5D4037", "stroke-width": 1.2 }, svg);
+    txt(svg, 53, TOP - 10, "height", { "text-anchor": "middle", "font-size": 13, "font-weight": 700 });
+    el("line", { x1: 72, x2: 590, y1: TOP, y2: TOP, stroke: "#90A4AE", "stroke-width": 1.5, "stroke-dasharray": "6 5" }, svg);
+    txt(svg, 588, TOP - 6, "start height", { "text-anchor": "end", "font-size": 13, fill: "#546E7A" });
+    // floor gets warm where the ball hit it
+    BALL.contacts.forEach((c, i) => { if (p >= c.p0) el("ellipse", { cx: ballX((c.p0 + c.p1) / 2), cy: FL + 2, rx: 26 - i * 4, ry: 4, fill: "#FF7043", opacity: 0.55 - i * 0.1 }, svg); });
+    // the path so far + the highest points
+    let pts = "";
+    for (let q = BALL.P0; q < Math.min(p, BALL.P1); q += 0.004) { const s = ballState(q); pts += `${ballX(q).toFixed(1)},${(yPix(s.y) - R).toFixed(1)} `; }
+    if (pts) el("polyline", { points: pts, fill: "none", stroke: "#90A4AE", "stroke-width": 2, "stroke-dasharray": "2 5" }, svg);
+    BALL.segs.filter((g) => g.type === "rise" && p >= g.p1).forEach((g) => {
+      const x = ballX(g.p1), y = yPix(BALL.H[g.i + 1]);
+      el("line", { x1: x - 24, x2: x + 24, y1: y, y2: y, stroke: "#43A047", "stroke-width": 2.5 }, svg);
+      txt(svg, x, y - 6, `${Math.round(100 * BALL.H[g.i + 1])} J`, { "text-anchor": "middle", "font-size": 13, "font-weight": 700, fill: "#2E7D32" });
+    });
+    const x = ballX(p), rx = R * (1 + 0.35 * S.sq), ry = R * (1 - 0.35 * S.sq), cy = yPix(S.y) - ry;
+    el("ellipse", { cx: x, cy, rx, ry, fill: "#C6E03A", stroke: "#7C8F12", "stroke-width": 2 }, svg);
+    el("path", { d: `M${x - rx * 0.85} ${cy - ry * 0.25} Q${x} ${cy + ry * 0.5} ${x + rx * 0.85} ${cy - ry * 0.25}`, fill: "none", stroke: "#fff", "stroke-width": 2 }, svg);
+    if (p < BALL.P0) txt(svg, x, cy - R - 2, "✋", { "text-anchor": "middle", "font-size": 34 });
+    BALL.contacts.forEach((c, i) => {
+      const end = c.p1 + 0.05;
+      if (p >= c.p0 && p < end) {
+        const op = 1 - (p - c.p0) / (end - c.p0), cx = ballX(c.p0);
+        soundArcs(svg, cx - 28, FL - 10, -1, op, tm); soundArcs(svg, cx + 28, FL - 10, 1, op, tm);
+        txt(svg, cx, FL + 30, "thud!", { "text-anchor": "middle", "font-size": 16, "font-weight": 800, fill: "#4E342E", opacity: op });
+        heatWaves(svg, cx - 12, FL - 4, 3, op * (0.8 - i * 0.15), tm);
+      }
+    });
+  }
+
+  function drawSkate(svg, p, S, tm) {
+    const X = (s) => 300 + 220 * s, Y = (s) => 290 - 180 * s * s, E = S.E;
+    bg(svg, "#E1F5FE");
+    el("rect", { x: 0, y: 300, width: 600, height: 40, fill: "#AED581" }, svg);
+    let d = `M0 ${Y(1.05)} L${X(-1.05)} ${Y(1.05)}`;
+    for (let s = -1.05; s <= 1.0501; s += 0.05) d += ` L${X(s).toFixed(1)} ${Y(s).toFixed(1)}`;
+    d += ` L600 ${Y(1.05)}`;
+    el("path", { d: d + " L600 300 L0 300 Z", fill: "#B0BEC5" }, svg);
+    el("path", { d, fill: "none", stroke: lerpCol("#455A64", "#E64A19", 0.55 * clamp((E.thermal || 0) / 900)), "stroke-width": 5, "stroke-linejoin": "round" }, svg);
+    const x = X(S.s), y = Y(S.s), ang = Math.atan2(-360 * S.s, 220) * 180 / Math.PI;
+    if (y < 286) {
+      el("line", { x1: x, x2: x, y1: y + 4, y2: 290, stroke: "#43A047", "stroke-width": 2.5, "stroke-dasharray": "5 4" }, svg);
+      txt(svg, x + 8, (y + 290) / 2 + 5, "height", { "font-size": 13, "font-weight": 700, fill: "#2E7D32" });
+    }
+    const K = E.kinetic || 0, g = el("g", { transform: `translate(${x} ${y - 2}) rotate(${ang})` }, svg);
+    if (K > 80) for (let k = 0; k < 3; k++) el("line", { x1: -S.dir * (34 + k * 6), x2: -S.dir * (50 + k * 6), y1: -20 - k * 12, y2: -20 - k * 12, stroke: "#78909C", "stroke-width": 3, "stroke-linecap": "round", opacity: K / 1000 }, g);
+    if (K > 20) [-15, 15].forEach((wx) => el("circle", { cx: wx, cy: -2, r: 7, fill: "#FF7043", opacity: 0.5 * Math.min(1, K / 600) }, g));
+    el("rect", { x: -24, y: -9, width: 48, height: 6, rx: 3, fill: "#FF7043" }, g);
+    [-15, 15].forEach((wx) => el("circle", { cx: wx, cy: -2, r: 3.6, fill: "#37474F" }, g));
+    el("path", { d: "M-8 -9 L-5 -29 M8 -9 L5 -29", stroke: "#283593", "stroke-width": 5, "stroke-linecap": "round" }, g);
+    el("path", { d: "M0 -28 L0 -52", stroke: "#E91E63", "stroke-width": 10, "stroke-linecap": "round" }, g);
+    el("path", { d: "M-19 -40 L0 -47 L19 -40", fill: "none", stroke: "#E91E63", "stroke-width": 5, "stroke-linecap": "round" }, g);
+    el("circle", { cx: 0, cy: -62, r: 9, fill: "#C68642" }, g);
+    el("path", { d: "M-10 -63 A10 10 0 0 1 10 -63 Z", fill: "#1E88E5" }, g);
+    if (K > 100) soundArcs(svg, x + S.dir * 26, y + 4, S.dir, 0.6 * Math.min(1, K / 700), tm);
+    if (p > 0.86) txt(svg, x, y - 84, "stopped", { "text-anchor": "middle", "font-size": 15, "font-weight": 700, fill: "#546E7A" });
+  }
+
+  function drawRunner(svg, x, y, phase, run) {
+    const sw = run * Math.sin(phase), g = el("g", { transform: `translate(${x} ${y})` }, svg);
+    el("path", { d: `M0 -30 L${-10 * sw} 0 M0 -30 L${10 * sw} 0`, stroke: "#283593", "stroke-width": 6, "stroke-linecap": "round", fill: "none" }, g);
+    el("path", { d: "M0 -30 L0 -58", stroke: "#E91E63", "stroke-width": 11, "stroke-linecap": "round" }, g);
+    el("path", { d: `M0 -52 L${12 * sw} -36 M0 -52 L${-12 * sw} -36`, stroke: "#C68642", "stroke-width": 5, "stroke-linecap": "round", fill: "none" }, g);
+    el("path", { d: "M-6 -76 Q-18 -70 -15 -60", stroke: "#3E2723", "stroke-width": 5, fill: "none", "stroke-linecap": "round" }, g);
+    el("circle", { cx: 0, cy: -70, r: 10, fill: "#C68642" }, g);
+    el("path", { d: "M-10 -72 A10 10 0 0 1 10 -72 Z", fill: "#3E2723" }, g);
+  }
+  function drawSun(svg, p, S, tm) {
+    const E = S.E;
+    bg(svg, "#B3E5FC");
+    el("rect", { x: 0, y: 280, width: 600, height: 60, fill: "#9CCC65" }, svg);
+    for (let k = 0; k < 12; k++) { const a = k * Math.PI / 6 + tm / 4000; el("line", { x1: 80 + Math.cos(a) * 48, y1: 72 + Math.sin(a) * 48, x2: 80 + Math.cos(a) * 62, y2: 72 + Math.sin(a) * 62, stroke: "#FFB300", "stroke-width": 4, "stroke-linecap": "round" }, svg); }
+    el("circle", { cx: 80, cy: 72, r: 42, fill: "#FFD54F", stroke: "#FFA000", "stroke-width": 3 }, svg);
+    const nf = clamp((E.nuclear || 0) / 1000);
+    el("circle", { cx: 80, cy: 72, r: 16, fill: "#FF6F00", opacity: 0.25 + 0.7 * nf }, svg);
+    if (nf > 0.02) txt(svg, 80, 79, "⚛", { "text-anchor": "middle", "font-size": 20, fill: "#fff" });
+    txt(svg, 80, 134, "the Sun", { "text-anchor": "middle", "font-size": 14, "font-weight": 700, fill: "#E65100" });
+    if (p > 0.05 && p < 0.3) for (let k = 0; k < 8; k++) {
+      const t = ((tm / 1500) + k / 8) % 1, x = 112 + t * 128, y = 92 + t * 70 + ((k % 3) - 1) * 10;
+      el("circle", { cx: x, cy: y, r: 5, fill: "#FFEB3B", stroke: "#FFA000" }, svg);
+      el("line", { x1: x - 14, y1: y - 8, x2: x - 5, y2: y - 3, stroke: "#FFEB3B", "stroke-width": 3, "stroke-linecap": "round" }, svg);
+    }
+    el("rect", { x: 240, y: 170, width: 20, height: 112, fill: "#795548" }, svg);
+    [[250, 148, 58], [212, 172, 36], [288, 172, 36]].forEach(([cx, cy, r]) => el("circle", { cx, cy, r, fill: "#43A047" }, svg));
+    const leafWarm = p < 0.28 ? 0 : p < 0.44 ? (p - 0.28) / 0.16 : clamp(1 - (p - 0.44) / 0.2);
+    heatWaves(svg, 222, 92, 4, 0.7 * leafWarm, tm); heatWaves(svg, 300, 278, 3, 0.6 * leafWarm, tm);
+    // the apple: grows on the tree, goes to Mia, is eaten
+    const aR = 11 * clamp((p - 0.28) / 0.16) * (p < 0.54 ? 1 : clamp(1 - (p - 0.54) / 0.06));
+    let ax = 276, ay = 184;
+    if (p > 0.44) { const t = clamp((p - 0.44) / 0.08); ax = 276 + (392 - 276) * t; ay = 184 + (232 - 184) * t - Math.sin(Math.PI * t) * 30; }
+    const run = p < 0.6 ? 0 : p < 0.86 ? 1 : p < 0.92 ? 1 - (p - 0.86) / 0.06 : 0;
+    const pos = p < 0.6 ? 0 : p < 0.86 ? p - 0.6 : p < 0.92 ? 0.26 + (p - 0.86) - (p - 0.86) ** 2 / 0.12 : 0.29;
+    const mx = 380 + (pos / 0.29) * 170;
+    drawRunner(svg, mx, 282, (tm / 1000) * 2 * Math.PI * 2.6, run);
+    if (aR > 0.5) {
+      el("circle", { cx: ax, cy: ay, r: aR, fill: "#E53935", stroke: "#B71C1C" }, svg);
+      el("line", { x1: ax, y1: ay - aR, x2: ax + 2, y2: ay - aR - 5, stroke: "#5D4037", "stroke-width": 2 }, svg);
+    }
+    if (run > 0.05) { txt(svg, mx - 30, 294 + (Math.floor(tm / 200) % 2) * 6, "tap", { "font-size": 13, "font-weight": 700, fill: "#EC407A", opacity: run }); }
+    heatWaves(svg, mx - 12, 196, 3, (p > 0.6 ? 0.8 : 0) * (p < 0.92 ? 1 : clamp(1 - (p - 0.92) / 0.08) * 0.6 + 0.2), tm);
+    txt(svg, mx, 330, "Mia", { "text-anchor": "middle", "font-size": 14, "font-weight": 700, fill: "#33691E" });
+  }
+  const DRAW = { kettle: drawKettle, torch: drawTorch, toy: drawToy, ball: drawBall, skate: drawSkate, sun: drawSun };
+  function drawScene(svg, sc, p) {
+    const S = stateOf(sc, p);
+    svg.setAttribute("viewBox", "0 0 600 340"); svg.replaceChildren();
+    DRAW[sc.id](svg, p, S, p * sc.dur);
+    return S;
+  }
+  // yellow arrow for "name the form": mark = [x, y, dx, dy] (dx, dy: where the arrow comes from)
+  function drawMark(svg, [x, y, dx, dy]) {
+    const x0 = x + dx * 58, y0 = y + dy * 58, x1 = x + dx * 14, y1 = y + dy * 14;
+    el("circle", { cx: x, cy: y, r: 24, fill: "none", stroke: "#FFAB00", "stroke-width": 4, "stroke-dasharray": "7 5" }, svg);
+    el("line", { x1: x0, y1: y0, x2: x1, y2: y1, stroke: "#263238", "stroke-width": 11, "stroke-linecap": "round" }, svg);
+    el("line", { x1: x0, y1: y0, x2: x1, y2: y1, stroke: "#FFC400", "stroke-width": 7, "stroke-linecap": "round" }, svg);
+    const a = Math.atan2(y1 - y0, x1 - x0), hx = (r, da) => x1 + Math.cos(a + Math.PI + da) * r, hy = (r, da) => y1 + Math.sin(a + Math.PI + da) * r;
+    el("path", { d: `M${x1} ${y1} L${hx(18, 0.5)} ${hy(18, 0.5)} L${hx(18, -0.5)} ${hy(18, -0.5)} Z`, fill: "#FFC400", stroke: "#263238", "stroke-width": 2 }, svg);
+  }
+
+  /* ============================ 6 PLAYER ============================ */
+  let SC = null;                                         // the open scene
+  const PL = { p: 0, playing: false, slow: false, last: 0, raf: 0, cap: -1, endCb: null };
+
+  // bars
+  const barEls = {};
+  $("erows").innerHTML = ORDER.map((k) => `<button class="erow" data-f="${k}" style="--c:${FORMS[k].col}" aria-label="${FORMS[k].label} energy">
+    <span class="bn">${FORMS[k].em} ${FORMS[k].label}</span><span class="btrack"><i></i></span><span class="bv">0 J</span><span class="ar"></span></button>`).join("");
+  ORDER.forEach((k) => { const r = document.querySelector(`.erow[data-f="${k}"]`); barEls[k] = { r, i: r.querySelector("i"), v: r.querySelector(".bv"), a: r.querySelector(".ar") }; });
+  $("tTrack").innerHTML = ORDER.map((k) => `<i data-f="${k}" style="--c:${FORMS[k].col}"></i>`).join("");
+  let lastE = null, shownE = {};
+  function updateBars(E, playing) {
+    const T = SC.total, R = roundE(E, T);
+    ORDER.forEach((k) => {
+      const b = barEls[k], v = R[k];
+      b.i.style.width = (100 * v / T) + "%"; b.v.textContent = v + " J";
+      b.r.classList.toggle("zero", v === 0);
+      const dv = lastE ? (E[k] || 0) - (lastE[k] || 0) : 0;
+      b.a.textContent = playing && Math.abs(dv) > 1e-4 * T ? (dv > 0 ? "▲" : "▼") : "";
+      document.querySelector(`#tTrack i[data-f="${k}"]`).style.width = (100 * v / T) + "%";
+    });
+    shownE = R;
+    $("tVal").textContent = ORDER.reduce((s, k) => s + R[k], 0) + " J";
+    lastE = { ...E };
+  }
+  function chips(p) {
+    const seen = SC.formsOrder.filter((k) => SC.firstAt[k] <= p + 1e-9);
+    $("chips").innerHTML = `<span class="lead">Energy path:</span> ` + (seen.length ? seen.map((k, i) => (i ? `<span class="to">➜</span>` : "") +
+      `<span class="fchip" style="--c:${FORMS[k].col};--fg:${FORMS[k].fg}">${FORMS[k].em} ${FORMS[k].tile}</span>`).join(" ") : "");
+  }
+  function render() {
+    const S = drawScene($("stage"), SC, PL.p);
+    updateBars(S.E, PL.playing);
+    $("tl").style.width = (100 * PL.p) + "%";
+    chips(PL.p);
+    let c = 0; SC.narr.forEach((n, i) => { if (PL.p >= n[0] - 1e-9) c = i; });
+    if (c !== PL.cap && (PL.playing || PL.p === 0 || PL.p >= 1)) { PL.cap = c; const n = SC.narr[c]; say("scene", n[1], n[2] || "talk"); }
+  }
+  function sfx(a, b) {
+    SC.sfx.forEach(([p, s]) => { if (a < p && p <= b) { if (s.startsWith("thud")) SND.thud(+s.slice(4)); else SND[s](); } });
+  }
+  function tick(t) {
+    if (!PL.playing) { PL.raf = 0; return; }
+    const dt = Math.min(64, t - PL.last); PL.last = t;
+    const a = PL.p; PL.p = Math.min(1, PL.p + (dt / SC.dur) * (PL.slow ? 0.35 : 1) * (window.__ET_SPEED || 1));
+    if (PL.p >= 1) PL.playing = false;
+    sfx(a, PL.p); render();
+    if (PL.p >= 1) { PL.raf = 0; markPlay(); ended(); return; }
+    PL.raf = requestAnimationFrame(tick);
+  }
+  function play() {
+    if (PL.p >= 1) { PL.p = 0; PL.cap = -1; lastE = null; }
+    PL.playing = true; PL.last = performance.now(); markPlay();
+    if (!PL.raf) PL.raf = requestAnimationFrame(tick);
+  }
+  function pause() { PL.playing = false; markPlay(); if (SC) render(); }
+  function markPlay() { $("bPlay").textContent = PL.playing ? "⏸ Pause" : PL.p >= 1 ? "▶ Play again" : PL.p > 0 ? "▶ Play on" : "▶ Play"; }
+  $("bPlay").onclick = () => (PL.playing ? pause() : play());
+  $("bReplay").onclick = () => { PL.p = 0; PL.cap = -1; lastE = null; play(); };
+  $("bSlow").onclick = () => { PL.slow = !PL.slow; $("bSlow").setAttribute("aria-pressed", PL.slow); };
+  const setControls = (on) => ["bPlay", "bSlow", "bReplay"].forEach((id) => ($(id).disabled = !on));
+  function ended() { if (PL.endCb) { const cb = PL.endCb; PL.endCb = null; cb(); } }
+
+  /* phases of a scene: predict → watch → explain → explore */
+  const PHASES = [["predict", "1 🤔 Predict"], ["watch", "2 👀 Watch"], ["explain", "3 ✍️ Explain"], ["explore", "4 🔍 Explore"]];
+  function phaseOf(id) { const s = SP(id); return !s.pred ? "predict" : !s.watched ? "watch" : s.stars == null ? "explain" : "explore"; }
+  function showPhases(now) {
+    const i = PHASES.findIndex(([k]) => k === now);
+    $("phases").innerHTML = PHASES.map(([k, t], j) => `<span class="ph${j < i ? " done" : j === i ? " now" : ""}">${j < i ? "✔ " : ""}${t}</span>`).join("");
+  }
+  function openScene(id) {
+    pause(); PL.endCb = null;
+    SC = SCENES[SC_I[id]]; P.cur = id; save();
+    if (!SC.formsOrder) { SC.formsOrder = formsIn(SC); SC.firstAt = {}; for (let i = 0; i <= 400; i++) { const E = stateOf(SC, i / 400).E; SC.formsOrder.forEach((k) => { if ((E[k] || 0) > 0.5 && SC.firstAt[k] == null) SC.firstAt[k] = i / 400; }); } }
+    PL.p = 0; PL.cap = -1; lastE = null;
+    const i = SC_I[id];
+    $("scCard").textContent = `Scene ${i + 1} of ${SCENES.length}`;
+    $("scTitle").textContent = `${SC.em} ${SC.name}`;
+    $("scOf").textContent = `Total: ${SC.total} J`;
+    $("scStars").innerHTML = isDone(id) ? starsHTML(SP(id).stars) : "";
+    renderList();
+    const ph = phaseOf(id);
+    if (ph === "predict") openPredict(); else if (ph === "watch") openWatch(); else if (ph === "explain") openExplain(); else openExplore();
+  }
+
+  function openPredict() {
+    showPhases("predict"); setControls(false); $("cover").hidden = false; render();
+    say("scene", `Before you watch, ${w("predict")}: which ${w("form", "forms of energy")} will you see in this scene? Tap all you think. It's OK to guess!`, "think");
+    const work = $("work"); work.replaceChildren();
+    work.append(h(`<div class="what">🤔 <b>Predict:</b> look at the picture. Which forms of energy will you see? Tap all you think.</div>`));
+    const grid = h(`<div class="pickgrid pred"></div>`); work.append(grid);
+    const pks = ORDER.map((k) => { const b = h(`<button class="pk" aria-pressed="false" data-f="${k}"><span class="em" style="--c:${FORMS[k].col}">${FORMS[k].em}</span><span>${FORMS[k].label}</span></button>`); grid.append(b); return b; });
+    pks.forEach((b) => (b.onclick = () => b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") !== "true")));
+    const fb = h(`<div class="feedback"></div>`), go = h(`<div class="controls"><button class="btn primary">✔ This is my prediction</button></div>`);
+    work.append(go, fb);
+    go.querySelector("button").onclick = () => {
+      const pred = pks.filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.f);
+      if (!pred.length) { fbSet(fb, "info", "Tap at least one form of energy first."); shake(grid); return; }
+      SP(SC.id).pred = pred; save(); openWatch();
+    };
+  }
+  function openWatch() {
+    showPhases("watch"); setControls(true); $("cover").hidden = true;
+    PL.p = 0; PL.cap = -1; render();
+    const work = $("work"); work.replaceChildren(h(`<div class="what">👀 <b>Watch:</b> press ▶ Play. Watch how the bars change – and look at the <b>TOTAL</b> bar.
+      Use ⏸ Pause and 🐢 Slow motion when it goes too fast.</div>`));
+    PL.endCb = () => { SP(SC.id).watched = true; save(); showCompare(work, true); };
+  }
+  function showCompare(work, fresh) {
+    const pred = SP(SC.id).pred || [], seen = SC.formsOrder;
+    const right = seen.filter((k) => pred.includes(k)), missed = seen.filter((k) => !pred.includes(k)), extra = pred.filter((k) => !seen.includes(k));
+    const ch = (k) => `<span class="fchip" style="--c:${FORMS[k].col};--fg:${FORMS[k].fg}">${FORMS[k].em} ${FORMS[k].tile}</span>`;
+    const box = h(`<div class="cmp what" style="background:#FFFDE7;border-color:#F9A825">
+      <div><b>Your prediction and what you saw</b></div>
+      ${right.length ? `<div class="row"><b>✔ You predicted these:</b>${right.map(ch).join("")}</div>` : ""}
+      ${missed.length ? `<div class="row"><b>👀 You saw these too:</b>${missed.map(ch).join("")}</div>` : ""}
+      ${extra.length ? `<div class="row"><b>✗ Not in this scene:</b>${extra.map(ch).join("")}</div>` : ""}
+    </div>`);
+    work.querySelectorAll(".cmp").forEach((x) => x.remove());
+    work.append(box);
+    if (fresh) {
+      const perfect = !missed.length && !extra.length;
+      say("scene", (perfect ? "Wow – a perfect prediction! " : "Good thinking! Scientists often change their ideas after they watch. ") +
+        `Did you see? The <b>TOTAL</b> stayed at <b>${SC.total} J</b> all the time. Now answer 4 questions.`, perfect ? "wow" : "happy", "good");
+      const nx = h(`<div class="controls"><button class="btn primary">Next: 4 questions →</button></div>`);
+      nx.querySelector("button").onclick = () => openExplain();
+      work.append(nx); nx.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "nearest" });
+    }
+  }
+  function openExplain() {
+    showPhases("explain"); setControls(true); $("cover").hidden = true;
+    if (PL.p === 0) { PL.p = 1; PL.cap = -1; render(); markPlay(); }
+    const work = $("work"); work.replaceChildren();
+    showCompare(work, false);
+    work.append(h(`<div class="what">✍️ <b>Explain:</b> 4 questions. You can play the scene again at any time to find the answers.</div>`));
+    say("scene", "Four questions about this scene. You can press ▶ Play again to check!", "talk");
+    const Q = SC.q, box = h(`<div class="cb" style="padding:0"></div>`); work.append(box);
+    sequence(box, [
+      (c, d) => { c.append(qline(1, Q.chain.q)); chainQ({ box: c, stages: Q.chain.stages, traps: Q.chain.traps, tip: Q.chain.tip, spex: "scene", onDone: d }); },
+      (c, d) => { c.append(qline(2, Q.where.q));
+        const ok = Q.where.opts.find(([v]) => v === Q.where.ok)[1];
+        ask({ box: c, opts: shuffle(Q.where.opts), correct: Q.where.ok, cls: "wide", tip: Q.where.tip, answer: ok, good: Q.where.good, spex: "scene", onDone: d }); },
+      (c, d) => { c.append(qline(3, Q.name.q));
+        const still = el("svg", { class: "still", role: "img", "aria-label": "A paused moment of the scene" }); c.append(still);
+        drawScene(still, SC, Q.name.p); drawMark(still, Q.name.mark);
+        ask({ box: c, opts: shuffle(Q.name.opts).map((k) => [k, formBtn(k)]), correct: Q.name.ok, tip: Q.name.tip,
+          answer: `<b>${fname(Q.name.ok)}</b>. ${FORMS[Q.name.ok].mean}`, good: `<b>${fname(Q.name.ok)}</b>. ${FORMS[Q.name.ok].mean}`, spex: "scene", onDone: d }); },
+      (c, d) => { c.append(qline(4, Q.missing.q)); joulesQ({ box: c, value: Q.missing.value, tip: Q.missing.tip, spex: "scene", onDone: d }); },
+    ], (sts) => finishScene(sts));
+  }
+  function finishScene(sts) {
+    const s = SP(SC.id), n = meanStars(sts), first = s.stars == null;
+    s.stars = Math.max(s.stars ?? -1, n); save();
+    refreshStars(); showPhases("explore"); $("scStars").innerHTML = starsHTML(s.stars);
+    const work = $("work"), i = SC_I[SC.id], next = SCENES[i + 1];
+    const res = h(`<div class="result"><div class="big">${SC.em} ${starsHTML(n)}</div>
+      <div style="font-size:20px">Scene finished! ${first ? `You won the <b>${SC.badge}</b> badge.` : ""}</div>
+      <div class="controls">${next ? `<button class="btn primary" data-a="next">Next scene: ${next.em} ${next.name} →</button>` : `<button class="btn primary" data-a="quiz">🧠 Now take the quiz →</button>`}
+      <button class="btn" data-a="explore">🔍 Explore this scene</button></div></div>`);
+    res.querySelector('[data-a="explore"]').onclick = () => openScene(SC.id);
+    const nb = res.querySelector('[data-a="next"]'); if (nb) nb.onclick = () => openScene(next.id);
+    const qb = res.querySelector('[data-a="quiz"]'); if (qb) qb.onclick = () => showTab("quiz");
+    work.append(res); res.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "nearest" });
+    say("scene", next ? `Well done! ${SC.total} J at the start, ${SC.total} J at the end – the energy just changed form. The next scene is open!` :
+      "You finished all 6 scenes! Energy is never made or destroyed – it only changes form. 🎉 Now try the <b>quiz</b>!", "happy", "good");
+    renderList();
+  }
+  function openExplore() {
+    showPhases("explore"); setControls(true); $("cover").hidden = true;
+    PL.p = 0; PL.cap = -1; render();
+    const s = SP(SC.id), i = SC_I[SC.id], next = SCENES[i + 1];
+    const work = $("work"); work.replaceChildren();
+    work.append(h(`<div class="explore">🔍 <b>Explore:</b> play the scene again, pause it, try 🐢 slow motion. <b>Tap any bar</b> to see what the form of energy means and how many joules it has at that moment.</div>`));
+    const c = h(`<div class="controls">${next ? `<button class="btn primary" data-a="next" ${unlocked(i + 1) ? "" : "disabled"}>Next scene: ${next.em} ${next.name} →</button>` : `<button class="btn primary" data-a="cert">🏅 My certificate</button>`}
+      <button class="btn" data-a="again">↺ Answer the questions again</button></div>`);
+    const nb = c.querySelector('[data-a="next"]'); if (nb) nb.onclick = () => openScene(next.id);
+    const cb = c.querySelector('[data-a="cert"]'); if (cb) cb.onclick = () => showTab("cert");
+    c.querySelector('[data-a="again"]').onclick = () => openExplain();
+    work.append(c);
+    say("scene", `You have ${starsHTML(s.stars)} for this scene. Play it again and tap the bars – the TOTAL is always <b>${SC.total} J</b>.`, "happy");
+  }
+
+  /* ============================ 7 UI ============================ */
+  function renderList() {
+    $("slist").innerHTML = SCENES.map((sc, i) => {
+      const s = SP(sc.id), open = unlocked(i);
+      return `<button class="sitem${s.stars != null ? " done" : ""}" data-id="${sc.id}" ${open ? "" : "disabled"} aria-current="${SC && SC.id === sc.id}">
+        <span class="em">${sc.em}</span><span><b>${i + 1} · ${sc.name}</b><small>${sc.total} J</small></span>
+        <span class="st">${!open ? "🔒" : s.stars != null ? "★".repeat(s.stars) + "☆".repeat(3 - s.stars) : ""}</span></button>`;
+    }).join("");
+    $("slist").querySelectorAll(".sitem").forEach((b) => (b.onclick = () => openScene(b.dataset.id)));
+    $("prog").style.width = (100 * SCENES.filter((sc) => isDone(sc.id)).length / SCENES.length) + "%";
+  }
+
+  /* the quiz: one question at a time; stars of the current go in P.quiz.st, the best finished go in P.quiz.best */
+  function quizDots() {
+    const Z = P.quiz;
+    $("qDots").innerHTML = QUIZ.map((_, i) => { const s = Z.st[i]; return `<span class="dot${i === Z.i ? " now" : ""}${s != null ? " s" + s : ""}" title="Question ${i + 1}">${i + 1}</span>`; }).join("");
+  }
+  function openQuiz() {
+    const Z = P.quiz, box = $("quizBox"); box.replaceChildren(); box.dataset.n = Z.i;
+    quizDots();
+    if (Z.i >= QUIZ.length) return quizResult();
+    const n = Z.i, q = QUIZ[n];
+    box.append(h(`<div class="qhead"><span class="qtype">${QTYPE[q.type]}</span><span class="of">Question ${n + 1} of ${QUIZ.length}</span></div>`),
+      h(`<div class="qpic" aria-hidden="true">${q.pic}</div>`), qline(n + 1, q.q));
+    const c = h(`<div class="part"></div>`); box.append(c);
+    say("quiz", n === 0 ? "Hi! 15 questions about energy at home and at school. Think about the scenes – energy is never made or destroyed!" : ["Next one! Read the situation carefully.", "Look at the picture – what is happening to the energy?", "Remember: the total always stays the same."][n % 3], "talk");
+    const done = (st) => {
+      Z.st[n] = starsOf(st); Z.i = n + 1; save(); quizDots(); refreshStars();
+      const last = Z.i >= QUIZ.length, nx = h(`<div class="controls"><button class="btn primary">${last ? "See my result →" : "Next question →"}</button></div>`);
+      nx.querySelector("button").onclick = () => { openQuiz(); $("quiz").scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "start" }); };
+      box.append(nx); nx.scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "nearest" });
+    };
+    if (q.type === "tf") ask({ box: c, opts: [["t", "✔ True"], ["f", "✗ False"]], correct: q.ok, cls: "tf", tip: q.tip,
+      answer: `<b>${q.ok === "t" ? "True" : "False"}</b>. ${q.why}`, good: `<b>${q.ok === "t" ? "True" : "False"}</b>. ${q.why}`, spex: "quiz", onDone: done });
+    else if (q.type === "mc") { const ok = q.opts.find(([v]) => v === q.ok)[1].replace(/\.$/, "") + ".";
+      ask({ box: c, opts: shuffle(q.opts), correct: q.ok, cls: "wide", tip: q.tip, answer: `<b>${ok}</b> ${q.why}`, good: `<b>${ok}</b> ${q.why}`, spex: "quiz", onDone: done }); }
+    else if (q.type === "tap") tapQ({ box: c, need: q.need, also: q.also, tip: q.tip, why: q.why, spex: "quiz", onDone: done });
+    else if (q.type === "chain") chainQ({ box: c, stages: q.stages, traps: q.traps, tip: q.tip, why: q.why, spex: "quiz", onDone: done });
+    else joulesQ({ box: c, value: q.value, tip: q.tip, why: q.why, spex: "quiz", onDone: done });
+  }
+  function quizResult() {
+    const Z = P.quiz, now = quizNow(), max = QUIZ.length * 3, first = Z.best == null;
+    if (first || now > Z.best) { Z.best = now; save(); }
+    refreshStars();
+    const right = Z.st.filter((s) => s === 3).length;
+    const res = h(`<div class="result"><div class="big">🧠 ★ ${now} of ${max}</div>
+      <div style="font-size:20px">Quiz finished! ${right} of ${QUIZ.length} right first time.${first ? " You won the <b>Quiz champion</b> badge." : ` Your best: ★ ${Z.best}.`}</div>
+      <div class="qlist">${QUIZ.map((q, i) => `<div><span>${i + 1}. ${QTYPE[q.type]}</span>${starsHTML(Z.st[i] || 0)}</div>`).join("")}</div>
+      <div class="controls"><button class="btn primary" data-a="cert">🏅 My certificate</button><button class="btn" data-a="again">↺ Take the quiz again</button></div></div>`);
+    res.querySelector('[data-a="cert"]').onclick = () => showTab("cert");
+    res.querySelector('[data-a="again"]').onclick = () => { Z.i = 0; Z.st = []; save(); openQuiz(); };
+    $("quizBox").append(res);
+    say("quiz", now >= 40 ? "Fantastic – you really understand energy! 🎉" : now >= 30 ? "Well done! Try again to beat your best score." : "Good try! Play the scenes again, then take the quiz once more.", "happy", "good");
+  }
+
+  const BADGES = [...SCENES.map((sc, i) => ({ id: sc.id, em: sc.em, name: sc.badge, how: `Scene ${i + 1}`, got: () => isDone(sc.id) })),
+    { id: "quiz", em: "🧠", name: "Quiz champion", how: "the quiz", got: () => P.quiz.best != null }];
+  function refreshStars() {
+    const n = totalStars(), a = sceneStars(), b = quizStars();
+    $("starSum").textContent = "★ " + n;
+    document.querySelector('[data-ts="scenes"]').textContent = a ? " ★" + a : ""; document.querySelector('[data-ts="quiz"]').textContent = b ? " ★" + b : "";
+    for (const b of BADGES) if (!P.badges[b.id] && b.got()) {
+      P.badges[b.id] = new Date().toISOString().slice(0, 10);
+      toast(`${b.em} New badge: <b>${b.name}</b>!`); SND.badge();
+    }
+    save();
+  }
+  function certHTML() {
+    const total = totalStars(), won = BADGES.filter((b) => P.badges[b.id]).length;
+    return `<div class="seal">★ ${total}</div>
+      <div class="marie">${SPEX.replace('data-mood="talk"', 'data-mood="happy"').replace('class="spex"', 'class="spex" style="width:100%;height:auto"')}</div>
+      <div class="t1">Certificate · Energy transfers</div>
+      <div class="t2">Energy Explorer</div>
+      <div><div class="for">This certificate is awarded to</div><div class="who">${esc(P.name) || "&nbsp;"}</div>
+        <div class="for" style="margin-top:.6%">for following energy through ${SCENES.filter((sc) => isDone(sc.id)).length} of ${SCENES.length} scenes with Marie · scenes ★ ${sceneStars()} of ${SCENES.length * 3} · quiz ★ ${quizStars()} of ${QUIZ.length * 3}</div>
+        <div class="law2" style="margin-top:.6%">⚖️ Energy cannot be made or destroyed. It only changes from one form to another.</div></div>
+      <div class="badges">${BADGES.map((b) => `<div class="badge${P.badges[b.id] ? " on" : ""}"><span class="em">${b.em}</span><b>${b.name}</b><span class="how">${P.badges[b.id] ? "✓ " + new Date(P.badges[b.id]).toLocaleDateString() : "to earn: " + b.how}</span></div>`).join("")}</div>
+      <div class="foot"><span>Grade 6 · Physics · Thinking about Energy · ${new Date().toLocaleDateString()}</span><span class="sig">Biljana Taneska · Science teacher</span></div>`;
+  }
+  function renderCert() {
+    $("certName").value = P.name || "";
+    $("certSheet").innerHTML = certHTML();
+    const won = BADGES.filter((b) => P.badges[b.id]).length;
+    say("cert", !P.name ? "Type your <b>name</b>, then print your certificate!" : won === BADGES.length ? `All ${BADGES.length} badges – you are a real Energy Explorer! 🎉 Print your certificate.` : `You have <b>${won} of ${BADGES.length}</b> badges. Grey badges are still to earn – or print it now!`, won === BADGES.length ? "happy" : "talk", won === BADGES.length ? "good" : "");
+  }
+  $("certName").addEventListener("input", (e) => { P.name = e.target.value.slice(0, 40); save(); $("certSheet").innerHTML = certHTML(); });
+  $("certPrint").addEventListener("click", () => {
+    let ps = $("pageStyle"); if (!ps) { ps = document.createElement("style"); ps.id = "pageStyle"; document.head.appendChild(ps); }
+    ps.textContent = "@page{size:A4 landscape;margin:10mm}";
+    $("printArea").innerHTML = `<div class="sheet">${certHTML()}</div>`;
+    window.print();
+  });
+  $("resetAll").addEventListener("click", () => {
+    if (!confirm("Delete all your stars, scenes, quiz and badges in this browser?")) return;
+    try { localStorage.removeItem(STORE); } catch (e) {}
+    location.reload();
+  });
+
+  const TABS = ["scenes", "quiz", "cert"];
+  function showTab(which) {
+    unselect(); if (which !== "scenes") pause();
+    for (const t of TABS) { $("tab-" + t).setAttribute("aria-selected", t === which); $(t).hidden = t !== which; }
+    if (which === "quiz" && $("quizBox").dataset.n !== String(P.quiz.i)) openQuiz();
+    if (which === "cert") renderCert();
+  }
+  for (const t of TABS) $("tab-" + t).addEventListener("click", () => showTab(t));
+
+  // key chips (9 forms) + word / form pop-up
+  $("keyChips").innerHTML = ORDER.map((k) => `<button class="kchip" data-f="${k}" style="--c:${FORMS[k].col}" title="${FORMS[k].label} energy"><i>${FORMS[k].em}</i><span class="kn">${FORMS[k].label}</span></button>`).join("");
+  function popWord(anchor, head, col, body) {
+    const pop = $("wpop");
+    $("wpHead").innerHTML = head; pop.style.setProperty("--c", col || "#E3F2FD"); $("wpTxt").innerHTML = body;
+    pop.hidden = false;
+    const r = anchor.getBoundingClientRect(), W = pop.offsetWidth, H = pop.offsetHeight;
+    let x = Math.min(window.innerWidth - W - 12, Math.max(12, r.left + r.width / 2 - W / 2)), y = r.bottom + 8;
+    if (y + H > window.innerHeight - 8) y = Math.max(8, r.top - H - 8);
+    pop.style.left = x + "px"; pop.style.top = y + "px";
+    if (P.read) speak($("wpHead").textContent + ". " + $("wpTxt").textContent);
+  }
+  document.addEventListener("click", (e) => {
+    const spk = e.target.closest(".spk");
+    if (spk) { const host = spk.closest(".q") || spk.closest(".spexbar"); if (host) speak(host.classList.contains("q") ? textOf(host) : host.querySelector(".bubble").textContent); return; }
+    const t = e.target.closest(".wd, .kchip, .erow");
+    if (t) {
+      e.stopPropagation();
+      if (t.dataset.w) { const [nm, mean] = WORDS[t.dataset.w]; popWord(t, `<i>📖</i>${nm}`, "#E3F2FD", mean); }
+      else { const k = t.dataset.f, F = FORMS[k];
+        popWord(t, `<i>${F.em}</i>${F.label} energy`, F.col, F.mean + (t.classList.contains("erow") && SC ? `<div class="now">In this scene now: ${shownE[k] ?? 0} J of ${SC.total} J</div>` : "")); }
+      return;
+    }
+    if (!e.target.closest("#wpop")) $("wpop").hidden = true;
+    if (SEL && !e.target.closest(".tile, .slot, .bank")) unselect();
+  });
+  $("wpOk").onclick = () => ($("wpop").hidden = true);
+  $("wpSpk").onclick = () => speak($("wpHead").textContent + ". " + $("wpTxt").textContent);
+
+  function closeOv(id) { $(id).classList.remove("on"); if (id === "help" && !P.seenIntro) { P.seenIntro = true; save(); } }
+  document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => closeOv(b.dataset.close)));
+  document.querySelectorAll(".overlay").forEach((o) => o.addEventListener("click", (e) => { if (e.target === o) closeOv(o.id); }));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { document.querySelectorAll(".overlay.on").forEach((o) => closeOv(o.id)); $("wpop").hidden = true; } });
+  $("helpBtn").addEventListener("click", () => $("help").classList.add("on"));
+  $("soundBtn").addEventListener("click", () => { P.sound = !P.sound; save(); markSound(); if (P.sound) SND.star(); });
+  const markSound = () => { $("soundBtn").setAttribute("aria-pressed", P.sound); $("soundBtn").textContent = P.sound ? "🔊 Sound" : "🔇 Sound"; };
+  $("readBtn").addEventListener("click", () => {
+    P.read = !P.read; save(); markRead();
+    if (P.read) { const b = document.querySelector('section:not([hidden]) .bubble'); if (b) speak(b.textContent); } else if (canSpeak) speechSynthesis.cancel();
+  });
+  const markRead = () => { $("readBtn").setAttribute("aria-pressed", P.read); $("readBtn").hidden = !canSpeak; };
+
+  // start
+  load(); markSound(); markRead();
+  ["scene", "quiz", "cert"].forEach((t) => spexBar(t));
+  P.quiz = P.quiz || { i: 0, st: [], best: null };
+  if (TEACHER) $("teachNote").hidden = false;
+  refreshStars();
+  const firstOpen = SCENES.find((sc, i) => unlocked(i) && !isDone(sc.id)) || SCENES[0];
+  openScene(P.cur && SC_I[P.cur] != null && unlocked(SC_I[P.cur]) ? P.cur : firstOpen.id);
+  showTab("scenes");
+  if (!P.seenIntro) $("help").classList.add("on");
+
+  // for the automatic tests only
+  window.__ET = { SCENES, QUIZ, openQuiz, FORMS, ORDER, BALL, SKATE, P, PL, stateOf, roundE, formsIn, openScene, showTab, play, pause, render,
+    setP: (p) => { PL.p = p; render(); }, finish: () => { PL.p = 1; PL.playing = false; render(); markPlay(); ended(); } };
+})();
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
