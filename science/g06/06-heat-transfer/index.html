@@ -57,6 +57,7 @@
   glove 100/93/85/78/70 · trapped air 100/94/88/81/75. Particle model: no wrapper vs wool (fast air particles reach the
   ice / still air trapped in the wool's pockets) in clear colours: hot air red, ice dark blue, still air orange; for this
   experiment the particle diagram is a little smaller and its caption bigger. The quiz has 2 more questions (woolly hat, cool box): 17 questions.
+  27 Oct 2026: ▶ Play starts exactly at the first action. The particle diagrams are wide (420 × 280).
   Self-contained: no internet, no external libraries or fonts. Open in any modern browser.
 
   File sections:
@@ -212,7 +213,7 @@ main .btn,.overlay .btn,.wpop .btn{font-size:19px}
 .ppanel{position:relative;display:grid;gap:6px;align-content:start;border:1px solid var(--line);border-radius:12px;padding:10px;background:#FBFCFE;min-width:0}
 .ppanel .bhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
 .ppanel .bhead b{font-size:18px;color:var(--navy)}
-#pcan{width:100%;height:auto;aspect-ratio:360/300;display:block;border-radius:10px;background:#fff;border:1px solid var(--line)}
+#pcan{width:100%;height:auto;aspect-ratio:420/280;display:block;border-radius:10px;background:#fff;border:1px solid var(--line)}
 .pcap{font-size:17px;line-height:1.35;background:#F3E5F5;border-left:5px solid #8E24AA;border-radius:10px;padding:6px 10px;min-height:2.6em}
 .legend{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--muted);flex-wrap:wrap}
 .legend .grad{width:120px;height:12px;border-radius:99px;background:linear-gradient(90deg,hsl(215 75% 52%),hsl(262 70% 52%),hsl(310 72% 50%),hsl(360 78% 48%))}
@@ -411,11 +412,11 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
 @media (min-width:900px) and (min-height:540px){
   /* the particle model takes the height that is left under Marie (it shrinks, the page never scrolls) */
   .task .ppanel{flex:1 1 0;min-height:0;display:flex;flex-direction:column}
-  .task #pcan{flex:1 1 0;height:0;min-height:90px;width:auto;max-width:100%;align-self:center}
-  .task .ppanel.lolly #pcan{max-width:70%}
+  .task #pcan{flex:1 1 0;height:0;min-height:90px;width:100%;max-width:100%;align-self:center;object-fit:contain;border:none;background:transparent}
+  .task .ppanel.lolly #pcan{max-width:85%}
 }
 @media (min-width:900px) and (max-height:760px){ .task .ppanel .bhead .hint,.task .legend span:last-child{display:none} .task .pcap{font-size:14px;line-height:1.3;padding:4px 8px} }
-@media (max-width:899px),(max-height:539px){ .task #pcan{max-width:min(100%,calc(30dvh * 360 / 300));margin:0 auto} }
+@media (max-width:899px),(max-height:539px){ .task #pcan{max-width:min(100%,calc(30dvh * 420 / 280));margin:0 auto} }
 @media print{
   body{background:#fff;display:block}
   body > *:not(#printArea){display:none!important}
@@ -482,7 +483,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
         <div class="fhead" id="freeHead"></div>
             <div class="ppanel" id="ppanel">
               <div class="bhead"><b>🔬 Inside: the particles</b><span class="hint">They never stop moving!</span></div>
-              <canvas id="pcan" width="360" height="300" role="img" aria-label="Particle model"></canvas>
+              <canvas id="pcan" width="420" height="280" role="img" aria-label="Particle model"></canvas>
               <div class="legend"><span>cold</span><span class="grad" aria-hidden="true"></span><span>hot</span><span>· faster particles = higher temperature</span></div>
               <div class="pcap" id="pcap" aria-live="polite"></div>
             </div>
@@ -1697,7 +1698,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   /* ============================ 6 PARTICLES ============================ */
   // the particle model: a canvas with its own clock, so the particles keep moving while the lab is paused
   const can = $("pcan"), ctx = can.getContext("2d");
-  const CW = 360, CH = 300;
+  const CW = 420, CH = 280;                                            // wide (teacher, 27 Oct 2026)
   function sizeCanvas() {
     const r = Math.min(3, window.devicePixelRatio || 1);
     if (can.width !== CW * r) { can.width = CW * r; can.height = CH * r; }
@@ -1761,99 +1762,97 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
 
   const PART = {
     race(S, dt, now, sc) {
-      const bs = { x: 20, y: 130, w: 100, h: 100 }, bb = { x: 140, y: 30, w: 200, h: 200 };
+      const bs = { x: 20, y: 116, w: 100, h: 100 }, bb = { x: 150, y: 26, w: 250, h: 190 };
       cbox(bs, "small beaker", degC(S.T.small)); cbox(bb, "big beaker (4 × more water)", degC(S.T.big));
       gas("s", bs, 8, S.T.small, dt); gas("b", bb, 32, S.T.big, dt);
       const f = clamp(S.t / sc.tmax);
-      [[bs.x], [bb.x]].forEach(([x]) => { ctx.fillStyle = "#ECEFF1"; ctx.fillRect(x, 246, 100, 12); ctx.fillStyle = "#FF6D00"; ctx.fillRect(x, 246, 100 * f, 12); ctx.strokeStyle = "#90A4AE"; ctx.strokeRect(x, 246, 100, 12); });
-      ctext("🔥 heat in from the hot plate: the same bar for both", 20, 280, { size: 12, col: "#E65100" });
+      [[bs.x, bs.w], [bb.x, bb.w]].forEach(([x, w2]) => { ctx.fillStyle = "#ECEFF1"; ctx.fillRect(x, 228, w2, 12); ctx.fillStyle = "#FF6D00"; ctx.fillRect(x, 228, w2 * f, 12); ctx.strokeStyle = "#90A4AE"; ctx.strokeRect(x, 228, w2, 12); });
+      ctext("🔥 heat in from the hot plate: the same for both", 20, 264, { size: 13, col: "#E65100", w: 800 });
     },
     ice(S, dt, now) {
       if (!S.phase2) {
-        const bs = { x: 20, y: 130, w: 100, h: 100 }, bb = { x: 140, y: 30, w: 200, h: 200 };
+        const bs = { x: 20, y: 116, w: 100, h: 100 }, bb = { x: 150, y: 26, w: 250, h: 190 };
         cbox(bs, "small cup", degC(S.T.cup)); cbox(bb, "big beaker (10 × more water)", degC(S.T.big));
         gas("s", bs, 8, S.T.cup, dt); gas("b", bb, 40, S.T.big, dt);
-        if (S.dropped) { iceBlock(bs.x + 14, bs.y + 30, S.ice.cup, now); iceBlock(bb.x + 20, bb.y + 30, S.ice.big, now); }
-        else { ctext("ice cube (same in both)", 20, 270, { size: 12, col: "#0277BD" }); iceBlock(180, 254, 1, now); }
-        ctext(S.dropped ? "blue = ice particles, held in place" : "", 20, 290, { size: 12, col: "#0277BD" });
+        if (S.dropped) { iceBlock(bs.x + 28, bs.y + 30, S.ice.cup, now); iceBlock(bb.x + 100, bb.y + 60, S.ice.big, now); }
+        else { ctext("ice cube (the same in both):", 20, 252, { size: 13, col: "#0277BD", w: 800 }); iceBlock(220, 238, 1, now); }
+        ctext(S.dropped ? "blue = ice particles, held in place" : "", 20, 262, { size: 13, col: "#0277BD", w: 800 });
       } else {
-        const bm = { x: 20, y: 110, w: 70, h: 70 }, bb = { x: 120, y: 30, w: 220, h: 220 };
+        const bm = { x: 20, y: 96, w: 80, h: 80 }, bb = { x: 130, y: 26, w: 270, h: 190 };
         cbox(bm, "match flame", ""); cbox(bb, "bath", degC(40));
         gas("m", bm, 4, 600, dt, { r: 4.5 }); gas("w", bb, 70, 40, dt, { r: 4.5 });
-        ctext("≈ 600 °C", 20, 200, { col: "#B71C1C", size: 14, w: 800 });
-        ctext("few particles,", 20, 218, { size: 12 }); ctext("very fast", 20, 234, { size: 12 });
-        ctext("bath: many more particles → more thermal energy", 20, 280, { size: 12 });
+        ctext("≈ 600 °C", 20, 196, { col: "#B71C1C", size: 14, w: 800 });
+        ctext("few particles,", 20, 214, { size: 12 }); ctext("very fast", 20, 230, { size: 12 });
+        ctext("bath: many more particles → more thermal energy", 20, 262, { size: 13, w: 800 });
       }
     },
     star(S, dt, now) {
       METALS.forEach((m, k) => {
-        const y0 = 22 + k * 56, dropped = S.t >= m.t;
-        ctext(m.name, 4, y0 + 24, { size: 12, w: 800, col: "#3E2723" });
-        ctx.fillStyle = "#FF7043"; ctx.globalAlpha = S.on ? 0.9 : 0.25; ctx.beginPath(); ctx.moveTo(72, y0 + 12); ctx.lineTo(83, y0 + 20); ctx.lineTo(72, y0 + 28); ctx.fill(); ctx.globalAlpha = 1;
+        const y0 = 10 + k * 46, dropped = S.t >= m.t;
+        ctext(m.name, 4, y0 + 21, { size: 12, w: 800, col: "#3E2723" });
+        ctx.fillStyle = "#FF7043"; ctx.globalAlpha = S.on ? 0.9 : 0.25; ctx.beginPath(); ctx.moveTo(72, y0 + 10); ctx.lineTo(83, y0 + 17); ctx.lineTo(72, y0 + 24); ctx.fill(); ctx.globalAlpha = 1;
         for (let c = 0; c < 12; c++) for (let rr = 0; rr < 3; rr++) {
           const hh = heatAt(m, c / 11, S.t);
-          solid(94 + c * 21.2, y0 + 5 + rr * 15, 5, tcol(20 + 75 * hh), 0.6 + 3 * hh, now, k * 40 + c * 3 + rr);
+          solid(96 + c * 24.5, y0 + 5 + rr * 12, 4.5, tcol(20 + 75 * hh), 0.6 + 2.6 * hh, now, k * 40 + c * 3 + rr);
         }
-        ctext(dropped ? "✓" : "📌", 348, y0 + 26, { size: 14, w: 800, col: "#2E7D32", align: "center" });
+        ctext(dropped ? "✓" : "📌", 406, y0 + 22, { size: 14, w: 800, col: "#2E7D32", align: "center" });
       });
-      ctext("hot centre →", 4, 296, { size: 12, col: "#E65100" }); ctext("pin end →|", 286, 296, { size: 12, col: "#546E7A" });
+      ctext("hot centre →", 4, 268, { size: 13, w: 800, col: "#E65100" }); ctext("pin end →|", 330, 268, { size: 13, w: 800, col: "#546E7A" });
     },
     tube(S, dt, now) {
-      const bh = { x: 20, y: 40, w: 150, h: 200 }, bc = { x: 190, y: 40, w: 150, h: 200 };
+      const bh = { x: 20, y: 30, w: 180, h: 180 }, bc = { x: 220, y: 30, w: 180, h: 180 };
       cbox(bh, "hot side (by the flame)", degC(S.Th)); cbox(bc, "cool side", degC(S.Tc));
-      bigArrow(bh.x + bh.w / 2, bh.y + 110, true, "#E65100", S.v); bigArrow(bc.x + bc.w / 2, bc.y + 90, false, "#1565C0", S.v);
+      bigArrow(bh.x + bh.w / 2, bh.y + 100, true, "#E65100", S.v); bigArrow(bc.x + bc.w / 2, bc.y + 80, false, "#1565C0", S.v);
       const nh = Math.round(26 - 12 * clamp((S.Th - 20) / 25));
       gas("h", bh, nh, S.Th, dt, { drift: -40 * S.v }); gas("c", bc, 26, S.Tc, dt, { drift: 40 * S.v });
-      ctext(S.v > 0.1 ? "rises ↑ (less dense)" : "", 22, 262, { size: 13, w: 800, col: "#D84315" });
-      ctext(S.v > 0.1 ? "sinks ↓ (denser)" : "", 192, 262, { size: 13, w: 800, col: "#1565C0" });
-      ctext("same size boxes: fewer particles = less dense", 20, 288, { size: 12 });
+      ctext(S.v > 0.1 ? "rises ↑ (less dense)" : "", 22, 234, { size: 13, w: 800, col: "#D84315" });
+      ctext(S.v > 0.1 ? "sinks ↓ (denser)" : "", 222, 234, { size: 13, w: 800, col: "#1565C0" });
+      ctext("same size boxes: fewer particles = less dense", 20, 262, { size: 13, w: 700 });
     },
     bottles(S, dt, now, sc) {
-      const on = S.on ? 1 : 0, B = [["black", "#212121", 15], ["white", "#FAFAFA", 130], ["silver", "#B0BEC5", 245]];
-      ctx.fillStyle = on ? "#FF7043" : "#B0BEC5"; ctx.fillRect(15, 4, 330, 8);
-      B.forEach(([k, c, x], i) => {
-        const b = { x, y: 96, w: 100, h: 150 };
-        if (on) [x + 30, x + 70].forEach((wx, j) => cwave(wx, 16, wx, 90, now * 7 + j, "#E53935", 4, 14, 0.85));
+      const on = S.on ? 1 : 0, B = [["black", "#212121", 20], ["white", "#FAFAFA", 150], ["silver", "#B0BEC5", 280]];
+      ctx.fillStyle = on ? "#FF7043" : "#B0BEC5"; ctx.fillRect(20, 4, 380, 8);
+      B.forEach(([k, c, x]) => {
+        const b = { x, y: 90, w: 120, h: 120 };
+        if (on) [x + 36, x + 84].forEach((wx, j) => cwave(wx, 16, wx, 84, now * 7 + j, "#E53935", 4, 14, 0.85));
         cbox(b, "", degC(S.T[k]));
-        ctx.fillStyle = c; ctx.fillRect(x, 248, 100, 10); ctx.strokeStyle = "#78909C"; ctx.strokeRect(x, 248, 100, 10);
+        ctx.fillStyle = c; ctx.fillRect(x, 212, 120, 10); ctx.strokeStyle = "#78909C"; ctx.strokeRect(x, 212, 120, 10);
         gas(k, b, 9, 20 + 4 * (S.T[k] - 20), dt, { r: 4.5 });            // the difference is shown 4 × bigger
-        ctext(k === "silver" ? "shiny silver" : k, x + 50, 274, { size: 13, w: 800, align: "center" });
+        ctext(k === "silver" ? "shiny silver" : k, x + 60, 240, { size: 13, w: 800, align: "center" });
       });
-      ctext("lamp → waves: no particles needed · inside: air particles", 180, 296, { size: 12, col: "#C62828", w: 800, align: "center" });
+      ctext("lamp → waves: no particles needed · inside: air particles", 210, 268, { size: 12, col: "#C62828", w: 800, align: "center" });
     },
     cube(S, dt, now) {
-      const b = { x: 20, y: 40, w: 200, h: 220 }, F = FACES[S.cur];
+      const b = { x: 20, y: 30, w: 240, h: 190 }, F = FACES[S.cur];
       cbox(b, "hot water inside the cube", degC(S.Tw));
       gas("w", b, 36, S.Tw, dt, { r: 4.5 });
-      ctx.fillStyle = F.shiny ? "#E0E7EB" : F.col; ctx.fillRect(220, 40, 14, 220); ctx.strokeStyle = "#546E7A"; ctx.strokeRect(220, 40, 14, 220);
-      if (S.pour >= 1) for (let j = 0; j < F.rad; j++) { const y = 60 + (j + 0.5) * (180 / F.rad); cwave(238, y, 350, y, now * 7 + j, "#E53935", 4, 14, 0.9); }
-      ctext(`face: ${F.name}`, 236, 280, { size: 13, w: 800, align: "left" });
-      ctext("same water behind every face", 20, 284, { size: 12 });
+      ctx.fillStyle = F.shiny ? "#E0E7EB" : F.col; ctx.fillRect(260, 30, 14, 190); ctx.strokeStyle = "#546E7A"; ctx.strokeRect(260, 30, 14, 190);
+      if (S.pour >= 1) for (let j = 0; j < F.rad; j++) { const y = 46 + (j + 0.5) * (160 / F.rad); cwave(278, y, 412, y, now * 7 + j, "#E53935", 4, 14, 0.9); }
+      ctext(`face: ${F.name}`, 278, 244, { size: 13, w: 800, align: "left" });
+      ctext("same water behind every face", 20, 266, { size: 13, w: 700 });
     },
     lolly(S, dt, now) {
-      const L = { x: 12, y: 30, w: 160, h: 220 }, R = { x: 188, y: 30, w: 160, h: 220 };
+      const L = { x: 12, y: 26, w: 192, h: 180 }, R = { x: 216, y: 26, w: 192, h: 180 };
       cbox(L, "no wrapper", ""); cbox(R, "winter glove (wool)", "");
       // hot air particles everywhere in both boxes (30 °C)
       gas("a1", L, 16, 30, dt, { r: 4.5, col: "#E53935" }); gas("a2", R, 16, 30, dt, { r: 4.5, col: "#E53935" });   // hot air: red
-      // the wool: a thick ring with still, trapped air inside its pockets; inside the ring the air cannot reach the ice
-      const wx = R.x + 22, wy = R.y + 62, ww = R.w - 44, wh = R.h - 70;
+      // the wool: a thick wall with still, trapped air in its pockets; inside it the air cannot reach the ice
+      const wx = R.x + 40, wy = R.y + 44, ww = R.w - 80, wh = R.h - 50;
       ctx.fillStyle = "#5C6BC0"; ctx.fillRect(wx, wy, ww, wh);
       ctx.fillStyle = "#F7FAFD"; ctx.fillRect(wx + 18, wy + 18, ww - 36, wh - 18);
-      for (let i = 0; i < 6; i++) for (let j = 0; j < 2; j++) {
-        solid(wx + 9, wy + 14 + i * 22, 3.5, "#FB8C00", 0.4, now, i * 2 + j); solid(wx + ww - 9, wy + 14 + i * 22, 3.5, "#FB8C00", 0.4, now, 20 + i);
-      }
-      for (let i = 0; i < 5; i++) solid(wx + 22 + i * 16, wy + 9, 3.5, "#FB8C00", 0.4, now, 40 + i);
+      for (let i = 0; i < 6; i++) { solid(wx + 9, wy + 12 + i * 20, 3.5, "#FB8C00", 0.4, now, i); solid(wx + ww - 9, wy + 12 + i * 20, 3.5, "#FB8C00", 0.4, now, 20 + i); }
+      for (let i = 0; i < 5; i++) solid(wx + 22 + i * 17, wy + 9, 3.5, "#FB8C00", 0.4, now, 40 + i);
       // the ice: strong dark-blue particles that vibrate in place (fewer as the lolly melts)
       const ice = (x, y, f) => { const cells = []; for (let j = 0; j < 3; j++) for (let i = 0; i < 4; i++) cells.push([i, j]);
         cells.sort((a, b) => (Math.abs(a[0] - 1.5) + Math.abs(a[1] - 1)) - (Math.abs(b[0] - 1.5) + Math.abs(b[1] - 1)));
         cells.slice(0, Math.round(12 * clamp(f))).forEach(([i, j], k) => solid(x + i * 11, y + j * 11, 4.8, "#1565C0", 0.8, now, k)); };
-      ice(L.x + 58, L.y + 150, S.left.none / 100);
-      ice(R.x + 58, R.y + 150, S.left.glove / 100);
-      ctext(`${Math.round(S.left.none)} % left`, L.x + 80, L.y + 214, { size: 13, w: 800, col: "#C62828", align: "center" });
-      ctext(`${Math.round(S.left.glove)} % left`, R.x + 80, R.y + 214, { size: 13, w: 800, col: "#2E7D32", align: "center" });
-      ctext("red = hot air (fast)", 92, 272, { size: 13, w: 800, col: "#C62828", align: "center" });
-      ctext("orange = still, trapped air", 268, 272, { size: 13, w: 800, col: "#E65100", align: "center" });
-      ctext("blue = ice particles", 180, 292, { size: 13, w: 800, col: "#1565C0", align: "center" });
+      ice(L.x + 79, L.y + 110, S.left.none / 100);
+      ice(R.x + 79, R.y + 110, S.left.glove / 100);
+      ctext(`${Math.round(S.left.none)} % left`, L.x + L.w / 2, L.y + 170, { size: 13, w: 800, col: "#C62828", align: "center" });
+      ctext(`${Math.round(S.left.glove)} % left`, R.x + R.w / 2, R.y + 170, { size: 13, w: 800, col: "#2E7D32", align: "center" });
+      ctext("red = hot air (fast)", 108, 232, { size: 13, w: 800, col: "#C62828", align: "center" });
+      ctext("orange = still, trapped air", 312, 232, { size: 13, w: 800, col: "#E65100", align: "center" });
+      ctext("blue = ice particles", 210, 256, { size: 13, w: 800, col: "#1565C0", align: "center" });
     },
   };
   let plast = 0;
@@ -1933,7 +1932,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     PL.p = 0; PL.cap = -1; PG = {}; lastCap = "";
     buildTable();
     $("ppanel").classList.toggle("lolly", SC.id === "lolly");           // ice lolly: a smaller diagram, a bigger caption
-    SC.lead = Math.max(0, Math.min(SC.P0 ?? 1, SC.narr[1][0]) - 150 / SC.dur);   // ▶ Play starts just before the first action
+    SC.lead = Math.min(SC.P0 ?? 1, SC.narr[1][0]);                       // ▶ Play starts at the first action (no still frames)
     setControls(true); render(); markPlay(); renderFree();
   }
   function renderFree() {

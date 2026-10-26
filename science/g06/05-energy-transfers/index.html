@@ -38,6 +38,7 @@
   big animation on the left, Marie (bigger text), the scene picker and the energy bars on the right;
   on phones the animation stays at the top. ▶ Play starts just before the first action (no still lead-in). Certificate =
   quiz only. Bigger key-word icons.
+  27 Oct 2026: ▶ Play starts exactly at the first action.
   Self-contained: no internet, no external libraries or fonts. Open in any modern browser.
 
   File sections:
@@ -1527,7 +1528,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     SC = SCENES[SC_I[id]]; P.fcur = id; save();
     if (!SC.formsOrder) { SC.formsOrder = formsIn(SC); SC.firstAt = {}; for (let i = 0; i <= 400; i++) { const E = stateOf(SC, i / 400).E; SC.formsOrder.forEach((k) => { if ((E[k] || 0) > 0.5 && SC.firstAt[k] == null) SC.firstAt[k] = i / 400; }); } }
     PL.p = 0; PL.cap = -1; lastE = null;
-    SC.lead = Math.max(0, Math.min(SC.P0 ?? 1, SC.narr[1][0]) - 150 / SC.dur);   // ▶ Play starts just before the first action
+    SC.lead = Math.min(SC.P0 ?? 1, SC.narr[1][0]);                       // ▶ Play starts at the first action (no still frames)
     setControls(true); render(); markPlay(); renderFree();
   }
   function renderFree() {
