@@ -1,0 +1,2242 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Nervous System Simulation</title>
+<!--
+  IB MYP 3 Sciences · Grade 8 · Biology Unit 1 Interactions with the Environment
+  The nervous system: stimulus → receptor → sensory neurone → relay neurone (CNS) → motor neurone → effector → response;
+  the three types of neurone and their parts; reflex arcs; synapses (and how some drugs change them).
+  Goes with Lessons 1–5 and the G8 MYP Workbook Activities 2–6 (pp. 4–19). Nothing copied from the workbook.
+  Self-contained: no internet, no external libraries or fonts. Open in any modern browser.
+
+  The guide is Marie (named after Marie Curie), the same guide as in the Grade 7 simulations.
+  Colours used everywhere: sensory neurone blue · relay neurone purple · motor neurone red · neurotransmitter green.
+
+  Science kept correct (teacher, 27 Oct 2026): CNS = brain + spinal cord (nerves are not part of the CNS); relay neurones
+  connect sensory and motor neurones inside the CNS; receptors are the cells that detect a stimulus; effectors are muscles
+  or glands.
+  Simplifications (teacher notes, not shown to students):
+    · Typical times: a spinal reflex about 0.05 s, a response you think about about 0.25 s; the race runs 20× slower.
+    · The synapse is drawn far wider than 20 nm; 12 neurotransmitter molecules and 6 receptors stand for many more.
+    · Drug A (blocks the receptors, e.g. curare) and Drug B (stops the reabsorption, e.g. cocaine; some medicines for
+      depression work a bit like this) are teaching patterns: 0 and 3 impulses out for every impulse in.
+    · "One way only": the backwards impulse is stopped straight away (impulses start at dendrites and nerve endings pass
+      the message on only forwards across a synapse).
+    · Smelling food → saliva and a loud noise → adrenaline are shown as pathways through the brain (a relay neurone in the
+      brain); the motor neurone path to the adrenal gland is drawn down the spinal cord.
+
+  File sections:
+    1 STYLE   layout, colours
+    2 MARKUP  header · key · 6 tabs (Pathway · Neurones · Reflexes · Synapse · Test yourself · Certificate) · overlays
+    3 CONFIG  scenarios, neurone parts, reflex cards, synapse steps, question banks, guide cards
+    4 ENGINE  drawing helpers, Marie, sound, stars, badges, storage, questions (tip → answer), drag-or-tap, quizzes
+    5 BODY    the body picture, nerve paths, the impulse animation and the responses
+    6 PATHWAY tab 1: build the chain, place it on the body, send the impulse
+    7 NEURONES tab 2: identify, label, myelin race, one way only
+    8 REFLEX  tab 3: race, reaction-time game, reflex or voluntary?
+    9 SYNAPSE tab 4: explore step by step, order, label, drugs
+   10 UI      tabs, overlays, guide, certificate, start
+-->
+<style>
+/* ============================ 1 STYLE ============================ */
+:root{
+  --navy:#1F3A5F; --accent:#E65100; --ink:#263238; --muted:#606A72;
+  --bg:#F2F5F9; --card:#FFFFFF; --line:#DDE6F0; --sunk:#EEF2F7; --soft-blue:#E3F2FD;
+  --star:#F9A825; --ok:#2E7D32; --bad:#C62828; --focus:#1565C0;
+  --sen:#1E88E5; --rel:#8E24AA; --mot:#E53935; --nt:#43A047; --cns:#F9A825;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;font-size:18px}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:1rem/1.45 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;min-height:100dvh}
+h2,h3{margin:0}
+p{margin:0}
+button{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,[role="button"]:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+/* header (as in every simulation) */
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);
+  display:flex;align-items:center;gap:12px;padding:8px 16px;flex-wrap:wrap;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header h1{font-size:1.25rem;margin:0;font-weight:600}
+header .sub{font-size:.85rem;opacity:.85}
+.sub a.home{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55);white-space:nowrap}
+header .grow{flex:1}
+.hbtns{display:flex;gap:6px;flex-wrap:wrap}
+.credit{text-align:right;font-size:.74rem;line-height:1.3;opacity:.92;white-space:nowrap}
+.credit a{color:#fff;text-decoration:underline}
+.btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;
+  min-height:44px;padding:6px 14px;cursor:pointer;touch-action:manipulation}
+.btn:hover{border-color:var(--navy)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.small{min-height:36px;padding:4px 10px;font-size:.9rem}
+header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5);white-space:nowrap}
+header .btn[aria-pressed="true"]{background:rgba(255,255,255,.18)}
+.tbanner{background:#FFF8E1;border-bottom:2px solid #F9A825;padding:6px 16px;font-size:17px;font-weight:600}
+
+/* key bar */
+.keybar{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;padding:6px 16px;background:#fff;border-bottom:1px solid var(--line)}
+.keybar .k{display:flex;align-items:center;gap:6px}
+.keybar .k i{display:inline-block;width:22px;height:6px;border-radius:3px}
+.keybar .k i.dot{width:12px;height:12px;border-radius:50%}
+.keybar .tools{margin-left:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.keybar .sum{font-weight:700;color:var(--navy);white-space:nowrap}
+
+/* tabs + panels */
+main{flex:1;display:flex;flex-direction:column;gap:10px;padding:10px 16px 16px;min-height:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+/* main tabs: big coloured buttons (teacher, 27 Oct 2026) */
+.tabs{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0 4px}
+.tab{font:inherit;font-size:22px;font-weight:700;border:2px solid var(--navy);border-radius:14px;background:#fff;color:var(--navy);
+  padding:8px 12px;min-height:56px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;
+  box-shadow:0 3px 0 #C5D0DC;transition:background .15s,transform .1s}
+.tab:hover{background:#FFF3E0}
+.tab:active{transform:translateY(2px)}
+.tab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 0 #BF360C}
+.tab .ic{font-size:26px;line-height:1}
+.tab .tstar{font-size:17px;color:var(--star);margin-left:2px}
+.tab[aria-selected="true"] .tstar{color:#FFE082}
+@media (min-width:1500px){ .tabs{gap:10px} .tab{font-size:24px;padding:8px 18px} .tab .ic{font-size:28px} }
+.panel{display:flex;flex-direction:column;gap:10px;min-height:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0;display:flex;flex-direction:column}
+.card > h2{padding:6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line);color:var(--navy);font-weight:600}
+.cb{padding:10px 12px;display:grid;gap:10px;align-content:start;min-height:0}
+.label{font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.hint{color:var(--muted)}
+.grid2{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:860px){ .grid2{grid-template-columns:minmax(230px,280px) minmax(0,1fr)} }
+.split{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:980px){ .split{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)} }
+.subsw{display:flex;gap:8px;flex-wrap:wrap}
+.subsw .chip{min-height:46px;padding:6px 16px;font-weight:600}
+.chip{font:inherit;border:1px solid var(--line);background:#fff;border-radius:99px;padding:4px 11px;
+  min-height:38px;cursor:pointer;display:inline-flex;gap:6px;align-items:center;line-height:1.2}
+.chip[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.chip .st{color:var(--star);font-size:15px}
+.chip[aria-pressed="true"] .st{color:#FFE082}
+
+/* Marie, the guide */
+.spexbar{display:flex;align-items:center;gap:10px;min-height:76px}
+.spex{width:72px;height:72px;flex:none}
+.bubble{position:relative;background:#fff;border:2px solid var(--navy);border-radius:14px;padding:8px 12px;line-height:1.4;flex:1;min-width:0}
+.bubble::before{content:"";position:absolute;left:-11px;top:24px;border:10px solid transparent;border-right-color:var(--navy);border-left:0}
+.bubble::after{content:"";position:absolute;left:-7px;top:26px;border:8px solid transparent;border-right-color:#fff;border-left:0}
+.bubble.tip{background:#FFF8E1} .bubble.tip::after{border-right-color:#FFF8E1}
+.bubble.good{background:#E8F5E9} .bubble.good::after{border-right-color:#E8F5E9}
+.bubble.ans{background:var(--soft-blue)} .bubble.ans::after{border-right-color:var(--soft-blue)}
+.spex .lens{fill:#FFE0C2;fill-opacity:.45}
+.spex .m{display:none} .spex[data-mood="talk"] .m-talk,.spex[data-mood="happy"] .m-happy,.spex[data-mood="think"] .m-think,
+.spex[data-mood="wow"] .m-wow,.spex[data-mood="hmm"] .m-hmm{display:inline}
+.spex[data-mood="hmm"] .brow{transform:translateY(-2px)}
+
+/* lists to choose from */
+.obj{font:inherit;display:flex;align-items:center;gap:8px;text-align:left;border:1px solid var(--line);background:#fff;
+  border-radius:10px;padding:6px 10px;min-height:54px;cursor:pointer;line-height:1.2;width:100%}
+.obj .em{font-size:1.6rem;width:34px;text-align:center;flex:none}
+.obj .st{margin-left:auto;color:var(--star);font-size:15px;white-space:nowrap}
+.obj[aria-pressed="true"]{border:2px solid var(--accent);background:#FFF3E0}
+.cardlist{display:grid;gap:6px}
+@media (max-width:859px){ .cardlist{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))} }
+
+/* answers */
+.cats{display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.cat{font:inherit;border:1px solid #B0BEC5;background:#fff;border-radius:10px;padding:8px 12px;min-height:52px;cursor:pointer;font-weight:600;line-height:1.25;text-align:left}
+.cat.right{background:#E8F5E9;border:2px solid var(--ok)}
+.cat.wrong{background:#FFEBEE;border-color:var(--bad)}
+.cat:disabled{cursor:default}
+.cats.one{grid-template-columns:minmax(0,1fr)}
+.feedback{min-height:2.4em;border-radius:10px;padding:8px 12px;background:var(--sunk)}
+.feedback:empty{display:none}
+.feedback.tip{background:#FFF8E1;border-left:4px solid #F9A825}
+.feedback.ans{background:var(--soft-blue);border-left:4px solid var(--focus)}
+.feedback.good{background:#E8F5E9;border-left:4px solid var(--ok)}
+.feedback.info{background:var(--sunk);border-left:4px solid #90A4AE}
+.feedback.stop{background:#FFEBEE;border-left:4px solid var(--bad)}
+.didyou{background:#F3E5F5;border-left:4px solid #8E24AA;border-radius:8px;padding:6px 10px}
+.stars{color:var(--star);font-size:1.2rem;letter-spacing:2px}
+.stars .off{color:var(--line)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.read{background:var(--soft-blue);border-left:5px solid var(--navy);border-radius:10px;padding:8px 12px}
+.qlabel{font-weight:700;color:var(--navy)}
+
+/* drag or tap */
+.tile{font:inherit;border:1px solid #B0BEC5;background:#fff;border-radius:10px;padding:8px 12px;min-height:48px;text-align:left;
+  font-weight:600;line-height:1.25;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;box-shadow:0 2px 0 var(--line)}
+.tile .em{margin-right:6px}
+.tile.sel{border-color:var(--focus);box-shadow:0 0 0 3px #BBDEFB}
+.tile.lifting{opacity:.3}
+.tile.locked{cursor:default;box-shadow:none;border:2px solid var(--ok);background:#E8F5E9;touch-action:auto}
+.tile.shown{border:2px solid var(--focus);background:var(--soft-blue)}
+.tile.bounce{animation:shake .4s}
+.drag-ghost{position:fixed;z-index:80;pointer-events:none;transform:translate(-50%,-60%) rotate(-3deg);box-shadow:0 10px 24px rgba(0,0,0,.25);max-width:280px}
+.bank{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px;border-radius:12px;background:var(--sunk);min-height:66px}
+.bank:empty::after{content:"✔ All placed";color:var(--muted);align-self:center}
+.slot{border:2px dashed #90A4AE;border-radius:12px;background:#fff;min-height:64px;padding:6px;display:grid;gap:4px;align-content:start;cursor:pointer}
+.slot.hot{border:2px solid var(--focus);background:var(--soft-blue)}
+.slot.shake{animation:shake .4s;border-color:var(--bad)}
+.slot.full{border-style:solid;border-color:var(--ok);cursor:default}
+.slot .sname{font-size:15px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
+/* tab 1: the chain */
+.chain{display:grid;gap:6px;grid-template-columns:minmax(0,1fr)}
+.chain .slot,.chain .fixed{position:relative}
+.chain > *:not(:last-child)::after{content:"↓";position:absolute;left:50%;bottom:-19px;transform:translateX(-50%);font-weight:800;color:var(--navy);z-index:1}
+.chain{row-gap:20px}
+@media (min-width:1180px){
+  .chain{grid-template-columns:repeat(7,minmax(0,1fr));column-gap:20px}
+  .chain > *:not(:last-child)::after{content:"→";left:auto;right:-17px;top:50%;bottom:auto;transform:translateY(-50%)}
+}
+.fixed{border-radius:12px;padding:6px 8px;background:#FFF3E0;border:2px solid #FFB74D;display:grid;gap:2px;align-content:start}
+.fixed.resp{background:#E8F5E9;border-color:#81C784}
+.fixed .sname{font-size:15px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+.slot[data-k="sensory"]{border-color:var(--sen)} .slot[data-k="relay"]{border-color:var(--rel)} .slot[data-k="motor"]{border-color:var(--mot)}
+.slot[data-k="sensory"] .sname{color:var(--sen)} .slot[data-k="relay"] .sname{color:var(--rel)} .slot[data-k="motor"] .sname{color:var(--mot)}
+.chain .tile{width:100%;font-size:17px}
+.bodySvg{width:100%;max-width:470px;display:block;margin:0 auto}
+.hs{cursor:pointer}
+.hs rect{fill:#fff;stroke:#90A4AE;stroke-width:1.5}
+.hs text{font-size:13px;font-weight:600;fill:#37474F}
+.hs line{stroke:#90A4AE;stroke-width:1.2;stroke-dasharray:3 2}
+.hs circle{fill:#fff;stroke:#607D8B;stroke-width:2}
+.ask .hs:not([data-dis]):hover rect{stroke:var(--focus);stroke-width:2.5}
+.hs.right rect{fill:#E8F5E9;stroke:var(--ok);stroke-width:2.5} .hs.right circle{fill:var(--ok)}
+.hs.wrong rect{fill:#FFEBEE;stroke:var(--bad)} .hs.wrong{opacity:.6}
+.nerve{fill:none;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.steps{display:grid;gap:4px;margin:0;padding:0;list-style:none}
+.steps li{padding:4px 10px;border-radius:8px;border-left:5px solid var(--line);background:#fff;transition:background .3s}
+.steps li.on{background:#FFF8E1;border-left-color:var(--accent);font-weight:600}
+.steps li.done{border-left-color:var(--ok)}
+@keyframes beat{50%{transform:scale(1.25)}}
+.beating{animation:beat .35s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+
+/* tab 2: neurones */
+.nSvg{width:100%;max-width:760px;display:block;margin:0 auto}
+.labwrap{position:relative;width:100%;max-width:820px;margin:0 auto}
+.labwrap svg{width:100%;display:block}
+.labwrap .slot{position:absolute;transform:translate(-50%,-50%);width:19%;min-height:44px;padding:3px;align-content:center;text-align:center;font-size:17px}
+.labwrap .slot .tile{width:100%;padding:4px 6px;min-height:36px;text-align:center;font-size:16px}
+.labwrap .slot.full{background:#E8F5E9}
+.labwrap .slot.info{cursor:pointer}
+.labwrap .slot.info:hover{box-shadow:0 0 0 3px #BBDEFB}
+.part-on{filter:drop-shadow(0 0 6px #FFB300)}
+.race{display:grid;gap:4px}
+.stop{font-size:15px}
+
+/* tab 3: reflexes */
+.raceSvg{width:100%;max-width:820px;display:block;margin:0 auto}
+.watch{font-variant-numeric:tabular-nums;font-weight:700;font-size:22px;color:var(--navy)}
+.pad{border-radius:16px;min-height:220px;display:grid;place-items:center;text-align:center;font-size:28px;font-weight:700;color:#fff;
+  background:#546E7A;cursor:pointer;user-select:none;-webkit-user-select:none;touch-action:manipulation;padding:16px}
+.pad.wait{background:#C62828} .pad.go{background:#2E7D32} .pad.done{background:var(--navy)}
+.times{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.times span{border:1px solid var(--line);border-radius:8px;padding:4px 10px;background:#fff;font-variant-numeric:tabular-nums}
+.bins{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:700px){ .bins{grid-template-columns:1fr 1fr} }
+.bins .slot{min-height:140px;align-content:start}
+.bins .slot .tile{width:100%}
+
+/* tab 4: synapse */
+.synSvg{width:100%;max-width:760px;display:block;margin:0 auto}
+.order{display:grid;gap:8px;max-width:760px;width:100%;margin:0 auto}
+.order .slot{grid-template-columns:40px minmax(0,1fr);align-items:center;min-height:56px}
+.order .slot .num{font-weight:800;font-size:22px;color:var(--navy);text-align:center}
+.order .slot .tile{width:100%}
+.drugbtns{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.count{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:20px}
+.count b{font-size:26px;color:var(--navy)}
+
+/* tabs 3–4: everything on one screen (teacher, 27 Oct 2026). --avail = the height left under the sub-buttons (set by fitHeight) */
+.fit{display:grid;gap:12px;grid-template-columns:minmax(0,1fr);align-items:start}
+.fl,.fr{display:grid;gap:8px;align-content:start;min-width:0}
+.fitcard .cb,.fitcard > .fit{padding:10px 12px}
+.cats.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.fit .cat{min-height:46px;padding:6px 10px}
+@media (min-width:900px){
+  .fit{grid-template-columns:max-content minmax(300px,1fr)}
+  .fit.sortfit{grid-template-columns:minmax(0,1fr) minmax(0,1.15fr)}
+  .fit.ordfit{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .fr{max-height:var(--avail,none);overflow:auto}
+  .fitsvg{max-width:none}
+  .fit .controls{justify-content:flex-start}
+  .fit.asking .hideq{display:none!important}
+  body.fitmode footer{display:none}
+  #rGame .fl{width:min(46vw,560px)}
+  #rGame .pad{min-height:0;height:clamp(110px,calc(var(--avail,400px) - 190px),220px);font-size:24px}
+  #rGame .pad.done{height:64px;font-size:20px}
+  #rGame .times{gap:4px} #rGame .times span{padding:2px 8px;font-size:17px}
+  #rSort .bank{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:8px}
+  #rSort .tile{font-size:16px;padding:4px 8px;min-height:38px}
+  #rSort .bins{grid-template-columns:1fr 1fr;gap:8px;max-height:none}
+  #rSort .bins .slot{min-height:var(--avail,300px);align-content:start}
+  #rSort .bins .slot .tile{font-size:16px;padding:3px 8px;min-height:0}
+  #sOrd .bank{display:grid;gap:6px;padding:8px}
+  #sOrd .tile,#sOrd .order .slot .tile{font-size:16px;padding:4px 8px;min-height:0}
+  #sOrd .order{gap:4px}
+  #sOrd .order .slot{min-height:38px;padding:1px 6px;grid-template-columns:30px minmax(0,1fr)}
+  #sOrd .order .slot .num{font-size:20px}
+  #sLab .labwrap .slot{font-size:15px;min-height:34px}
+  #sLab .labwrap .slot .tile{font-size:14px;padding:2px 4px;min-height:28px}
+  #sExp .steps li{font-size:18px;padding:3px 10px}
+  .fit .count{justify-content:flex-start;font-size:18px} .fit .count b{font-size:22px}
+  .fit .read{font-size:19px;padding:6px 10px}
+  .fit .watch{font-size:20px}
+  .qbody{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);align-items:center;gap:10px 18px}
+  .qbody .cats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .qpic .em{font-size:2.4rem}
+  .review li{padding:4px 10px}
+}
+/* quizzes */
+.qhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.qhead h2{color:var(--navy)}
+.qbody{display:grid;gap:12px;max-width:1000px;width:100%;margin:0 auto}
+.qtext{font-weight:600;text-align:center}
+.qpic{display:grid;justify-items:center;gap:6px}
+.qpic .em{font-size:3.4rem;line-height:1.1}
+.qbody .cats{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:.78rem;font-weight:600;color:var(--muted);background:#fff}
+.dot.now{border-color:var(--navy);color:var(--navy)}
+.dot.done{background:var(--star);border-color:var(--star);color:#3E2A00}
+.dot.zero{background:#CFD8DC;border-color:#CFD8DC;color:#37474F}
+.review{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.review li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;padding:7px 12px;border:1px solid var(--line);border-radius:10px}
+.score{font-size:2.6rem;font-weight:700;line-height:1;color:var(--navy)}
+
+/* guide cards */
+.slide{display:grid;gap:10px}
+.slide h3{color:var(--navy)}
+.slide ul{margin:0;padding-left:1.2em;display:grid;gap:4px}
+.slide .pic{display:grid;justify-items:center}
+.slide .pic svg{width:100%;max-width:560px}
+.slidenav{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
+.slidenav .pg{color:var(--muted)}
+.kw{display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.kw div{border-radius:10px;padding:6px 10px;background:var(--sunk)}
+.kw b{display:block;color:var(--navy)}
+.kw svg{display:block;width:100%;max-width:420px;height:auto;margin:4px auto 0}
+.flow{display:flex;flex-wrap:wrap;gap:4px;align-items:center;justify-content:center;font-weight:600}
+.flow span{border-radius:8px;padding:4px 8px;background:var(--sunk)}
+.flow .s{background:#E3F2FD;color:#0D47A1} .flow .r{background:#F3E5F5;color:#6A1B9A} .flow .m{background:#FFEBEE;color:#B71C1C}
+
+/* overlays */
+.overlay{position:fixed;inset:0;background:rgba(31,58,95,.55);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+.overlay.on{display:flex}
+.overlay .box{background:#fff;border-radius:14px;max-width:780px;width:100%;max-height:92vh;overflow:auto;padding:16px 20px;display:grid;gap:10px}
+.overlay h3{margin:.1em 0 .2em;color:var(--navy)}
+.overlay li{margin:.2em 0}
+#present .box{max-width:1200px;width:96vw;height:94vh;max-height:none;font-size:1.3rem;align-content:start}
+#present .slide h3{font-size:2rem}
+#present .spex{width:110px;height:110px}
+#present .bubble{font-size:1.3rem}
+
+/* certificate */
+.certwrap{display:grid;gap:12px;justify-items:center}
+.sheet{width:100%;max-width:1000px;aspect-ratio:297/210;border:10px double var(--navy);border-radius:16px;background:#fff;
+  padding:3% 4%;display:grid;grid-template-rows:auto auto auto 1fr auto;gap:1.2%;text-align:center;position:relative;container-type:inline-size;overflow:hidden}
+.sheet .t1{font-size:max(15px,1.9cqw);letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.sheet .t2{font-size:max(26px,4.6cqw);font-weight:800;color:var(--navy);line-height:1.1}
+.sheet .who{font-size:max(24px,4.2cqw);font-weight:700;color:var(--accent);border-bottom:2px solid var(--line);padding:0 4%;justify-self:center;min-width:50%}
+.sheet .for{font-size:max(14px,1.8cqw)}
+.sheet .badges{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1.2cqw;align-content:center}
+.sheet .foot{display:flex;justify-content:space-between;align-items:end;font-size:max(12px,1.5cqw);color:var(--muted);gap:10px}
+.sheet .foot .sig{border-top:1px solid #90A4AE;padding-top:2px;min-width:30%}
+.sheet .marie{position:absolute;right:3%;top:4%;width:12%}
+.sheet .seal{position:absolute;left:3%;top:4%;width:11%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#FFE082,#F9A825);
+  display:grid;place-items:center;font-size:max(14px,2.4cqw);font-weight:800;color:#5D4037;box-shadow:0 0 0 4px #FFF8E1,0 0 0 6px #F9A825}
+.badge{display:grid;justify-items:center;gap:1px;padding:.6cqw .3cqw;border-radius:12px;border:2px dashed #CFD8DC;text-align:center;font-size:max(11px,1.35cqw);color:#90A4AE;line-height:1.15}
+.badge .em{font-size:max(22px,3.6cqw);filter:grayscale(1);opacity:.4;line-height:1.1}
+.badge.on{border:2px solid var(--star);background:#FFFDE7;color:var(--ink)}
+.badge.on .em{filter:none;opacity:1}
+.badge .how{font-size:max(10px,1.1cqw);color:var(--muted)}
+.word{font:inherit;font-size:20px;min-height:44px;padding:4px 8px;border:1px solid #B0BEC5;border-radius:8px}
+#printArea{display:none}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:12px;
+  z-index:90;box-shadow:0 8px 20px rgba(0,0,0,.25);font-weight:600;display:none}
+.toast.on{display:block;animation:pop .35s}
+@keyframes pop{from{transform:translate(-50%,20px);opacity:0}}
+footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
+
+/* big text, as in the Grade 7 simulations: 20 px for everything students read or press, labels at least 15 px */
+.card > h2{font-size:19px}
+.keybar{font-size:16px}
+main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
+.read,.feedback,.didyou,.bubble,.steps li,.slide{font-size:20px}
+.label{font-size:15px} .hint{font-size:16px}
+.qtext{font-size:22px} .qhead h2{font-size:20px}
+
+@media (max-width:1099px){ header .sub{font-size:.75rem} }
+@media (max-width:759px){
+  header h1{font-size:1.05rem}
+  .credit{order:3;flex-basis:100%;text-align:left;font-size:.7rem}
+  .credit br{display:none} .credit a{margin-left:6px}
+  .keybar{font-size:14px;gap:2px 10px}
+  .keybar .tools{margin-left:0}
+  .spex{width:56px;height:56px}
+  .bubble{font-size:17px}
+  main .btn,.cat,.obj,.chip,.tile{font-size:18px}
+  .read,.feedback,.didyou,.steps li{font-size:18px}
+  .hbtns .btn{min-height:38px;padding:4px 9px;font-size:.88rem}
+  .labwrap .slot{font-size:13px;width:23%;min-height:36px}
+  .labwrap .slot .tile{font-size:13px;padding:2px 3px;min-height:30px}
+  .labwrap .slot .sname{font-size:11px}
+  .pad{font-size:22px;min-height:180px}
+}
+@media (max-width:599px){ .tab{padding:6px 10px;font-size:20px;min-height:50px} .tab .ic{font-size:22px} .tab .full{display:none} }
+@media print{
+  @page{size:A4 landscape;margin:10mm}
+  body > *:not(#printArea){display:none!important}
+  #printArea{display:block}
+  #printArea .sheet{max-width:none;width:100%;aspect-ratio:auto;height:180mm;border-width:8px}
+  #printArea .badge{font-size:11pt} #printArea .badge .em{font-size:28pt} #printArea .badge .how{font-size:8pt}
+}
+@media (prefers-reduced-motion:reduce){ .beating,.tile.bounce,.slot.shake{animation:none} }
+</style>
+</head>
+<body>
+<!-- ============================ 2 MARKUP ============================ -->
+<header>
+  <div>
+    <h1>The nervous system</h1>
+    <div class="sub"><a class="home" href="https://school.taneski.com/science/g08/#biology" title="Back to Grade 8 science">← All Grade 8 science</a> · IB MYP 3 · Unit 1 Interactions with the Environment · with Marie</div>
+  </div>
+  <div class="grow"></div>
+  <div class="hbtns">
+    <button class="btn" id="guideBtn">📖 Marie's guide</button>
+    <button class="btn" id="soundBtn" aria-pressed="false" aria-label="Sound on or off">🔇 Sound</button>
+    <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
+  </div>
+  <div class="credit">Biljana Taneska · Science teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
+</header>
+
+<div class="keybar" aria-label="Key">
+  <span class="k"><i style="background:var(--sen)"></i>Sensory neurone</span>
+  <span class="k"><i style="background:var(--rel)"></i>Relay neurone (in the CNS)</span>
+  <span class="k"><i style="background:var(--mot)"></i>Motor neurone</span>
+  <span class="k"><i class="dot" style="background:#FFEB3B;box-shadow:0 0 0 2px #FBC02D"></i>Impulse</span>
+  <div class="tools"><span class="sum" id="starSum">★ 0</span></div>
+</div>
+
+<main>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-path" aria-selected="true" aria-controls="path"><span class="ic">🔗</span>1<span class="full"> · Stimulus → response</span><span class="tstar" data-ts="path"></span></button>
+    <button class="tab" role="tab" id="tab-neur" aria-selected="false" aria-controls="neur"><span class="ic">🧠</span>2<span class="full"> · Neurones</span><span class="tstar" data-ts="neur"></span></button>
+    <button class="tab" role="tab" id="tab-reflex" aria-selected="false" aria-controls="reflex"><span class="ic">⚡</span>3<span class="full"> · Reflexes</span><span class="tstar" data-ts="reflex"></span></button>
+    <button class="tab" role="tab" id="tab-syn" aria-selected="false" aria-controls="syn"><span class="ic">🔬</span>4<span class="full"> · Synapse</span><span class="tstar" data-ts="syn"></span></button>
+    <button class="tab" role="tab" id="tab-test" aria-selected="false" aria-controls="test"><span class="ic">🏆</span>5<span class="full"> · Test yourself</span><span class="tstar" data-ts="test"></span></button>
+    <button class="tab" role="tab" id="tab-cert" aria-selected="false" aria-controls="cert"><span class="ic">🏅</span>6<span class="full"> · Certificate</span></button>
+  </div>
+
+  <!-- 1 PATHWAY -->
+  <section class="panel" id="path" role="tabpanel" aria-labelledby="tab-path">
+    <div class="spexbar" data-spex="path"></div>
+    <div class="subsw" data-subs="path">
+      <button class="chip" data-sub="pBuild" aria-pressed="true">🛤 Build the pathway</button>
+      <button class="chip" data-sub="pCheck" aria-pressed="false">✅ Check <span class="st" data-cs="path"></span></button>
+    </div>
+    <div class="grid2" id="pBuild">
+      <div class="card">
+        <h2>Choose what happens</h2>
+        <div class="cb"><div class="cardlist" id="scList"></div></div>
+      </div>
+      <div class="card">
+        <h2 id="scTitle">Build the pathway</h2>
+        <div class="cb">
+          <p class="read" id="scStory"></p>
+          <div id="stepA">
+            <div class="qlabel" style="margin-bottom:6px">Step 1 · Put the cards in the right boxes. One card does not belong!</div>
+            <div class="chain" id="chain"></div>
+            <div class="label" style="margin:12px 0 4px">Cards (drag one into a box, or tap a card, then tap a box)</div>
+            <div class="bank" id="scBank"></div>
+            <div class="feedback" id="aFb" aria-live="polite" style="margin-top:8px"></div>
+          </div>
+          <div id="stepB" hidden>
+            <div class="qlabel" style="margin-bottom:6px">Step 2 · Find each part on the body</div>
+            <div class="split">
+              <svg class="bodySvg" id="body" viewBox="0 0 430 440" aria-label="A body with the nervous system"></svg>
+              <div style="display:grid;gap:10px;align-content:start">
+                <p class="read" id="bQ"></p>
+                <div class="feedback" id="bFb" aria-live="polite"></div>
+                <ol class="steps" id="bSteps" hidden></ol>
+                <div class="controls">
+                  <button class="btn primary" id="bGo" hidden>▶ Send the impulse</button>
+                  <button class="btn" id="bAgain" hidden>↺ Watch again</button>
+                  <button class="btn primary" id="bNext" hidden>Next example →</button>
+                </div>
+                <div class="didyou" id="bDid" hidden></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="pCheck" hidden><div class="cb" data-check="path"></div></div>
+  </section>
+
+  <!-- 2 NEURONES -->
+  <section class="panel" id="neur" role="tabpanel" aria-labelledby="tab-neur" hidden>
+    <div class="spexbar" data-spex="neur"></div>
+    <div class="subsw" data-subs="neur">
+      <button class="chip" data-sub="nId" aria-pressed="true">🔎 Which neurone?</button>
+      <button class="chip" data-sub="nLab" aria-pressed="false">🏷 Parts of a neurone</button>
+      <button class="chip" data-sub="nRace" aria-pressed="false">🏁 Myelin race</button>
+      <button class="chip" data-sub="nWay" aria-pressed="false">➡ One way only</button>
+      <button class="chip" data-sub="nCheck" aria-pressed="false">✅ Check <span class="st" data-cs="neur"></span></button>
+    </div>
+    <div class="card" id="nId">
+      <h2 id="idTitle">Which neurone is this?</h2>
+      <div class="cb">
+        <div class="subsw" id="idPick"></div>
+        <svg class="nSvg" id="idSvg" viewBox="0 0 600 170" aria-label="A neurone"></svg>
+        <p class="read" id="idQ"></p>
+        <div class="cats" id="idCats"></div>
+        <div class="feedback" id="idFb" aria-live="polite"></div>
+        <div class="controls"><button class="btn primary" id="idNext" hidden>Next →</button></div>
+      </div>
+    </div>
+    <div class="card" id="nLab" hidden>
+      <h2>Parts of a motor neurone</h2>
+      <div class="cb">
+        <p class="hint" id="labHint">Drag each label into the right box (or tap a label, then tap a box).</p>
+        <div class="labwrap" id="labWrap"><svg id="labSvg" viewBox="0 0 600 270" aria-label="A motor neurone with label boxes"></svg></div>
+        <div class="bank" id="labBank"></div>
+        <div class="feedback" id="labFb" aria-live="polite"></div>
+        <div class="didyou" id="labInfo" hidden></div>
+      </div>
+    </div>
+    <div class="card" id="nRace" hidden>
+      <h2>Myelin race: which impulse arrives first?</h2>
+      <div class="cb">
+        <p class="read">Two axons, the same length. The top one has a <b>myelin sheath</b> (a fatty layer around the axon). The bottom one has none. Press <b>Send</b>.</p>
+        <svg class="nSvg" id="raceSvg" viewBox="0 0 600 220" aria-label="Two axons, one with myelin and one without"></svg>
+        <div class="controls"><button class="btn primary" id="raceGo">▶ Send both impulses</button></div>
+        <div id="raceAsk" hidden><p class="qlabel" style="margin-bottom:6px">Why did the top impulse win?</p><div class="cats one" id="raceCats"></div></div>
+        <div class="feedback" id="raceFb" aria-live="polite"></div>
+      </div>
+    </div>
+    <div class="card" id="nWay" hidden>
+      <h2>One way only</h2>
+      <div class="cb">
+        <p class="read">A sensory, a relay and a motor neurone are joined by tiny gaps called <b>synapses</b>. Try sending an impulse <b>forwards</b> and <b>backwards</b>.</p>
+        <svg class="nSvg" id="waySvg" viewBox="0 0 600 190" aria-label="Three neurones in a row"></svg>
+        <div class="controls">
+          <button class="btn primary" id="wayF">▶ Start at the receptor</button>
+          <button class="btn navy" id="wayB">◀ Start at the muscle</button>
+        </div>
+        <div class="feedback" id="wayInfo" aria-live="polite"></div>
+        <div id="wayAsk" hidden><p class="qlabel" style="margin-bottom:6px">Why can the message not go backwards?</p><div class="cats one" id="wayCats"></div></div>
+        <div class="feedback" id="wayFb" aria-live="polite"></div>
+      </div>
+    </div>
+    <div class="card" id="nCheck" hidden><div class="cb" data-check="neur"></div></div>
+  </section>
+
+  <!-- 3 REFLEXES -->
+  <section class="panel" id="reflex" role="tabpanel" aria-labelledby="tab-reflex" hidden>
+    <div class="spexbar" data-spex="reflex"></div>
+    <div class="subsw" data-subs="reflex">
+      <button class="chip" data-sub="rRace" aria-pressed="true">🏁 Reflex race</button>
+      <button class="chip" data-sub="rGame" aria-pressed="false">⏱ Reaction-time game</button>
+      <button class="chip" data-sub="rSort" aria-pressed="false">🔀 Reflex or not?</button>
+      <button class="chip" data-sub="rCheck" aria-pressed="false">✅ Check <span class="st" data-cs="reflex"></span></button>
+    </div>
+    <div class="card fitcard" id="rRace">
+      <div class="fit">
+        <div class="fl">
+          <svg class="raceSvg fitsvg" id="rrSvg" viewBox="0 0 640 380" data-maxw="820" data-reserve="40" aria-label="Two people: a reflex and a thinking response"></svg>
+          <div class="controls"><span class="watch" id="rrW1">Sam ⏱ 0.00 s</span><span class="watch" id="rrW2">Mia ⏱ 0.00 s</span></div>
+        </div>
+        <div class="fr">
+          <p class="read hideq"><b>Reflex or thinking: which is faster?</b> Sam touches a hot plate (a <b>reflex</b>). Mia sees a ball and decides to catch it (Mia <b>thinks</b> first). The impulses travel at the same speed.</p>
+          <div class="controls"><button class="btn primary" id="rrGo">▶ Start the race</button></div>
+          <p class="hint hideq" style="text-align:center">Slow motion: 20 times slower than real life. The times are typical values.</p>
+          <div id="rrAsk" hidden><p class="qlabel" style="margin-bottom:6px">Why is Sam's reflex so much faster?</p><div class="cats two" id="rrCats"></div></div>
+          <div class="feedback" id="rrFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="rGame" hidden>
+      <div class="fit">
+        <div class="fl">
+          <div class="pad" id="pad" role="button" tabindex="0">Press here to start</div>
+          <div class="times" id="times"></div>
+          <div class="read" id="gameRes" hidden></div>
+        </div>
+        <div class="fr">
+          <p class="read hideq"><b>Reaction-time game.</b> Press the grey box. Wait until it turns <b style="color:var(--ok)">green</b>, then click (or tap) it as fast as you can. Do it <b>5 times</b>.</p>
+          <div id="gameAsk" hidden><p class="qlabel" style="margin-bottom:6px">Is clicking when the box turns green a reflex?</p><div class="cats two" id="gameCats"></div></div>
+          <div class="feedback" id="gameFb" aria-live="polite"></div>
+          <div class="controls"><button class="btn" id="gameAgain" hidden>↺ Play again</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="rSort" hidden>
+      <div class="fit sortfit">
+        <div class="fl">
+          <div class="bank" id="sortBank"></div>
+          <div class="feedback" id="sortFb" aria-live="polite"></div>
+        </div>
+        <div class="fr bins">
+          <div class="slot" id="binR" data-bin="R"><span class="sname">⚡ Reflex: automatic, no thinking</span></div>
+          <div class="slot" id="binV" data-bin="V"><span class="sname">🧠 Voluntary: you decide</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="rCheck" hidden><div class="cb" data-check="reflex"></div></div>
+  </section>
+
+  <!-- 4 SYNAPSE -->
+  <section class="panel" id="syn" role="tabpanel" aria-labelledby="tab-syn" hidden>
+    <div class="spexbar" data-spex="syn"></div>
+    <div class="subsw" data-subs="syn">
+      <button class="chip" data-sub="sExp" aria-pressed="true">🔬 Zoom in</button>
+      <button class="chip" data-sub="sOrd" aria-pressed="false">🔢 Put in order</button>
+      <button class="chip" data-sub="sLab" aria-pressed="false">🏷 Label it</button>
+      <button class="chip" data-sub="sDrug" aria-pressed="false">💊 Drugs</button>
+      <button class="chip" data-sub="sCheck" aria-pressed="false">✅ Check <span class="st" data-cs="syn"></span></button>
+    </div>
+    <div class="card fitcard" id="sExp">
+      <div class="fit">
+        <div class="fl"><svg class="synSvg fitsvg" id="sxSvg" viewBox="0 0 600 330" data-maxw="760" aria-label="A synapse between two neurones"></svg></div>
+        <div class="fr">
+          <ol class="steps" id="sxSteps"></ol>
+          <div class="controls">
+            <button class="btn" id="sxBack">← Back</button>
+            <button class="btn primary" id="sxNext">Next step →</button>
+            <button class="btn navy" id="sxPlay">▶ Play all</button>
+            <button class="btn" id="sxReset">↺ Start again</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="sOrd" hidden>
+      <div class="fit ordfit">
+        <div class="fl">
+          <div class="bank" id="ordBank"></div>
+          <div class="feedback" id="ordFb" aria-live="polite"></div>
+        </div>
+        <div class="fr"><div class="order" id="ordSlots"></div></div>
+      </div>
+    </div>
+    <div class="card fitcard" id="sLab" hidden>
+      <div class="fit">
+        <div class="fl"><div class="labwrap fitlab" id="slWrap" data-maxw="820"><svg id="slSvg" viewBox="0 0 600 400" aria-label="A synapse with label boxes"></svg></div></div>
+        <div class="fr">
+          <p class="read"><b>Label the synapse.</b> Drag each label into its box (or tap a label, then tap a box).</p>
+          <div class="bank" id="slBank"></div>
+          <div class="feedback" id="slFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="sDrug" hidden>
+      <div class="fit">
+        <div class="fl">
+          <svg class="synSvg fitsvg" id="sdSvg" viewBox="0 0 600 330" data-maxw="760" data-reserve="44" aria-label="A synapse with or without a drug"></svg>
+          <div class="count"><span>Impulses sent: <b id="cIn">0</b></span><span>Impulses in the next neurone: <b id="cOut">0</b></span></div>
+        </div>
+        <div class="fr">
+          <p class="read hideq"><b>How some drugs change a synapse.</b> Choose a drug, then send <b>3 impulses</b>. Count the impulses that start in the next neurone.</p>
+          <div class="drugbtns hideq" id="drugBtns"></div>
+          <div class="controls hideq"><button class="btn primary" id="sdGo">▶ Send 3 impulses</button></div>
+          <div id="sdAsk" hidden><p class="qlabel" style="margin-bottom:6px" id="sdQ"></p><div class="cats one" id="sdCats"></div></div>
+          <div class="feedback" id="sdFb" aria-live="polite"></div>
+          <div class="didyou" id="sdDid" hidden></div>
+          <div class="controls"><button class="btn primary" id="sdMore" hidden>Try another drug →</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="sCheck" hidden><div class="cb" data-check="syn"></div></div>
+  </section>
+
+  <!-- 5 TEST YOURSELF -->
+  <section class="panel" id="test" role="tabpanel" aria-labelledby="tab-test" hidden>
+    <div class="spexbar" data-spex="test"></div>
+    <div class="card"><div class="cb" id="testBox"></div></div>
+  </section>
+
+  <!-- 6 CERTIFICATE -->
+  <section class="panel" id="cert" role="tabpanel" aria-labelledby="tab-cert" hidden>
+    <div class="spexbar" data-spex="cert"></div>
+    <div class="card">
+      <h2>My certificate</h2>
+      <div class="cb certwrap">
+        <label>Your name: <input class="word" id="certName" autocomplete="off" maxlength="40" style="max-width:300px"></label>
+        <div class="sheet" id="certSheet"></div>
+        <div class="controls">
+          <button class="btn primary" id="certPrint">🖨 Print my certificate</button>
+          <button class="btn" id="resetAll">↺ Start again (delete my progress)</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- overlays -->
+<div class="overlay" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="box">
+    <h3 id="helpTitle">How to use this simulation</h3>
+    <ol>
+      <li><b>Marie</b> is your guide. <b>📖 Marie's guide</b> (top right) explains all the key words.</li>
+      <li><b>1 · Stimulus → response</b>: choose an example. Put the cards in order from the stimulus to the response.
+        Then find the parts on the body and press <b>▶ Send the impulse</b>.</li>
+      <li><b>2 · Neurones</b>: name the three types of neurone, label the parts, race two impulses and try to send one backwards.</li>
+      <li><b>3 · Reflexes</b>: race a reflex against a thinking response, test your own reaction time and sort reflexes.</li>
+      <li><b>4 · Synapse</b>: zoom in to the gap between two neurones, put the steps in order, label it and see what some drugs do.</li>
+      <li><b>✅ Check</b> (in tabs 1–4) has 3 quick questions. <b>5 · Test yourself</b> mixes everything (12 questions).</li>
+      <li><b>Wrong answer?</b> The first time you get a tip. The second time the simulation shows the answer.
+        Stars: right first time ★★★ · right after a tip ★★ · answer shown: no stars. Win 6 badges and print your
+        <b>6 · 🏅 Certificate</b>. Your progress is saved in this browser.</li>
+    </ol>
+    <h3>The biology</h3>
+    <ul>
+      <li><b>Stimulus</b> → <b>receptor</b> → <b style="color:var(--sen)">sensory neurone</b> → <b style="color:var(--rel)">relay neurone</b> (in the CNS) → <b style="color:var(--mot)">motor neurone</b> → <b>effector</b> → <b>response</b>.</li>
+      <li><b>CNS</b> (central nervous system) = the brain and the spinal cord. <b>Nerves</b> (bundles of neurones) link the CNS to the rest of the body.</li>
+      <li><b>Effectors</b> are muscles (they contract) and glands (they release a substance, such as saliva or a hormone).</li>
+    </ul>
+    <p class="hint">The drawings are models, not to scale. A real synapse is only about 20 nm (0.000 02 mm) wide.</p>
+    <p style="text-align:right"><button class="btn primary" data-close="help">Close</button></p>
+  </div>
+</div>
+
+<div class="overlay" id="present" role="dialog" aria-modal="true" aria-label="Marie's guide">
+  <div class="box">
+    <div class="spexbar" data-spex="present"></div>
+    <div id="presentSlide"></div>
+    <div class="slidenav">
+      <button class="btn" id="pPrev">← Back</button>
+      <span class="pg" id="pPg"></span>
+      <button class="btn primary" id="pNext">Next →</button>
+      <button class="btn" data-close="present">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+<div id="printArea"></div>
+
+<footer>Stimulus → receptor → sensory neurone → relay neurone (CNS) → motor neurone → effector (muscle or gland) → response.</footer>
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const TEACHER = /[?&#]teacher\b/i.test(location.search + location.hash);   // teacher preview
+
+  /* ============================ 3 CONFIG ============================ */
+  // tab 1: the chain from stimulus to response
+  const KINDS = [
+    { k: "rec", name: "Receptor" },
+    { k: "sensory", name: "Sensory neurone" },
+    { k: "relay", name: "Relay neurone (CNS)" },
+    { k: "motor", name: "Motor neurone" },
+    { k: "eff", name: "Effector" },
+  ];
+  const SLOT_TIP = {
+    rec: "The <b>receptor</b> comes straight after the stimulus: it is the group of cells that <b>detects</b> the change.",
+    sensory: "The <b>sensory neurone</b> carries the impulse from the receptor <b>to</b> the CNS (the brain or the spinal cord).",
+    relay: "The <b>relay neurone</b> is <b>inside</b> the CNS. It passes the impulse from the sensory neurone to the motor neurone.",
+    motor: "The <b>motor neurone</b> carries the impulse <b>from</b> the CNS to the effector.",
+    eff: "The <b>effector</b> carries out the response: a <b>muscle</b> contracts or a <b>gland</b> releases a substance.",
+  };
+  // body spots (body coordinates; the body is drawn 64 units in from the left of the picture)
+  const SPOTS = {
+    brain: { name: "Brain", x: 150, y: 40, side: "R", ly: 22 },
+    eye: { name: "Eye", x: 163, y: 66, side: "R", ly: 60 },
+    biceps: { name: "Biceps muscle", x: 209, y: 152, side: "R", ly: 120 },
+    adrenal: { name: "Adrenal gland", x: 168, y: 201, side: "R", ly: 196 },
+    finger: { name: "Skin of finger", x: 244, y: 266, side: "R", ly: 246 },
+    thigh: { name: "Thigh muscle", x: 173, y: 292, side: "R", ly: 300 },
+    ear: { name: "Ear", x: 114, y: 64, side: "L", ly: 48 },
+    nose: { name: "Nose", x: 150, y: 79, side: "L", ly: 84 },
+    saliva: { name: "Salivary gland", x: 131, y: 94, side: "L", ly: 120 },
+    spinal: { name: "Spinal cord", x: 150, y: 175, side: "L", ly: 178 },
+  };
+  const SCEN = [
+    { id: "hot", em: "🔥", name: "Touching a hot plate", reflex: true, hair: "short",
+      story: "Sam touches a hot plate by mistake. Ouch! Sam's hand jumps away before Sam can even think about it.",
+      stim: "The heat of the hot plate", resp: "Sam's hand pulls away from the plate",
+      cards: { rec: "Pain and heat receptors in the skin of the finger", sensory: "Carries the impulse from the finger to the spinal cord",
+        relay: "Passes the impulse on, inside the spinal cord", motor: "Carries the impulse from the spinal cord to the arm",
+        eff: "The biceps muscle in the arm contracts" },
+      wrong: { text: "Sound receptors in the ear", tip: "Sam does not <b>hear</b> the heat! Which part of the body feels heat?" },
+      body: { rec: "finger", cns: "spinal", eff: "biceps" },
+      cnsTip: "Sam's hand moves <b>before</b> Sam thinks. Which part of the CNS can send a response without the brain?",
+      sensory: [[244, 262], [240, 246], [234, 214], [228, 186], [212, 158], [194, 128], [172, 116], [153, 116]],
+      motor: [[153, 122], [172, 122], [190, 130], [203, 146], [209, 152]], relayAt: [150, 117],
+      did: "This is a <b>reflex</b>: the relay neurone is in the <b>spinal cord</b>, so the brain does not have to decide. Sam feels the pain a moment later, when another impulse reaches the brain." },
+    { id: "smell", em: "🍕", name: "Smelling pizza", hair: "long",
+      story: "Lena walks past a pizza shop. The smell makes Lena's mouth water.",
+      stim: "The smell of pizza (chemicals in the air)", resp: "Saliva flows: the mouth waters",
+      cards: { rec: "Smell receptors (chemical receptors) in the nose", sensory: "Carries the impulse from the nose to the brain",
+        relay: "Passes the impulse on, inside the brain", motor: "Carries the impulse from the brain to the salivary glands",
+        eff: "The salivary glands release saliva" },
+      wrong: { text: "The biceps muscle in the arm contracts", tip: "Is a watering mouth a movement of the arm? Which part of the body <b>makes saliva</b>?" },
+      body: { rec: "nose", cns: "brain", eff: "saliva" },
+      cnsTip: "The smell goes up to the head. The CNS is the brain and the spinal cord: which one is in the head?",
+      sensory: [[150, 78], [147, 66], [146, 50]], motor: [[154, 50], [152, 70], [140, 84], [131, 93]], relayAt: [150, 44],
+      did: "Here the effector is a <b>gland</b>, not a muscle. A gland responds by <b>releasing a substance</b>, here saliva." },
+    { id: "bang", em: "💥", name: "A sudden loud bang", hair: "short",
+      story: "A balloon pops right behind Omar. BANG! Omar jumps, and Omar's heart starts to race.",
+      stim: "A loud bang (a sound)", resp: "Adrenaline in the blood: the heart beats faster",
+      cards: { rec: "Sound receptors in the ear", sensory: "Carries the impulse from the ear to the brain",
+        relay: "Passes the impulse on, inside the brain", motor: "Carries the impulse from the brain, down the spinal cord, to the adrenal glands",
+        eff: "The adrenal glands release the hormone adrenaline into the blood" },
+      wrong: { text: "Taste receptors on the tongue", tip: "Can you <b>taste</b> a bang? Which sense organ detects sound?" },
+      body: { rec: "ear", cns: "brain", eff: "adrenal" },
+      cnsTip: "The sound goes from the ear up into the head. Which part of the CNS is in the head?",
+      sensory: [[114, 64], [126, 56], [140, 48]], motor: [[152, 50], [154, 80], [154, 182], [161, 194], [168, 201]], relayAt: [148, 43],
+      did: "Adrenaline is a <b>hormone</b>: a chemical messenger carried by the blood. It gets the body ready for action. You will learn more about hormones in the lesson on the endocrine system." },
+    { id: "ball", em: "⚽", name: "Seeing a ball and kicking it", hair: "long",
+      story: "A football rolls towards Mia. Mia sees it, decides to kick it, and kicks!",
+      stim: "A ball rolling closer (light from the ball)", resp: "Mia's leg kicks the ball",
+      cards: { rec: "Light receptors in the eye", sensory: "Carries the impulse from the eye to the brain",
+        relay: "Passes the impulse on, inside the brain (Mia decides to kick)", motor: "Carries the impulse from the brain, down the spinal cord, to the leg",
+        eff: "The thigh muscle in the leg contracts" },
+      wrong: { text: "Pressure receptors in the skin of the foot", tip: "Mia sees the ball <b>before</b> it touches the foot. Which sense organ sees?" },
+      body: { rec: "eye", cns: "brain", eff: "thigh" },
+      cnsTip: "Mia <b>decides</b> to kick. Which part of the CNS thinks and decides?",
+      sensory: [[163, 66], [158, 54], [152, 44]], motor: [[148, 50], [146, 80], [146, 240], [160, 254], [169, 272], [173, 292]], relayAt: [150, 42],
+      did: "This is <b>not a reflex</b>: Mia decides what to do, so the impulse goes through the <b>brain</b>. That takes longer than a reflex (try the race in tab 3)." },
+  ];
+
+  // tab 2: neurone parts (label boxes in the motor neurone drawing, viewBox 600 × 270)
+  const NPARTS = [
+    { id: "dend", name: "Dendrites", x: 78, y: 30, px: 62, py: 100, job: "<b>Dendrites</b> are short branches. They pick up impulses from other neurones. Lots of branches = lots of connections." },
+    { id: "nuc", name: "Nucleus", x: 225, y: 30, px: 112, py: 135, job: "The <b>nucleus</b> controls the cell. Neurones have a nucleus, cytoplasm and a cell membrane, like other animal cells." },
+    { id: "mye", name: "Myelin sheath", x: 372, y: 30, px: 340, py: 124, job: "The <b>myelin sheath</b> is a fatty layer around the axon. It <b>insulates</b> the axon and makes the impulse travel <b>faster</b>." },
+    { id: "body", name: "Cell body", x: 90, y: 240, px: 104, py: 166, job: "The <b>cell body</b> holds the nucleus and most of the cytoplasm. It keeps the neurone alive." },
+    { id: "axon", name: "Axon", x: 258, y: 240, px: 258, py: 136, job: "The <b>axon</b> is a long, thin fibre. It carries the impulse <b>away from</b> the cell body. It is long so impulses can travel far, e.g. from your spinal cord to your toes (about 1 m)." },
+    { id: "end", name: "Nerve endings", x: 500, y: 240, px: 520, py: 160, job: "The <b>nerve endings</b> pass the impulse on to the next neurone or to an effector (here a muscle). Many branches connect with many cells." },
+  ];
+  const NID = [
+    { id: "sensory", name: "Sensory neurone", where: "fromRec",
+      tip: "Look at where the <b>cell body</b> is: in the middle, on a little side branch. And look at the start: a receptor.",
+      why: "The cell body sits on a side branch in the middle, and it starts at a <b>receptor</b>." },
+    { id: "relay", name: "Relay neurone", where: "inside",
+      tip: "This one is <b>short</b> with lots of branches and no myelin. It sits inside the brain or the spinal cord.",
+      why: "It is short, with lots of branches. It sits inside the CNS." },
+    { id: "motor", name: "Motor neurone", where: "toEff",
+      tip: "Look for the cell body with its dendrites at <b>one end</b>, and a long axon that ends on a <b>muscle</b>.",
+      why: "The cell body is at one end, and the long axon ends on a <b>muscle</b> (an effector)." },
+  ];
+  const WHERE = [
+    ["fromRec", "From a receptor to the CNS"],
+    ["inside", "Inside the CNS: from a sensory neurone to a motor neurone"],
+    ["toEff", "From the CNS to an effector (a muscle or a gland)"],
+  ];
+
+  // tab 3: reflex or voluntary?
+  const SORT = [
+    { id: "blink", em: "👁", text: "Blinking when dust flies at your eye", bin: "R" },
+    { id: "knee", em: "🦵", text: "Your leg jerks when the doctor taps your knee", bin: "R" },
+    { id: "pupil", em: "🌞", text: "Your pupils get smaller in bright light", bin: "R" },
+    { id: "cough", em: "😮‍💨", text: "Coughing when food goes down the wrong way", bin: "R" },
+    { id: "pan", em: "🍳", text: "Pulling your hand off a hot pan", bin: "R" },
+    { id: "write", em: "✍️", text: "Writing your name", bin: "V" },
+    { id: "goal", em: "⚽", text: "Kicking a ball into the goal", bin: "V" },
+    { id: "apple", em: "🍎", text: "Choosing an apple to eat", bin: "V" },
+  ];
+  const REFLEX_S = 0.05, THINK_S = 0.25;   // typical times (s)
+
+  // tab 4: the synapse
+  const SYN_STEPS = [
+    "An <b>impulse</b> arrives at the end of the first (presynaptic) neurone.",
+    "A chemical messenger, the <b>neurotransmitter</b>, is <b>released</b> into the gap.",
+    "The neurotransmitter <b>diffuses</b> across the gap (only about 20 nm wide).",
+    "It <b>binds</b> to <b>receptor</b> molecules on the next (postsynaptic) neurone.",
+    "This starts a <b>new impulse</b> in the postsynaptic neurone.",
+    "The neurotransmitter is <b>reabsorbed</b> into the presynaptic neurone, ready to be used again.",
+  ];
+  const SYN_TIPS = [
+    "Everything starts when the impulse arrives at the end of the first neurone.",
+    "Before the chemical can cross, it has to come out of the first neurone.",
+    "After it is released, the chemical spreads across the gap.",
+    "When it reaches the other side, it fits into the receptors.",
+    "When the receptors are filled, the second neurone gets going.",
+    "At the end the chemical is cleared away, so the message stops.",
+  ];
+  const SLABELS = [
+    { id: "pre", name: "Presynaptic neurone", x: 95, y: 26, px: 90, py: 200 },
+    { id: "post", name: "Postsynaptic neurone", x: 505, y: 26, px: 500, py: 130 },
+    { id: "nt", name: "Neurotransmitter", x: 300, y: 26, px: 300, py: 182 },
+    { id: "gap", name: "Synapse (the gap)", x: 245, y: 376, px: 300, py: 282 },
+    { id: "rec", name: "Receptor", x: 450, y: 376, px: 337, py: 260 },
+  ];
+  const DRUGS = [
+    { id: "none", name: "No drug" },
+    { id: "A", name: "💊 Drug A: blocks the receptors" },
+    { id: "B", name: "💊 Drug B: stops the reabsorption" },
+  ];
+
+  // quick checks (3 per tab) and Test yourself
+  const CHECKS = {
+    path: [
+      { id: "c1", em: "🌡", text: "What is a stimulus?", ans: "a",
+        opts: [["a", "A change in the surroundings (or inside the body) that the body can detect"], ["b", "The way the body reacts"], ["c", "A cell that detects changes"], ["d", "A nerve that carries impulses"]],
+        tip: "The stimulus comes first: it is what happens, e.g. the heat of the plate.", why: "A stimulus is a <b>change</b>, such as heat, light, a sound or a smell. The response is what the body does about it." },
+      { id: "c2", em: "💪", text: "Which of these can be an effector?", ans: "a",
+        opts: [["a", "A muscle or a gland"], ["b", "A receptor in the skin"], ["c", "The spinal cord"], ["d", "A sensory neurone"]],
+        tip: "The effector carries out the response: it moves, or it makes and releases something.", why: "Effectors are <b>muscles</b> (they contract) and <b>glands</b> (they release a substance)." },
+      { id: "c3", em: "🧠", text: "The CNS (central nervous system) is made of…", ans: "a",
+        opts: [["a", "the brain and the spinal cord"], ["b", "the brain and the nerves"], ["c", "the spinal cord and the nerves"], ["d", "all the neurones in the body"]],
+        tip: "Central = in the middle of the body. The nerves go out from it to the rest of the body.", why: "CNS = <b>brain + spinal cord</b>. The nerves that reach the rest of the body are not part of the CNS." },
+    ],
+    neur: [
+      { id: "c1", em: "💪", text: "Which neurone carries impulses from the CNS to a muscle?", ans: "mot",
+        opts: [["mot", "Motor neurone"], ["sen", "Sensory neurone"], ["rel", "Relay neurone"]],
+        tip: "This neurone makes things move: it goes to an effector.", why: "The <b>motor neurone</b> carries impulses from the CNS to an effector (a muscle or a gland)." },
+      { id: "c2", em: "📏", text: "Why is the axon of a motor neurone so long?", ans: "a",
+        opts: [["a", "To carry impulses over long distances, e.g. from the spinal cord to the foot"], ["b", "To hold more nuclei"], ["c", "To make the neurone stronger"], ["d", "To slow the impulse down"]],
+        tip: "Think about how far it is from your spinal cord to your toes.", why: "A long axon lets an impulse travel a <b>long distance</b> in one cell, up to about 1 m." },
+      { id: "c3", em: "🔬", text: "A neurone is an animal cell. Which three parts does it share with other animal cells?", ans: "a",
+        opts: [["a", "Nucleus, cytoplasm and cell membrane"], ["b", "Nucleus, cell wall and chloroplasts"], ["c", "Axon, dendrites and myelin sheath"], ["d", "Cell wall, cytoplasm and vacuole"]],
+        tip: "Cell walls and chloroplasts are only in plant cells. Axons are only in neurones.", why: "Like all animal cells, a neurone has a <b>nucleus</b>, <b>cytoplasm</b> and a <b>cell membrane</b>." },
+    ],
+    reflex: [
+      { id: "c1", em: "⚡", text: "Why do we need reflexes?", ans: "a",
+        opts: [["a", "They are fast and automatic, so they protect the body from harm"], ["b", "They help us make careful choices"], ["c", "They help us learn new things"], ["d", "They only work when we are asleep"]],
+        tip: "Think about the hot plate: what would happen if you had to stop and think?", why: "Reflexes are <b>fast</b> and <b>automatic</b> (no thinking), so they <b>protect</b> the body, e.g. from burns." },
+      { id: "c2", em: "🔥", text: "In the hot-plate reflex, where is the relay neurone?", ans: "a",
+        opts: [["a", "In the spinal cord"], ["b", "In the brain"], ["c", "In the arm muscle"], ["d", "In the skin"]],
+        tip: "In a reflex the brain does not have to decide. Which other part is in the CNS?", why: "The relay neurone of this reflex is in the <b>spinal cord</b>. The impulse does not have to go to the brain first." },
+      { id: "c3", em: "📌", text: "You step on a drawing pin and pull your foot away. Which receptors detected the stimulus?", ans: "a",
+        opts: [["a", "Pain and pressure receptors in the skin of the foot"], ["b", "Light receptors in the eye"], ["c", "Sound receptors in the ear"], ["d", "Chemical receptors in the nose"]],
+        tip: "Where does the pin touch you?", why: "<b>Pain and pressure receptors in the skin</b> of the foot detect the pin." },
+    ],
+    syn: [
+      { id: "c1", em: "🔍", text: "What is a synapse?", ans: "a",
+        opts: [["a", "A tiny gap between two neurones"], ["b", "The end of a muscle"], ["c", "A chemical messenger"], ["d", "The cell body of a neurone"]],
+        tip: "Neurones do not touch each other.", why: "A synapse is the <b>tiny gap</b> (about 20 nm) between two neurones." },
+      { id: "c2", em: "🧪", text: "How does the message cross a synapse?", ans: "a",
+        opts: [["a", "A chemical (the neurotransmitter) diffuses across the gap"], ["b", "The electrical impulse jumps across"], ["c", "The two neurones touch for a moment"], ["d", "The blood carries it across"]],
+        tip: "The electrical impulse cannot cross the gap. What is released into it?", why: "A <b>neurotransmitter</b> is released and <b>diffuses</b> across the gap." },
+      { id: "c3", em: "♻️", text: "What happens to the neurotransmitter after it has done its job?", ans: "a",
+        opts: [["a", "It is reabsorbed by the presynaptic neurone and used again"], ["b", "It stays in the gap for ever"], ["c", "It travels to the brain"], ["d", "It turns into an impulse"]],
+        tip: "If it stayed in the gap, the next neurone would never stop firing.", why: "It is <b>reabsorbed</b> into the presynaptic neurone, so the message stops and the chemical can be used again." },
+    ],
+  };
+  const QBANK = [
+    { id: "t1", em: "🛤", text: "Which order is correct?", ans: "a",
+      opts: [["a", "Stimulus → receptor → sensory neurone → relay neurone → motor neurone → effector → response"],
+        ["b", "Stimulus → receptor → motor neurone → relay neurone → sensory neurone → effector → response"],
+        ["c", "Stimulus → effector → motor neurone → relay neurone → sensory neurone → receptor → response"],
+        ["d", "Receptor → stimulus → sensory neurone → relay neurone → motor neurone → response → effector"]],
+      tip: "The receptor detects the stimulus, and the sensory neurone comes before the motor neurone.", why: "The impulse goes from the receptor along the sensory neurone to the CNS, then along the motor neurone to the effector." },
+    { id: "t2", em: "🔎", text: "Ana writes: receptor → sensory neurone → relay neurone → sensory neurone → effector. What is wrong?", ans: "a",
+      opts: [["a", "The second sensory neurone should be a motor neurone"], ["b", "The receptor should be at the end"], ["c", "There should be no relay neurone"], ["d", "Nothing is wrong"]],
+      tip: "Which neurone carries the impulse to the effector?", why: "The neurone that carries the impulse to the effector is the <b>motor neurone</b>." },
+    { id: "t3", em: "🍞", text: "The smell of fresh bread makes your mouth water. What is the effector?", ans: "c",
+      opts: [["a", "Chemical receptors in the nose"], ["b", "The brain"], ["c", "The salivary glands"], ["d", "The sensory neurone"]],
+      tip: "The effector does the response. What makes saliva?", why: "The <b>salivary glands</b> are the effector: they release saliva." },
+    { id: "t4", em: "🎈", text: "A loud bang makes your heart race. Which receptors detected the bang?", ans: "a",
+      opts: [["a", "Sound receptors in the ear"], ["b", "Light receptors in the eye"], ["c", "Chemical receptors on the tongue"], ["d", "Temperature receptors in the skin"]],
+      tip: "A bang is a sound.", why: "<b>Sound receptors in the ear</b> detect the bang." },
+    { id: "t5", em: "🟣", text: "Which neurone is found only inside the CNS?", ans: "rel",
+      opts: [["rel", "Relay neurone"], ["sen", "Sensory neurone"], ["mot", "Motor neurone"], ["all", "All three"]],
+      tip: "This neurone connects the other two.", why: "<b>Relay neurones</b> are inside the brain and spinal cord. They connect sensory and motor neurones." },
+    { id: "t6", em: "🧈", text: "What does the myelin sheath do?", ans: "a",
+      opts: [["a", "It insulates the axon and speeds up the impulse"], ["b", "It makes the neurotransmitter"], ["c", "It detects stimuli"], ["d", "It joins two neurones together"]],
+      tip: "Remember the myelin race!", why: "Myelin is a fatty layer that <b>insulates</b> the axon, so the impulse travels <b>faster</b>." },
+    { id: "t7", em: "🔵", text: "Which neurone carries impulses from a receptor to the CNS?", ans: "sen",
+      opts: [["sen", "Sensory neurone"], ["rel", "Relay neurone"], ["mot", "Motor neurone"]],
+      tip: "Receptors are in the sense organs.", why: "The <b>sensory neurone</b> carries impulses from a receptor (in a sense organ) to the CNS." },
+    { id: "t8", em: "👁", text: "Which of these is a reflex?", ans: "a",
+      opts: [["a", "Blinking when dust flies at your eye"], ["b", "Writing a text message"], ["c", "Choosing a song to play"], ["d", "Running to catch a bus"]],
+      tip: "A reflex happens on its own, without thinking.", why: "<b>Blinking</b> is automatic and protects the eye: it is a reflex." },
+    { id: "t9", em: "⏱", text: "Why is a reflex faster than a response you think about?", ans: "a",
+      opts: [["a", "The impulse goes through the spinal cord and does not wait for the brain to decide"], ["b", "Reflex impulses travel in the blood"], ["c", "Reflexes use more neurones"], ["d", "The muscles in reflexes are bigger"]],
+      tip: "Remember the race in tab 3: where did Sam's impulse go?", why: "In a reflex the relay neurone is in the <b>spinal cord</b>: a short path with no thinking time." },
+    { id: "t10", em: "🔗", text: "At a synapse, the neurotransmitter binds to…", ans: "a",
+      opts: [["a", "receptor molecules on the postsynaptic neurone"], ["b", "the myelin sheath"], ["c", "the nucleus of the presynaptic neurone"], ["d", "red blood cells"]],
+      tip: "It binds on the other side of the gap.", why: "It binds to <b>receptor molecules</b> on the postsynaptic (next) neurone and starts a new impulse." },
+    { id: "t11", em: "💊", text: "A drug blocks the receptors at a synapse. What happens?", ans: "a",
+      opts: [["a", "Fewer impulses (or none) start in the next neurone"], ["b", "More impulses start in the next neurone"], ["c", "The impulses go backwards"], ["d", "Nothing changes"]],
+      tip: "The neurotransmitter cannot bind any more.", why: "If the receptors are blocked, the neurotransmitter cannot bind, so <b>fewer or no</b> new impulses start." },
+    { id: "t12", em: "➡", text: "Impulses travel along a neurone…", ans: "a",
+      opts: [["a", "in one direction only: dendrites → cell body → axon → nerve endings"], ["b", "in both directions"], ["c", "from the nerve endings to the dendrites"], ["d", "in any direction the brain chooses"]],
+      tip: "Remember the ➡ One way only part of tab 2.", why: "Impulses travel <b>one way only</b>: dendrites → cell body → axon → nerve endings." },
+    { id: "t13", em: "😱", text: "After a scare, the adrenal glands release adrenaline. In this response, the adrenal glands are the…", ans: "eff",
+      opts: [["eff", "effector"], ["rec", "receptor"], ["stim", "stimulus"], ["rel", "relay neurone"]],
+      tip: "Glands carry out a response by releasing something.", why: "A gland that releases a substance is an <b>effector</b>." },
+    { id: "t14", em: "🦶", text: "Neurones are long and thin. Why?", ans: "a",
+      opts: [["a", "So they can carry impulses over long distances in the body"], ["b", "So they can store food"], ["c", "So they can swim in the blood"], ["d", "So they can make hormones"]],
+      tip: "Think about the job of a neurone.", why: "Their long axons carry impulses over <b>long distances</b> in the body." },
+  ];
+  const FIRST_ROUND = ["t1", "t7", "t5", "t3", "t4", "t2", "t6", "t8", "t9", "t10", "t11", "t12"];
+
+  /* ============================ 4 ENGINE ============================ */
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs = {}, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  const txt = (parent, x, y, s, attrs = {}) => { const t = el("text", { x, y, ...attrs }, parent); t.textContent = s; return t; };
+  const h = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+  const shuffle = (arr) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const reduced = () => window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  // tween: calls f(t) with t from 0 to 1 over ms milliseconds
+  function tween(ms, f) {
+    return new Promise((res) => {
+      if (reduced()) { f(1); return res(); }
+      const t0 = performance.now();
+      const step = (now) => { const t = Math.min(1, (now - t0) / ms); f(t); if (t < 1) requestAnimationFrame(step); else res(); };
+      requestAnimationFrame(step);
+    });
+  }
+  const ease = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  const pathD = (pts) => "M" + pts.map((p) => p.join(" ")).join(" L");
+
+  /* Marie, the guide (same drawing as in the Grade 7 simulations) */
+  const SPEX = `<svg class="spex" viewBox="0 0 100 100" data-mood="talk" aria-hidden="true">
+    <circle cx="50" cy="50" r="49" fill="#DCE3EA"/>
+    <path d="M24 47 Q20 15 50 13 Q80 14 77 47 L78 63 Q73 67 68 60 L32 60 Q27 66 22 61Z" fill="#3B2A22"/>
+    <path d="M10 100 Q12 76 50 71 Q88 76 90 100Z" fill="#7F8C6B"/>
+    <rect x="44.5" y="60" width="11" height="13" rx="3" fill="#E6BFA3"/>
+    <path d="M41 71 L50 86 L35 82Z" fill="#8E9B79" stroke="#6B775A" stroke-width="1"/><path d="M59 71 L50 86 L65 82Z" fill="#8E9B79" stroke="#6B775A" stroke-width="1"/>
+    <circle cx="50" cy="93" r="1.6" fill="#A1887F"/>
+    <circle cx="29.5" cy="47" r="4" fill="#E6BFA3"/><circle cx="70.5" cy="47" r="4" fill="#E6BFA3"/><circle cx="29.3" cy="52.5" r="1.4" fill="#26A69A"/>
+    <ellipse cx="50" cy="45" rx="20.5" ry="23" fill="#F0CDB4"/>
+    <path d="M29.5 41 Q29 20 45 18.5 Q63 16.5 72 30 Q74 38 72.5 47 Q67 34 57 31 Q49 29 45 25.5 Q39 31 29.5 41Z" fill="#3B2A22"/>
+    <path d="M44.5 19.5 Q47 23 45.5 27" stroke="#A8A29E" stroke-width="1.6" fill="none"/><path d="M50 21 Q63 21 70 32" stroke="#5A463C" stroke-width="1.2" fill="none"/>
+    <circle cx="37" cy="54" r="3.3" fill="#F48FB1" opacity=".35"/><circle cx="63" cy="54" r="3.3" fill="#F48FB1" opacity=".35"/>
+    <g class="brow" stroke="#3B2A22" stroke-width="1.6" fill="none" stroke-linecap="round"><path d="M35 35.5 q5 -2.5 10 -0.5"/><path d="M55 35 q5 -2 10 0.5"/></g>
+    <circle cx="41" cy="44" r="2.2" fill="#4E342E"/><circle cx="59" cy="44" r="2.2" fill="#4E342E"/>
+    <path d="M50 46 q-2.2 5 0 6.2" stroke="#D49F82" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <rect class="lens" x="32" y="37.5" width="16.5" height="13.5" rx="6" stroke="#B98A70" stroke-width="1.2"/>
+    <rect class="lens" x="51.5" y="37.5" width="16.5" height="13.5" rx="6" stroke="#B98A70" stroke-width="1.2"/>
+    <path d="M48.5 42 q1.5 -1.6 3 0 M32 41 L28 40 M68 41 L72 40" stroke="#B98A70" stroke-width="1.1" fill="none"/>
+    <ellipse class="m m-talk" cx="50" cy="58.5" rx="3.6" ry="2.6" fill="#B5545C"/>
+    <path class="m m-happy" d="M43 56.5 Q50 63.5 57 56.5Z" fill="#B5545C"/>
+    <path class="m m-think" d="M45.5 59 h8" stroke="#B5545C" stroke-width="2" stroke-linecap="round"/>
+    <circle class="m m-wow" cx="50" cy="59" r="3.2" fill="#B5545C"/>
+    <path class="m m-hmm" d="M44 59.5 q3 -2.2 6 0 t6 0" stroke="#B5545C" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>`;
+  function spexBar(name) {
+    const bar = document.querySelector(`[data-spex="${name}"]`);
+    if (bar && !bar.firstChild) bar.innerHTML = SPEX + `<div class="bubble" aria-live="polite"></div>`;
+    return bar;
+  }
+  function say(name, html, mood = "talk", cls = "") {
+    const bar = spexBar(name); if (!bar) return;
+    bar.querySelector(".spex").dataset.mood = mood;
+    const b = bar.querySelector(".bubble"); b.className = "bubble" + (cls ? " " + cls : ""); b.innerHTML = html;
+  }
+
+  /* sound: off by default; tiny tones made in the browser */
+  let actx = null;
+  function beep(f, d, type = "sine", v = 0.06, when = 0) {
+    if (!P.sound) return;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + when;
+      o.type = type; o.frequency.value = f; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + d + 0.02);
+    } catch (e) {}
+  }
+  const SND = {
+    zap: () => beep(880, 0.08, "square", 0.03),
+    pop: () => beep(520, 0.07, "sine", 0.05),
+    star: () => { beep(660, 0.12); beep(990, 0.18, "sine", 0.06, 0.1); },
+    tip: () => beep(250, 0.22, "triangle", 0.07),
+    badge: () => [523, 659, 784, 1047].forEach((f, i) => beep(f, 0.18, "sine", 0.06, i * 0.11)),
+  };
+
+  /* progress: stars, badges – saved in this browser */
+  const STORE = "g8-nervous-v1";
+  const P = { stars: { path: {}, neur: {}, reflex: {}, syn: {}, test: {} }, done: {}, react: [], badges: {}, name: "", sound: false, seenIntro: false, testRounds: 0 };
+  function save() { try { localStorage.setItem(STORE, JSON.stringify(P)); } catch (e) {} }
+  function load() {
+    try {
+      const d = JSON.parse(localStorage.getItem(STORE) || "{}");
+      for (const k in d) if (k in P) P[k] = d[k];
+      for (const t of ["path", "neur", "reflex", "syn", "test"]) P.stars[t] = P.stars[t] || {};
+      P.done = P.done || {}; P.react = Array.isArray(P.react) ? P.react : [];
+    } catch (e) {}
+  }
+  const starsOf = (st) => (st.revealed ? 0 : st.mistakes ? 2 : 3);
+  const starsHTML = (n, of = 3) => `<span class="stars" aria-label="${n} stars">${"★".repeat(n)}<span class="off">${"★".repeat(Math.max(0, of - n))}</span></span>`;
+  const tabStars = (t) => Object.values(P.stars[t]).reduce((s, n) => s + n, 0);
+  const has = (t, id) => id in P.stars[t];
+  const BADGES = [
+    { id: "path", em: "🛤", name: "Pathway builder", how: "all 4 examples in tab 1", got: () => SCEN.every((s) => has("path", s.id + "-eff")) },
+    { id: "neur", em: "🧠", name: "Neurone expert", how: "name the 3 neurones and label the parts", got: () => NID.every((n) => has("neur", "id-" + n.id + "-w")) && has("neur", "label") },
+    { id: "reflex", em: "⚡", name: "Fast reflexes", how: "race, 5 reaction times and sort 8 cards", got: () => P.done.race && P.react.length >= 5 && SORT.every((c) => has("reflex", "sort-" + c.id)) },
+    { id: "syn", em: "🔬", name: "Synapse explorer", how: "order, label and both drugs", got: () => has("syn", "order") && has("syn", "label") && has("syn", "drugA") && has("syn", "drugB") },
+    { id: "check", em: "✅", name: "Checker", how: "all 4 Checks (tabs 1–4)", got: () => ["path", "neur", "reflex", "syn"].every((t) => CHECKS[t].every((q) => has(t, "chk-" + q.id))) },
+    { id: "test", em: "🏆", name: "Nerve master", how: "finish Test yourself once", got: () => P.testRounds >= 1 },
+  ];
+  function toast(msg) { const t = $("toast"); t.innerHTML = msg; t.classList.remove("on"); void t.offsetWidth; t.classList.add("on"); clearTimeout(toast.k); toast.k = setTimeout(() => t.classList.remove("on"), 3200); }
+  let curTab = "path";
+  function refreshStars() {
+    let total = 0;
+    for (const t in P.stars) { const n = tabStars(t); total += n; const s = document.querySelector(`[data-ts="${t}"]`); if (s) s.textContent = n ? "★" + n : ""; }
+    $("starSum").textContent = "★ " + total;
+    for (const t in CHECKS) {
+      const n = CHECKS[t].reduce((s, q) => s + (P.stars[t]["chk-" + q.id] ?? 0), 0), any = CHECKS[t].some((q) => has(t, "chk-" + q.id));
+      const c = document.querySelector(`[data-cs="${t}"]`); if (c) c.textContent = any ? "★" + n : "";
+    }
+    for (const b of BADGES) if (!P.badges[b.id] && b.got()) {
+      P.badges[b.id] = new Date().toISOString().slice(0, 10);
+      toast(`${b.em} New badge: <b>${b.name}</b>!`); SND.badge();
+      if (curTab !== "cert") setTimeout(() => say(curTab, `${b.em} You won the <b>${b.name}</b> badge! See 🏅 Certificate.`, "happy", "good"), 900);
+    }
+    save();
+  }
+  function addStars(tab, id, n) {
+    P.stars[tab][id] = Math.max(P.stars[tab][id] ?? -1, n);
+    if (n) SND.star();
+    refreshStars();
+  }
+  function fbSet(e, cls, html) { e.className = "feedback " + cls; e.innerHTML = html; }
+
+  /* questions: 1st wrong → a tip, 2nd wrong → the answer is shown.
+     opts = [value, html] makes buttons in box; or items = existing elements with data-v (e.g. the body labels) */
+  const setDis = (b, v) => { if ("disabled" in b) b.disabled = v; else if (v) b.setAttribute("data-dis", ""); else b.removeAttribute("data-dis"); };
+  const isDis = (b) => ("disabled" in b ? b.disabled : b.hasAttribute("data-dis"));
+  function ask({ box, fb, opts, items, correct, tip, answer, good, cls = "cat", spex, onDone }) {
+    const st = { mistakes: 0, revealed: false, done: false };
+    let btns;
+    if (items) { btns = items; btns.forEach((b) => { setDis(b, false); b.classList.remove("right", "wrong"); }); box.classList.add("ask"); }
+    else { box.replaceChildren(); btns = opts.map(([v, html]) => { const b = h(`<button class="${cls}" data-v="${v}">${html}</button>`); box.appendChild(b); return b; }); }
+    btns.forEach((b) => {
+      b.onclick = () => { if (!isDis(b)) pick(b.dataset.v, b); };
+      b.onkeydown = (e) => { if ((e.key === "Enter" || e.key === " ") && !("disabled" in b)) { e.preventDefault(); b.onclick(); } };
+    });
+    function finish() { st.done = true; box.classList.remove("ask"); btns.forEach((b) => setDis(b, true)); onDone && onDone(st); }
+    function pick(v, b) {
+      if (st.done) return;
+      if (correct.includes(v)) {
+        b.classList.add("right");
+        fbSet(fb, "good", `✔ ${typeof good === "function" ? good(v) : good}`);
+        spex && say(spex, st.mistakes ? "Yes! You got it after the tip. ★★" : "Brilliant – right first time! ★★★", "happy", "good");
+        return finish();
+      }
+      st.mistakes++; b.classList.add("wrong"); setDis(b, true); SND.tip();
+      if (st.mistakes === 1) { fbSet(fb, "tip", "💡 Tip: " + (typeof tip === "function" ? tip(v) : tip)); spex && say(spex, "Hmm, not quite. Read my tip and try again!", "hmm", "tip"); }
+      else {
+        st.revealed = true;
+        btns.forEach((x) => correct.includes(x.dataset.v) && x.classList.add("right"));
+        fbSet(fb, "ans", "The answer: " + answer);
+        spex && say(spex, "Here is the answer – read why, and you'll get the next one!", "think", "ans");
+        finish();
+      }
+    }
+    return st;
+  }
+
+  /* drag, or tap then tap (as in the Salt naming simulation) */
+  let SEL = null;
+  function unselect() { if (SEL) SEL.classList.remove("sel"); SEL = null; }
+  function pickable(tile, slotSel, drop) {
+    tile.addEventListener("click", (e) => {
+      if (tile.dataset.dragged) { delete tile.dataset.dragged; e.stopPropagation(); return; }
+      if (tile.dataset.locked) return;
+      e.stopPropagation();
+      const same = SEL === tile; unselect();
+      if (!same) { SEL = tile; tile.classList.add("sel"); tile._drop = drop; }
+    });
+    tile.addEventListener("pointerdown", (e) => {
+      if (e.button > 0 || tile.dataset.locked) return;
+      const sx = e.clientX, sy = e.clientY;
+      let ghost = null, hot = null;
+      try { tile.setPointerCapture(e.pointerId); } catch (er) {}
+      const at = (x, y) => { const t = document.elementFromPoint(x, y); const s = t && t.closest(slotSel); return s && !s.classList.contains("full") ? s : null; };
+      const move = (ev) => {
+        if (!ghost && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 6) {
+          ghost = tile.cloneNode(true); ghost.classList.add("drag-ghost"); ghost.classList.remove("sel");
+          ghost.style.width = tile.offsetWidth + "px";
+          document.body.appendChild(ghost); tile.classList.add("lifting");
+        }
+        if (!ghost) return;
+        ghost.style.left = ev.clientX + "px"; ghost.style.top = ev.clientY + "px";
+        const s = at(ev.clientX, ev.clientY);
+        if (s !== hot) { hot && hot.classList.remove("hot"); hot = s; hot && hot.classList.add("hot"); }
+      };
+      const up = (ev) => {
+        tile.removeEventListener("pointermove", move); tile.removeEventListener("pointerup", up); tile.removeEventListener("pointercancel", up);
+        if (!ghost) return;
+        tile.dataset.dragged = "1"; setTimeout(() => delete tile.dataset.dragged, 0);
+        ghost.remove(); tile.classList.remove("lifting"); hot && hot.classList.remove("hot");
+        const s = ev.type === "pointerup" && at(ev.clientX, ev.clientY);
+        if (s) { unselect(); drop(tile, s); }
+      };
+      tile.addEventListener("pointermove", move); tile.addEventListener("pointerup", up); tile.addEventListener("pointercancel", up);
+    });
+  }
+  // a tapped slot receives the selected tile
+  document.addEventListener("click", (e) => {
+    const s = e.target.closest(".slot");
+    if (s && SEL && !s.classList.contains("full") && SEL._drop && SEL._slots && SEL._slots.includes(s)) { const t = SEL; unselect(); t._drop(t, s); }
+  });
+  const shakeEl = (e) => { e.classList.remove("shake", "bounce"); void e.offsetWidth; e.classList.add(e.classList.contains("tile") ? "bounce" : "shake"); setTimeout(() => e.classList.remove("shake", "bounce"), 450); };
+
+  /* a drop task: tiles go into slots.
+     fits(tile, slot) → true if right. mode "task": one tip for the whole task, the 2nd mistake fills everything in;
+     mode "tile": each tile has its own tip → answer (stars per tile). */
+  function dropTask({ tiles, slots, fits, home, place, tip, fb, spex, mode = "task", onTile, onDone }) {
+    const st = { mistakes: 0, revealed: false, done: false };
+    const left = new Set(tiles);
+    for (const t of tiles) {
+      t._st = { mistakes: 0, revealed: false };
+      t._slots = slots;
+      pickable(t, slots.map((s) => "#" + s.id).join(","), drop);
+    }
+    function lock(t, s, shown) {
+      t.dataset.locked = "1"; t.classList.remove("sel"); t.classList.add(shown ? "shown" : "locked");
+      place(t, s); left.delete(t);
+      if (onTile) onTile(t, s);
+      if (!left.size || ![...left].some((x) => home(x))) finishAll();
+    }
+    function finishAll() { if (st.done) return; st.done = true; onDone && onDone(st); }
+    function revealAll() { st.revealed = true; for (const t of [...left]) { const s = home(t); if (s) lock(t, s, true); } }
+    function drop(t, s) {
+      if (st.done || t.dataset.locked) return;
+      if (fits(t, s)) {
+        SND.pop(); lock(t, s, false);
+        if (mode === "task" && !st.done) fb && fbSet(fb, "good", "✔ Right!");
+        return;
+      }
+      SND.tip(); shakeEl(s); shakeEl(t);
+      if (mode === "tile") {
+        t._st.mistakes++;
+        if (t._st.mistakes === 1) { fbSet(fb, "tip", "💡 Tip: " + tip(t, s)); spex && say(spex, "Hmm, not quite. Read my tip and try again!", "hmm", "tip"); }
+        else { t._st.revealed = true; const hs = home(t); fbSet(fb, "ans", "The answer: " + tip(t, s, true)); spex && say(spex, "I've put that one in the right place for you.", "think", "ans"); lock(t, hs, true); }
+        return;
+      }
+      st.mistakes++;
+      if (st.mistakes === 1) { fbSet(fb, "tip", "💡 Tip: " + tip(t, s)); spex && say(spex, "Hmm, not quite. Read my tip and try again!", "hmm", "tip"); }
+      else { revealAll(); fbSet(fb, "ans", "The answer is shown: the blue cards were placed for you. Read them carefully!"); spex && say(spex, "Here is the answer – read it, and you'll get the next one!", "think", "ans"); }
+    }
+    return st;
+  }
+
+  /* a short quiz (Checks and Test yourself): one question at a time, tip → answer */
+  function quiz({ root, tab, list, prefix, spex, title, onEnd, again }) {
+    let qi = 0; const QR = [];
+    root.innerHTML = `<div class="qhead"><h2></h2><div class="dots"></div></div><div class="qbody"></div><div class="feedback" aria-live="polite"></div>
+      <div class="controls"><button class="btn primary" hidden>Next question →</button></div>`;
+    const [hd, dots, body, fb, next] = [root.querySelector("h2"), root.querySelector(".dots"), root.querySelector(".qbody"), root.querySelector(".feedback"), root.querySelector(".btn")];
+    const paint = () => { dots.innerHTML = list.map((_, k) => { const r = QR[k]; return `<span class="dot${k === qi ? " now" : ""}${r ? (r.n > 0 ? " done" : " zero") : ""}">${k + 1}</span>`; }).join(""); };
+    function loadQ() {
+      const q = list[qi];
+      hd.textContent = `${title} · question ${qi + 1} of ${list.length}`; paint();
+      fb.className = "feedback"; fb.innerHTML = ""; next.hidden = true; body.replaceChildren();
+      body.appendChild(h(`<div class="qpic"><div class="em">${q.em}</div><p class="qtext">${q.text}</p></div>`));
+      const box = h(`<div class="cats"></div>`); body.appendChild(box);
+      const right = q.opts.find(([v]) => v === q.ans)[1];
+      ask({ box, fb, spex, opts: shuffle(q.opts), correct: [q.ans], tip: q.tip, answer: `<b>${right}</b>. ${q.why}`, good: q.why,
+        onDone: (st) => { const n = starsOf(st); QR[qi] = { label: q.text, n }; paint();
+          if (prefix) addStars(tab, prefix + q.id, n);
+          next.hidden = false; next.textContent = qi < list.length - 1 ? "Next question →" : "See my result →"; next.focus({ preventScroll: true }); } });
+    }
+    next.addEventListener("click", () => { if (qi < list.length - 1) { qi++; loadQ(); } else end(); });
+    function end() {
+      const right = QR.filter((r) => r.n === 3).length, stars = QR.reduce((s, r) => s + r.n, 0), max = list.length * 3;
+      root.innerHTML = `<h2 style="color:var(--navy)">${title} · your result</h2>
+        <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:end"><div><div class="score">${right}/${list.length}</div><div class="hint">right first time</div></div>
+        <div><div class="score" style="color:var(--star)">★ ${stars}</div><div class="hint">stars out of ${max}</div></div></div>
+        <p>${stars >= max * 0.9 ? "Outstanding! You really know your nervous system." : stars >= max * 0.66 ? "Well done! Look again at the questions without ★★★." : "Good try! Read Marie's guide (📖, top right), then play again."}</p>
+        <ul class="review">${QR.map((r, k) => `<li><span>${k + 1}. ${r.label}</span>${starsHTML(r.n)}</li>`).join("")}</ul>
+        <div class="controls"><button class="btn primary">${again}</button></div>`;
+      root.querySelector(".btn").addEventListener("click", () => onEnd(true));
+      onEnd(false, stars);
+    }
+    loadQ();
+  }
+  function runCheck(tab) {
+    const root = document.querySelector(`[data-check="${tab}"]`);
+    quiz({ root, tab, list: CHECKS[tab], prefix: "chk-", spex: tab, title: "Check", again: "↺ Try the Check again",
+      onEnd: (restart, stars) => { if (restart) runCheck(tab); else say(tab, `Check finished: <b>★ ${stars}</b> out of 9!`, "happy", "good"); } });
+  }
+
+  /* ============================ 5 BODY ============================ */
+  const SKIN = "#F6D5BD", OUT = "#C99A7A", MUSCLE = "#EF9A9A", MUSCLE_S = "#C62828";
+  const COL = { sensory: "#1E88E5", relay: "#8E24AA", motor: "#E53935" };
+  function limb(g, x1, y1, x2, y2, w) {
+    el("line", { x1, y1, x2, y2, stroke: OUT, "stroke-width": w + 3, "stroke-linecap": "round" }, g);
+    el("line", { x1, y1, x2, y2, stroke: SKIN, "stroke-width": w, "stroke-linecap": "round" }, g);
+  }
+  // the body (centre line x = 150, head at the top, feet at y ≈ 415); returns the moving parts
+  function drawBody(g, { brainLabel = false, hair = "short" } = {}) {
+    const R = {};
+    // legs
+    limb(g, 132, 250, 126, 332, 26); limb(g, 126, 332, 122, 404, 21);
+    el("ellipse", { cx: 114, cy: 412, rx: 16, ry: 7, fill: SKIN, stroke: OUT, "stroke-width": 1.5 }, g);
+    limb(g, 168, 250, 174, 332, 26);
+    R.shank = el("g", {}, g); limb(R.shank, 174, 332, 178, 404, 21);
+    el("ellipse", { cx: 186, cy: 412, rx: 16, ry: 7, fill: SKIN, stroke: OUT, "stroke-width": 1.5 }, R.shank);
+    // left arm (on the left of the picture)
+    limb(g, 110, 122, 80, 184, 20); limb(g, 80, 184, 70, 248, 17);
+    el("circle", { cx: 68, cy: 256, r: 11, fill: SKIN, stroke: OUT, "stroke-width": 1.5 }, g);
+    // torso, neck, head
+    el("path", { d: "M112 114 Q150 104 188 114 Q196 118 194 130 L186 256 Q150 266 114 256 L106 130 Q104 118 112 114Z", fill: SKIN, stroke: OUT, "stroke-width": 1.5 }, g);
+    // right arm
+    limb(g, 190, 122, 228, 184, 20);
+    R.forearm = el("g", {}, g); limb(R.forearm, 228, 184, 240, 248, 17);
+    el("circle", { cx: 242, cy: 256, r: 11, fill: SKIN, stroke: OUT, "stroke-width": 1.5 }, R.forearm);
+    el("rect", { x: 140, y: 94, width: 20, height: 24, fill: SKIN }, g);
+    // hair (drawn behind the head): short for Sam and Omar, long with a ponytail for Lena and Mia
+    const HAIR = "#4E342E";
+    if (hair === "long") {
+      el("path", { d: "M113 44 Q104 92 112 124 Q122 132 132 122 L132 96 L168 96 L168 122 Q178 132 188 124 Q196 92 187 44 Z", fill: HAIR }, g);
+      el("ellipse", { cx: 197, cy: 44, rx: 9, ry: 20, fill: HAIR, transform: "rotate(28 197 44)" }, g);
+      el("rect", { x: 183, y: 26, width: 10, height: 7, rx: 3, fill: "#EC407A", transform: "rotate(35 188 29)" }, g);
+    }
+    el("ellipse", { cx: 150, cy: 54, rx: 39.5, ry: 38, fill: HAIR }, g);
+    el("ellipse", { cx: 113, cy: 64, rx: 5, ry: 10, fill: SKIN, stroke: OUT, "stroke-width": 1.5 }, g);
+    el("ellipse", { cx: 187, cy: 64, rx: 5, ry: 10, fill: SKIN, stroke: OUT, "stroke-width": 1.5 }, g);
+    el("ellipse", { cx: 150, cy: 60, rx: 36, ry: 42, fill: SKIN, stroke: OUT, "stroke-width": 1.5 }, g);
+    // inside: CNS (brain + spinal cord) in yellow/pink, organs, effectors
+    el("line", { x1: 150, y1: 56, x2: 150, y2: 250, stroke: "#F9A825", "stroke-width": 9, "stroke-linecap": "round" }, g);
+    el("line", { x1: 150, y1: 56, x2: 150, y2: 250, stroke: "#FFE082", "stroke-width": 4.5, "stroke-linecap": "round" }, g);
+    el("ellipse", { cx: 150, cy: 42, rx: 27, ry: 18, fill: "#F8BBD0", stroke: "#C2185B", "stroke-width": 1.5 }, g);
+    el("path", { d: "M132 40 q6 -8 12 0 q6 8 12 0 q6 -8 12 0 M138 50 q6 -5 12 0 q6 5 12 0", fill: "none", stroke: "#C2185B", "stroke-width": 1.2, opacity: 0.7 }, g);
+    el("ellipse", { cx: 170, cy: 214, rx: 7, ry: 11, fill: "#BCAAA4", stroke: "#795548", "stroke-width": 1.2 }, g);
+    R.adrenal = el("path", { d: "M162 206 L169 195 L176 206 Z", fill: "#FF8A65", stroke: "#D84315", "stroke-width": 1.2 }, g);
+    R.heart = el("path", { d: "M138 158 C126 148 128 138 134 138 C137 138 138 141 138 142 C138 141 139 138 142 138 C148 138 150 148 138 158Z", fill: "#E53935", stroke: "#B71C1C", "stroke-width": 1 }, g);
+    R.biceps = el("ellipse", { cx: 209, cy: 153, rx: 8, ry: 17, fill: MUSCLE, stroke: MUSCLE_S, "stroke-width": 1.4, transform: "rotate(-31.5 209 153)" }, g);
+    R.thigh = el("ellipse", { cx: 172, cy: 292, rx: 9, ry: 24, fill: MUSCLE, stroke: MUSCLE_S, "stroke-width": 1.4, transform: "rotate(4 172 292)" }, g);
+    R.saliva = el("ellipse", { cx: 131, cy: 94, rx: 7, ry: 5, fill: "#CE93D8", stroke: "#7B1FA2", "stroke-width": 1.2 }, g);
+    for (const x of [137, 163]) { el("ellipse", { cx: x, cy: 66, rx: 6, ry: 4, fill: "#fff", stroke: "#8D6E63", "stroke-width": 1 }, g); el("circle", { cx: x, cy: 66, r: 2.6, fill: "#5D4037" }, g); }
+    el("path", { d: "M150 70 L146 80 Q150 82 154 80", fill: "none", stroke: OUT, "stroke-width": 1.5 }, g);
+    R.mouth = el("path", { d: "M141 90 Q150 96 159 90", fill: "none", stroke: "#B5545C", "stroke-width": 2.5, "stroke-linecap": "round" }, g);
+    if (brainLabel) txt(g, 150, 46, "brain", { "text-anchor": "middle", "font-size": 11, fill: "#880E4F" });
+    R.nerves = el("g", {}, g);   // nerve paths are drawn here
+    R.fx = el("g", {}, g);       // props and response effects
+    return R;
+  }
+  function resetBody(R) {
+    R.forearm.removeAttribute("transform"); R.shank.removeAttribute("transform");
+    R.biceps.setAttribute("rx", 8); R.biceps.setAttribute("ry", 17); R.thigh.setAttribute("rx", 9);
+    R.heart.classList.remove("beating"); R.nerves.replaceChildren();
+  }
+  // props for each example
+  function drawProp(R, id) {
+    const g = R.fx; g.replaceChildren();
+    if (id === "hot") {
+      el("rect", { x: 218, y: 268, width: 50, height: 11, rx: 3, fill: "#455A64" }, g);
+      el("rect", { x: 221, y: 265, width: 44, height: 4, rx: 2, fill: "#FF5722" }, g);
+      for (const x of [214, 270]) el("path", { d: `M${x} 262 q-4 -6 0 -12 q4 -6 0 -12`, fill: "none", stroke: "#FF7043", "stroke-width": 2, "stroke-linecap": "round" }, g);
+    } else if (id === "smell") {
+      txt(g, 34, 92, "🍕", { "font-size": 28 });
+      el("path", { d: "M66 80 q12 -8 24 0 t24 0 t22 -2", fill: "none", stroke: "#8D6E63", "stroke-width": 2, "stroke-dasharray": "4 4", "stroke-linecap": "round" }, g);
+    } else if (id === "bang") {
+      txt(g, 40, 18, "💥", { "font-size": 26 });
+      txt(g, 66, 30, "BANG!", { "font-size": 15, "font-weight": 800, fill: "#D84315" });
+      for (const r of [8, 15, 22]) el("path", { d: `M${108 - r} ${56 - r * 0.6} q-${r * 0.5} ${r * 0.6} 0 ${r * 1.2}`, fill: "none", stroke: "#90A4AE", "stroke-width": 1.8 }, g);
+    } else if (id === "ball") {
+      R.ball = txt(g, 208, 412, "⚽", { "font-size": 22 });
+      el("path", { d: "M168 66 L206 392", stroke: "#FBC02D", "stroke-width": 1.5, "stroke-dasharray": "3 5", opacity: 0.8 }, g);
+    }
+  }
+  // the tap-able labels around the body
+  function drawSpots(g, ids) {
+    const out = [];
+    for (const id of ids) {
+      const s = SPOTS[id], right = s.side === "R", x0 = right ? 266 : -62, w = 100;
+      const hs = el("g", { class: "hs", "data-v": id, role: "button", tabindex: 0, "aria-label": s.name }, g);
+      el("line", { x1: right ? x0 : x0 + w, y1: s.ly, x2: s.x, y2: s.y }, hs);
+      el("circle", { cx: s.x, cy: s.y, r: 4.5 }, hs);
+      el("rect", { x: x0, y: s.ly - 12, width: w, height: 24, rx: 7 }, hs);
+      txt(hs, x0 + w / 2, s.ly + 5, s.name, { "text-anchor": "middle" });
+      out.push(hs);
+    }
+    return out;
+  }
+  // an impulse running along a nerve: the nerve is drawn as the glowing dot moves
+  async function runNerve(g, pts, color, ms, { d = null, width = 4 } = {}) {
+    const p = el("path", { d: d || pathD(pts), class: "nerve", stroke: color, "stroke-width": width }, g);
+    const L = p.getTotalLength();
+    p.style.strokeDasharray = L; p.style.strokeDashoffset = L;
+    const halo = el("circle", { r: 11, fill: "#FFEB3B", opacity: 0.45 }, g), dot = el("circle", { r: 5.5, fill: "#FFEB3B", stroke: "#F9A825", "stroke-width": 2 }, g);
+    SND.zap();
+    await tween(ms, (t) => {
+      const q = p.getPointAtLength(L * t);
+      p.style.strokeDashoffset = L * (1 - t);
+      for (const c of [halo, dot]) { c.setAttribute("cx", q.x); c.setAttribute("cy", q.y); }
+    });
+    halo.remove(); dot.remove();
+    return p;
+  }
+  const relayD = ([x, y]) => `M${x - 9} ${y + 3} q3 -9 6 0 t6 0 t6 0`;
+  async function respond(R, id) {
+    if (id === "hot") {
+      await tween(500, (t) => { const a = 45 * ease(t); R.forearm.setAttribute("transform", `rotate(${a} 228 184)`); R.biceps.setAttribute("rx", 8 + 3 * t); R.biceps.setAttribute("ry", 17 - 3 * t); });
+    } else if (id === "smell") {
+      for (let i = 0; i < 4; i++) {
+        const d = el("path", { d: "M0 -5 Q4 1 0 4 Q-4 1 0 -5Z", fill: "#4FC3F7", stroke: "#0288D1", "stroke-width": 0.8 }, R.fx);
+        const x = 145 + i * 4;
+        tween(900, (t) => { d.setAttribute("transform", `translate(${x} ${95 + 30 * t})`); d.setAttribute("opacity", 1 - t * 0.8); }).then(() => d.remove());
+        await wait(220);
+      }
+      await wait(600);
+    } else if (id === "bang") {
+      const pts = [[168, 201], [152, 190], [141, 170], [138, 152]];
+      const tmp = el("path", { d: pathD(pts), fill: "none" }, R.fx), L = tmp.getTotalLength();
+      for (let i = 0; i < 5; i++) {
+        const c = el("circle", { r: 3.2, fill: "#FF9800", stroke: "#E65100", "stroke-width": 0.8 }, R.fx);
+        tween(1000, (t) => { const q = tmp.getPointAtLength(L * t); c.setAttribute("cx", q.x); c.setAttribute("cy", q.y); }).then(() => c.remove());
+        await wait(180);
+      }
+      await wait(900);
+      R.heart.classList.add("beating");
+      txt(R.fx, 100, 136, "faster!", { "font-size": 13, "font-weight": 700, fill: "#C62828" });
+    } else if (id === "ball") {
+      R.thigh.setAttribute("rx", 11);
+      await tween(380, (t) => R.shank.setAttribute("transform", `rotate(${-38 * ease(t)} 174 332)`));
+      if (R.ball) await tween(700, (t) => { R.ball.setAttribute("x", 208 + 120 * t); R.ball.setAttribute("y", 412 - 90 * t - 40 * Math.sin(Math.PI * t)); R.ball.setAttribute("opacity", 1 - t * 0.5); });
+    }
+  }
+
+  /* ============================ 6 PATHWAY ============================ */
+  let sc = 0, bodyR = null, scBusy = false;
+  const scStars = (s) => ["chain", "rec", "cns", "eff"].reduce((n, k) => n + (P.stars.path[s.id + "-" + k] ?? 0), 0);
+  function renderScList() {
+    $("scList").innerHTML = SCEN.map((s, i) => `<button class="obj" data-i="${i}" aria-pressed="${i === sc}"><span class="em">${s.em}</span><span>${s.name}</span><span class="st">${has("path", s.id + "-eff") ? "★" + scStars(s) + "/12" : ""}</span></button>`).join("");
+    $("scList").querySelectorAll(".obj").forEach((b) => b.addEventListener("click", () => { if (!scBusy) openScen(+b.dataset.i); }));
+  }
+  function openScen(i) {
+    sc = i; const s = SCEN[i]; unselect();
+    renderScList();
+    $("scTitle").textContent = `${s.em} ${s.name}`;
+    $("scStory").innerHTML = s.story;
+    $("stepA").hidden = false; $("stepB").hidden = true;
+    fbSet($("aFb"), "", "");
+    // the chain: stimulus · 5 boxes · response
+    const ch = $("chain"); ch.replaceChildren();
+    ch.appendChild(h(`<div class="fixed"><span class="sname">Stimulus</span><span>${s.stim}</span></div>`));
+    const slots = KINDS.map((k) => { const d = h(`<div class="slot" id="sl-${k.k}" data-k="${k.k}"><span class="sname">${k.name}</span></div>`); ch.appendChild(d); return d; });
+    ch.appendChild(h(`<div class="fixed resp"><span class="sname">Response</span><span>${s.resp}</span></div>`));
+    const bank = $("scBank"); bank.replaceChildren();
+    const tiles = shuffle([...KINDS.map((k) => ({ k: k.k, text: s.cards[k.k] })), { k: "x", text: s.wrong.text }]).map((c) => {
+      const t = h(`<div class="tile" data-k="${c.k}" role="button" tabindex="0">${c.text}</div>`); bank.appendChild(t); return t; });
+    const slotOf = (k) => slots.find((x) => x.dataset.k === k) || null;
+    dropTask({ tiles, slots, spex: "path", fb: $("aFb"),
+      fits: (t, sl) => t.dataset.k === sl.dataset.k,
+      home: (t) => slotOf(t.dataset.k),
+      place: (t, sl) => { sl.appendChild(t); sl.classList.add("full"); },
+      tip: (t, sl) => t.dataset.k === "x" ? s.wrong.tip : SLOT_TIP[sl.dataset.k],
+      onDone: (st) => {
+        addStars("path", s.id + "-chain", starsOf(st));
+        const x = tiles.find((t) => t.dataset.k === "x");
+        x.dataset.locked = "1"; x.style.opacity = 0.5; x.style.textDecoration = "line-through"; x.insertAdjacentHTML("beforeend", " <small>(does not belong)</small>");
+        if (!st.revealed) { fbSet($("aFb"), "good", `✔ The pathway is complete${st.mistakes ? "" : ", right first time"}! The card “${s.wrong.text}” does not belong. Now find the parts on the body ↓`); say("path", st.mistakes ? "Well done! ★★ Now let's find these parts on the body." : "Perfect pathway! ★★★ Now let's find these parts on the body.", "happy", "good"); }
+        else $("aFb").insertAdjacentHTML("beforeend", " Now find the parts on the body ↓");
+        setTimeout(() => startBody(), 700);
+      } });
+    say("path", `<b>${s.name}</b>: what happens between the <b>stimulus</b> and the <b>response</b>? Put the cards in order. One card does not belong!`);
+  }
+  function startBody() {
+    const s = SCEN[sc];
+    $("stepB").hidden = false;
+    const svg = $("body"); svg.replaceChildren();
+    const g = el("g", { transform: "translate(64 6)" }, svg);
+    bodyR = drawBody(g, { hair: s.hair }); drawProp(bodyR, s.id);
+    const items = drawSpots(el("g", {}, g), Object.keys(SPOTS));
+    ["bGo", "bAgain", "bNext"].forEach((b) => ($(b).hidden = true)); $("bSteps").hidden = true; $("bDid").hidden = true;
+    fbSet($("bFb"), "", "");
+    const Q = [
+      { k: "rec", q: "Where is the <b>receptor</b>? Tap it on the body.", tip: `Look at your receptor card from Step 1: <i>${s.cards.rec}</i>.` },
+      { k: "cns", q: "Where is the <b>relay neurone</b> in this example? Tap the part of the <b>CNS</b> (central nervous system).", tip: s.cnsTip },
+      { k: "eff", q: "Where is the <b>effector</b>? Tap it.", tip: `Look at your effector card: <i>${s.cards.eff}</i>.` },
+    ];
+    let qi = 0;
+    const next = () => {
+      const q = Q[qi], right = s.body[q.k];
+      $("bQ").innerHTML = `<b>${qi + 1} of 3.</b> ${q.q}`;
+      ask({ box: svg, items, fb: $("bFb"), correct: [right], spex: "path", tip: q.tip, answer: `<b>${SPOTS[right].name}</b>.`, good: `${SPOTS[right].name}.`,
+        onDone: (st) => {
+          addStars("path", s.id + "-" + q.k, starsOf(st));
+          items.forEach((it) => it.classList.remove("wrong"));
+          qi++;
+          if (qi < Q.length) setTimeout(() => { items.forEach((it) => it.classList.remove("right")); next(); }, 1100);
+          else setTimeout(readyToSend, 900);
+        } });
+    };
+    next();
+    $("stepB").scrollIntoView({ behavior: reduced() ? "auto" : "smooth", block: "nearest" });
+  }
+  function readyToSend() {
+    const s = SCEN[sc];
+    $("bQ").innerHTML = `All three found! Now press <b>▶ Send the impulse</b> and watch the message travel.`;
+    fbSet($("bFb"), "", "");
+    $("bGo").hidden = false;
+    say("path", "Press <b>▶ Send the impulse</b>! Watch the colours: <b style='color:var(--sen)'>sensory</b>, <b style='color:var(--rel)'>relay</b>, <b style='color:var(--mot)'>motor</b>.", "wow");
+  }
+  async function sendImpulse() {
+    if (scBusy) return; scBusy = true;
+    const s = SCEN[sc], R = bodyR;
+    ["bGo", "bAgain", "bNext"].forEach((b) => ($(b).hidden = true));
+    resetBody(R); drawProp(R, s.id);
+    const steps = [`<b>Stimulus</b>: ${s.stim}`, `<b>Receptor</b>: ${s.cards.rec}`, `<b style="color:var(--sen)">Sensory neurone</b>: ${s.cards.sensory.toLowerCase()}`,
+      `<b style="color:var(--rel)">Relay neurone</b> in the ${s.body.cns === "spinal" ? "spinal cord" : "brain"}`, `<b style="color:var(--mot)">Motor neurone</b>: ${s.cards.motor.toLowerCase()}`,
+      `<b>Effector</b>: ${s.cards.eff}`, `<b>Response</b>: ${s.resp}`];
+    const ol = $("bSteps"); ol.hidden = false; ol.innerHTML = steps.map((x) => `<li>${x}</li>`).join("");
+    const li = [...ol.children], mark = (k) => li.forEach((x, j) => { x.classList.toggle("on", j === k); x.classList.toggle("done", j < k); });
+    mark(0); await wait(900);
+    mark(1);
+    const ring = el("circle", { cx: SPOTS[s.body.rec].x, cy: SPOTS[s.body.rec].y, r: 6, fill: "none", stroke: "#FFB300", "stroke-width": 3 }, R.nerves);
+    await tween(700, (t) => ring.setAttribute("r", 6 + 10 * t));
+    ring.remove();
+    mark(2); await runNerve(R.nerves, s.sensory, COL.sensory, 1500);
+    mark(3); await runNerve(R.nerves, null, COL.relay, 700, { d: relayD(s.relayAt), width: 5 });
+    if (s.body.cns === "brain") await wait(300);
+    mark(4); await runNerve(R.nerves, s.motor, COL.motor, s.id === "hot" ? 900 : 1700);
+    mark(5); await respond(R, s.id);
+    mark(6); await wait(500);
+    li[6].classList.remove("on"); li.forEach((x) => x.classList.add("done"));
+    $("bDid").hidden = false; $("bDid").innerHTML = "💡 " + s.did;
+    $("bAgain").hidden = false; $("bNext").hidden = false;
+    $("bNext").textContent = sc < SCEN.length - 1 ? "Next example →" : "✅ Go to the Check →";
+    P.done["sent-" + s.id] = 1; renderScList(); refreshStars();
+    say("path", `That is the whole pathway: stimulus → receptor → <b style="color:var(--sen)">sensory</b> → <b style="color:var(--rel)">relay</b> → <b style="color:var(--mot)">motor</b> → effector → response.`, "happy", "good");
+    scBusy = false;
+  }
+  $("bGo").addEventListener("click", sendImpulse);
+  $("bAgain").addEventListener("click", sendImpulse);
+  $("bNext").addEventListener("click", () => { if (sc < SCEN.length - 1) { openScen(sc + 1); $("path").scrollIntoView({ behavior: "auto", block: "start" }); } else showSub("path", "pCheck"); });
+
+  /* ============================ 7 NEURONES ============================ */
+  const NFILL = { sensory: "#E3F2FD", relay: "#F3E5F5", motor: "#FFEBEE" };
+  // small drawing helpers for neurones
+  function dendrites(g, x, y, angles, len, color, sw = 3) {
+    for (const a of angles) {
+      const r = (a * Math.PI) / 180, x2 = x + Math.cos(r) * len, y2 = y + Math.sin(r) * len;
+      el("line", { x1: x, y1: y, x2, y2, stroke: color, "stroke-width": sw, "stroke-linecap": "round" }, g);
+      for (const b of [-28, 28]) { const rb = r + (b * Math.PI) / 180; el("line", { x1: x2, y1: y2, x2: x2 + Math.cos(rb) * len * 0.45, y2: y2 + Math.sin(rb) * len * 0.45, stroke: color, "stroke-width": sw - 1, "stroke-linecap": "round" }, g); }
+    }
+  }
+  function cellBody(g, x, y, r, type) {
+    el("circle", { cx: x, cy: y, r, fill: NFILL[type], stroke: COL[type], "stroke-width": 3 }, g);
+    el("circle", { cx: x, cy: y, r: r * 0.36, fill: "#7E57C2", opacity: 0.75 }, g);
+  }
+  function axon(g, x1, x2, y, type, myelin, { seg = 40, gap = 12, start = null } = {}) {
+    el("line", { x1, y1: y, x2, y2: y, stroke: COL[type], "stroke-width": 4, "stroke-linecap": "round" }, g);
+    const out = el("g", {}, g);
+    if (myelin) for (let x = start ?? x1 + 14; x + seg <= x2 - 8; x += seg + gap) el("rect", { x, y: y - 8, width: seg, height: 16, rx: 7, fill: "#FFF3C4", stroke: "#E0B000", "stroke-width": 1.6 }, out);
+    return out;
+  }
+  function endings(g, x, y, type, spread = 26, len = 34) {
+    const out = el("g", {}, g);
+    for (const dy of [-spread, 0, spread]) {
+      el("path", { d: `M${x} ${y} Q${x + len * 0.5} ${y + dy * 0.2} ${x + len} ${y + dy}`, fill: "none", stroke: COL[type], "stroke-width": 3, "stroke-linecap": "round" }, out);
+      el("circle", { cx: x + len, cy: y + dy, r: 4.5, fill: COL[type] }, out);
+    }
+    return out;
+  }
+  function muscle(g, x, y, w, hgt) {
+    const m = el("g", {}, g);
+    el("rect", { x, y, width: w, height: hgt, rx: 8, fill: MUSCLE, stroke: MUSCLE_S, "stroke-width": 1.6 }, m);
+    for (let i = 1; i < 5; i++) el("line", { x1: x + 4, x2: x + w - 4, y1: y + (hgt * i) / 5, y2: y + (hgt * i) / 5, stroke: MUSCLE_S, "stroke-width": 1, opacity: 0.5 }, m);
+    return m;
+  }
+  function receptorCell(g, x, y) {
+    el("path", { d: `M${x - 12} ${y - 12} Q${x + 10} ${y} ${x - 12} ${y + 12} Q${x - 4} ${y} ${x - 12} ${y - 12}Z`, fill: "#FFCC80", stroke: "#EF6C00", "stroke-width": 1.6 }, g);
+    for (const dy of [-8, 0, 8]) el("circle", { cx: x - 14, cy: y + dy, r: 2.2, fill: "#EF6C00" }, g);
+  }
+  // one of the three neurones for "Which neurone?" (viewBox 600 × 170)
+  function drawNeurone(svg, type) {
+    svg.replaceChildren();
+    const g = el("g", {}, svg), y = 92;
+    if (type === "motor") {
+      dendrites(g, 70, y, [150, 190, 230, 270, 110, 310], 30, COL.motor);
+      axon(g, 92, 498, y, "motor", true);
+      cellBody(g, 70, y, 24, "motor");
+      endings(g, 498, y, "motor", 24, 36);
+      muscle(g, 540, y - 40, 52, 80);
+    } else if (type === "sensory") {
+      receptorCell(g, 34, y);
+      axon(g, 40, 498, y, "sensory", true);
+      el("line", { x1: 290, y1: y, x2: 290, y2: 52, stroke: COL.sensory, "stroke-width": 4 }, g);
+      cellBody(g, 290, 34, 20, "sensory");
+      endings(g, 498, y, "sensory", 24, 36);
+    } else {
+      dendrites(g, 278, y, [140, 170, 200, 230, 110, 250, 90, 270], 28, COL.relay);
+      axon(g, 300, 420, y, "relay", false);
+      cellBody(g, 300, y, 24, "relay");
+      endings(g, 420, y, "relay", 20, 30);
+    }
+  }
+
+  // 🔎 Which neurone? Three neurones, two questions each
+  const ID_ORDER = shuffle(NID.map((n) => n.id));
+  let idI = 0;
+  function renderIdPick() {
+    $("idPick").innerHTML = ID_ORDER.map((id, i) => { const n = (P.stars.neur["id-" + id] ?? 0) + (P.stars.neur["id-" + id + "-w"] ?? 0), done = has("neur", "id-" + id + "-w");
+      return `<button class="chip" data-i="${i}" aria-pressed="${i === idI}">Neurone ${i + 1}${done ? ` <span class="st">★${n}</span>` : ""}</button>`; }).join("");
+    $("idPick").querySelectorAll(".chip").forEach((b) => b.addEventListener("click", () => openId(+b.dataset.i)));
+  }
+  function openId(i) {
+    idI = i; const n = NID.find((x) => x.id === ID_ORDER[i]);
+    renderIdPick();
+    drawNeurone($("idSvg"), n.id);
+    $("idTitle").textContent = `Neurone ${i + 1} of 3: which neurone is this?`;
+    $("idNext").hidden = true;
+    $("idQ").innerHTML = "<b>Question 1.</b> Which type of neurone is this?";
+    fbSet($("idFb"), "", "");
+    ask({ box: $("idCats"), fb: $("idFb"), spex: "neur", opts: NID.map((x) => [x.id, x.name]), correct: [n.id], tip: n.tip, answer: `<b>${n.name}</b>. ${n.why}`, good: `${n.name}. ${n.why}`,
+      onDone: (st) => {
+        addStars("neur", "id-" + n.id, starsOf(st));
+        setTimeout(() => {
+          $("idQ").innerHTML = `<b>Question 2.</b> Where does a <b>${n.name.toLowerCase()}</b> carry impulses?`;
+          fbSet($("idFb"), "", "");
+          const right = WHERE.find(([v]) => v === n.where)[1];
+          ask({ box: $("idCats"), fb: $("idFb"), spex: "neur", opts: WHERE, correct: [n.where],
+            tip: n.id === "sensory" ? "It starts at a receptor (in a sense organ)." : n.id === "relay" ? "It connects the other two neurones." : "It ends on a muscle.",
+            answer: `<b>${right}</b>.`, good: right + ".",
+            onDone: (st2) => { addStars("neur", "id-" + n.id + "-w", starsOf(st2)); renderIdPick();
+              const nx = ID_ORDER.findIndex((id) => !has("neur", "id-" + id + "-w"));
+              $("idNext").hidden = false; $("idNext").textContent = nx >= 0 ? "Next neurone →" : "🏷 Label the parts →";
+              $("idNext").onclick = () => nx >= 0 ? openId(nx) : showSub("neur", "nLab"); } });
+        }, 900);
+      } });
+    say("neur", `Look carefully at <b>neurone ${i + 1}</b>: where is the <b>cell body</b>? Where does it start and end?`);
+  }
+
+  // 🏷 Parts of a motor neurone (label boxes, then tap a part to see its job)
+  let labReady = false;
+  function setupLabel() {
+    labReady = true;
+    const svg = $("labSvg"); svg.replaceChildren();
+    const g = el("g", {}, svg), y = 135, part = (id) => el("g", { id: "pt-" + id }, g);
+    const pd = part("dend"); dendrites(pd, 110, y, [150, 195, 225, 260, 115, 305], 38, COL.motor, 3.5);
+    const pa = part("axon"); el("line", { x1: 140, y1: y, x2: 470, y2: y, stroke: COL.motor, "stroke-width": 5, "stroke-linecap": "round" }, pa);
+    const pm = part("mye"); for (let x = 160; x + 40 <= 462; x += 52) el("rect", { x, y: y - 8, width: 40, height: 16, rx: 7, fill: "#FFF3C4", stroke: "#E0B000", "stroke-width": 1.6 }, pm);
+    const pb = part("body"); el("circle", { cx: 110, cy: y, r: 30, fill: NFILL.motor, stroke: COL.motor, "stroke-width": 3 }, pb);
+    const pn = part("nuc"); el("circle", { cx: 110, cy: y, r: 10, fill: "#7E57C2", opacity: 0.8 }, pn);
+    const pe = part("end"); endings(pe, 470, y, "motor", 25, 40);
+    muscle(g, 540, y - 42, 52, 84); txt(g, 566, y + 62, "muscle", { "text-anchor": "middle", "font-size": 13, fill: "#B71C1C" });
+    txt(g, 300, y + 58, "impulse →", { "text-anchor": "middle", "font-size": 13, fill: "#607D8B" });
+    for (const p of NPARTS) el("line", { x1: p.x, y1: p.y + (p.y < 100 ? 18 : -18), x2: p.px, y2: p.py, stroke: "#78909C", "stroke-width": 1.4, "stroke-dasharray": "3 3" }, g);
+    const wrap = $("labWrap"); wrap.querySelectorAll(".slot").forEach((x) => x.remove());
+    const slots = NPARTS.map((p) => { const d = h(`<div class="slot" id="ls-${p.id}" data-k="${p.id}" style="left:${(p.x / 600) * 100}%;top:${(p.y / 270) * 100}%"></div>`); wrap.appendChild(d); return d; });
+    const bank = $("labBank"); bank.replaceChildren();
+    const tiles = shuffle(NPARTS).map((p) => { const t = h(`<div class="tile" data-k="${p.id}" role="button" tabindex="0">${p.name}</div>`); bank.appendChild(t); return t; });
+    $("labInfo").hidden = true; fbSet($("labFb"), "", "");
+    dropTask({ tiles, slots, spex: "neur", fb: $("labFb"),
+      fits: (t, s) => t.dataset.k === s.dataset.k, home: (t) => slots.find((s) => s.dataset.k === t.dataset.k),
+      place: (t, s) => { s.appendChild(t); s.classList.add("full"); },
+      tip: (t, s) => { const p = NPARTS.find((x) => x.id === s.dataset.k); return { dend: "This box points at the short branches around the cell body.", nuc: "This box points at the dark spot in the middle of the cell body.", mye: "This box points at the yellow fatty layer around the axon.", body: "This box points at the round part that holds the nucleus.", axon: "This box points at the long thin fibre (where it shows between the yellow parts).", end: "This box points at the branches at the very end, on the muscle." }[p.id]; },
+      onDone: (st) => {
+        addStars("neur", "label", starsOf(st));
+        if (!st.revealed) fbSet($("labFb"), "good", `✔ All six parts labelled${st.mistakes ? "" : ", right first time"}!`);
+        $("labHint").textContent = "Now tap a label to see what that part does.";
+        say("neur", "Now <b>tap each label</b> to find out what that part does!", "happy", "good");
+        slots.forEach((s) => { s.classList.add("info"); s.addEventListener("click", () => showPart(s.dataset.k)); });
+        showPart("axon");
+      } });
+  }
+  function showPart(id) {
+    const p = NPARTS.find((x) => x.id === id);
+    document.querySelectorAll("#labSvg .part-on").forEach((x) => x.classList.remove("part-on"));
+    const g = $("pt-" + id); if (g) g.classList.add("part-on");
+    $("labInfo").hidden = false; $("labInfo").innerHTML = "💡 " + p.job;
+  }
+
+  // 🏁 Myelin race
+  let raceBusy = false;
+  function drawRace() {
+    const svg = $("raceSvg"); svg.replaceChildren();
+    const g = el("g", {}, svg);
+    for (const [y, my, label] of [[70, true, "With a myelin sheath"], [165, false, "Without myelin"]]) {
+      txt(g, 40, y - 26, label, { "font-size": 16, "font-weight": 700, fill: my ? "#8D6E00" : "#607D8B" });
+      axon(g, 40, 560, y, "motor", my, { seg: 40, gap: 12, start: 46 });
+      cellBody(g, 34, y, 14, "motor");
+      txt(g, 572, y + 7, "🏁", { "font-size": 20 });
+    }
+    return g;
+  }
+  async function race() {
+    if (raceBusy) return; raceBusy = true;
+    const g = drawRace();
+    $("raceGo").disabled = true; $("raceAsk").hidden = true; fbSet($("raceFb"), "", "");
+    const mk = (y) => [el("circle", { cx: 40, cy: y, r: 11, fill: "#FFEB3B", opacity: 0.45 }, g), el("circle", { cx: 40, cy: y, r: 6, fill: "#FFEB3B", stroke: "#F9A825", "stroke-width": 2 }, g)];
+    const top = mk(70), bot = mk(165), mv = (d, x, y) => d.forEach((c) => { c.setAttribute("cx", x); c.setAttribute("cy", y); });
+    const nodes = [40]; for (let x = 46 + 40 + 6; x < 560; x += 52) nodes.push(x); nodes.push(560);
+    SND.zap();
+    const a = (async () => {
+      for (let k = 1; k < nodes.length; k++) { const x0 = nodes[k - 1], x1 = nodes[k]; await tween(110, (t) => mv(top, x0 + (x1 - x0) * t, 70 - 16 * Math.sin(Math.PI * t))); }
+      txt(g, 300, 112, "Arrived! Fast: up to about 100 m/s", { "text-anchor": "middle", "font-size": 15, "font-weight": 700, fill: "#2E7D32" }); SND.pop();
+    })();
+    const b = (async () => {
+      await tween(5200, (t) => mv(bot, 40 + 520 * t, 165));
+      txt(g, 300, 207, "Arrived… slow: about 1 m/s", { "text-anchor": "middle", "font-size": 15, "font-weight": 700, fill: "#C62828" }); SND.pop();
+    })();
+    await a;
+    say("neur", "The top impulse <b>jumped</b> along the gaps in the myelin. Wait for the bottom one…", "wow");
+    await b;
+    P.done.myelin = 1; save();
+    $("raceGo").disabled = false; $("raceGo").textContent = "↺ Race again";
+    $("raceAsk").hidden = false;
+    ask({ box: $("raceCats"), fb: $("raceFb"), spex: "neur", correct: ["a"],
+      opts: shuffle([["a", "The myelin sheath insulates the axon, so the impulse travels faster"], ["b", "The top axon is shorter"], ["c", "The top impulse is bigger"], ["d", "The bottom axon is broken"]]),
+      tip: "Both axons are the same length. What is different about the top one?", answer: "<b>The myelin sheath insulates the axon, so the impulse travels faster.</b>",
+      good: "The <b>myelin sheath</b> is a fatty, insulating layer: the impulse jumps from gap to gap, so it travels much faster.",
+      onDone: (st) => addStars("neur", "race", starsOf(st)) });
+    raceBusy = false;
+  }
+  $("raceGo").addEventListener("click", race);
+
+  // ➡ One way only: sensory → relay → motor → muscle
+  let wayBusy = false, wayM = null;
+  function drawWay() {
+    const svg = $("waySvg"); svg.replaceChildren();
+    const g = el("g", {}, svg), y = 95;
+    receptorCell(g, 22, y);
+    axon(g, 26, 196, y, "sensory", true, { seg: 26, gap: 8, start: 34 });
+    el("line", { x1: 118, y1: y, x2: 118, y2: 70, stroke: COL.sensory, "stroke-width": 4 }, g); cellBody(g, 118, 58, 13, "sensory");
+    endings(g, 196, y, "sensory", 10, 12);
+    dendrites(g, 236, y, [150, 180, 210], 14, COL.relay, 3);
+    axon(g, 250, 366, y, "relay", false); cellBody(g, 250, y, 15, "relay");
+    endings(g, 366, y, "relay", 10, 12);
+    dendrites(g, 404, y, [150, 180, 210], 12, COL.motor, 3);
+    axon(g, 416, 534, y, "motor", true, { seg: 26, gap: 8, start: 436 }); cellBody(g, 416, y, 15, "motor");
+    endings(g, 534, y, "motor", 14, 18);
+    wayM = muscle(g, 556, y - 32, 40, 64);
+    for (const [x, s, c] of [[110, "sensory neurone", COL.sensory], [300, "relay neurone", COL.relay], [470, "motor neurone", COL.motor], [576, "muscle", "#B71C1C"]]) txt(g, x, 150, s, { "text-anchor": "middle", "font-size": 14, "font-weight": 700, fill: c });
+    for (const x of [214, 384]) { txt(g, x, 178, "synapse", { "text-anchor": "middle", "font-size": 13, fill: "#2E7D32" }); el("line", { x1: x, y1: 112, x2: x, y2: 164, stroke: "#A5D6A7", "stroke-width": 1.5, "stroke-dasharray": "3 3" }, g); }
+    return g;
+  }
+  async function crossGap(g, x0, x1, y) {
+    const dots = [-8, -3, 2, 7].map((dy) => el("circle", { cx: x0, cy: y + dy, r: 2.6, fill: "#43A047" }, g));
+    await tween(500, (t) => dots.forEach((d) => d.setAttribute("cx", x0 + (x1 - x0) * t)));
+    dots.forEach((d) => d.remove());
+  }
+  async function wayForward() {
+    if (wayBusy) return; wayBusy = true;
+    const g = drawWay(), y = 95;
+    fbSet($("wayInfo"), "info", "The impulse travels: dendrites → cell body → axon → nerve endings, and crosses each synapse as a chemical.");
+    const lit = [];
+    lit.push(await runNerve(g, [[24, y], [206, y]], "#FFD54F", 1100, { width: 3 }));
+    await crossGap(g, 208, 226, y);
+    lit.push(await runNerve(g, [[226, y], [376, y]], "#FFD54F", 900, { width: 3 }));
+    await crossGap(g, 378, 394, y);
+    lit.push(await runNerve(g, [[394, y], [550, y]], "#FFD54F", 900, { width: 3 }));
+    wayM.querySelector("rect").setAttribute("fill", "#E57373");
+    await tween(400, (t) => wayM.setAttribute("transform", `translate(${556 + 20} ${y}) scale(${1 - 0.25 * Math.sin(Math.PI * t)} ${1 + 0.15 * Math.sin(Math.PI * t)}) translate(${-(556 + 20)} ${-y})`));
+    txt(g, 576, 52, "contracts!", { "text-anchor": "middle", "font-size": 13, "font-weight": 700, fill: "#B71C1C" });
+    lit.forEach((p) => p.setAttribute("opacity", 0.5));
+    P.done.wayF = 1; save();
+    say("neur", "Forwards works! Now try <b>◀ Start at the muscle</b>.", "happy");
+    wayBusy = false;
+  }
+  async function wayBack() {
+    if (wayBusy) return; wayBusy = true;
+    const g = drawWay(), y = 95;
+    const halo = el("circle", { cx: 552, cy: y, r: 11, fill: "#FFEB3B", opacity: 0.45 }, g), dot = el("circle", { cx: 552, cy: y, r: 6, fill: "#FFEB3B", stroke: "#F9A825", "stroke-width": 2 }, g);
+    await tween(600, (t) => { const x = 552 - 18 * Math.sin(Math.PI * t * 0.5); halo.setAttribute("cx", x); dot.setAttribute("cx", x); });
+    SND.tip();
+    txt(g, 528, 48, "⛔", { "text-anchor": "middle", "font-size": 30 });
+    await tween(500, (t) => { halo.setAttribute("opacity", 0.45 * (1 - t)); dot.setAttribute("opacity", 1 - t); });
+    fbSet($("wayInfo"), "stop", "⛔ <b>Stopped!</b> Impulses travel <b>one way only</b>: dendrites → cell body → axon → nerve endings. At every synapse only the nerve endings release the chemical messenger, so the message can only cross <b>forwards</b>.");
+    P.done.wayB = 1; save();
+    if ($("wayAsk").hidden) {
+      $("wayAsk").hidden = false;
+      ask({ box: $("wayCats"), fb: $("wayFb"), spex: "neur", correct: ["a"],
+        opts: shuffle([["a", "At a synapse only the nerve endings release the chemical messenger, so the message crosses one way"], ["b", "The muscle is too heavy to send impulses"], ["c", "Backwards impulses are too slow"], ["d", "The myelin sheath blocks it"]]),
+        tip: "Think about what happens at the gap between two neurones.", answer: "<b>At a synapse only the nerve endings release the chemical messenger, so the message crosses one way.</b>",
+        good: "Only the <b>nerve endings</b> release the chemical, so messages always go: receptor → sensory → relay → motor → effector.",
+        onDone: (st) => addStars("neur", "way", starsOf(st)) });
+    }
+    wayBusy = false;
+  }
+  $("wayF").addEventListener("click", wayForward);
+  $("wayB").addEventListener("click", wayBack);
+
+  /* ============================ 8 REFLEX ============================ */
+  // 🏁 Reflex race: Sam (hot plate, spinal cord) against Mia (sees a ball, brain decides)
+  let rrBusy = false;
+  const MIA = { sensory: [[163, 66], [158, 54], [152, 44]], relayAt: [150, 42],
+    motor: [[148, 50], [146, 80], [146, 118], [172, 122], [190, 130], [203, 146], [209, 152]] };
+  function drawRR() {
+    const svg = $("rrSvg"); svg.replaceChildren();
+    const mk = (x, title, col, hair) => {
+      txt(svg, x + 128, 20, title, { "text-anchor": "middle", "font-size": 17, "font-weight": 700, fill: col });
+      const g = el("g", { transform: `translate(${x} 22) scale(.84)` }, svg);
+      return drawBody(g, { hair });
+    };
+    const A = mk(10, "Sam: a reflex", "#2E7D32", "short"), B = mk(330, "Mia: thinks first", "#1565C0", "long");
+    drawProp(A, "hot");
+    B.ball = txt(B.fx, 292, 150, "⚽", { "font-size": 24 });
+    return { A, B };
+  }
+  async function rrRun() {
+    if (rrBusy) return; rrBusy = true;
+    $("rrGo").disabled = true; $("rrAsk").hidden = true; asking("rRace", false); fbSet($("rrFb"), "", "");
+    const { A, B } = drawRR(), t0 = performance.now(), SLOW = 20;
+    let doneA = 0, doneB = 0;
+    const tick = () => {
+      const s = (performance.now() - t0) / 1000 / SLOW;
+      if (!doneA) $("rrW1").textContent = `Sam ⏱ ${s.toFixed(2)} s`;
+      if (!doneB) $("rrW2").textContent = `Mia ⏱ ${s.toFixed(2)} s`;
+      if (!doneA || !doneB) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+    const sam = (async () => {
+      await runNerve(A.nerves, SCEN[0].sensory, COL.sensory, 420);
+      await runNerve(A.nerves, null, COL.relay, 160, { d: relayD(SCEN[0].relayAt), width: 5 });
+      await runNerve(A.nerves, SCEN[0].motor, COL.motor, 340);
+      doneA = 1; $("rrW1").textContent = `Sam ⏱ ${REFLEX_S.toFixed(2)} s ✔`;
+      await tween(300, (t) => { A.forearm.setAttribute("transform", `rotate(${45 * ease(t)} 228 184)`); A.biceps.setAttribute("rx", 8 + 3 * t); });
+      txt(A.fx, 250, 330, "Ouch! Hand away!", { "text-anchor": "middle", "font-size": 15, "font-weight": 700, fill: "#2E7D32" });
+    })();
+    const mia = (async () => {
+      const ballGo = tween(4600, (t) => { B.ball.setAttribute("x", 292 - 40 * t); B.ball.setAttribute("y", 150 + 95 * t); });
+      await runNerve(B.nerves, MIA.sensory, COL.sensory, 420);
+      const think = txt(B.fx, 196, 30, "💭 Is it coming to me? Catch it!", { "font-size": 13, fill: "#1565C0", "font-weight": 600 });
+      await runNerve(B.nerves, null, COL.relay, 3000, { d: relayD(MIA.relayAt) + " t6 0 t-6 0 t-6 0 t-6 0", width: 5 });
+      think.remove();
+      await runNerve(B.nerves, MIA.motor, COL.motor, 1100);
+      doneB = 1; $("rrW2").textContent = `Mia ⏱ ${THINK_S.toFixed(2)} s ✔`;
+      await ballGo;
+      await tween(300, (t) => { B.forearm.setAttribute("transform", `rotate(${-20 * ease(t)} 228 184)`); B.biceps.setAttribute("rx", 8 + 3 * t); });
+      txt(B.fx, 250, 330, "Caught it!", { "text-anchor": "middle", "font-size": 15, "font-weight": 700, fill: "#1565C0" });
+    })();
+    await sam;
+    say("reflex", "Sam's reflex is finished already! The impulse only went to the <b>spinal cord</b> and straight back.", "wow");
+    await mia;
+    P.done.race = 1; refreshStars();
+    $("rrGo").disabled = false; $("rrGo").textContent = "↺ Race again";
+    say("reflex", `Sam: <b>${REFLEX_S} s</b>. Mia: <b>${THINK_S} s</b>. The reflex was about <b>${Math.round(THINK_S / REFLEX_S)} times</b> faster!`, "happy");
+    $("rrAsk").hidden = false; asking("rRace", true);
+    ask({ box: $("rrCats"), fb: $("rrFb"), spex: "reflex", correct: ["a"],
+      opts: shuffle([["a", "The relay neurone is in the spinal cord: a short path, and the brain does not have to decide"], ["b", "Sam's neurones carry impulses faster than Mia's"], ["c", "Heat travels faster than light"], ["d", "Sam's arm muscle is stronger"]]),
+      tip: "The impulses travel at the same speed. Look at where each impulse went.", answer: "<b>The relay neurone is in the spinal cord: a short path, and the brain does not have to decide.</b>",
+      good: "In a reflex the impulse goes through the <b>spinal cord</b> and straight back out. There is no thinking time, so it is much faster.",
+      onDone: (st) => addStars("reflex", "race", starsOf(st)) });
+    rrBusy = false;
+  }
+  $("rrGo").addEventListener("click", rrRun);
+
+  // ⏱ Reaction-time game: 5 tries
+  let gameAsked = false, gState = "idle", gT0 = 0, gTimer = null, gTimes = [];
+  const pad = $("pad");
+  function padSet(cls, html) { pad.className = "pad" + (cls ? " " + cls : ""); pad.innerHTML = html; }
+  function showTimes() { $("times").innerHTML = gTimes.map((t, i) => `<span>Try ${i + 1}: <b>${t.toFixed(2)} s</b></span>`).join(""); }
+  function padPress(e) {
+    if (e) e.preventDefault();
+    if (gState === "idle") {
+      gState = "wait"; padSet("wait", "Wait for green…");
+      gTimer = setTimeout(() => { gState = "go"; gT0 = performance.now(); padSet("go", "CLICK NOW!"); }, 1500 + Math.random() * 2500);
+    } else if (gState === "wait") {
+      clearTimeout(gTimer); gState = "idle"; SND.tip();
+      padSet("", "Too soon! Wait for <b>green</b>.<br><small>Tap to try again.</small>");
+    } else if (gState === "go") {
+      const t = (performance.now() - gT0) / 1000; gTimes.push(t); showTimes(); SND.pop();
+      if (gTimes.length < 5) { gState = "idle"; padSet("", `${t.toFixed(2)} s<br><small>Tap for try ${gTimes.length + 1} of 5</small>`); }
+      else { gState = "done"; padSet("done", `${t.toFixed(2)} s<br><small>Finished! See your results below.</small>`); gameResult(); }
+    }
+  }
+  pad.addEventListener("pointerdown", padPress);
+  pad.addEventListener("keydown", (e) => { if (e.key === " " || e.key === "Enter") padPress(e); });
+  function gameResult() {
+    P.react = gTimes.map((t) => Math.round(t * 1000) / 1000); save();
+    const sum = gTimes.reduce((s, t) => s + t, 0), avg = sum / gTimes.length, k = avg / REFLEX_S;
+    $("gameRes").hidden = false;
+    $("gameRes").innerHTML = `<b>Average</b> = sum of the times ÷ number of tries = ${sum.toFixed(2)} s ÷ 5 = <b>${avg.toFixed(2)} s</b><br>
+      A reflex takes about <b>${REFLEX_S} s</b>. ${avg.toFixed(2)} s ÷ ${REFLEX_S} s ≈ <b>${Math.round(k)}</b>, so your reaction is about <b>${Math.round(k)} times slower</b> than a reflex.<br>
+      <span class="hint">Write your 5 times and your average on your worksheet.</span>`;
+    $("gameAgain").hidden = false;
+    refreshStars();
+    say("reflex", `Your average reaction time: <b>${avg.toFixed(2)} s</b>. Is that a reflex? Answer the question below.`, "wow");
+    if (!gameAsked) {
+      gameAsked = true; $("gameAsk").hidden = false; asking("rGame", true);
+      ask({ box: $("gameCats"), fb: $("gameFb"), spex: "reflex", correct: ["a"],
+        opts: shuffle([["a", "No: you see the colour, your brain decides, then you move. It is a voluntary response"], ["b", "Yes: it is very fast"], ["c", "Yes: it uses neurones"], ["d", "Yes: your hand moves"]]),
+        tip: "Did your brain have to decide what to do?", answer: "<b>No: you see the colour, your brain decides, then you move. It is a voluntary response.</b>",
+        good: "Your <b>brain</b> had to decide, so it is a voluntary response. That is why it is slower than a reflex.",
+        onDone: (st) => { addStars("reflex", "game", starsOf(st)); $("gameAsk").hidden = true; } });
+    }
+  }
+  $("gameAgain").addEventListener("click", () => { gTimes = []; showTimes(); gState = "idle"; padSet("", "Press here to start"); $("gameRes").hidden = true; $("gameAgain").hidden = true; $("gameAsk").hidden = true; fbSet($("gameFb"), "", ""); asking("rGame", false); });
+
+  // 🔀 Reflex or voluntary?
+  function setupSort() {
+    const bank = $("sortBank"); bank.replaceChildren();
+    const bins = [$("binR"), $("binV")];
+    bins.forEach((b) => b.querySelectorAll(".tile").forEach((t) => t.remove()));
+    fbSet($("sortFb"), "", "");
+    const tiles = shuffle(SORT).map((c) => { const t = h(`<div class="tile" data-id="${c.id}" data-bin="${c.bin}" role="button" tabindex="0"><span class="em">${c.em}</span>${c.text}</div>`); bank.appendChild(t); return t; });
+    const nameOf = (t) => SORT.find((c) => c.id === t.dataset.id).text;
+    const what = (t) => (t.dataset.bin === "R" ? "a <b>reflex</b>: automatic and fast, no thinking" : "<b>voluntary</b>: you decide to do it");
+    dropTask({ tiles, slots: bins, mode: "tile", spex: "reflex", fb: $("sortFb"),
+      fits: (t, s) => t.dataset.bin === s.dataset.bin, home: (t) => bins.find((b) => b.dataset.bin === t.dataset.bin),
+      place: (t, s) => s.appendChild(t),
+      tip: (t, s, answer) => answer ? `“${nameOf(t)}” is ${what(t)}.` : t.dataset.bin === "R" ? "Do you have to think about it? Or does it happen on its own, very fast, to protect you?" : "Does this happen on its own, or do you decide to do it?",
+      onTile: (t) => {
+        addStars("reflex", "sort-" + t.dataset.id, starsOf(t._st));
+        if (!t._st.revealed) fbSet($("sortFb"), "good", `✔ Right: “${nameOf(t)}” is ${what(t)}.`);
+      },
+      onDone: () => say("reflex", "All 8 sorted! Reflexes are <b>automatic</b>, <b>fast</b> and <b>protect</b> you.", "happy", "good") });
+    say("reflex", "Is it a <b>reflex</b> (automatic) or <b>voluntary</b> (you decide)? Drag each card into the right box (or tap a card, then tap a box).");
+  }
+
+  /* ============================ 9 SYNAPSE ============================ */
+  const VES = [[205, 100], [238, 150], [205, 200]];
+  const RECY = [90, 114, 138, 162, 186, 210];
+  const HOME = VES.flatMap(([x, y]) => [[x - 6, y - 5], [x + 6, y - 5], [x - 6, y + 6], [x + 6, y + 6]]);
+  const LABEL_POS = [[290, 92], [302, 112], [288, 136], [300, 132], [312, 158], [292, 176], [306, 196], [290, 214], [316, 100], [314, 226], [296, 156], [318, 180]];
+  // a synapse drawing; dy moves it down; returns the parts that move
+  function makeSyn(svg, { dy = 20, labels = true } = {}) {
+    svg.replaceChildren();
+    const g = el("g", { transform: `translate(0 ${dy})` }, svg), S = { g };
+    el("path", { d: "M0 115 L130 115 C170 115 180 55 230 55 C262 55 270 90 270 150 C270 210 262 245 230 245 C180 245 170 185 130 185 L0 185 Z", fill: "#E3F2FD", stroke: COL.sensory, "stroke-width": 3 }, g);
+    el("path", { d: "M600 55 L380 55 C345 55 330 90 330 150 C330 210 345 245 380 245 L600 245 Z", fill: "#F3E5F5", stroke: COL.relay, "stroke-width": 3 }, g);
+    S.recs = RECY.map((y) => el("path", { d: `M330 ${y - 9} h12 v18 h-12 v-5 h5 v-8 h-5 z`, fill: "#FFB74D", stroke: "#E65100", "stroke-width": 1.2 }, g));
+    S.block = el("g", { opacity: 0 }, g);
+    for (const y of RECY) { el("rect", { x: 330, y: y - 4, width: 6, height: 8, fill: "#546E7A" }, S.block); el("circle", { cx: 325, cy: y, r: 4.5, fill: "#78909C", stroke: "#37474F", "stroke-width": 1 }, S.block); }
+    S.ves = VES.map(([x, y]) => el("circle", { cx: x, cy: y, r: 16, fill: "#fff", stroke: "#90CAF9", "stroke-width": 2 }, g));
+    S.mol = HOME.map(([x, y]) => el("circle", { cx: x, cy: y, r: 4, fill: "#43A047", stroke: "#1B5E20", "stroke-width": 1 }, g));
+    S.preGlow = el("ellipse", { cx: -40, cy: 150, rx: 26, ry: 30, fill: "#FFEB3B", opacity: 0 }, g);
+    S.postGlow = el("ellipse", { cx: 380, cy: 150, rx: 26, ry: 70, fill: "#FFEB3B", opacity: 0 }, g);
+    if (labels) {
+      txt(g, 12, 105, "presynaptic neurone", { "font-size": 14, "font-weight": 700, fill: "#1565C0" });
+      txt(g, 590, 45, "postsynaptic neurone", { "text-anchor": "end", "font-size": 14, "font-weight": 700, fill: "#6A1B9A" });
+      txt(g, 300, 270, "synapse (gap)", { "text-anchor": "middle", "font-size": 14, "font-weight": 700, fill: "#2E7D32" });
+      txt(g, 395, 268, "receptors", { "font-size": 13, fill: "#E65100" });
+      el("line", { x1: 393, y1: 263, x2: 344, y2: 214, stroke: "#E65100", "stroke-width": 1, "stroke-dasharray": "3 3" }, g);
+      txt(g, 130, 270, "● neurotransmitter", { "text-anchor": "middle", "font-size": 13, fill: "#2E7D32" });
+    }
+    S.pos = HOME.map((p) => p.slice());
+    return S;
+  }
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  function synTargets(name) {
+    if (name === "home") return HOME.map((p) => p.slice());
+    if (name === "released") return HOME.map((_, i) => [rnd(276, 284), 82 + i * 12]);
+    if (name === "diffused") return HOME.map(() => [rnd(288, 320), rnd(80, 220)]);
+    if (name === "bound") return HOME.map((_, i) => i < 6 ? [334.5, RECY[i]] : [rnd(290, 318), rnd(80, 220)]);
+    if (name === "bounce") return HOME.map((_, i) => i < 6 ? [319, RECY[i]] : [rnd(290, 316), rnd(80, 220)]);
+    if (name === "label") return LABEL_POS.map((p) => p.slice());
+  }
+  function synSet(S, name) { S.pos = synTargets(name); S.mol.forEach((m, i) => { m.setAttribute("cx", S.pos[i][0]); m.setAttribute("cy", S.pos[i][1]); }); }
+  function synMove(S, name, ms) {
+    const from = S.pos.map((p) => p.slice()), to = synTargets(name);
+    S.pos = to;
+    return tween(ms, (t) => { const e = ease(t); S.mol.forEach((m, i) => { m.setAttribute("cx", from[i][0] + (to[i][0] - from[i][0]) * e); m.setAttribute("cy", from[i][1] + (to[i][1] - from[i][1]) * e); }); });
+  }
+  const vesShow = (S, v) => S.ves.forEach((c) => c.setAttribute("opacity", v));
+  async function synPre(S, ms = 900) { SND.zap(); await tween(ms, (t) => { S.preGlow.setAttribute("cx", -30 + 260 * t); S.preGlow.setAttribute("opacity", 0.75 * Math.sin(Math.PI * Math.min(1, t * 1.1))); }); S.preGlow.setAttribute("opacity", 0); }
+  async function synPost(S, ms = 900) { SND.zap(); await tween(ms, (t) => { S.postGlow.setAttribute("cx", 360 + 260 * t); S.postGlow.setAttribute("opacity", 0.75 * Math.sin(Math.PI * t)); }); S.postGlow.setAttribute("opacity", 0); }
+  async function synRelease(S, ms = 900) { await Promise.all([tween(ms * 0.6, (t) => vesShow(S, 1 - t)), synMove(S, "released", ms)]); }
+  async function synReabsorb(S, ms = 1100) { await synMove(S, "home", ms); await tween(300, (t) => vesShow(S, t)); }
+
+  // 🔬 Zoom in: six steps
+  let SX = null, sxI = -1, sxBusy = false;
+  function setupSx() {
+    SX = makeSyn($("sxSvg")); sxI = -1;
+    $("sxSteps").innerHTML = SYN_STEPS.map((s, i) => `<li>${i + 1}. ${s}</li>`).join("");
+    markSx();
+  }
+  function markSx() {
+    [...$("sxSteps").children].forEach((li, j) => { li.classList.toggle("on", j === sxI); li.classList.toggle("done", j < sxI); });
+    $("sxBack").disabled = sxI < 0 || sxBusy; $("sxNext").disabled = sxI >= 5 || sxBusy; $("sxPlay").disabled = sxBusy;
+  }
+  // the state of the drawing after step k (for ← Back)
+  function sxJump(k) {
+    SX.preGlow.setAttribute("opacity", 0); SX.postGlow.setAttribute("opacity", 0);
+    vesShow(SX, k >= 1 && k < 5 ? 0 : 1);
+    synSet(SX, k < 1 ? "home" : k === 1 ? "released" : k === 2 ? "diffused" : k < 5 ? "bound" : "home");
+  }
+  async function sxStep(k) {
+    if (k === 0) await synPre(SX);
+    if (k === 1) await synRelease(SX);
+    if (k === 2) await synMove(SX, "diffused", 1300);
+    if (k === 3) { await synMove(SX, "bound", 900); SND.pop(); }
+    if (k === 4) await synPost(SX);
+    if (k === 5) await synReabsorb(SX);
+  }
+  async function sxNext() {
+    if (sxBusy || sxI >= 5) return;
+    sxBusy = true; sxI++; markSx();
+    say("syn", `<b>Step ${sxI + 1}.</b> ${SYN_STEPS[sxI]}`, sxI === 4 ? "wow" : "talk");
+    await sxStep(sxI);
+    sxBusy = false; markSx();
+    if (sxI === 5) { P.done.synExp = 1; save(); say("syn", "That's how a message crosses a synapse! Now try <b>🔢 Put in order</b>.", "happy", "good"); }
+  }
+  $("sxNext").addEventListener("click", sxNext);
+  $("sxBack").addEventListener("click", () => { if (sxBusy || sxI < 0) return; sxI--; sxJump(sxI); markSx(); say("syn", sxI < 0 ? "Back to the start. Press <b>Next step</b>." : `<b>Step ${sxI + 1}.</b> ${SYN_STEPS[sxI]}`); });
+  $("sxReset").addEventListener("click", () => { if (sxBusy) return; sxI = -1; sxJump(-1); markSx(); say("syn", "Press <b>Next step →</b> to watch one step at a time, or <b>▶ Play all</b>."); });
+  $("sxPlay").addEventListener("click", async () => {
+    if (sxBusy) return;
+    if (sxI >= 5) { sxI = -1; sxJump(-1); }
+    while (sxI < 5) { await sxNext(); await wait(500); }
+  });
+
+  // 🔢 Put the steps in order
+  function setupOrder() {
+    const box = $("ordSlots"); box.replaceChildren();
+    const slots = SYN_STEPS.map((_, i) => { const d = h(`<div class="slot" id="os-${i}" data-k="${i}"><span class="num">${i + 1}</span></div>`); box.appendChild(d); return d; });
+    const bank = $("ordBank"); bank.replaceChildren();
+    const tiles = shuffle(SYN_STEPS.map((s, i) => [s, i])).map(([s, i]) => { const t = h(`<div class="tile" data-k="${i}" role="button" tabindex="0">${s}</div>`); bank.appendChild(t); return t; });
+    fbSet($("ordFb"), "", "");
+    dropTask({ tiles, slots, spex: "syn", fb: $("ordFb"),
+      fits: (t, s) => t.dataset.k === s.dataset.k, home: (t) => slots[+t.dataset.k],
+      place: (t, s) => { s.appendChild(t); s.classList.add("full"); },
+      tip: (t, s) => `Box ${+s.dataset.k + 1}: ${SYN_TIPS[+s.dataset.k]}`,
+      onDone: (st) => { addStars("syn", "order", starsOf(st)); if (!st.revealed) { fbSet($("ordFb"), "good", `✔ All six steps in order${st.mistakes ? "" : ", right first time"}!`); say("syn", "Great! Now <b>🏷 Label it</b>.", "happy", "good"); } } });
+    say("syn", "Put the six steps in the right order. Start with the <b>impulse arriving</b>. Drag a step into a box (or tap a step, then tap a box).");
+  }
+
+  // 🏷 Label the synapse
+  function setupSynLabel() {
+    const S = makeSyn($("slSvg"), { dy: 50, labels: false }); synSet(S, "label"); vesShow(S, 0.6);
+    const g = S.g.parentNode;
+    for (const p of SLABELS) el("line", { x1: p.x, y1: p.y + (p.y < 100 ? 18 : -18), x2: p.px, y2: p.py, stroke: "#78909C", "stroke-width": 1.4, "stroke-dasharray": "3 3" }, g);
+    const wrap = $("slWrap"); wrap.querySelectorAll(".slot").forEach((x) => x.remove());
+    const slots = SLABELS.map((p) => { const d = h(`<div class="slot" id="ss-${p.id}" data-k="${p.id}" style="left:${(p.x / 600) * 100}%;top:${(p.y / 400) * 100}%;width:24%"></div>`); wrap.appendChild(d); return d; });
+    const bank = $("slBank"); bank.replaceChildren();
+    const tiles = shuffle(SLABELS).map((p) => { const t = h(`<div class="tile" data-k="${p.id}" role="button" tabindex="0">${p.name}</div>`); bank.appendChild(t); return t; });
+    fbSet($("slFb"), "", "");
+    const TIPS = { pre: "This box points at the neurone the message comes <b>from</b> (before the gap).", post: "This box points at the neurone the message goes <b>to</b> (after the gap).",
+      nt: "This box points at one of the little green chemical messengers.", gap: "This box points at the space between the two neurones.", rec: "This box points at an orange molecule where the chemical fits in." };
+    dropTask({ tiles, slots, spex: "syn", fb: $("slFb"),
+      fits: (t, s) => t.dataset.k === s.dataset.k, home: (t) => slots.find((s) => s.dataset.k === t.dataset.k),
+      place: (t, s) => { s.appendChild(t); s.classList.add("full"); },
+      tip: (t, s) => TIPS[s.dataset.k],
+      onDone: (st) => { addStars("syn", "label", starsOf(st)); if (!st.revealed) { fbSet($("slFb"), "good", `✔ All five labels in place${st.mistakes ? "" : ", right first time"}!`); say("syn", "Well done! Now find out what some <b>💊 drugs</b> do to a synapse.", "happy", "good"); } } });
+    say("syn", "Label the synapse: drag each label into its box.");
+  }
+
+  // 💊 Drugs
+  let SD = null, drug = "none", sdBusy = false;
+  function setupDrug() {
+    $("drugBtns").innerHTML = DRUGS.map((d) => `<button class="chip" data-d="${d.id}" aria-pressed="${d.id === drug}">${d.name}${d.id !== "none" && has("syn", "drug" + d.id) ? ' <span class="st">✔</span>' : ""}</button>`).join("");
+    $("drugBtns").querySelectorAll(".chip").forEach((b) => b.addEventListener("click", () => { if (sdBusy) return; drug = b.dataset.d; setupDrug(); }));
+    SD = makeSyn($("sdSvg"));
+    SD.block.setAttribute("opacity", drug === "A" ? 1 : 0);
+    $("cIn").textContent = 0; $("cOut").textContent = 0;
+    $("sdAsk").hidden = true; $("sdDid").hidden = true; $("sdMore").hidden = true; asking("sDrug", false); fbSet($("sdFb"), "", "");
+    say("syn", drug === "none" ? "First try with <b>no drug</b>: send 3 impulses and count." : drug === "A" ? "<b>Drug A</b> (grey) sits in the receptors. Send 3 impulses: what happens?" : "<b>Drug B</b> stops the neurotransmitter being reabsorbed. Send 3 impulses: what happens?");
+  }
+  async function sdRun() {
+    if (sdBusy) return; sdBusy = true; $("sdGo").disabled = true;
+    const S = SD; let nIn = 0, nOut = 0;
+    synSet(S, "home"); vesShow(S, 1);
+    $("cIn").textContent = 0; $("cOut").textContent = 0; $("sdAsk").hidden = true; $("sdDid").hidden = true; fbSet($("sdFb"), "", "");
+    const out = async () => { await synPost(S, 600); nOut++; $("cOut").textContent = nOut; };
+    for (let k = 0; k < 3; k++) {
+      await synPre(S, 600); nIn++; $("cIn").textContent = nIn;
+      if (drug === "B" && k > 0) { await synMove(S, "diffused", 500); }
+      else { await synRelease(S, 600); await synMove(S, "diffused", 800); }
+      if (drug === "A") { await synMove(S, "bounce", 500); await synMove(S, "diffused", 400); await wait(300); await synReabsorb(S, 800); }
+      else if (drug === "B") { await synMove(S, "bound", 500); for (let j = 0; j < 3; j++) { await out(); await wait(120); } }
+      else { await synMove(S, "bound", 500); await out(); await synReabsorb(S, 800); }
+      await wait(300);
+    }
+    P.done["drug-" + drug] = 1; save();
+    if (drug === "none") {
+      fbSet($("sdFb"), "info", `No drug: <b>${nIn}</b> impulses in → <b>${nOut}</b> impulses in the next neurone. Every message passes on, and then it stops. Now try <b>Drug A</b> and <b>Drug B</b>.`);
+      say("syn", "Normal synapse: 3 in, 3 out. Now choose <b>Drug A</b>.", "happy");
+    } else {
+      const A = drug === "A";
+      $("sdAsk").hidden = false; asking("sDrug", true); $("sdQ").textContent = `With Drug ${drug}, what happened in the next neurone?`;
+      ask({ box: $("sdCats"), fb: $("sdFb"), spex: "syn", correct: ["a"],
+        opts: shuffle(A ? [["a", "No new impulses: the neurotransmitter could not bind to the blocked receptors"], ["b", "More impulses than normal"], ["c", "The same as with no drug"]]
+          : [["a", "More impulses: the neurotransmitter stayed in the gap and kept stimulating it"], ["b", "No impulses at all"], ["c", "The same as with no drug"]]),
+        tip: A ? "Count the impulses in the next neurone. Could the green chemical fit into the receptors?" : "Count the impulses in the next neurone. Was the green chemical cleared away?",
+        answer: A ? "<b>No new impulses: the neurotransmitter could not bind to the blocked receptors.</b>" : "<b>More impulses: the neurotransmitter stayed in the gap and kept stimulating it.</b>",
+        good: A ? `${nIn} in → ${nOut} out. The receptors were blocked, so the message could not pass.` : `${nIn} in → ${nOut} out. The chemical was not reabsorbed, so the next neurone kept firing.`,
+        onDone: (st) => {
+          addStars("syn", "drug" + drug, starsOf(st));
+          $("sdDid").hidden = false; $("sdAsk").hidden = true; $("sdMore").hidden = false;
+          $("sdDid").innerHTML = A ? "💡 Some poisons work like this. <b>Curare</b> blocks the synapses between nerves and muscles, so the muscles cannot contract."
+            : "💡 Some drugs work like this, for example <b>cocaine</b>. Some medicines for depression work in a gentler way like this. You will learn more in the lesson on drugs.";
+          setupDrugChips();
+        } });
+    }
+    $("sdGo").disabled = false; sdBusy = false;
+  }
+  function setupDrugChips() { $("drugBtns").querySelectorAll(".chip").forEach((b) => { const d = b.dataset.d; if (d !== "none" && has("syn", "drug" + d) && !b.querySelector(".st")) b.insertAdjacentHTML("beforeend", ' <span class="st">✔</span>'); }); }
+  $("sdGo").addEventListener("click", sdRun);
+  $("sdMore").addEventListener("click", () => { $("sdMore").hidden = true; $("sdDid").hidden = true; fbSet($("sdFb"), "", ""); asking("sDrug", false);
+    say("syn", "Choose a drug and press <b>▶ Send 3 impulses</b>."); });
+
+  /* ============================ 10 UI ============================ */
+  // tabs 3–4 fit on one screen: --avail = the height left for the activity; pictures shrink to it (never bigger than before)
+  function asking(id, on) { const f = $(id) && $(id).querySelector(".fit"); if (f) f.classList.toggle("asking", on); }
+  function fitHeight() {
+    const wide = innerWidth >= 900;
+    document.body.classList.toggle("fitmode", wide && (curTab === "reflex" || curTab === "syn"));   // footer hidden in tabs 3–4
+    const card = [...document.querySelectorAll(".fitcard")].find((c) => c.offsetParent);
+    if (!card) return;
+    const ft = document.querySelector("footer"), below = parseFloat(getComputedStyle(document.querySelector("main")).paddingBottom) + (ft.offsetParent ? ft.offsetHeight : 0);
+    const avail = Math.max(240, Math.floor(innerHeight - (card.getBoundingClientRect().top + scrollY) - below - 26));
+    document.documentElement.style.setProperty("--avail", avail + "px");
+    card.querySelectorAll(".fitsvg").forEach((s) => {
+      if (!wide) { s.style.width = s.style.height = ""; return; }
+      const [, , vw, vh] = s.getAttribute("viewBox").split(" ").map(Number);
+      const hh = Math.min(avail - (+s.dataset.reserve || 0), (+s.dataset.maxw * vh) / vw);
+      s.style.height = hh + "px"; s.style.width = (hh * vw) / vh + "px";
+    });
+    card.querySelectorAll(".fitlab").forEach((w) => {
+      if (!wide) { w.style.width = ""; return; }
+      const [, , vw, vh] = w.querySelector("svg").getAttribute("viewBox").split(" ").map(Number);
+      w.style.width = Math.min(+w.dataset.maxw, (avail * vw) / vh) + "px";
+    });
+  }
+  addEventListener("resize", fitHeight);
+  if (window.ResizeObserver) { const ro = new ResizeObserver(() => fitHeight()); document.querySelectorAll("header, .spexbar, .subsw, .tabs").forEach((e) => ro.observe(e)); }
+  const TABS = ["path", "neur", "reflex", "syn", "test", "cert"];
+  const SUBS = {}; document.querySelectorAll("[data-subs]").forEach((w) => (SUBS[w.dataset.subs] = [...w.querySelectorAll("[data-sub]")].map((b) => b.dataset.sub)));
+  const curSub = { path: "pBuild", neur: "nId", reflex: "rRace", syn: "sExp" };
+  const ready = {};
+  const SUB_SAY = {
+    nId: null, nLab: null,
+    nRace: ["neur", "Which impulse wins? Press <b>▶ Send both impulses</b>."], nWay: ["neur", "Can an impulse go backwards? Try both buttons."],
+    rRace: ["reflex", "Who responds faster: Sam (a reflex) or Mia (who thinks first)? Press <b>▶ Start the race</b>."],
+    rGame: ["reflex", "How fast are <b>you</b>? Press the grey box to start. Wait for green!"],
+    sExp: ["syn", "Neurones do not touch. Let's zoom in to the tiny gap between them: a <b>synapse</b>. Press <b>Next step →</b>."],
+  };
+  const INIT = {
+    nId: () => openId(0), nLab: setupLabel, nRace: drawRace, nWay: () => { drawWay(); fbSet($("wayInfo"), "", ""); },
+    rRace: drawRR, rSort: setupSort, sExp: setupSx, sOrd: setupOrder, sLab: setupSynLabel, sDrug: setupDrug,
+    pCheck: () => runCheck("path"), nCheck: () => runCheck("neur"), rCheck: () => runCheck("reflex"), sCheck: () => runCheck("syn"),
+  };
+  function showSub(tab, sub) {
+    unselect();
+    curSub[tab] = sub;
+    if (curTab !== tab) return showTab(tab);
+    for (const s of SUBS[tab]) $(s).hidden = s !== sub;
+    document.querySelectorAll(`[data-subs="${tab}"] [data-sub]`).forEach((b) => b.setAttribute("aria-pressed", b.dataset.sub === sub));
+    if (!ready[sub] && INIT[sub]) { ready[sub] = 1; INIT[sub](); }
+    else if (sub.endsWith("Check")) say(tab, "Three quick questions. Tip first, then the answer.");
+    if (SUB_SAY[sub]) say(...SUB_SAY[sub]);
+    fitHeight();
+    if (sub === "pBuild") say("path", `<b>${SCEN[sc].name}</b>: build the pathway from the stimulus to the response.`);
+  }
+  document.querySelectorAll("[data-subs] [data-sub]").forEach((b) => b.addEventListener("click", () => showSub(b.closest("[data-subs]").dataset.subs, b.dataset.sub)));
+  let testReady = false;
+  function showTab(which) {
+    curTab = which; unselect();
+    for (const t of TABS) { $("tab-" + t).setAttribute("aria-selected", t === which); $(t).hidden = t !== which; }
+    if (curSub[which]) showSub(which, curSub[which]);
+    fitHeight();
+    if (which === "test" && !testReady) { testReady = true; newRound(); }
+    if (which === "cert") renderCert();
+  }
+  for (const t of TABS) $("tab-" + t).addEventListener("click", () => showTab(t));
+
+  // 5 Test yourself
+  let roundNo = 0;
+  function newRound() {
+    roundNo++;
+    const list = roundNo === 1 ? FIRST_ROUND.map((id) => QBANK.find((q) => q.id === id)) : shuffle(QBANK).slice(0, 12);
+    quiz({ root: $("testBox"), tab: "test", list, prefix: null, spex: "test", title: "Test yourself", again: "Play again (new questions)",
+      onEnd: (restart, stars) => {
+        if (restart) return newRound();
+        P.testRounds++; addStars("test", "best", stars);
+        say("test", `Round finished: <b>★ ${stars}</b> out of 36! ${stars >= 32 ? "Outstanding!" : "Look at the questions without ★★★ again."}`, "happy", "good");
+      } });
+    say("test", "12 questions about the whole nervous system. A tip first, then the answer. Good luck!");
+  }
+
+  // overlays
+  function closeOv(id) { $(id).classList.remove("on"); if (id === "present" && !P.seenIntro) { P.seenIntro = true; save(); } }
+  document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => closeOv(b.dataset.close)));
+  document.querySelectorAll(".overlay").forEach((o) => o.addEventListener("click", (e) => { if (e.target === o) closeOv(o.id); }));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") document.querySelectorAll(".overlay.on").forEach((o) => closeOv(o.id)); });
+  $("helpBtn").addEventListener("click", () => $("help").classList.add("on"));
+  $("soundBtn").addEventListener("click", () => { P.sound = !P.sound; save(); markSound(); if (P.sound) SND.star(); });
+  const markSound = () => { $("soundBtn").setAttribute("aria-pressed", P.sound); $("soundBtn").textContent = P.sound ? "🔊 Sound" : "🔇 Sound"; };
+
+  // Marie's guide: 6 cards
+  const nSvg = (type) => { const s = document.createElementNS(NS, "svg"); s.setAttribute("viewBox", "0 0 600 170"); s.setAttribute("aria-hidden", "true"); drawNeurone(s, type); return s.outerHTML; };
+  const FLOW = `<div class="flow"><span>Stimulus</span>→<span>Receptor</span>→<span class="s">Sensory neurone</span>→<span class="r">Relay neurone (CNS)</span>→<span class="m">Motor neurone</span>→<span>Effector</span>→<span>Response</span></div>`;
+  const SLIDES = [
+    { say: "Hi, I'm <b>Marie</b>! Your <b>nervous system</b> lets you respond to changes, very fast. Here are the key words.",
+      html: `<h3>1 · Your nervous system</h3><div class="kw">
+        <div><b>CNS (central nervous system)</b>The brain and the spinal cord. It receives information and coordinates (organises) the response.</div>
+        <div><b>Nerves</b>Bundles of neurones. They link the CNS to every part of the body. They are not part of the CNS.</div>
+        <div><b>Neurone</b>A nerve cell. It carries messages as electrical impulses.</div>
+        <div><b>Impulse</b>An electrical message that travels along a neurone.</div></div>` },
+    { say: "Every response follows the same pathway. Learn this order!",
+      html: `<h3>2 · From stimulus to response</h3>${FLOW}<div class="kw">
+        <div><b>Stimulus</b>A change you can detect: light, sound, touch, pressure, pain, temperature or chemicals.</div>
+        <div><b>Receptor</b>Cells that detect a stimulus and change it into an electrical impulse. They are in the sense organs: eye (light), ear (sound), nose and tongue (chemicals), skin (touch, pressure, pain, temperature).</div>
+        <div><b>Effector</b>The part that carries out the response: a <b>muscle</b> (it contracts) or a <b>gland</b> (it releases a substance, e.g. saliva or a hormone).</div>
+        <div><b>Response</b>What the body does, e.g. pull your hand away, or your mouth waters.</div></div>` },
+    { say: "There are <b>three types</b> of neurone. Look at where the <b>cell body</b> is!",
+      html: `<h3>3 · Three types of neurone</h3>
+        <div class="kw" style="grid-template-columns:1fr">
+        <div><b style="color:var(--sen)">Sensory neurone</b>Carries impulses from a receptor to the CNS. The cell body is on a side branch in the middle.${nSvg("sensory")}</div>
+        <div><b style="color:var(--rel)">Relay neurone</b>Inside the CNS (brain or spinal cord). Passes impulses from a sensory neurone to a motor neurone. Short, with many branches.${nSvg("relay")}</div>
+        <div><b style="color:var(--mot)">Motor neurone</b>Carries impulses from the CNS to an effector (a muscle or a gland). The cell body is at one end.${nSvg("motor")}</div></div>` },
+    { say: "Neurones are cells, so they have a nucleus, cytoplasm and a cell membrane. But they have special parts too.",
+      html: `<h3>4 · Parts of a neurone</h3><div class="kw">${NPARTS.map((p) => `<div><b>${p.name}</b>${p.job.replace(/<\/?b>/g, "")}</div>`).join("")}</div>
+        <p class="read">Impulses travel <b>one way only</b>: dendrites → cell body → axon → nerve endings.</p>` },
+    { say: "Reflexes protect you. They are so fast that you do not have to think!",
+      html: `<h3>5 · Reflexes and the reflex arc</h3><ul>
+        <li>A <b>reflex</b> is an <b>automatic</b>, very <b>fast</b> response that <b>protects</b> the body, e.g. pulling your hand off a hot plate, blinking, the knee jerk.</li>
+        <li>The pathway of a reflex is called a <b>reflex arc</b>: receptor → sensory neurone → relay neurone in the <b>spinal cord</b> → motor neurone → effector.</li>
+        <li>The brain does not have to decide, so a reflex takes only about <b>0.05 s</b>. A response you think about takes about <b>0.25 s</b>.</li>
+        <li>You feel the pain a moment later, when another impulse reaches the brain.</li></ul>` },
+    { say: "Neurones do not touch. The message crosses the gap as a <b>chemical</b>.",
+      html: `<h3>6 · Synapses</h3><p>A <b>synapse</b> is the tiny gap (about 20 nm) between two neurones. The electrical impulse cannot cross it, so a chemical messenger, the <b>neurotransmitter</b>, carries the message:</p>
+        <ol>${SYN_STEPS.map((s) => `<li>${s}</li>`).join("")}</ol>
+        <p>Some drugs change synapses: they block the receptors, or stop the reabsorption.</p>` },
+  ];
+  let pi = 0;
+  function showPresent(i) {
+    pi = Math.max(0, Math.min(SLIDES.length - 1, i));
+    $("presentSlide").innerHTML = `<div class="slide">${SLIDES[pi].html}</div>`;
+    say("present", SLIDES[pi].say, pi === 0 ? "happy" : "talk");
+    $("pPg").textContent = `${pi + 1} / ${SLIDES.length}`; $("pPrev").disabled = pi === 0;
+    $("pNext").textContent = pi === SLIDES.length - 1 ? "Let's start! ✓" : "Next →";
+  }
+  $("pPrev").addEventListener("click", () => showPresent(pi - 1));
+  $("pNext").addEventListener("click", () => pi === SLIDES.length - 1 ? closeOv("present") : showPresent(pi + 1));
+  function openPresent(i = 0) { $("present").classList.add("on"); showPresent(i); }
+  $("guideBtn").addEventListener("click", () => openPresent(0));
+
+  // 6 Certificate
+  function certHTML() {
+    const total = Object.keys(P.stars).reduce((s, t) => s + tabStars(t), 0);
+    const won = BADGES.filter((b) => P.badges[b.id]).length;
+    return `<div class="seal">★ ${total}</div>
+      <div class="marie">${SPEX.replace('data-mood="talk"', 'data-mood="happy"').replace('class="spex"', 'class="spex" style="width:100%;height:auto"')}</div>
+      <div class="t1">Certificate · The nervous system</div>
+      <div class="t2">Nervous System Expert</div>
+      <div><div class="for">This certificate is awarded to</div><div class="who">${esc(P.name) || "&nbsp;"}</div>
+        <div class="for" style="margin-top:.6%">for exploring the nervous system with Marie: ${won} of ${BADGES.length} badges · ★ ${total} stars</div></div>
+      <div class="badges">${BADGES.map((b) => `<div class="badge${P.badges[b.id] ? " on" : ""}"><span class="em">${b.em}</span><b>${b.name}</b><span class="how">${P.badges[b.id] ? "✓ " + new Date(P.badges[b.id]).toLocaleDateString() : "to earn: " + b.how}</span></div>`).join("")}</div>
+      <div class="foot"><span>Grade 8 · Biology · ${new Date().toLocaleDateString()}</span><span class="sig">Biljana Taneska · Science teacher</span></div>`;
+  }
+  function renderCert() {
+    $("certName").value = P.name || "";
+    $("certSheet").innerHTML = certHTML();
+    const won = BADGES.filter((b) => P.badges[b.id]).length;
+    say("cert", !P.name ? "Type your <b>name</b>, then print your certificate!" : won === BADGES.length ? "All 6 badges: you are a nervous system expert! 🎉 Print your certificate." : `You have <b>${won} of ${BADGES.length}</b> badges. Grey badges are still to earn – or print it now!`, won === BADGES.length ? "happy" : "talk", won === BADGES.length ? "good" : "");
+  }
+  $("certName").addEventListener("input", (e) => { P.name = e.target.value.slice(0, 40); save(); $("certSheet").innerHTML = certHTML(); });
+  $("certPrint").addEventListener("click", () => { $("printArea").innerHTML = `<div class="sheet">${certHTML()}</div>`; window.print(); });
+  $("resetAll").addEventListener("click", () => {
+    if (!confirm("Delete all your stars and badges in this browser?")) return;
+    try { localStorage.removeItem(STORE); } catch (e) {}
+    location.reload();
+  });
+
+  // start
+  load(); markSound();
+  TABS.forEach((t) => spexBar(t)); spexBar("present");
+  if (TEACHER) document.querySelector("main").insertAdjacentHTML("beforebegin", `<div class="tbanner">👩‍🏫 Teacher preview: all tabs are open; the intro guide does not open by itself. Students don't see this.</div>`);
+  openScen(0); refreshStars();
+  say("path", "Hi, I'm <b>Marie</b>! Let's follow a message through the <b>nervous system</b>, from the <b>stimulus</b> to the <b>response</b>. Put the cards in order. One card does not belong!", "happy");
+  if (!P.seenIntro && !TEACHER) openPresent(0);
+
+  // for the automatic tests only
+  window.__NERV = { drawNeuroneTo: drawNeurone, SCEN, NID, NPARTS, SORT, SYN_STEPS, SLABELS, CHECKS, QBANK, FIRST_ROUND, P, showTab, showSub, openScen, startBody, sendImpulse, openId, race, wayForward, wayBack, rrRun, sxNext, sdRun, setupDrug, set drug(v) { drug = v; } };
+})();
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
