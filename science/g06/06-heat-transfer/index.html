@@ -21,7 +21,7 @@
       faster particles = higher temperature; the particles keep moving even when the lab is paused.
     · play / pause / slow motion / replay only (no sliders). Students only READ temperatures (°C) – no joules, no formulas;
       thermal energy is shown without numbers (more / fewer particles, faster / slower). The results tables fill themselves.
-    · Marie, stars 3/2/0 (tip → answer), Sound, 🗣 Read aloud, words explained on tap, link to the Glossary energy,
+    · Marie, stars 3/2/0 (tip → answer), Sound, words explained on tap, link to the Glossary energy,
       2 · 🧠 Quiz (15 everyday situations, always open), 3 · 🏅 certificate "Heat Explorer" (7 badges, A4 landscape).
     · Progress in localStorage "g6-heat-v1". Teacher mode: add ?teacher to the address to open all parts.
   The numbers (teacher notes; made simple, not measured):
@@ -66,7 +66,7 @@
     1 STYLE     layout, the key-word colours
     2 MARKUP    header · key words · 3 tabs (Stations · Quiz · Certificate) · overlays (help, word pop-up)
     3 CONFIG    KEY, WORDS, SCENES (states, tables, narration, questions), QUIZ (17 questions)
-    4 ENGINE    helpers, Marie, read aloud, sound, storage, judge (tip → answer), drag-or-tap, question types
+    4 ENGINE    helpers, Marie, sound, storage, judge (tip → answer), drag-or-tap, question types
     5 DRAW      the 6 labs (SVG, redrawn from the position p = 0…1)
     6 PARTICLES the particle model (canvas, its own clock)
     7 PLAYER    table, play / pause / slow, phases of a part
@@ -168,9 +168,6 @@ main{flex:1;display:flex;flex-direction:column;gap:10px;padding:10px 16px 16px;m
 .spex .m{display:none} .spex[data-mood="talk"] .m-talk,.spex[data-mood="happy"] .m-happy,.spex[data-mood="think"] .m-think,
 .spex[data-mood="wow"] .m-wow,.spex[data-mood="hmm"] .m-hmm{display:inline}
 .spex[data-mood="hmm"] .brow{transform:translateY(-2px)}
-.spk{font:inherit;font-size:20px;border:1px solid #B0BEC5;background:#fff;border-radius:50%;width:42px;height:42px;cursor:pointer;flex:none;line-height:1;padding:0}
-.spk:hover{border-color:var(--navy)}
-.nospeech .spk{display:none}
 /* words explained on tap */
 .wd{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:help;border-bottom:2px dotted var(--focus);font-weight:inherit}
 .wd:hover{background:#E3F2FD}
@@ -453,7 +450,6 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   </div>
   <div class="grow"></div>
   <div class="hbtns">
-    <button class="btn" id="readBtn" aria-pressed="false" aria-label="Read aloud on or off">🗣 Read aloud</button>
     <button class="btn" id="soundBtn" aria-pressed="false" aria-label="Sound on or off">🔇 Sound</button>
     <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
   </div>
@@ -549,8 +545,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
       <li><b>Drag</b> a word into a gap – or <b>tap it, then tap the gap</b>.</li>
       <li><b>Wrong answer?</b> The first time you get a tip. The second time you see the answer.
         Stars: right first time ★★★ · after a tip ★★ · answer shown: no stars.</li>
-      <li>Words with a <span class="wd" style="cursor:default">dotted line</span> – tap them to see what they mean.
-        <b>🗣 Read aloud</b> reads Marie's words for you. 🔈 reads one question.</li>
+      <li>Words with a <span class="wd" style="cursor:default">dotted line</span> – tap them to see what they mean.</li>
       <li><b>2 · 🧠 Quiz</b>: 17 questions about heat in real life. You can take it again – your best score counts.</li>
       <li><b>3 · 🏅 Certificate</b>: type your name and print it. You win the <b>Quiz champion</b> badge when you finish the quiz. Your progress is saved in this browser.</li>
     </ol>
@@ -562,7 +557,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
 <div class="wpop" id="wpop" role="dialog" aria-label="Meaning" hidden>
   <div class="wh" id="wpHead"></div>
   <div id="wpTxt"></div>
-  <div class="controls"><button class="btn small" id="wpSpk" aria-label="Read aloud">🔈 Read</button><button class="btn small navy" id="wpOk">OK</button></div>
+  <div class="controls"><button class="btn small navy" id="wpOk">OK</button></div>
 </div>
 
 <div class="toast" id="toast" role="status"></div>
@@ -1080,61 +1075,15 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   </svg>`;
   function spexBar(name) {
     const bar = document.querySelector(`[data-spex="${name}"]`);
-    if (bar && !bar.firstChild) bar.innerHTML = SPEX + `<div class="bubble" aria-live="polite"></div><button class="spk" type="button" aria-label="Read Marie's words aloud" title="Read aloud">🔈</button>`;
+    if (bar && !bar.firstChild) bar.innerHTML = SPEX + `<div class="bubble" aria-live="polite"></div>`;
     return bar;
   }
   function say(name, html, mood = "talk", cls = "") {
     const bar = spexBar(name); if (!bar) return;
     bar.querySelector(".spex").dataset.mood = mood;
     const b = bar.querySelector(".bubble"); b.className = "bubble" + (cls ? " " + cls : ""); b.innerHTML = html;
-    if (P.read && !bar.closest("[hidden]")) speak(b.textContent);
   }
 
-  /* read aloud: the browser's own voice (works offline on most devices) */
-  const canSpeak = "speechSynthesis" in window && typeof SpeechSynthesisUtterance !== "undefined";
-  if (!canSpeak) document.documentElement.classList.add("nospeech");
-  function speakText(s) {
-    return s.replace(/\p{Extended_Pictographic}|️|[★▶⏸↺〰]/gu, " ").replace(/[→➜]/g, " then ").replace(/−/g, " minus ")
-      .replace(/(\d)\s?°C/g, "$1 degrees Celsius").replace(/°C/g, "degrees Celsius").replace(/(\d)\s?s\b/g, "$1 seconds").replace(/(\d)\s?g\b/g, "$1 grams")
-      .replace(/\s+/g, " ").trim();
-  }
-  // voices load late in some browsers; keep the utterances referenced (Chrome drops them otherwise);
-  // speak in short sentences (Chrome stops long ones); wait a moment after cancel() (Chrome drops a speak() right after it)
-  let VOICES = [];
-  const loadVoices = () => { try { VOICES = speechSynthesis.getVoices() || []; } catch (e) {} };
-  if (canSpeak) { loadVoices(); try { speechSynthesis.addEventListener("voiceschanged", loadVoices); } catch (e) {} }
-  const pickVoice = () => {
-    if (!VOICES.length) loadVoices();
-    const en = VOICES.filter((x) => /^en([-_]|$)/i.test(x.lang));
-    return en.find((x) => /^en[-_]GB/i.test(x.lang) && x.localService) || en.find((x) => /^en[-_]GB/i.test(x.lang)) ||
-      en.find((x) => x.localService) || en[0] || VOICES.find((x) => x.default) || null;
-  };
-  const SPQ = [];
-  let spkTimer = 0, noVoiceShown = false;
-  function speak(s) {
-    if (!canSpeak) return;
-    try {
-      const S = window.speechSynthesis, text = speakText(s);
-      if (!text) return;
-      const parts = (text.match(/[^.!?]+[.!?]*/g) || [text]).map((x) => x.trim()).filter(Boolean);
-      const go = () => {
-        try { S.resume(); } catch (e) {}
-        const v = pickVoice();
-        parts.forEach((t) => {
-          const u = new SpeechSynthesisUtterance(t);
-          if (v) { u.voice = v; u.lang = v.lang; } else u.lang = "en";
-          u.rate = 0.9; u.volume = 1;
-          u.onend = u.onerror = () => { const i = SPQ.indexOf(u); if (i >= 0) SPQ.splice(i, 1); };
-          SPQ.push(u); S.speak(u);
-        });
-        if (!v) setTimeout(() => { loadVoices(); if (!VOICES.length && !noVoiceShown) { noVoiceShown = true;
-          toast("🔈 This browser has no voice for reading aloud. Try Chrome or Edge, or check that the sound is on."); } }, 1500);
-      };
-      clearTimeout(spkTimer);
-      if (S.speaking || S.pending) { S.cancel(); SPQ.length = 0; spkTimer = setTimeout(go, 120); } else go();
-    } catch (e) {}
-  }
-  const textOf = (node) => { const c = node.cloneNode(true); c.querySelectorAll(".spk, .qn").forEach((x) => x.remove()); return c.textContent; };
 
   /* sound: off by default; tiny tones made in the browser */
   let actx = null;
@@ -1160,7 +1109,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
 
   /* progress: saved in this browser */
   const STORE = "g6-heat-v1";
-  const P = { sc: {}, cur: null, quiz: { i: 0, st: [], best: null }, badges: {}, fcur: null, name: "", sound: false, read: false, seenIntro: false };
+  const P = { sc: {}, cur: null, quiz: { i: 0, st: [], best: null }, badges: {}, fcur: null, name: "", sound: false, seenIntro: false };
   function save() { try { localStorage.setItem(STORE, JSON.stringify(P)); } catch (e) {} }
   function load() { try { const d = JSON.parse(localStorage.getItem(STORE) || "null"); for (const k in d || {}) if (k in P) P[k] = d[k]; P.sc = P.sc || {}; } catch (e) {} }
   const SP = (id) => (P.sc[id] = P.sc[id] || { pred: null, watched: false, stars: null });
@@ -1203,7 +1152,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     };
   }
   function fbSet(e, cls, html) { e.className = "feedback " + cls; e.innerHTML = html; }
-  const qline = (n, html) => h(`<p class="q"><span><span class="qn">${n}</span>${html}</span><button class="spk" type="button" aria-label="Read the question aloud" title="Read aloud">🔈</button></p>`);
+  const qline = (n, html) => h(`<p class="q"><span><span class="qn">${n}</span>${html}</span></p>`);
   const trBtn = (k) => `<span class="fi" style="--c:${KEY[k].col}">${KEY[k].em}</span>${KEY[k].label}`;
 
   /* multiple choice. opts = [value, html]; correct = value */
@@ -2068,11 +2017,8 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     let x = Math.min(window.innerWidth - W - 12, Math.max(12, r.left + r.width / 2 - W / 2)), y = r.bottom + 8;
     if (y + H > window.innerHeight - 8) y = Math.max(8, r.top - H - 8);
     pop.style.left = x + "px"; pop.style.top = y + "px";
-    if (P.read) speak($("wpHead").textContent + ". " + $("wpTxt").textContent);
   }
   document.addEventListener("click", (e) => {
-    const spk = e.target.closest(".spk");
-    if (spk) { const host = spk.closest(".q") || spk.closest(".spexbar"); if (host) speak(host.classList.contains("q") ? textOf(host) : host.querySelector(".bubble").textContent); return; }
     const t = e.target.closest(".wd, .kchip");
     if (t) {
       e.stopPropagation();
@@ -2084,7 +2030,6 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     if (SEL && !e.target.closest(".tile, .slot, .bank")) unselect();
   });
   $("wpOk").onclick = () => ($("wpop").hidden = true);
-  $("wpSpk").onclick = () => speak($("wpHead").textContent + ". " + $("wpTxt").textContent);
 
   function closeOv(id) { $(id).classList.remove("on"); if (id === "help" && !P.seenIntro) { P.seenIntro = true; save(); } }
   document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => closeOv(b.dataset.close)));
@@ -2093,14 +2038,9 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   $("helpBtn").addEventListener("click", () => $("help").classList.add("on"));
   $("soundBtn").addEventListener("click", () => { P.sound = !P.sound; save(); markSound(); if (P.sound) SND.star(); });
   const markSound = () => { $("soundBtn").setAttribute("aria-pressed", P.sound); $("soundBtn").textContent = P.sound ? "🔊 Sound" : "🔇 Sound"; };
-  $("readBtn").addEventListener("click", () => {
-    P.read = !P.read; save(); markRead();
-    if (P.read) { const b = document.querySelector('section:not([hidden]) .bubble'); if (b) speak(b.textContent); } else if (canSpeak) { clearTimeout(spkTimer); SPQ.length = 0; speechSynthesis.cancel(); }
-  });
-  const markRead = () => { $("readBtn").setAttribute("aria-pressed", P.read); $("readBtn").hidden = !canSpeak; };
 
   // start
-  load(); markSound(); markRead();
+  load(); markSound();
   ["free", "quiz", "cert"].forEach((t) => spexBar(t));
   P.quiz = P.quiz || { i: 0, st: [], best: null };
   refreshStars();
