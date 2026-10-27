@@ -1699,10 +1699,12 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   // the particle model: a canvas with its own clock, so the particles keep moving while the lab is paused
   const can = $("pcan"), ctx = can.getContext("2d");
   const CW = 420, CH = 280;                                            // wide (teacher, 27 Oct 2026)
+  // the bitmap follows the size on screen × the screen's pixel ratio, so the particles and labels stay sharp
   function sizeCanvas() {
-    const r = Math.min(3, window.devicePixelRatio || 1);
-    if (can.width !== CW * r) { can.width = CW * r; can.height = CH * r; }
-    ctx.setTransform(r, 0, 0, r, 0, 0);
+    const box = can.getBoundingClientRect(), r = Math.min(4, (window.devicePixelRatio || 1) * Math.max(1, Math.min(box.width / CW, box.height / CH)));
+    const w2 = Math.round(CW * r), h2 = Math.round(CH * r);
+    if (can.width !== w2 || can.height !== h2) { can.width = w2; can.height = h2; }
+    ctx.setTransform(w2 / CW, 0, 0, h2 / CH, 0, 0);
   }
   const spd = (T) => 30 + 2 * Math.min(T, 100) + Math.max(0, T - 100) * 0.25;      // px/s (exaggerated)
   let PG = {};                                                                         // particle groups of the open part

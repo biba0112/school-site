@@ -21,6 +21,10 @@
       · 3 · 🏅 certificate "Matter Explorer" (quiz stars of 45 + the Quiz champion badge).
     · Marie, stars 3/2/0 (tip → answer), Sound, 🗣 Read aloud, words explained on tap, link to the Glossary energy.
     · Progress in localStorage "g6-matter-v1".
+    · 27 Oct 2026: a pressure gauge (manometer, low → high, no numbers) beside the jar, joined near the floor. Pressure =
+      gas fraction × (0.55 + 0.45 × level) × (jar volume / volume under the lid). Squashing the gas warms it by up to
+      0.12 × the substance's scale (work done on the gas, like a bicycle pump); it cools back as the lid rises. The canvas
+      bitmap follows its size on screen (sharp numbers and particles).
   Simplifications (teacher notes):
     · "Hotter = faster" (teacher's choice): the temperature keeps rising while a substance melts or boils. In reality it
       stays at the melting / boiling point until the change is finished (the energy goes into pulling the particles
@@ -571,7 +575,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     <ol>
       <li><b>The particle jar:</b> hold the slider to the right to <b>heat 🔥</b>, to the left to <b>cool ❄️</b> – or use the <b>▲ Heat</b> and <b>▼ Cool</b> buttons (tap = a little, hold = more). Let go and it stops.
         Watch the thermometer (°C), the particles, the <b>⚡ kinetic energy</b> bar and the <b>📦 space used</b> bar.
-        🔧 <b>Push the lid</b> to try to squash it, 🫙 <b>Pour</b> it into another jar.</li>
+        🔧 <b>Push the lid</b> to try to squash it – the <b>pressure gauge</b> beside the jar shows the pressure of the gas – and 🫙 <b>Pour</b> it into another jar.</li>
       <li><b>Substances:</b> 💧 water, 🍫 chocolate, 🕯️ candle wax and 🔩 iron. <b>Jump to</b> 🧊 Solid, 💧 Liquid or 💨 Gas with one tap.</li>
       <li>The <b>change-of-state diagram</b> on the right lights up: melting, freezing, evaporating / boiling, condensing.</li>
       <li><b>Drag</b> a word or card – or <b>tap it, then tap where it goes</b>.</li>
@@ -1226,10 +1230,21 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
       emit({ type: "test", kind: "squash", st, ok: squashed });
     }
   }
+  // squashing the gas: work is done on it, so it warms a little (0.12 of the substance's scale at full squash); the
+  // added amount is taken away again as the lid rises. Pressure (0 … ≈ 2.2): gas fraction × how hot × how squashed.
+  function squashGas(dt) {
+    const S = SB(), J = JR(), c = counts(), gf = c.g / N, V0 = J.floor - J.top, V = J.floor - LAB.lid;
+    const sq = clamp((LAB.lid - J.top) / (0.58 * V0)) * gf, add = 0.12 * (S.Tmax - S.Tmin) * sq;
+    const base = LAB.T - (LAB.sq || 0), T2 = clamp(base + add, S.Tmin, S.Tmax);
+    LAB.sq = T2 - base; LAB.T = T2;                                       // remember what was really added (the scale may stop it)
+    const P = gf * (0.55 + 0.45 * lev(S, LAB.T)) * V0 / Math.max(1, V);
+    LAB.pr = (LAB.pr || 0) + (P - (LAB.pr || 0)) * Math.min(1, 5 * dt);
+  }
+  const unSquash = () => { LAB.T -= LAB.sq || 0; LAB.sq = 0; };            // the lid jumps back up (pour, jump, new substance)
   function testMsg(st, squashed) {
     const S = SB();
     if (st === "mix") return setMsg("Wait until it has finished changing state – then test it again.", 4000);
-    if (st === "g") setMsg(squashed ? `🔧 The ${S.names.g} was <b>squashed</b> into a smaller space: there is empty space between gas particles. A gas has <b>no fixed volume</b>.` : "🔧 Push the lid again.", 6000);
+    if (st === "g") setMsg(squashed ? `🔧 The ${S.names.g} was <b>squashed</b>: there is empty space between gas particles, so a gas has <b>no fixed volume</b>. The <b>pressure</b> goes up – the particles hit the walls more often. Pushing the lid gives them energy: they move faster and the gas <b>warms up</b>, like a bicycle pump.` : "🔧 Push the lid again.", 9000);
     else setMsg(`🔧 The lid can't push the ${S.names[st]} down: its particles are already close together. A ${STK[st]} has a <b>fixed volume</b> – it can't be squashed.`, 6000);
   }
   function setMsg(html, ms = 5000, warn = false) { LAB.msg = html; LAB.msgUntil = performance.now() + ms; LAB.warn = warn; }
@@ -1239,11 +1254,12 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     if (!LAB.enabled) return;
     LAB.push = !LAB.push; LAB.reported = false; LAB.pushAt = performance.now();
     if (LAB.push) SND.click();
+    else if ((LAB.sq || 0) > 0.5) setMsg(`↥ The gas <b>expands</b> again: the pressure drops and it cools down.`, 6000);
     markLab();
   }
   function pour() {
     if (!LAB.enabled) return;
-    LAB.jar = LAB.jar === "wide" ? "tall" : "wide"; LAB.push = false; LAB.lid = JR().top;
+    unSquash(); LAB.jar = LAB.jar === "wide" ? "tall" : "wide"; LAB.push = false; LAB.lid = JR().top;
     const keep = LAB.ps.map((p) => p.st), J = JR(), sp = speeds(lev(SB(), LAB.T)), cols = Math.floor((J.x1 - J.x0) / D);
     let m = 0;
     LAB.ps.forEach((p, n) => {                                            // liquid falls in from the top, gas spreads out
@@ -1266,10 +1282,12 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   function jump(k) {
     if (!LAB.enabled) return;
     const S = SB(); if (k === "g" && S.bp == null) return;
+    LAB.push = false; LAB.lid = JR().top; LAB.sq = 0; markLab();
     LAB.T = invLev(S, LV[k]); LAB.stopShown = false; SND.click();
   }
   function setSub(k, T) {
     LAB.sub = k; const S = SB();
+    LAB.sq = 0; LAB.pr = 0;
     LAB.T = T != null ? T : S.start; LAB.jar = "wide"; LAB.push = false; LAB.lid = JR().top; LAB.flash = {}; LAB.stopShown = false; LAB.msg = "";
     placeAll(); markLab(); LAB.st = null;
     emit({ type: "sub", sub: k });
@@ -1338,10 +1356,12 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   tempButton($("bHeat"), 1); tempButton($("bCool"), -1);
 
   /* drawing */
+  // the bitmap follows the size on screen × the screen's pixel ratio, so numbers and particles stay sharp
   function sizeCanvas() {
-    const r = Math.min(3, window.devicePixelRatio || 1);
-    if (can.width !== CW * r) { can.width = CW * r; can.height = CH * r; }
-    ctx.setTransform(r, 0, 0, r, 0, 0);
+    const box = can.getBoundingClientRect(), r = Math.min(4, (window.devicePixelRatio || 1) * Math.max(1, box.width / CW));
+    const w2 = Math.round(CW * r), h2 = Math.round(CH * r);
+    if (can.width !== w2 || can.height !== h2) { can.width = w2; can.height = h2; }
+    ctx.setTransform(w2 / CW, 0, 0, h2 / CH, 0, 0);
   }
   const ctext = (s, x, y, { col = "#37474F", size = 13, wgt = 700, align = "left" } = {}) => { ctx.fillStyle = col; ctx.font = `${wgt} ${size}px Segoe UI, Calibri, Arial, sans-serif`; ctx.textAlign = align; ctx.fillText(s, x, y); ctx.textAlign = "left"; };
   const rrect = (x, y, w2, h2, r) => { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w2, h2, r) : ctx.rect(x, y, w2, h2); };
@@ -1359,6 +1379,20 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     ctx.fillStyle = "#fff"; ctx.strokeStyle = "#1F3A5F"; ctx.lineWidth = 2; rrect(x - 42, 8, 84, 26, 7); ctx.fill(); ctx.stroke();
     ctext(degs(LAB.T).replace("-", "−"), x, 27, { size: 16, wgt: 800, col: "#1F3A5F", align: "center" });
     ctext("°C", x + 16, y1 + 34, { size: 11, col: "#455A64", align: "center" });
+  }
+  // the manometer (pressure gauge): no numbers, low → high, green / orange / red
+  function drawGauge(J) {
+    const gx = 350, gy = 228, r = 25, a0 = 0.75 * Math.PI, sw = 1.5 * Math.PI, f = clamp((LAB.pr || 0) / 2.2);
+    ctx.fillStyle = "#90A4AE"; ctx.fillRect(J.x1 + 2, gy + 40, gx - J.x1 + 1, 6); ctx.fillRect(gx - 3, gy + r, 6, 46 - r);   // the pipe into the jar
+    ctx.beginPath(); ctx.arc(gx, gy, r + 3, 0, 2 * Math.PI); ctx.fillStyle = "#546E7A"; ctx.fill();
+    ctx.beginPath(); ctx.arc(gx, gy, r, 0, 2 * Math.PI); ctx.fillStyle = "#fff"; ctx.fill();
+    [[0, 0.45, "#43A047"], [0.45, 0.75, "#FB8C00"], [0.75, 1, "#E53935"]].forEach(([a, b, c]) => {
+      ctx.beginPath(); ctx.arc(gx, gy, r - 5, a0 + sw * a, a0 + sw * b); ctx.strokeStyle = c; ctx.lineWidth = 5; ctx.stroke(); });
+    const an = a0 + sw * f;
+    ctx.beginPath(); ctx.moveTo(gx, gy); ctx.lineTo(gx + (r - 6) * Math.cos(an), gy + (r - 6) * Math.sin(an)); ctx.strokeStyle = "#263238"; ctx.lineWidth = 2.5; ctx.lineCap = "round"; ctx.stroke();
+    ctx.beginPath(); ctx.arc(gx, gy, 3, 0, 2 * Math.PI); ctx.fillStyle = "#263238"; ctx.fill();
+    ctext("low", gx - 19, gy + r + 11, { size: 10, wgt: 800, col: "#2E7D32", align: "center" }); ctext("high", gx + 21, gy + r + 11, { size: 10, wgt: 800, col: "#C62828", align: "center" });
+    ctext("pressure", gx, gy - r - 7, { size: 11, wgt: 800, col: "#37474F", align: "center" });
   }
   function drawLab(now) {
     sizeCanvas(); ctx.clearRect(0, 0, CW, CH);
@@ -1385,6 +1419,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     ctx.fillStyle = LAB.push ? "#5C6BC0" : "#90A4AE"; ctx.fillRect(J.x0, ly - 9, J.x1 - J.x0, 9);
     ctx.fillStyle = "#78909C"; const cx = (J.x0 + J.x1) / 2; ctx.fillRect(cx - 4, 4, 8, ly - 13); rrect(cx - 26, 0, 52, 10, 4); ctx.fill();
     if (LAB.push) ctext("⬇", cx + 12, Math.max(24, ly - 16), { size: 16, col: "#3949AB" });
+    drawGauge(J);
     drawThermo(S);
   }
 
@@ -1435,7 +1470,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
       void was;
     }
     let left = dt; while (left > 1e-6) { const h = Math.min(1 / 240, left); physics(h); left -= h; }
-    convert(dt); lidStep(dt);
+    convert(dt); lidStep(dt); squashGas(dt);
     drawLab(t / 1000); side();
   }
 
