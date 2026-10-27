@@ -402,6 +402,9 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
 .cdia .ar.on text{font-weight:800}
 .labmsg{font-size:15px;line-height:1.3;background:#F3E5F5;border-left:5px solid #8E24AA;border-radius:10px;padding:6px 10px;min-height:2.4em}
 .labmsg.warn{background:#FFEBEE;border-left-color:var(--bad)}
+/* the conclusion box (teacher, 27 Oct 2026): big text, key words bold, heat in red */
+.ht{color:#C62828;font-weight:800}
+.clab{display:block;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#8E24AA;margin-bottom:2px}
 /* sort into solid / liquid / gas */
 .bins{display:grid;gap:8px;grid-template-columns:repeat(3,minmax(0,1fr))}
 .bin{border:2px dashed #90A4AE;border-radius:12px;background:#fff;min-height:150px;padding:6px;display:flex;flex-direction:column;gap:6px;cursor:pointer}
@@ -443,6 +446,8 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   .cdia{max-height:150px} .statebig{min-height:46px} .statebig .se{font-size:26px} .statebig b{font-size:17px} .statebig .temp{font-size:18px}
   .labmsg{font-size:15px;min-height:0}
 }
+.task .labmsg{font-size:20px;line-height:1.35;padding:8px 12px;min-height:0}
+@media (min-width:900px) and (max-height:760px){ .task .labmsg{font-size:18px;line-height:1.3;padding:6px 10px} .clab{display:inline;margin-right:6px} }
 @media (min-width:900px) and (max-height:700px){ .bubble{font-size:20px} .cdia{max-height:122px} .jumps .btn{min-height:44px;font-size:18px} .tools #labBtns .btn{min-height:40px;font-size:16px} }
 /* phones and small tablets: one column; the jar + slider stay at the top while the rest scrolls under them */
 @media (max-width:899px),(max-height:539px){
@@ -1444,11 +1449,17 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     [["aM", "melting"], ["aF", "freezing"], ["aE", "evaporating"], ["aC", "condensing"]].forEach(([id, k]) => $(id).classList.toggle("on", (LAB.flash[k] || 0) > now));
     // the message under the diagram
     let msg = LAB.msgUntil > now ? LAB.msg : "", warn = LAB.msgUntil > now && LAB.warn;
-    if (!msg) msg = st === "mix" ? { melting: "Melting: the particles break out of their fixed places one by one.", freezing: "Freezing: the particles slow down and settle into fixed places, one by one.",
-      evaporating: "Evaporating: fast particles escape from the surface.", boiling: "Boiling: the particles escape from the liquid and spread out.", condensing: "Condensing: the gas particles slow down and come together." }[changing]
-      : st === "s" ? `<b>Solid:</b> the particles are very close together, in a regular pattern. They vibrate in fixed places${L > 0.22 ? " – faster now!" : "."}`
-      : st === "l" ? `<b>Liquid:</b> the particles are close together, with no pattern. They slide past each other.${c.g ? " A few fast ones escaped from the surface (evaporated)." : ""}`
-      : `<b>Gas:</b> the particles are far apart and move fast in all directions. They fill the whole jar.`;
+    // the conclusion for what you see (teacher, 27 Oct 2026: big text, key words bold, heat in red)
+    const CL = '<span class="clab">💡 Conclusion</span>';
+    if (!msg) msg = CL + (st === "mix" ? {
+        melting: `<b>Melting</b>: <span class="ht">heat</span> gives the particles more <b>kinetic energy</b> – they vibrate so fast that they break out of their fixed places.`,
+        freezing: `<b>Freezing</b>: the particles lose energy, <b>slow down</b> and get stuck in fixed places again.`,
+        evaporating: `<b>Evaporating</b>: the fastest particles escape from the <b>surface</b> of the liquid.`,
+        boiling: `<b>Boiling</b>: <span class="ht">heat</span> makes the particles so fast that they escape from the liquid and <b>spread out</b>.`,
+        condensing: `<b>Condensing</b>: the gas particles lose energy and come <b>close together</b> again.` }[changing]
+      : st === "s" ? `<b>Solid</b>: the particles are very <b>close together</b> in a regular pattern and only <b>vibrate</b>. Fixed shape, fixed volume.`
+      : st === "l" ? `<b>Liquid</b>: the particles are close together but <b>slide past</b> each other. It flows and takes the shape of the jar, but keeps its volume.`
+      : `<b>Gas</b>: the particles are <b>far apart</b> and move fast in all directions. It fills the whole jar and can be <b>squashed</b>.`);
     if ($("labMsg").innerHTML !== msg) $("labMsg").innerHTML = msg;
     $("labMsg").classList.toggle("warn", !!warn);
     if (st !== LAB.st && st !== "mix") { LAB.st = st; emit({ type: "state", st }); }

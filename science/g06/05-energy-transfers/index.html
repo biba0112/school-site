@@ -39,6 +39,8 @@
   on phones the animation stays at the top. ▶ Play starts just before the first action (no still lead-in). Certificate =
   quiz only. Bigger key-word icons.
   27 Oct 2026: ▶ Play starts exactly at the first action.
+  27 Oct 2026: the green law box became a pink CONCLUSION box for each scene (big text, thermal (heat) in red;
+  the law kept short: … J in = … J out).
   Self-contained: no internet, no external libraries or fonts. Open in any modern browser.
 
   File sections:
@@ -416,6 +418,12 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 @media (prefers-reduced-motion:reduce){ .qpic span{animation:none!important} .toast.on,.shake{animation:none} .progress i{transition:none} }
+/* the conclusion box (teacher, 27 Oct 2026): big text, key words bold, heat in red */
+.ht{color:#C62828;font-weight:800}
+.clab{display:block;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#8E24AA;margin-bottom:2px}
+@media (max-height:760px){ .clab{display:inline;margin:0 6px 0 0} }
+.concl{font-size:20px;line-height:1.35;background:#F3E5F5;border-left:5px solid #8E24AA;border-radius:10px;padding:8px 12px}
+@media (min-width:900px) and (max-height:760px){ .task .concl{font-size:17px;line-height:1.28;padding:5px 9px} .task .bars .bhead{display:none} .task .erow .btrack{height:13px} }
 </style>
 </head>
 <body>
@@ -474,8 +482,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
               <div class="bhead"><b>Energy in joules (J)</b><span class="hint">Tap a bar to see what it means.</span></div>
               <div id="erows" style="display:grid;gap:2px"></div>
               <div class="trow"><span class="bn">TOTAL</span><span class="btrack" id="tTrack"></span><span class="bv" id="tVal">0 J</span><span></span></div>
-              <div class="law">⚖️ <b>The law of conservation of energy:</b> energy cannot be made or destroyed. It only changes from one form to another.
-                <span class="ok">The TOTAL always stays the same.</span></div>
+              <div class="concl" id="concl" aria-live="polite"></div>
             </div>
       </div>
     </div>
@@ -1521,6 +1528,15 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   function ended() { if (PL.endCb) { const cb = PL.endCb; PL.endCb = null; cb(); } }
 
   /* ============================ 7 UI ============================ */
+  /* the conclusion of each scene (the pink box under the bars); the law kept short: … J in = … J out */
+  const CONCL = {
+    kettle: `<b>Electrical</b> energy → <span class="ht">thermal (heat)</span> energy (and a little <b>sound</b>). 1000 J in = 1000 J out: energy is never used up.`,
+    torch: `<b>Chemical</b> → <b>electrical</b> → <b>light</b> + <span class="ht">thermal (heat)</span>. 100 J in = 100 J out.`,
+    toy: `<b>Elastic</b> → <b>kinetic</b> → <span class="ht">thermal (heat)</span> + <b>sound</b>. 50 J in = 50 J out.`,
+    ball: `<b>Gravitational</b> ⇄ <b>kinetic</b> ⇄ <b>elastic</b>. Each bounce is lower: some energy becomes <span class="ht">thermal (heat)</span> and <b>sound</b>. The total stays 100 J.`,
+    skate: `<b>Gravitational</b> ⇄ <b>kinetic</b> on every ramp. Friction makes <span class="ht">thermal (heat)</span> and <b>sound</b>, so Lea stops. The total stays 1000 J.`,
+    sun: `<b>Nuclear</b> → <b>light</b> → <b>chemical</b> (in the apple) → <b>kinetic</b> + <span class="ht">thermal (heat)</span> in Mia. 1000 J at the start = 1000 J at the end.`,
+  };
   /* the free lab: choose a scene and play it (no questions) */
   const NARR = "free";
   function openScene(id) {
@@ -1529,6 +1545,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     if (!SC.formsOrder) { SC.formsOrder = formsIn(SC); SC.firstAt = {}; for (let i = 0; i <= 400; i++) { const E = stateOf(SC, i / 400).E; SC.formsOrder.forEach((k) => { if ((E[k] || 0) > 0.5 && SC.firstAt[k] == null) SC.firstAt[k] = i / 400; }); } }
     PL.p = 0; PL.cap = -1; lastE = null;
     SC.lead = Math.min(SC.P0 ?? 1, SC.narr[1][0]);                       // ▶ Play starts at the first action (no still frames)
+    $("concl").innerHTML = `<span class="clab">💡 Conclusion</span>${CONCL[SC.id]}`;
     setControls(true); render(); markPlay(); renderFree();
   }
   function renderFree() {
