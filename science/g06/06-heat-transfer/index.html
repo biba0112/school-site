@@ -59,6 +59,7 @@
   experiment the particle diagram is a little smaller and its caption bigger. The quiz has 2 more questions (woolly hat, cool box): 17 questions.
   27 Oct 2026: ▶ Play starts exactly at the first action. The particle diagrams are wide (420 × 280).
   27 Oct 2026: the pink box under the particle model shows the experiment's CONCLUSION (big text, heat in red).
+  27 Oct 2026: wider right column, so the particle diagram is bigger (the animation ~10 % smaller).
   Self-contained: no internet, no external libraries or fonts. Open in any modern browser.
 
   File sections:
@@ -434,6 +435,13 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
 @media (max-height:760px){ .clab{display:inline;margin:0 6px 0 0} }
 .task .ppanel .pcap{font-size:20px;line-height:1.35;padding:8px 12px;min-height:0}
 @media (min-width:900px) and (max-height:760px){ .task .ppanel .pcap{font-size:18px;line-height:1.3;padding:6px 10px} .task .ppanel .legend{display:none} }
+/* a bigger particle diagram (teacher, 27 Oct 2026): the right column is wider, the animation ~10 % smaller */
+@media (min-width:900px) and (min-height:540px){
+  .split{grid-template-columns:min(57%, max(700px, calc((100dvh - 268px) * 540 / 340 + 20px))) minmax(0,1fr)}
+  .stagebox .stage{max-width:calc((100dvh - 268px) * 540 / 340)}
+  .task #pcan{min-height:120px} .task .ppanel.lolly #pcan{max-width:100%}
+}
+@media (min-width:900px) and (max-height:760px){ .task .ppanel .bhead{display:none} }
 </style>
 </head>
 <body>
