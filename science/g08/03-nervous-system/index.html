@@ -7,8 +7,9 @@
 <!--
   IB MYP 3 Sciences · Grade 8 · Biology Unit 1 Interactions with the Environment
   The nervous system: stimulus → receptor → sensory neurone → relay neurone (CNS) → motor neurone → effector → response;
-  the three types of neurone and their parts; reflex arcs; synapses (and how some drugs change them).
-  Goes with Lessons 1–5 and the G8 MYP Workbook Activities 2–6 (pp. 4–19). Nothing copied from the workbook.
+  the three types of neurone and their parts; reflex arcs; synapses; neurotransmitters and how drugs change the brain.
+  Goes with Lessons 1–6 and the G8 MYP Workbook Activities 2–6 (pp. 4–19); tab 5 with the unit slides 69–92 (neurotransmitters,
+  drugs, reward pathway). Tab 5 was inspired by Learn.Genetics "Mouse Party" (own design and drawings). Nothing copied.
   Self-contained: no internet, no external libraries or fonts. Open in any modern browser.
 
   The guide is Marie (named after Marie Curie), the same guide as in the Grade 7 simulations.
@@ -22,6 +23,10 @@
     · The synapse is drawn far wider than 20 nm; 12 neurotransmitter molecules and 6 receptors stand for many more.
     · Drug A (blocks the receptors, e.g. curare) and Drug B (stops the reabsorption, e.g. cocaine; some medicines for
       depression work a bit like this) are teaching patterns: 0 and 3 impulses out for every impulse in.
+    · Drug lab (tab 5): message counts are a model (normal 3; copy 6–9, block 0, boost 9, reabsorption blocked 9, forced out
+      12). Dopamine and serotonin are grouped as "mood and reward"; THC copies anandamide; caffeine blocks adenosine (a
+      neuromodulator, shown like a neurotransmitter). Brain regions are simplified (reward pathway = VTA → nucleus
+      accumbens → front of the brain). Tolerance shown as receptors removed (6 → 3).
     · "One way only": the backwards impulse is stopped straight away (impulses start at dendrites and nerve endings pass
       the message on only forwards across a synapse).
     · Smelling food → saliva and a loud noise → adrenaline are shown as pathways through the brain (a relay neurone in the
@@ -29,15 +34,16 @@
 
   File sections:
     1 STYLE   layout, colours
-    2 MARKUP  header · key · 6 tabs (Pathway · Neurones · Reflexes · Synapse · Test yourself · Certificate) · overlays
+    2 MARKUP  header · key · 7 tabs (Pathway · Neurones · Reflexes · Synapse · Neurotransmitters · Test yourself · Certificate) · overlays
     3 CONFIG  scenarios, neurone parts, reflex cards, synapse steps, question banks, guide cards
     4 ENGINE  drawing helpers, Marie, sound, stars, badges, storage, questions (tip → answer), drag-or-tap, quizzes
     5 BODY    the body picture, nerve paths, the impulse animation and the responses
     6 PATHWAY tab 1: build the chain, place it on the body, send the impulse
     7 NEURONES tab 2: identify, label, myelin race, one way only
     8 REFLEX  tab 3: race, reaction-time game, reflex or voluntary?
-    9 SYNAPSE tab 4: explore step by step, order, label, drugs
-   10 UI      tabs, overlays, guide, certificate, start
+    9 SYNAPSE tab 4: explore step by step, order, label; "How drugs change a synapse" (Drug A/B, shown in tab 5)
+   10 UI      tabs, one-screen fit, overlays, guide, certificate, start
+   11 NEUROTRANSMITTERS tab 5 (s6): meet 7 neurotransmitters, brain map, drug lab (10 drugs, 5 patterns), addiction & tolerance
 -->
 <style>
 /* ============================ 1 STYLE ============================ */
@@ -93,16 +99,17 @@ main{flex:1;display:flex;flex-direction:column;gap:10px;padding:10px 16px 16px;m
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 /* main tabs: big coloured buttons (teacher, 27 Oct 2026) */
 .tabs{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0 4px}
-.tab{font:inherit;font-size:22px;font-weight:700;border:2px solid var(--navy);border-radius:14px;background:#fff;color:var(--navy);
-  padding:8px 12px;min-height:56px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;
+.tab{font:inherit;font-size:19px;font-weight:700;border:2px solid var(--navy);border-radius:14px;background:#fff;color:var(--navy);
+  padding:8px 9px;min-height:54px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;
   box-shadow:0 3px 0 #C5D0DC;transition:background .15s,transform .1s}
 .tab:hover{background:#FFF3E0}
 .tab:active{transform:translateY(2px)}
 .tab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 0 #BF360C}
-.tab .ic{font-size:26px;line-height:1}
-.tab .tstar{font-size:17px;color:var(--star);margin-left:2px}
+.tab .ic{font-size:23px;line-height:1}
+.tab .tstar{font-size:15px;color:var(--star);margin-left:2px}
 .tab[aria-selected="true"] .tstar{color:#FFE082}
-@media (min-width:1500px){ .tabs{gap:10px} .tab{font-size:24px;padding:8px 18px} .tab .ic{font-size:28px} }
+@media (max-width:1499px){ .tab .tstar{display:none} }   /* 7 tabs: per-tab stars only on big screens; the total ★ stays top right */
+@media (min-width:1500px){ .tabs{gap:10px} .tab{font-size:24px;padding:8px 14px} .tab .ic{font-size:28px} .tab .tstar{font-size:17px} }
 .panel{display:flex;flex-direction:column;gap:10px;min-height:0}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0;display:flex;flex-direction:column}
 .card > h2{padding:6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line);color:var(--navy);font-weight:600}
@@ -292,6 +299,45 @@ main{flex:1;display:flex;flex-direction:column;gap:10px;padding:10px 16px 16px;m
   .qpic .em{font-size:2.4rem}
   .review li{padding:4px 10px}
 }
+/* tab 5: neurotransmitters and the drug lab (28 Oct 2026) */
+.brainSvg{width:100%;max-width:700px;display:block}
+.minibox{position:relative}
+.miniSyn{width:100%;height:auto;display:block}
+.minipause{position:absolute;top:4px;right:4px;font-size:16px!important;min-height:34px;padding:3px 10px}
+.ntgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;padding:10px 12px 0}
+.ntcard{font:inherit;font-size:17px;font-weight:700;display:flex;align-items:center;gap:8px;text-align:left;border:2px solid var(--line);background:#fff;border-radius:10px;padding:4px 8px;min-height:40px;cursor:pointer;line-height:1.15}
+.ntcard svg{width:24px;height:24px;flex:none}
+.ntcard[aria-pressed="true"]{border-color:var(--accent);background:#FFF3E0}
+.ntinfo{border-radius:10px;padding:6px 10px;background:var(--sunk);font-size:18px;line-height:1.35}
+.ntinfo h3{font-size:20px;margin:0 0 2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.grp{font-size:14px;font-weight:700;border-radius:99px;padding:1px 8px;color:#fff}
+.grp.up{background:#D84315} .grp.calm{background:#1565C0} .grp.mood{background:#7B1FA2}
+.brainslot{border:none;padding:0;background:transparent;min-height:0;display:block}
+.brainslot.hot{background:transparent;outline:3px dashed var(--focus);outline-offset:-3px;border-radius:14px}
+.drugbank{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+.drugbank .tile{font-size:17px;padding:3px 8px;min-height:36px;border-left:6px solid var(--c);display:flex;align-items:center;gap:6px}
+.drugbank .tile .st{margin-left:auto;color:var(--star);font-size:14px}
+.drughead{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;font-size:18px}
+.drughead b.dn{font-size:22px;color:var(--navy)}
+.tagc{font-size:14px;font-weight:700;border-radius:99px;padding:1px 9px;color:#fff;background:var(--c)}
+.tagl{font-size:14px;font-weight:700;border-radius:99px;padding:1px 9px;border:2px solid #90A4AE;color:#37474F}
+.druginfo{display:grid;gap:4px;font-size:17px;line-height:1.3}
+.druginfo div{border-radius:8px;padding:4px 9px;background:var(--sunk)}
+.druginfo .risk{background:#FFEBEE;border-left:4px solid var(--bad);color:#8E0000}
+.rg{opacity:0;transition:opacity .4s}
+.rg.on{opacity:1}
+.rgl{font-size:15px;fill:#78909C}
+.rgl.on{fill:#BF360C;font-weight:700}
+@media (min-width:900px){
+  #meetBrain{max-width:min(36vw,560px)}
+  #ntMeet .fr{display:flex;flex-direction:column;gap:8px;height:var(--avail);max-height:var(--avail);overflow:hidden}
+  #ntMeet > .ntgrid{grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;padding:10px 12px 0}
+  .ntcard{justify-content:center;font-size:17px;padding:4px 6px;min-height:42px}
+  .ntcard svg{width:22px;height:22px}
+  .ntinfo{font-size:20px;padding:6px 12px;line-height:1.35} .ntinfo h3{font-size:22px;margin-bottom:2px} .ntinfo .grp{font-size:15px} .ntinfo h3 .hint{font-size:16px;font-weight:400}
+  #ntMeet .minibox{flex:1 1 auto;min-height:112px;display:flex}
+  #ntMeet .miniSyn{flex:0 1 auto;width:80%;height:80%;min-height:0;margin:auto}   /* 80% of the space (teacher, 28 Oct 2026) */
+}
 /* quizzes */
 .qhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
 .qhead h2{color:var(--navy)}
@@ -344,7 +390,7 @@ main{flex:1;display:flex;flex-direction:column;gap:10px;padding:10px 16px 16px;m
 .sheet .t2{font-size:max(26px,4.6cqw);font-weight:800;color:var(--navy);line-height:1.1}
 .sheet .who{font-size:max(24px,4.2cqw);font-weight:700;color:var(--accent);border-bottom:2px solid var(--line);padding:0 4%;justify-self:center;min-width:50%}
 .sheet .for{font-size:max(14px,1.8cqw)}
-.sheet .badges{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1.2cqw;align-content:center}
+.sheet .badges{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1.2cqw;align-content:center}
 .sheet .foot{display:flex;justify-content:space-between;align-items:end;font-size:max(12px,1.5cqw);color:var(--muted);gap:10px}
 .sheet .foot .sig{border-top:1px solid #90A4AE;padding-top:2px;min-width:30%}
 .sheet .marie{position:absolute;right:3%;top:4%;width:12%}
@@ -429,8 +475,9 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
     <button class="tab" role="tab" id="tab-neur" aria-selected="false" aria-controls="neur"><span class="ic">🧠</span>2<span class="full"> · Neurones</span><span class="tstar" data-ts="neur"></span></button>
     <button class="tab" role="tab" id="tab-reflex" aria-selected="false" aria-controls="reflex"><span class="ic">⚡</span>3<span class="full"> · Reflexes</span><span class="tstar" data-ts="reflex"></span></button>
     <button class="tab" role="tab" id="tab-syn" aria-selected="false" aria-controls="syn"><span class="ic">🔬</span>4<span class="full"> · Synapse</span><span class="tstar" data-ts="syn"></span></button>
-    <button class="tab" role="tab" id="tab-test" aria-selected="false" aria-controls="test"><span class="ic">🏆</span>5<span class="full"> · Test yourself</span><span class="tstar" data-ts="test"></span></button>
-    <button class="tab" role="tab" id="tab-cert" aria-selected="false" aria-controls="cert"><span class="ic">🏅</span>6<span class="full"> · Certificate</span></button>
+    <button class="tab" role="tab" id="tab-nt" aria-selected="false" aria-controls="nt"><span class="ic">🧪</span>5<span class="full"> · Neurotransmitters</span><span class="tstar" data-ts="nt"></span></button>
+    <button class="tab" role="tab" id="tab-test" aria-selected="false" aria-controls="test"><span class="ic">🏆</span>6<span class="full"> · Test yourself</span><span class="tstar" data-ts="test"></span></button>
+    <button class="tab" role="tab" id="tab-cert" aria-selected="false" aria-controls="cert"><span class="ic">🏅</span>7<span class="full"> · Certificate</span></button>
   </div>
 
   <!-- 1 PATHWAY -->
@@ -598,7 +645,6 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
       <button class="chip" data-sub="sExp" aria-pressed="true">🔬 Zoom in</button>
       <button class="chip" data-sub="sOrd" aria-pressed="false">🔢 Put in order</button>
       <button class="chip" data-sub="sLab" aria-pressed="false">🏷 Label it</button>
-      <button class="chip" data-sub="sDrug" aria-pressed="false">💊 Drugs</button>
       <button class="chip" data-sub="sCheck" aria-pressed="false">✅ Check <span class="st" data-cs="syn"></span></button>
     </div>
     <div class="card fitcard" id="sExp">
@@ -634,6 +680,30 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
         </div>
       </div>
     </div>
+    <div class="card fitcard" id="sCheck" hidden><div class="cb" data-check="syn"></div></div>
+  </section>
+
+  <!-- 5 NEUROTRANSMITTERS (28 Oct 2026) -->
+  <section class="panel" id="nt" role="tabpanel" aria-labelledby="tab-nt" hidden>
+    <div class="spexbar" data-spex="nt"></div>
+    <div class="subsw" data-subs="nt">
+      <button class="chip" data-sub="ntMeet" aria-pressed="true">🧪 Meet the neurotransmitters</button>
+      <button class="chip" data-sub="sDrug" aria-pressed="false">💊 How drugs change a synapse</button>
+      <button class="chip" data-sub="ntLab" aria-pressed="false">🧠 Drug lab <span class="st" id="dlSt"></span></button>
+      <button class="chip" data-sub="ntTol" aria-pressed="false">🔁 Addiction &amp; tolerance</button>
+    </div>
+    <div class="card fitcard" id="ntMeet">
+      <div class="ntgrid fitpre" id="ntGrid"></div>
+      <div class="fit">
+        <div class="fl">
+          <svg class="brainSvg fitsvg" id="meetBrain" viewBox="0 0 700 400" data-maxw="700" aria-label="The brain, side view"></svg>
+        </div>
+        <div class="fr">
+          <div class="ntinfo" id="ntInfo"></div>
+          <div class="minibox"><svg class="miniSyn" id="meetSyn" viewBox="0 0 600 200" aria-label="A synapse with this neurotransmitter"></svg><button class="btn small minipause" id="miniPause">⏸ Pause</button></div>
+        </div>
+      </div>
+    </div>
     <div class="card fitcard" id="sDrug" hidden>
       <div class="fit">
         <div class="fl">
@@ -641,7 +711,7 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
           <div class="count"><span>Impulses sent: <b id="cIn">0</b></span><span>Impulses in the next neurone: <b id="cOut">0</b></span></div>
         </div>
         <div class="fr">
-          <p class="read hideq"><b>How some drugs change a synapse.</b> Choose a drug, then send <b>3 impulses</b>. Count the impulses that start in the next neurone.</p>
+          <p class="read hideq"><b>How drugs change a synapse.</b> Choose a drug, then send <b>3 impulses</b>. Count the impulses that start in the next neurone.</p>
           <div class="drugbtns hideq" id="drugBtns"></div>
           <div class="controls hideq"><button class="btn primary" id="sdGo">▶ Send 3 impulses</button></div>
           <div id="sdAsk" hidden><p class="qlabel" style="margin-bottom:6px" id="sdQ"></p><div class="cats one" id="sdCats"></div></div>
@@ -651,16 +721,60 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
         </div>
       </div>
     </div>
-    <div class="card fitcard" id="sCheck" hidden><div class="cb" data-check="syn"></div></div>
+    <div class="card fitcard" id="ntLab" hidden>
+      <div class="fit">
+        <div class="fl">
+          <div class="slot brainslot" id="brainDrop"><svg class="brainSvg fitsvg" id="dlBrain" viewBox="0 0 700 400" data-maxw="700" aria-label="The brain: drop a drug here"></svg></div>
+          <div id="dlSynWrap" hidden>
+            <svg class="synSvg fitsvg" id="dlSyn" viewBox="0 0 600 330" data-maxw="760" data-reserve="44" aria-label="A synapse with or without the drug"></svg>
+            <div class="count"><span>Impulses arriving: <b id="lcIn">0</b></span><span><span id="lcLabel">Messages in the next neurone</span>: <b id="lcOut">0</b></span></div>
+          </div>
+        </div>
+        <div class="fr">
+          <div id="dlPick">
+            <p class="read"><b>Drug lab.</b> Drag a drug onto the brain (or tap a drug, then tap the brain). Colours: <b style="color:#E65100">stimulant</b> · <b style="color:#1565C0">depressant</b> · <b style="color:#6A1B9A">painkiller</b> · <b style="color:#2E7D32">hallucinogen</b>.</p>
+            <div class="drugbank" id="drugBank"></div>
+          </div>
+          <div id="dlView" hidden>
+            <div class="drughead" id="dlHead"></div>
+            <div class="controls hideq" id="dlBtns">
+              <button class="btn navy" id="dlNormal">▶ Normal</button>
+              <button class="btn primary" id="dlDrug">▶ Add the drug</button>
+              <button class="btn" id="dlBrainBtn">🧠 Brain</button>
+            </div>
+            <div class="druginfo hideq" id="dlInfo" hidden></div>
+            <div class="controls hideq"><button class="btn primary" id="dlAskBtn" hidden>Answer the question →</button></div>
+            <div id="dlAsk" hidden><p class="qlabel" style="margin-bottom:6px" id="dlQ"></p><div class="cats two" id="dlCats"></div></div>
+            <div class="feedback" id="dlFb" aria-live="polite"></div>
+            <div class="controls"><button class="btn primary" id="dlNext" hidden>Choose another drug →</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="ntTol" hidden>
+      <div class="fit">
+        <div class="fl"><svg class="synSvg fitsvg" id="tolSvg" viewBox="0 0 600 330" data-maxw="720" aria-label="Receptors and a feeling meter"></svg></div>
+        <div class="fr">
+          <ol class="steps hideq" id="tolSteps"></ol>
+          <div class="controls hideq">
+            <button class="btn" id="tolBack">← Back</button>
+            <button class="btn primary" id="tolNext">Next step →</button>
+            <button class="btn" id="tolReset">↺ Start again</button>
+          </div>
+          <div id="tolAsk" hidden><p class="qlabel" style="margin-bottom:6px">Why does a person need more and more of a drug after a while?</p><div class="cats two" id="tolCats"></div></div>
+          <div class="feedback" id="tolFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
   </section>
 
-  <!-- 5 TEST YOURSELF -->
+  <!-- 6 TEST YOURSELF -->
   <section class="panel" id="test" role="tabpanel" aria-labelledby="tab-test" hidden>
     <div class="spexbar" data-spex="test"></div>
     <div class="card"><div class="cb" id="testBox"></div></div>
   </section>
 
-  <!-- 6 CERTIFICATE -->
+  <!-- 7 CERTIFICATE -->
   <section class="panel" id="cert" role="tabpanel" aria-labelledby="tab-cert" hidden>
     <div class="spexbar" data-spex="cert"></div>
     <div class="card">
@@ -687,11 +801,12 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
         Then find the parts on the body and press <b>▶ Send the impulse</b>.</li>
       <li><b>2 · Neurones</b>: name the three types of neurone, label the parts, race two impulses and try to send one backwards.</li>
       <li><b>3 · Reflexes</b>: race a reflex against a thinking response, test your own reaction time and sort reflexes.</li>
-      <li><b>4 · Synapse</b>: zoom in to the gap between two neurones, put the steps in order, label it and see what some drugs do.</li>
-      <li><b>✅ Check</b> (in tabs 1–4) has 3 quick questions. <b>5 · Test yourself</b> mixes everything (12 questions).</li>
+      <li><b>4 · Synapse</b>: zoom in to the gap between two neurones, put the steps in order and label it.</li>
+      <li><b>5 · Neurotransmitters</b>: meet 7 neurotransmitters, see how drugs change a synapse, drop 10 drugs onto the brain in the <b>drug lab</b>, and find out how <b>addiction and tolerance</b> happen.</li>
+      <li><b>✅ Check</b> (in tabs 1–4) has 3 quick questions. <b>6 · Test yourself</b> mixes everything (12 questions).</li>
       <li><b>Wrong answer?</b> The first time you get a tip. The second time the simulation shows the answer.
-        Stars: right first time ★★★ · right after a tip ★★ · answer shown: no stars. Win 6 badges and print your
-        <b>6 · 🏅 Certificate</b>. Your progress is saved in this browser.</li>
+        Stars: right first time ★★★ · right after a tip ★★ · answer shown: no stars. Win 7 badges and print your
+        <b>7 · 🏅 Certificate</b>. Your progress is saved in this browser.</li>
     </ol>
     <h3>The biology</h3>
     <ul>
@@ -969,6 +1084,116 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
   ];
   const FIRST_ROUND = ["t1", "t7", "t5", "t3", "t4", "t2", "t6", "t8", "t9", "t10", "t11", "t12"];
 
+  // tab 5: neurotransmitters (teacher's slides 69–77 + endorphins), drawn with their own colour and shape
+  const NTS = [
+    { id: "ach", name: "Acetylcholine", color: "#00897B", shape: "hex", grp: "up", where: ["cortex", "hippo"],
+      job: "Motor neurones release it onto muscles: it makes <b>muscles contract</b>. In the brain it helps <b>attention and memory</b>." },
+    { id: "dop", name: "Dopamine", color: "#F57C00", shape: "circle", grp: "mood", where: ["reward"],
+      job: "The <b>reward</b> chemical: you feel pleasure and want to do something again (like eating when you are hungry). It also helps control <b>movement</b>." },
+    { id: "ser", name: "Serotonin", color: "#7B1FA2", shape: "tri", grp: "mood", where: ["cortex", "stem"],
+      job: "Keeps your <b>mood</b> steady and helps with <b>sleep</b> and appetite. Too little is linked to depression." },
+    { id: "gaba", name: "GABA", color: "#1E88E5", shape: "square", grp: "calm", where: ["cortex", "cereb"],
+      job: "The brain's <b>brake</b>: it calms neurones down, so they fire less. It helps you relax and sleep." },
+    { id: "glu", name: "Glutamate", color: "#C62828", shape: "diamond", grp: "up", where: ["hippo", "cortex"],
+      job: "The brain's <b>accelerator</b>: it excites neurones. You need it for <b>learning and memory</b>." },
+    { id: "nor", name: "Norepinephrine", color: "#F9A825", shape: "star", grp: "up", where: ["stem", "cortex"],
+      job: "Also called noradrenaline. It makes you <b>alert</b> and ready for action (fight or flight)." },
+    { id: "endo", name: "Endorphins", color: "#EC407A", shape: "pill", grp: "calm", where: ["spine", "stem", "reward"],
+      job: "The body's own <b>painkillers</b>. Released when you are hurt or after hard exercise: they block pain messages and give a good feeling." },
+  ];
+  const NT_EXTRA = {   // chemicals that only appear in the drug lab
+    ade: { id: "ade", name: "adenosine", color: "#78909C", shape: "circle", grp: "calm" },
+    ana: { id: "ana", name: "anandamide", color: "#8D6E63", shape: "hex", grp: "mood" },
+  };
+  const GRP = { up: ["up", "⚡ speeds up (excitatory)"], calm: ["calm", "🛑 calms down (inhibitory)"], mood: ["mood", "😊 mood and reward"] };
+  const REGIONS = {
+    front: "front of the brain (decisions)", cortex: "cortex (thinking, senses)", reward: "reward pathway (pleasure)",
+    hippo: "hippocampus (memory)", cereb: "cerebellum (balance)", stem: "brainstem (breathing, heartbeat)", spine: "spinal cord (pain messages)",
+  };
+  const CAT = { stim: ["stimulant", "#E65100"], dep: ["depressant", "#1565C0"], pain: ["painkiller", "#6A1B9A"], hall: ["hallucinogen", "#2E7D32"] };
+  // pattern: copy (looks like the neurotransmitter) · block (sits in the receptors) · boost (helps the receptor) ·
+  // reuptake (stops the reabsorption) · release (forces it out of the vesicles). out = messages after 3 impulses (a model).
+  const LAB_DRUGS = [
+    { id: "caf", name: "Caffeine", em: "☕", cat: "stim", legal: "legal", nt: "ade", pattern: "block", out: 0, outLabel: "“Tired” signals in the next neurone", regions: ["cortex"],
+      how: "Blocks the receptors for <b>adenosine</b>, the chemical that makes you feel tired.",
+      effect: "Adenosine cannot slow the neurones down, so you feel <b>awake and alert</b>.",
+      risks: "Poor sleep, fast heartbeat, shaky hands; headaches when you stop.",
+      q: { text: "Caffeine blocks the receptors for adenosine (the “tired” chemical). What happens?", ans: "a",
+        opts: [["a", "Adenosine cannot bind, so the neurones are not slowed down: you feel awake"], ["b", "More adenosine binds, so you feel sleepy"], ["c", "Caffeine makes new neurones"], ["d", "Nothing changes"]],
+        tip: "Look at the counter: 3 “tired” signals without caffeine, 0 with caffeine.", why: "Caffeine sits in the adenosine receptors, so the “tired” message cannot get through." } },
+    { id: "nic", name: "Nicotine", em: "🚬", cat: "stim", legal: "legal for adults", nt: "ach", pattern: "copy", a: 2, b: 2, regions: ["reward", "cortex"],
+      how: "Has a shape like <b>acetylcholine</b>: it binds to its receptors. This also releases extra <b>dopamine</b> in the reward pathway.",
+      effect: "Neurones fire more: you feel alert, and the extra dopamine makes the brain want more.",
+      risks: "Very addictive. Smoking tobacco causes cancer, heart disease and lung disease.",
+      q: { text: "Nicotine has a shape like acetylcholine. What does it do at the synapse?", ans: "a",
+        opts: [["a", "It binds to the acetylcholine receptors and makes the next neurone fire"], ["b", "It blocks the receptors, so nothing happens"], ["c", "It stops the impulse arriving"], ["d", "It breaks down acetylcholine"]],
+        tip: "Watch the drug molecules: where did they go, and did the next neurone fire?", why: "Nicotine fits the acetylcholine receptors, so the next neurone fires, even without an impulse." } },
+    { id: "alc", name: "Alcohol", em: "🍺", cat: "dep", legal: "legal for adults", nt: "gaba", pattern: "boost", out: 9, outLabel: "Calm-down signals in the next neurone", regions: ["cereb", "front", "hippo"],
+      how: "Helps <b>GABA</b> (the brake) work even more, and blocks <b>glutamate</b> (the accelerator).",
+      effect: "The brain <b>slows down</b>: slower reactions, poor balance, poor decisions and memory.",
+      risks: "Accidents, liver damage, addiction. A lot of alcohol at once can stop breathing.",
+      q: { text: "Alcohol helps GABA work. GABA calms neurones. What happens to the brain?", ans: "a",
+        opts: [["a", "It slows down: slower reactions, poor balance and judgement"], ["b", "It speeds up: faster reactions"], ["c", "Nothing: alcohol only affects the liver"], ["d", "Neurones send more pain messages"]],
+        tip: "GABA is the brain's brake. More braking means…?", why: "More GABA effect = more braking: the brain works more slowly." } },
+    { id: "coc", name: "Cocaine", em: "❄️", cat: "stim", legal: "illegal", nt: "dop", pattern: "reuptake", out: 9, regions: ["reward"],
+      how: "Blocks the <b>reabsorption of dopamine</b>, so dopamine stays in the gap.",
+      effect: "The reward pathway is stimulated again and again: a short, very strong “high”.",
+      risks: "Heart attack, stroke, very addictive.",
+      q: { text: "Cocaine blocks the reabsorption of dopamine. What happens in the next neurone?", ans: "a",
+        opts: [["a", "Dopamine stays in the gap, so it keeps firing (more messages)"], ["b", "Dopamine is reabsorbed faster"], ["c", "No dopamine is released"], ["d", "The receptors are destroyed"]],
+        tip: "After the dopamine binds, does it go back into the first neurone?", why: "Dopamine cannot be reabsorbed, so it keeps binding and the next neurone keeps firing." } },
+    { id: "mdma", name: "Ecstasy (MDMA)", em: "💊", cat: "stim", legal: "illegal", nt: "ser", pattern: "release", out: 12, regions: ["cortex", "stem"],
+      how: "Forces a <b>flood of serotonin</b> out of the vesicles and stops its reabsorption.",
+      effect: "Strong changes in mood and feelings. Afterwards the serotonin has run out, so people often feel low.",
+      risks: "Overheating, dehydration, low mood for days, damage to serotonin neurones.",
+      q: { text: "Ecstasy forces out lots of serotonin at once. Why do people often feel low a few days later?", ans: "a",
+        opts: [["a", "The serotonin has been used up, so there is too little left"], ["b", "The serotonin receptors have doubled"], ["c", "Ecstasy turns into dopamine"], ["d", "The synapse closes"]],
+        tip: "Look at the vesicles at the end of the animation.", why: "The vesicles are empty: it takes days to make enough serotonin again." } },
+    { id: "meth", name: "Meth", em: "⚗️", cat: "stim", legal: "illegal", nt: "dop", pattern: "release", out: 12, regions: ["reward"],
+      how: "Gets into the neurone and pushes <b>dopamine</b> out of the vesicles, even without an impulse; it also blocks reabsorption.",
+      effect: "A huge flood of dopamine in the reward pathway.",
+      risks: "Extremely addictive, damages neurones, heart problems.",
+      q: { text: "Meth pushes dopamine out of the vesicles, even without an impulse. What does this cause?", ans: "a",
+        opts: [["a", "A huge flood of dopamine in the reward pathway"], ["b", "No dopamine at all"], ["c", "Slower messages"], ["d", "Less pleasure from the drug"]],
+        tip: "Count the messages: how many instead of 3?", why: "Dopamine pours out without any impulse, so the reward pathway is flooded." } },
+    { id: "her", name: "Heroin", em: "💉", cat: "pain", legal: "illegal", nt: "endo", pattern: "copy", a: 3, b: 2, outLabel: "Pain-blocking signals", regions: ["reward", "stem"],
+      how: "Has a shape like <b>endorphins</b>: it binds to their receptors. It also releases extra dopamine.",
+      effect: "No pain and a strong good feeling, but it also slows down the brainstem.",
+      risks: "Breathing can stop (overdose). Extremely addictive.",
+      q: { text: "Heroin has a shape like endorphins. Why is it so dangerous?", ans: "a",
+        opts: [["a", "It also slows the brainstem, so breathing can stop"], ["b", "It makes you more alert"], ["c", "It blocks dopamine completely"], ["d", "It only affects the skin"]],
+        tip: "Look at the brain map: which part controls breathing?", why: "Heroin slows the brainstem, which controls breathing: an overdose can stop breathing." } },
+    { id: "cod", name: "Codeine", em: "💊", cat: "pain", legal: "medicine (doctor)", nt: "endo", pattern: "copy", a: 0, b: 2, outLabel: "Pain-blocking signals", regions: ["spine", "stem"],
+      how: "A weaker copy of <b>endorphins</b>. Doctors give it for strong pain.",
+      effect: "Pain messages are blocked, so it hurts less.",
+      risks: "Makes you drowsy; addictive if it is not taken exactly as the doctor says.",
+      q: { text: "Codeine is a medicine that copies endorphins. What do endorphins do?", ans: "a",
+        opts: [["a", "They block pain messages: they are the body's own painkillers"], ["b", "They make muscles contract"], ["c", "They help you learn"], ["d", "They keep you awake"]],
+        tip: "Check the cards in 🧪 Meet the neurotransmitters: which one is the body's painkiller?", why: "Endorphins are the body's own painkillers; codeine copies them." } },
+    { id: "can", name: "Cannabis (THC)", em: "🌿", cat: "hall", legal: "illegal in Austria and most countries", nt: "ana", pattern: "copy", a: 2, b: 2, regions: ["hippo", "cereb", "reward"],
+      how: "THC has a shape like <b>anandamide</b>, the brain's own cannabis-like chemical, and binds to its receptors.",
+      effect: "Changes memory, coordination and the sense of time.",
+      risks: "Poor memory and learning (worst in teenagers), addiction, mental-health problems.",
+      q: { text: "THC copies the brain's own cannabis-like chemical in the hippocampus. Which ability is affected most?", ans: "a",
+        opts: [["a", "Memory and learning"], ["b", "Hearing"], ["c", "Digestion"], ["d", "Seeing colours"]],
+        tip: "On the brain map, the hippocampus is the memory area.", why: "The hippocampus makes new memories, so THC makes learning and remembering harder." } },
+    { id: "lsd", name: "LSD", em: "🌀", cat: "hall", legal: "illegal", nt: "ser", pattern: "copy", a: 2, b: 2, regions: ["cortex"],
+      how: "Has a shape like <b>serotonin</b> and binds to some serotonin receptors in the cortex.",
+      effect: "The cortex gets mixed-up messages: changed senses and hallucinations.",
+      risks: "Frightening hallucinations, accidents, flashbacks.",
+      q: { text: "LSD copies serotonin at receptors in the cortex. What can this cause?", ans: "a",
+        opts: [["a", "Hallucinations: seeing or hearing things that are not there"], ["b", "Faster reflexes"], ["c", "Better sleep"], ["d", "Stronger muscles"]],
+        tip: "LSD is a hallucinogen.", why: "Mixed-up serotonin messages in the cortex change what you see and hear." } },
+  ];
+  const TOL_STEPS = [
+    "<b>Normal:</b> dopamine binds to 6 receptors. You feel normal.",
+    "<b>A drug</b> floods the synapse with dopamine. Far too many signals: it feels very strong.",
+    "The drug is used <b>again and again</b>. The brain protects itself: it <b>removes receptors</b> (6 → 3).",
+    "The same dose now feels weaker. This is <b>tolerance</b>: the person needs more to get the same effect.",
+    "<b>Without the drug</b>, normal dopamine fits only 3 receptors. The person feels bad and craves the drug: <b>withdrawal</b>.",
+    "Needing the drug just to feel normal is <b>addiction</b>. Receptors take a long time to come back. The best way to avoid it: don't start.",
+  ];
+
   /* ============================ 4 ENGINE ============================ */
   const NS = "http://www.w3.org/2000/svg";
   const el = (tag, attrs = {}, parent) => {
@@ -1052,13 +1277,14 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
 
   /* progress: stars, badges – saved in this browser */
   const STORE = "g8-nervous-v1";
-  const P = { stars: { path: {}, neur: {}, reflex: {}, syn: {}, test: {} }, done: {}, react: [], badges: {}, name: "", sound: false, seenIntro: false, testRounds: 0 };
+  const P = { stars: { path: {}, neur: {}, reflex: {}, syn: {}, nt: {}, test: {} }, done: {}, react: [], badges: {}, name: "", sound: false, seenIntro: false, testRounds: 0 };
   function save() { try { localStorage.setItem(STORE, JSON.stringify(P)); } catch (e) {} }
   function load() {
     try {
       const d = JSON.parse(localStorage.getItem(STORE) || "{}");
       for (const k in d) if (k in P) P[k] = d[k];
-      for (const t of ["path", "neur", "reflex", "syn", "test"]) P.stars[t] = P.stars[t] || {};
+      for (const t of ["path", "neur", "reflex", "syn", "nt", "test"]) P.stars[t] = P.stars[t] || {};
+      for (const k of ["drugA", "drugB"]) if (k in P.stars.syn) { P.stars.nt[k] = Math.max(P.stars.nt[k] ?? -1, P.stars.syn[k]); delete P.stars.syn[k]; }   // Drugs moved to tab 5 (28 Oct 2026)
       P.done = P.done || {}; P.react = Array.isArray(P.react) ? P.react : [];
     } catch (e) {}
   }
@@ -1070,7 +1296,8 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
     { id: "path", em: "🛤", name: "Pathway builder", how: "all 4 examples in tab 1", got: () => SCEN.every((s) => has("path", s.id + "-eff")) },
     { id: "neur", em: "🧠", name: "Neurone expert", how: "name the 3 neurones and label the parts", got: () => NID.every((n) => has("neur", "id-" + n.id + "-w")) && has("neur", "label") },
     { id: "reflex", em: "⚡", name: "Fast reflexes", how: "race, 5 reaction times and sort 8 cards", got: () => P.done.race && P.react.length >= 5 && SORT.every((c) => has("reflex", "sort-" + c.id)) },
-    { id: "syn", em: "🔬", name: "Synapse explorer", how: "order, label and both drugs", got: () => has("syn", "order") && has("syn", "label") && has("syn", "drugA") && has("syn", "drugB") },
+    { id: "syn", em: "🔬", name: "Synapse explorer", how: "put in order and label the synapse", got: () => has("syn", "order") && has("syn", "label") },
+    { id: "nt", em: "🧪", name: "Brain chemist", how: "Drugs A and B, all 10 drugs in the lab, tolerance", got: () => has("nt", "drugA") && has("nt", "drugB") && LAB_DRUGS.every((d) => has("nt", "lab-" + d.id)) && has("nt", "tol") },
     { id: "check", em: "✅", name: "Checker", how: "all 4 Checks (tabs 1–4)", got: () => ["path", "neur", "reflex", "syn"].every((t) => CHECKS[t].every((q) => has(t, "chk-" + q.id))) },
     { id: "test", em: "🏆", name: "Nerve master", how: "finish Test yourself once", got: () => P.testRounds >= 1 },
   ];
@@ -2003,20 +2230,20 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
       fits: (t, s) => t.dataset.k === s.dataset.k, home: (t) => slots.find((s) => s.dataset.k === t.dataset.k),
       place: (t, s) => { s.appendChild(t); s.classList.add("full"); },
       tip: (t, s) => TIPS[s.dataset.k],
-      onDone: (st) => { addStars("syn", "label", starsOf(st)); if (!st.revealed) { fbSet($("slFb"), "good", `✔ All five labels in place${st.mistakes ? "" : ", right first time"}!`); say("syn", "Well done! Now find out what some <b>💊 drugs</b> do to a synapse.", "happy", "good"); } } });
+      onDone: (st) => { addStars("syn", "label", starsOf(st)); if (!st.revealed) { fbSet($("slFb"), "good", `✔ All five labels in place${st.mistakes ? "" : ", right first time"}!`); say("syn", "Well done! Next, tab <b>5 · Neurotransmitters</b> shows how drugs change a synapse.", "happy", "good"); } } });
     say("syn", "Label the synapse: drag each label into its box.");
   }
 
   // 💊 Drugs
   let SD = null, drug = "none", sdBusy = false;
   function setupDrug() {
-    $("drugBtns").innerHTML = DRUGS.map((d) => `<button class="chip" data-d="${d.id}" aria-pressed="${d.id === drug}">${d.name}${d.id !== "none" && has("syn", "drug" + d.id) ? ' <span class="st">✔</span>' : ""}</button>`).join("");
+    $("drugBtns").innerHTML = DRUGS.map((d) => `<button class="chip" data-d="${d.id}" aria-pressed="${d.id === drug}">${d.name}${d.id !== "none" && has("nt", "drug" + d.id) ? ' <span class="st">✔</span>' : ""}</button>`).join("");
     $("drugBtns").querySelectorAll(".chip").forEach((b) => b.addEventListener("click", () => { if (sdBusy) return; drug = b.dataset.d; setupDrug(); }));
     SD = makeSyn($("sdSvg"));
     SD.block.setAttribute("opacity", drug === "A" ? 1 : 0);
     $("cIn").textContent = 0; $("cOut").textContent = 0;
     $("sdAsk").hidden = true; $("sdDid").hidden = true; $("sdMore").hidden = true; asking("sDrug", false); fbSet($("sdFb"), "", "");
-    say("syn", drug === "none" ? "First try with <b>no drug</b>: send 3 impulses and count." : drug === "A" ? "<b>Drug A</b> (grey) sits in the receptors. Send 3 impulses: what happens?" : "<b>Drug B</b> stops the neurotransmitter being reabsorbed. Send 3 impulses: what happens?");
+    say("nt", drug === "none" ? "First try with <b>no drug</b>: send 3 impulses and count." : drug === "A" ? "<b>Drug A</b> (grey) sits in the receptors. Send 3 impulses: what happens?" : "<b>Drug B</b> stops the neurotransmitter being reabsorbed. Send 3 impulses: what happens?");
   }
   async function sdRun() {
     if (sdBusy) return; sdBusy = true; $("sdGo").disabled = true;
@@ -2036,18 +2263,18 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
     P.done["drug-" + drug] = 1; save();
     if (drug === "none") {
       fbSet($("sdFb"), "info", `No drug: <b>${nIn}</b> impulses in → <b>${nOut}</b> impulses in the next neurone. Every message passes on, and then it stops. Now try <b>Drug A</b> and <b>Drug B</b>.`);
-      say("syn", "Normal synapse: 3 in, 3 out. Now choose <b>Drug A</b>.", "happy");
+      say("nt", "Normal synapse: 3 in, 3 out. Now choose <b>Drug A</b>.", "happy");
     } else {
       const A = drug === "A";
       $("sdAsk").hidden = false; asking("sDrug", true); $("sdQ").textContent = `With Drug ${drug}, what happened in the next neurone?`;
-      ask({ box: $("sdCats"), fb: $("sdFb"), spex: "syn", correct: ["a"],
+      ask({ box: $("sdCats"), fb: $("sdFb"), spex: "nt", correct: ["a"],
         opts: shuffle(A ? [["a", "No new impulses: the neurotransmitter could not bind to the blocked receptors"], ["b", "More impulses than normal"], ["c", "The same as with no drug"]]
           : [["a", "More impulses: the neurotransmitter stayed in the gap and kept stimulating it"], ["b", "No impulses at all"], ["c", "The same as with no drug"]]),
         tip: A ? "Count the impulses in the next neurone. Could the green chemical fit into the receptors?" : "Count the impulses in the next neurone. Was the green chemical cleared away?",
         answer: A ? "<b>No new impulses: the neurotransmitter could not bind to the blocked receptors.</b>" : "<b>More impulses: the neurotransmitter stayed in the gap and kept stimulating it.</b>",
         good: A ? `${nIn} in → ${nOut} out. The receptors were blocked, so the message could not pass.` : `${nIn} in → ${nOut} out. The chemical was not reabsorbed, so the next neurone kept firing.`,
         onDone: (st) => {
-          addStars("syn", "drug" + drug, starsOf(st));
+          addStars("nt", "drug" + drug, starsOf(st));
           $("sdDid").hidden = false; $("sdAsk").hidden = true; $("sdMore").hidden = false;
           $("sdDid").innerHTML = A ? "💡 Some poisons work like this. <b>Curare</b> blocks the synapses between nerves and muscles, so the muscles cannot contract."
             : "💡 Some drugs work like this, for example <b>cocaine</b>. Some medicines for depression work in a gentler way like this. You will learn more in the lesson on drugs.";
@@ -2056,21 +2283,22 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
     }
     $("sdGo").disabled = false; sdBusy = false;
   }
-  function setupDrugChips() { $("drugBtns").querySelectorAll(".chip").forEach((b) => { const d = b.dataset.d; if (d !== "none" && has("syn", "drug" + d) && !b.querySelector(".st")) b.insertAdjacentHTML("beforeend", ' <span class="st">✔</span>'); }); }
+  function setupDrugChips() { $("drugBtns").querySelectorAll(".chip").forEach((b) => { const d = b.dataset.d; if (d !== "none" && has("nt", "drug" + d) && !b.querySelector(".st")) b.insertAdjacentHTML("beforeend", ' <span class="st">✔</span>'); }); }
   $("sdGo").addEventListener("click", sdRun);
   $("sdMore").addEventListener("click", () => { $("sdMore").hidden = true; $("sdDid").hidden = true; fbSet($("sdFb"), "", ""); asking("sDrug", false);
-    say("syn", "Choose a drug and press <b>▶ Send 3 impulses</b>."); });
+    say("nt", "Choose a drug and press <b>▶ Send 3 impulses</b>."); });
 
   /* ============================ 10 UI ============================ */
   // tabs 3–4 fit on one screen: --avail = the height left for the activity; pictures shrink to it (never bigger than before)
   function asking(id, on) { const f = $(id) && $(id).querySelector(".fit"); if (f) f.classList.toggle("asking", on); }
   function fitHeight() {
     const wide = innerWidth >= 900;
-    document.body.classList.toggle("fitmode", wide && (curTab === "reflex" || curTab === "syn"));   // footer hidden in tabs 3–4
+    document.body.classList.toggle("fitmode", wide && ["reflex", "syn", "nt"].includes(curTab));   // footer hidden in tabs 3–5
     const card = [...document.querySelectorAll(".fitcard")].find((c) => c.offsetParent);
     if (!card) return;
     const ft = document.querySelector("footer"), below = parseFloat(getComputedStyle(document.querySelector("main")).paddingBottom) + (ft.offsetParent ? ft.offsetHeight : 0);
-    const avail = Math.max(240, Math.floor(innerHeight - (card.getBoundingClientRect().top + scrollY) - below - 26));
+    const pre = [...card.querySelectorAll(".fitpre")].reduce((s, e) => s + e.offsetHeight + 8, 0);   // e.g. the row of cards above the columns
+    const avail = Math.max(180, Math.floor(innerHeight - (card.getBoundingClientRect().top + scrollY) - below - 26 - pre));
     document.documentElement.style.setProperty("--avail", avail + "px");
     card.querySelectorAll(".fitsvg").forEach((s) => {
       if (!wide) { s.style.width = s.style.height = ""; return; }
@@ -2086,9 +2314,9 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
   }
   addEventListener("resize", fitHeight);
   if (window.ResizeObserver) { const ro = new ResizeObserver(() => fitHeight()); document.querySelectorAll("header, .spexbar, .subsw, .tabs").forEach((e) => ro.observe(e)); }
-  const TABS = ["path", "neur", "reflex", "syn", "test", "cert"];
+  const TABS = ["path", "neur", "reflex", "syn", "nt", "test", "cert"];
   const SUBS = {}; document.querySelectorAll("[data-subs]").forEach((w) => (SUBS[w.dataset.subs] = [...w.querySelectorAll("[data-sub]")].map((b) => b.dataset.sub)));
-  const curSub = { path: "pBuild", neur: "nId", reflex: "rRace", syn: "sExp" };
+  const curSub = { path: "pBuild", neur: "nId", reflex: "rRace", syn: "sExp", nt: "ntMeet" };
   const ready = {};
   const SUB_SAY = {
     nId: null, nLab: null,
@@ -2099,7 +2327,7 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
   };
   const INIT = {
     nId: () => openId(0), nLab: setupLabel, nRace: drawRace, nWay: () => { drawWay(); fbSet($("wayInfo"), "", ""); },
-    rRace: drawRR, rSort: setupSort, sExp: setupSx, sOrd: setupOrder, sLab: setupSynLabel, sDrug: setupDrug,
+    rRace: drawRR, rSort: setupSort, sExp: setupSx, sOrd: setupOrder, sLab: setupSynLabel, sDrug: setupDrug, ntMeet: setupMeet, ntLab: setupLab, ntTol: setupTol,
     pCheck: () => runCheck("path"), nCheck: () => runCheck("neur"), rCheck: () => runCheck("reflex"), sCheck: () => runCheck("syn"),
   };
   function showSub(tab, sub) {
@@ -2126,7 +2354,7 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
   }
   for (const t of TABS) $("tab-" + t).addEventListener("click", () => showTab(t));
 
-  // 5 Test yourself
+  // 6 Test yourself
   let roundNo = 0;
   function newRound() {
     roundNo++;
@@ -2149,7 +2377,7 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
   $("soundBtn").addEventListener("click", () => { P.sound = !P.sound; save(); markSound(); if (P.sound) SND.star(); });
   const markSound = () => { $("soundBtn").setAttribute("aria-pressed", P.sound); $("soundBtn").textContent = P.sound ? "🔊 Sound" : "🔇 Sound"; };
 
-  // Marie's guide: 6 cards
+  // Marie's guide: 7 cards
   const nSvg = (type) => { const s = document.createElementNS(NS, "svg"); s.setAttribute("viewBox", "0 0 600 170"); s.setAttribute("aria-hidden", "true"); drawNeurone(s, type); return s.outerHTML; };
   const FLOW = `<div class="flow"><span>Stimulus</span>→<span>Receptor</span>→<span class="s">Sensory neurone</span>→<span class="r">Relay neurone (CNS)</span>→<span class="m">Motor neurone</span>→<span>Effector</span>→<span>Response</span></div>`;
   const SLIDES = [
@@ -2184,6 +2412,12 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
       html: `<h3>6 · Synapses</h3><p>A <b>synapse</b> is the tiny gap (about 20 nm) between two neurones. The electrical impulse cannot cross it, so a chemical messenger, the <b>neurotransmitter</b>, carries the message:</p>
         <ol>${SYN_STEPS.map((s) => `<li>${s}</li>`).join("")}</ol>
         <p>Some drugs change synapses: they block the receptors, or stop the reabsorption.</p>` },
+    { say: "Each neurotransmitter has its own job, and many drugs work by copying or changing one of them.",
+      html: `<h3>7 · Neurotransmitters and drugs</h3><div class="kw">
+        <div><b>Neurotransmitters</b>Chemical messengers at synapses: acetylcholine, dopamine, serotonin, GABA, glutamate, norepinephrine, endorphins.</div>
+        <div><b>Speed up or calm down</b>Some make the next neurone fire (glutamate); others calm it down (GABA).</div>
+        <div><b>How drugs work</b>They copy a neurotransmitter, block its receptors, help the receptors, stop the reabsorption, or force it out.</div>
+        <div><b>Tolerance and addiction</b>Used again and again, a drug makes the brain remove receptors: the person needs more (tolerance) and feels bad without it (addiction).</div></div>` },
   ];
   let pi = 0;
   function showPresent(i) {
@@ -2198,7 +2432,7 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
   function openPresent(i = 0) { $("present").classList.add("on"); showPresent(i); }
   $("guideBtn").addEventListener("click", () => openPresent(0));
 
-  // 6 Certificate
+  // 7 Certificate
   function certHTML() {
     const total = Object.keys(P.stars).reduce((s, t) => s + tabStars(t), 0);
     const won = BADGES.filter((b) => P.badges[b.id]).length;
@@ -2215,7 +2449,7 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
     $("certName").value = P.name || "";
     $("certSheet").innerHTML = certHTML();
     const won = BADGES.filter((b) => P.badges[b.id]).length;
-    say("cert", !P.name ? "Type your <b>name</b>, then print your certificate!" : won === BADGES.length ? "All 6 badges: you are a nervous system expert! 🎉 Print your certificate." : `You have <b>${won} of ${BADGES.length}</b> badges. Grey badges are still to earn – or print it now!`, won === BADGES.length ? "happy" : "talk", won === BADGES.length ? "good" : "");
+    say("cert", !P.name ? "Type your <b>name</b>, then print your certificate!" : won === BADGES.length ? `All ${BADGES.length} badges: you are a nervous system expert! 🎉 Print your certificate.` : `You have <b>${won} of ${BADGES.length}</b> badges. Grey badges are still to earn – or print it now!`, won === BADGES.length ? "happy" : "talk", won === BADGES.length ? "good" : "");
   }
   $("certName").addEventListener("input", (e) => { P.name = e.target.value.slice(0, 40); save(); $("certSheet").innerHTML = certHTML(); });
   $("certPrint").addEventListener("click", () => { $("printArea").innerHTML = `<div class="sheet">${certHTML()}</div>`; window.print(); });
@@ -2235,6 +2469,331 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
 
   // for the automatic tests only
   window.__NERV = { drawNeuroneTo: drawNeurone, SCEN, NID, NPARTS, SORT, SYN_STEPS, SLABELS, CHECKS, QBANK, FIRST_ROUND, P, showTab, showSub, openScen, startBody, sendImpulse, openId, race, wayForward, wayBack, rrRun, sxNext, sdRun, setupDrug, set drug(v) { drug = v; } };
+
+  /* ============================ 11 NEUROTRANSMITTERS (tab 5, 28 Oct 2026) ============================ */
+  const ntOf = (id) => NTS.find((n) => n.id === id) || NT_EXTRA[id];
+  // molecule shapes, centred on 0,0
+  function shapeD(shape, r) {
+    if (shape === "tri") return `M0 ${-r} L${r} ${r * 0.8} L${-r} ${r * 0.8}Z`;
+    if (shape === "square") return `M${-r * 0.82} ${-r * 0.82}h${1.64 * r}v${1.64 * r}h${-1.64 * r}Z`;
+    if (shape === "diamond") return `M0 ${-r}L${r} 0L0 ${r}L${-r} 0Z`;
+    if (shape === "hex") return "M" + [0, 1, 2, 3, 4, 5].map((k) => `${(r * Math.cos((Math.PI / 3) * k)).toFixed(1)} ${(r * Math.sin((Math.PI / 3) * k)).toFixed(1)}`).join("L") + "Z";
+    if (shape === "star") return "M" + [...Array(10)].map((_, k) => { const rr = k % 2 ? r * 0.45 : r, a = -Math.PI / 2 + (Math.PI / 5) * k; return `${(rr * Math.cos(a)).toFixed(1)} ${(rr * Math.sin(a)).toFixed(1)}`; }).join("L") + "Z";
+    if (shape === "pill") return `M${-r} ${-r * 0.55}h${2 * r}v${1.1 * r}h${-2 * r}Z`;
+    if (shape === "cross") return `M${-r * 0.35} ${-r}h${0.7 * r}v${0.65 * r}h${0.65 * r}v${0.7 * r}h${-0.65 * r}v${0.65 * r}h${-0.7 * r}v${-0.65 * r}h${-0.65 * r}v${-0.7 * r}h${0.65 * r}Z`;
+    return `M${-r} 0a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0`;
+  }
+  const iconSvg = (n, s = 24) => `<svg viewBox="-12 -12 24 24" width="${s}" height="${s}" aria-hidden="true"><path d="${shapeD(n.shape, 9)}" fill="${n.color}" stroke="rgba(0,0,0,.35)" stroke-width="1.2"/></svg>`;
+
+  // the brain, side view (front on the left); regions light up
+  // [region, text x, text y, side (L: leader from the end of the text, R: from its start), region point]
+  const BRAIN_LABELS = [["front", 10, 26, "L", 120, 130], ["reward", 10, 330, "L", 215, 218], ["hippo", 10, 362, "L", 330, 230],
+    ["cortex", 548, 40, "R", 470, 90], ["cereb", 548, 280, "R", 508, 292], ["stem", 548, 324, "R", 364, 318], ["spine", 548, 368, "R", 358, 372]];
+  function drawBrain(svg) {
+    svg.replaceChildren();
+    const g = el("g", {}, svg), R = {};
+    const CER = "M70 200 C60 110 150 40 290 38 C430 36 530 100 532 190 C534 240 505 262 470 262 L380 262 C350 262 330 270 300 272 L160 272 C110 270 76 245 70 200Z";
+    el("path", { d: "M330 330 L328 400 L358 400 L358 330Z", fill: "#FFE082", stroke: "#F9A825", "stroke-width": 2 }, g);
+    el("ellipse", { cx: 440, cy: 292, rx: 72, ry: 44, fill: "#F8BBD0", stroke: "#C2185B", "stroke-width": 2.5 }, g);
+    for (const dy of [-22, -8, 6, 20]) el("path", { d: `M${385} ${292 + dy} q55 ${dy > 0 ? 10 : -10} 110 0`, fill: "none", stroke: "#C2185B", "stroke-width": 1.2, opacity: 0.6 }, g);
+    el("path", { d: "M318 262 C322 300 326 320 330 340 L358 340 C358 318 362 296 368 262Z", fill: "#F48FB1", stroke: "#C2185B", "stroke-width": 2.5 }, g);
+    el("path", { d: CER, fill: "#F8BBD0", stroke: "#C2185B", "stroke-width": 3 }, g);
+    for (const d of ["M110 150 q30 -40 70 -20 t70 -30", "M200 90 q40 30 90 0 t90 10", "M320 130 q40 -30 80 0 t70 -10", "M120 220 q40 -20 80 0 t80 -10", "M260 190 q40 -30 90 -10", "M400 200 q40 20 90 -10"])
+      el("path", { d, fill: "none", stroke: "#C2185B", "stroke-width": 1.6, opacity: 0.45 }, g);
+    // regions (hidden until lit)
+    const rg = (id, node) => { node.classList.add("rg"); node.dataset.r = id; (R[id] = R[id] || []).push(node); return node; };
+    rg("front", el("ellipse", { cx: 140, cy: 165, rx: 62, ry: 75, fill: "#FFB300", "fill-opacity": 0.45, stroke: "#FF6F00", "stroke-width": 3 }, g));
+    rg("cortex", el("path", { d: CER, fill: "none", stroke: "#FFB300", "stroke-width": 16, "stroke-opacity": 0.75 }, g));
+    const rw = rg("reward", el("g", {}, g));
+    el("path", { d: "M328 238 C290 230 250 220 218 214 C180 205 160 185 145 150", fill: "none", stroke: "#FF6F00", "stroke-width": 6, "stroke-dasharray": "10 6", "stroke-linecap": "round" }, rw);
+    el("circle", { cx: 330, cy: 238, r: 11, fill: "#FF6F00" }, rw); el("circle", { cx: 216, cy: 214, r: 13, fill: "#FF6F00" }, rw); el("circle", { cx: 145, cy: 150, r: 9, fill: "#FF6F00" }, rw);
+    rg("hippo", el("path", { d: "M300 222 C320 204 362 208 370 228 C374 242 356 248 346 238 C336 229 318 238 300 233Z", fill: "#FFB300", stroke: "#FF6F00", "stroke-width": 3 }, g));
+    rg("cereb", el("ellipse", { cx: 440, cy: 292, rx: 72, ry: 44, fill: "#FFB300", "fill-opacity": 0.5, stroke: "#FF6F00", "stroke-width": 3 }, g));
+    rg("stem", el("path", { d: "M318 262 C322 300 326 320 330 340 L358 340 C358 318 362 296 368 262Z", fill: "#FFB300", "fill-opacity": 0.65, stroke: "#FF6F00", "stroke-width": 3 }, g));
+    rg("spine", el("path", { d: "M330 330 L328 400 L358 400 L358 330Z", fill: "#FFB300", stroke: "#FF6F00", "stroke-width": 3 }, g));
+    const L = {};
+    for (const [id, x, y, side, lx, ly] of BRAIN_LABELS) {
+      const t = REGIONS[id].replace(" (", "\n("), [t1, t2] = t.split("\n"), w = Math.max(t1.length, (t2 || "").length) * 8.2;
+      const sx = side === "L" ? x + w + 4 : x - 4;
+      const tx = txt(g, x, y, "", { class: "rgl", "font-size": 17 });
+      el("tspan", { x, dy: 0 }, tx).textContent = t1; if (t2 && side === "R") el("tspan", { x, dy: 19 }, tx).textContent = t2; else if (t2) tx.lastChild.textContent += " " + t2;
+      L[id] = [el("line", { x1: sx, y1: y - 6, x2: lx, y2: ly, stroke: "#B0BEC5", "stroke-width": 1.4, "stroke-dasharray": "4 3" }, g), tx];
+    }
+    return { light(ids) { for (const id in R) R[id].forEach((n) => n.classList.toggle("on", ids.includes(id)));
+      for (const id in L) { L[id][1].classList.toggle("on", ids.includes(id)); L[id][0].setAttribute("stroke", ids.includes(id) ? "#FF6F00" : "#B0BEC5"); } } };
+  }
+  const where = (ids) => ids.map((r) => REGIONS[r]).join(" · ");
+
+  // 🧪 Meet the neurotransmitters
+  let meetBrain = null, meetId = null, miniRun = 0;
+  function setupMeet() {
+    meetBrain = drawBrain($("meetBrain"));
+    $("ntGrid").innerHTML = NTS.map((n) => `<button class="ntcard" data-id="${n.id}" aria-pressed="false">${iconSvg(n)}${n.name}</button>`).join("");
+    $("ntGrid").querySelectorAll(".ntcard").forEach((b) => b.addEventListener("click", () => meetPick(b.dataset.id)));
+    meetPick("dop");
+    say("nt", "Neurotransmitters are the chemical messengers at synapses. Each has its own job. <b>Tap a card</b> to meet it.");
+  }
+  function meetPick(id) {
+    const n = ntOf(id); meetId = id;
+    $("ntGrid").querySelectorAll(".ntcard").forEach((b) => b.setAttribute("aria-pressed", b.dataset.id === id));
+    const [gc, gt] = GRP[n.grp];
+    $("ntInfo").innerHTML = `<h3>${iconSvg(n, 26)}${n.name}<span class="grp ${gc}">${gt}</span><span class="hint">Where: ${n.where.map((r) => REGIONS[r].split(" (")[0]).join(" · ")}${id === "ach" ? " · every muscle" : ""}</span></h3>${n.job}`;
+    meetBrain.light(n.where);
+    P.done["meet-" + id] = 1; save();
+    playMini(n);
+  }
+  // the synapse animation: molecules are released, cross the gap, bind, the next neurone answers, then they are reabsorbed.
+  // It loops (slowly) while the card is selected; ⏸ pauses it; it waits while the part is not on screen.
+  let miniPaused = false;
+  const MHOME = [[206, 62], [222, 76], [236, 94], [248, 108], [206, 124], [222, 138]];
+  const MREC = [52, 84, 116, 148];
+  const MBOUND = MREC.map((y) => [347, y]).concat([[308, 72], [304, 132]]);
+  const MREL = MHOME.map((_, i) => [292, 50 + i * 20]);
+  async function playMini(n) {
+    const run = ++miniRun, svg = $("meetSyn"); svg.replaceChildren();
+    el("path", { d: "M0 70 L140 70 C190 70 200 20 250 20 C278 20 284 55 284 100 C284 145 278 180 250 180 C200 180 190 130 140 130 L0 130Z", fill: "#E3F2FD", stroke: COL.sensory, "stroke-width": 3 }, svg);
+    const post = el("path", { d: "M600 20 L390 20 C350 20 336 55 336 100 C336 145 350 180 390 180 L600 180Z", fill: "#F3E5F5", stroke: COL.relay, "stroke-width": 3 }, svg);
+    const ves = [[214, 69], [242, 101], [214, 131]].map(([x, y]) => el("circle", { cx: x, cy: y, r: 19, fill: "#fff", stroke: "#90CAF9", "stroke-width": 2 }, svg));
+    for (const y of MREC) el("path", { d: shapeD(n.shape, 11), transform: `translate(347 ${y})`, fill: "#fff", stroke: n.color, "stroke-width": 2.5 }, svg);
+    const preGlow = el("ellipse", { cx: -30, cy: 100, rx: 30, ry: 26, fill: "#FFEB3B", opacity: 0 }, svg);
+    const postGlow = el("rect", { x: 362, y: 30, width: 232, height: 140, rx: 40, fill: n.grp === "calm" ? "#64B5F6" : n.grp === "up" ? "#FFEB3B" : "#CE93D8", opacity: 0 }, svg);
+    const mol = MHOME.map(() => el("path", { d: shapeD(n.shape, 9), fill: n.color, stroke: "rgba(0,0,0,.35)", "stroke-width": 1.2 }, svg));
+    const word = txt(svg, 480, 108, n.grp === "calm" ? "🛑 calms down" : n.grp === "up" ? "⚡ fires!" : "😊 mood signal", { "text-anchor": "middle", "font-size": 30, "font-weight": 800, fill: "#4A148C", opacity: 0 });
+    txt(svg, 6, 197, "presynaptic neurone", { "font-size": 19, "font-weight": 700, fill: "#1565C0" });
+    txt(svg, 288, 16, "synapse (gap)", { "text-anchor": "middle", "font-size": 18, "font-weight": 700, fill: "#2E7D32" });
+    txt(svg, 358, 16, "receptors", { "font-size": 18, fill: n.color, "font-weight": 700 });
+    txt(svg, 594, 197, "postsynaptic neurone", { "text-anchor": "end", "font-size": 19, "font-weight": 700, fill: "#6A1B9A" });
+    let pos = MHOME.map((p) => p.slice());
+    const go = async (to, ms) => { const from = pos.map((p) => p.slice()); pos = to.map((p) => p.slice()); await moveTo(mol, from, pos, ms); };
+    setT(mol, pos);
+    if (reduced()) { setT(mol, MBOUND); word.setAttribute("opacity", 1); postGlow.setAttribute("opacity", 0.45); return; }
+    const live = () => run === miniRun;
+    while (live()) {
+      if (miniPaused || !$("ntMeet").offsetParent || document.hidden) { await wait(300); continue; }
+      ves.forEach((v) => v.setAttribute("opacity", 1)); word.setAttribute("opacity", 0); postGlow.setAttribute("opacity", 0);
+      await tween(900, (t) => { preGlow.setAttribute("cx", -30 + 250 * t); preGlow.setAttribute("opacity", 0.8 * Math.sin(Math.PI * Math.min(1, t * 1.1))); });
+      preGlow.setAttribute("opacity", 0); if (!live()) return;
+      await Promise.all([tween(500, (t) => ves.forEach((v) => v.setAttribute("opacity", 1 - t))), go(MREL, 700)]); if (!live()) return;
+      await go(MBOUND, 1100); if (!live()) return;
+      await tween(900, (t) => { postGlow.setAttribute("opacity", 0.55 * Math.sin(Math.PI * Math.min(1, t * 1.4))); word.setAttribute("opacity", Math.min(1, t * 3)); });
+      await wait(700); if (!live()) return;
+      await Promise.all([go(MHOME, 1100), tween(1100, (t) => { word.setAttribute("opacity", 1 - t); ves.forEach((v) => v.setAttribute("opacity", t)); postGlow.setAttribute("opacity", 0); })]);
+      await wait(600);
+    }
+  }
+  $("miniPause").addEventListener("click", () => { miniPaused = !miniPaused; $("miniPause").textContent = miniPaused ? "▶ Play" : "⏸ Pause"; });
+
+  // the drug-lab synapse: like the one in tab 4, with molecule shapes, reabsorption pumps and the drug
+  const TY = [105, 150, 195];
+  function makeLab(svg, n, d) {
+    svg.replaceChildren();
+    const g = el("g", { transform: "translate(0 20)" }, svg), S = { g, n, d };
+    el("path", { d: "M0 115 L130 115 C170 115 180 55 230 55 C262 55 270 90 270 150 C270 210 262 245 230 245 C180 245 170 185 130 185 L0 185 Z", fill: "#E3F2FD", stroke: COL.sensory, "stroke-width": 3 }, g);
+    el("path", { d: "M600 55 L380 55 C345 55 330 90 330 150 C330 210 345 245 380 245 L600 245 Z", fill: "#F3E5F5", stroke: COL.relay, "stroke-width": 3 }, g);
+    RECY.forEach((y) => el("path", { d: `M330 ${y - 9} h12 v18 h-12 v-5 h5 v-8 h-5 z`, fill: n.color, "fill-opacity": 0.35, stroke: n.color, "stroke-width": 1.6 }, g));
+    S.pumps = TY.map((y) => el("rect", { x: 262, y: y - 7, width: 12, height: 14, rx: 3, fill: "#B0BEC5", stroke: "#546E7A", "stroke-width": 1.2 }, g));
+    S.ves = VES.map(([x, y]) => el("circle", { cx: x, cy: y, r: 16, fill: "#fff", stroke: "#90CAF9", "stroke-width": 2 }, g));
+    S.mol = HOME.map(() => el("path", { d: shapeD(n.shape, 5.5), fill: n.color, stroke: "rgba(0,0,0,.35)", "stroke-width": 1 }, g));
+    S.drug = d ? [...Array(6)].map(() => el("path", { d: shapeD(d.pattern === "copy" ? n.shape : "cross", 7), fill: "#37474F", stroke: CAT[d.cat][1], "stroke-width": 2.2 }, g)) : [];
+    S.preGlow = el("ellipse", { cx: -40, cy: 150, rx: 26, ry: 30, fill: "#FFEB3B", opacity: 0 }, g);
+    S.postGlow = el("ellipse", { cx: 380, cy: 150, rx: 26, ry: 70, fill: n.grp === "calm" ? "#64B5F6" : "#FFEB3B", opacity: 0 }, g);
+    txt(g, 6, 104, "presynaptic neurone", { "font-size": 14, "font-weight": 700, fill: "#1565C0" });
+    txt(g, 590, 45, "postsynaptic neurone", { "text-anchor": "end", "font-size": 14, "font-weight": 700, fill: "#6A1B9A" });
+    txt(g, 268, 262, "reabsorption pumps", { "text-anchor": "end", "font-size": 12, fill: "#546E7A" });
+    const kg = el("g", { transform: "translate(170 -12)" }, g);
+    el("path", { d: shapeD(n.shape, 7), transform: "translate(0 0)", fill: n.color }, kg); txt(kg, 12, 5, n.name, { "font-size": 14, "font-weight": 700, fill: n.color });
+    if (d) { el("path", { d: shapeD(d.pattern === "copy" ? n.shape : "cross", 7), transform: "translate(150 0)", fill: "#37474F", stroke: CAT[d.cat][1], "stroke-width": 2 }, kg); txt(kg, 162, 5, d.name, { "font-size": 14, "font-weight": 700, fill: "#37474F" }); }
+    S.pos = HOME.map((p) => p.slice()); S.dpos = S.drug.map((_, i) => [300 + (i - 2.5) * 14, -60]);
+    setT(S.mol, S.pos); setT(S.drug, S.dpos);
+    return S;
+  }
+  const setT = (els, pos) => els.forEach((m, i) => m.setAttribute("transform", `translate(${pos[i][0].toFixed(1)} ${pos[i][1].toFixed(1)})`));
+  function moveTo(els, from, to, ms) {
+    return tween(ms, (t) => { const e = ease(t); els.forEach((m, i) => m.setAttribute("transform", `translate(${(from[i][0] + (to[i][0] - from[i][0]) * e).toFixed(1)} ${(from[i][1] + (to[i][1] - from[i][1]) * e).toFixed(1)})`)); });
+  }
+  async function labMol(S, name, ms) { const from = S.pos.map((p) => p.slice()); S.pos = synTargets(name); await moveTo(S.mol, from, S.pos, ms); }
+  async function labDrugTo(S, kind, ms) {
+    const from = S.dpos.map((p) => p.slice());
+    S.dpos = S.drug.map((_, i) => kind === "rec" ? [334.5, RECY[i]] : kind === "beside" ? [352, RECY[i]] : kind === "trans" ? (i < 3 ? [282, TY[i]] : [rnd(292, 318), rnd(80, 220)])
+      : kind === "inside" ? [205 + (i % 3) * 16, 128 + Math.floor(i / 3) * 44] : kind === "gap" ? [rnd(290, 318), rnd(70, 230)] : [300 + (i - 2.5) * 14, -60]);
+    await moveTo(S.drug, from, S.dpos, ms);
+  }
+  const labVes = (S, v) => S.ves.forEach((c) => c.setAttribute("opacity", v));
+  async function labPre(S) { SND.zap(); await tween(600, (t) => { S.preGlow.setAttribute("cx", -30 + 260 * t); S.preGlow.setAttribute("opacity", 0.75 * Math.sin(Math.PI * Math.min(1, t * 1.1))); }); S.preGlow.setAttribute("opacity", 0); }
+  async function labPost(S, cnt) { SND.zap(); await tween(500, (t) => { S.postGlow.setAttribute("cx", 360 + 260 * t); S.postGlow.setAttribute("opacity", 0.75 * Math.sin(Math.PI * t)); }); S.postGlow.setAttribute("opacity", 0); cnt(); }
+  async function labRelease(S) { await Promise.all([tween(400, (t) => labVes(S, 1 - t)), labMol(S, "released", 600)]); }
+  async function labBack(S) { await labMol(S, "home", 700); await tween(250, (t) => labVes(S, t)); }
+
+  // 🧠 Drug lab
+  let LB = null, labD = null, labBusy = false, labBrainMap = null, labRuns = {};
+  function setupLab() {
+    labBrainMap = drawBrain($("dlBrain"));
+    $("drugBank").innerHTML = LAB_DRUGS.map((d) => `<div class="tile" data-id="${d.id}" role="button" tabindex="0" style="--c:${CAT[d.cat][1]}"><span>${d.em}</span>${d.name}<span class="st">${has("nt", "lab-" + d.id) ? "★" + P.stars.nt["lab-" + d.id] : ""}</span></div>`).join("");
+    const drop = $("brainDrop");
+    $("drugBank").querySelectorAll(".tile").forEach((t) => { t._slots = [drop]; pickable(t, "#brainDrop", (tile) => chooseDrug(tile.dataset.id)); });
+    labStars();
+    say("nt", "Welcome to the <b>drug lab</b>! Drag a drug onto the brain to see where it acts and what it does at a synapse.");
+  }
+  function labStars() { const n = LAB_DRUGS.filter((d) => has("nt", "lab-" + d.id)).length; $("dlSt").textContent = n ? `${n}/10` : ""; }
+  async function chooseDrug(id) {
+    if (labBusy) return;
+    const d = LAB_DRUGS.find((x) => x.id === id); labD = d; labRuns = {};
+    labBrainMap.light(d.regions);
+    say("nt", `<b>${d.name}</b> acts here: ${where(d.regions)}.`, "wow");
+    $("drugBank").querySelectorAll(".tile").forEach((t) => t.classList.toggle("sel", t.dataset.id === id));
+    await wait(1600);
+    showLabView();
+  }
+  function showLabView() {
+    const d = labD, n = ntOf(d.nt), [cn, cc] = CAT[d.cat];
+    $("brainDrop").hidden = true; $("dlSynWrap").hidden = false; $("dlPick").hidden = true; $("dlView").hidden = false;
+    $("dlHead").innerHTML = `<span>${d.em}</span><b class="dn">${d.name}</b><span class="tagc" style="--c:${cc}">${cn}</span><span class="tagl">${d.legal}</span><span class="hint">acts on: ${n.name}</span>`;
+    $("dlBtns").hidden = false; $("dlInfo").hidden = true; $("dlAskBtn").hidden = true; $("dlAsk").hidden = true; $("dlNext").hidden = true; $("dlDrug").disabled = true;
+    fbSet($("dlFb"), "", ""); asking("ntLab", false);
+    $("lcLabel").textContent = d.outLabel || "Messages in the next neurone";
+    LB = makeLab($("dlSyn"), n, d); $("lcIn").textContent = 0; $("lcOut").textContent = 0;
+    $("dlBrainBtn").textContent = "🧠 Brain";
+    fitHeight();
+    say("nt", `First press <b>▶ Normal</b>: how does a synapse with <b>${n.name}</b> work without the drug?`);
+  }
+  async function labRun(withDrug) {
+    if (labBusy) return; labBusy = true;
+    $("dlNormal").disabled = $("dlDrug").disabled = true;
+    const d = labD, n = ntOf(d.nt);
+    const S = LB = makeLab($("dlSyn"), n, withDrug ? d : null);
+    let nIn = 0, nOut = 0; $("lcIn").textContent = 0; $("lcOut").textContent = 0;
+    const cnt = () => { nOut++; $("lcOut").textContent = nOut; }, pre = async () => { await labPre(S); nIn++; $("lcIn").textContent = nIn; };
+    const p = withDrug ? d.pattern : "normal";
+    if (p === "normal") for (let k = 0; k < 3; k++) { await pre(); await labRelease(S); await labMol(S, "diffused", 600); await labMol(S, "bound", 400); await labPost(S, cnt); await labBack(S); }
+    else if (p === "copy") {
+      await labDrugTo(S, "gap", 700); await labDrugTo(S, "rec", 500);
+      if (d.a) say("nt", "No impulse has arrived, but the drug fits the receptors: the next neurone fires!", "wow");
+      for (let j = 0; j < d.a; j++) await labPost(S, cnt);
+      for (let k = 0; k < 3; k++) { await pre(); await labRelease(S); await labMol(S, "diffused", 500); await labMol(S, "bounce", 300); for (let j = 0; j < d.b; j++) await labPost(S, cnt); await labBack(S); }
+    } else if (p === "block") {
+      await labDrugTo(S, "gap", 700); await labDrugTo(S, "rec", 500);
+      for (let k = 0; k < 3; k++) { await pre(); await labRelease(S); await labMol(S, "diffused", 500); await labMol(S, "bounce", 400); await wait(250); await labBack(S); }
+    } else if (p === "boost") {
+      await labDrugTo(S, "gap", 700); await labDrugTo(S, "beside", 500);
+      for (let k = 0; k < 3; k++) { await pre(); await labRelease(S); await labMol(S, "diffused", 500); await labMol(S, "bound", 400); for (let j = 0; j < 3; j++) await labPost(S, cnt); await labBack(S); }
+    } else if (p === "reuptake") {
+      await labDrugTo(S, "gap", 700); await labDrugTo(S, "trans", 500);
+      for (let k = 0; k < 3; k++) { await pre(); if (k === 0) await labRelease(S); await labMol(S, "diffused", 400); await labMol(S, "bound", 400); for (let j = 0; j < 3; j++) await labPost(S, cnt); }
+    } else if (p === "release") {
+      await labDrugTo(S, "gap", 600); await labDrugTo(S, "inside", 600);
+      say("nt", "No impulse yet, but the drug pushes the neurotransmitter out of the vesicles!", "wow");
+      await labRelease(S); await labMol(S, "diffused", 500); await labMol(S, "bound", 400); for (let j = 0; j < 3; j++) await labPost(S, cnt);
+      for (let k = 0; k < 3; k++) { await pre(); await labMol(S, "diffused", 350); await labMol(S, "bound", 350); for (let j = 0; j < 3; j++) await labPost(S, cnt); }
+      labVes(S, 0.15);
+    }
+    labRuns[withDrug ? "drug" : "normal"] = nOut;
+    labBusy = false; $("dlNormal").disabled = false; $("dlDrug").disabled = !labRuns.normal && labRuns.normal !== 0;
+    const lab = $("lcLabel").textContent.toLowerCase();
+    if (!withDrug) say("nt", `Normal: <b>${nIn}</b> impulses → <b>${nOut}</b> ${lab}. Now press <b>▶ Add the drug</b>.`, "happy");
+    else {
+      say("nt", `With ${d.name}: <b>${nIn}</b> impulses → <b>${nOut}</b> ${lab} (normal: ${labRuns.normal ?? 3}).`, "wow");
+      $("dlInfo").hidden = false;
+      $("dlInfo").innerHTML = `<div><b>How:</b> ${d.how}</div><div><b>Effect on the brain:</b> ${d.effect}</div><div class="risk"><b>⚠ Risks:</b> ${d.risks}</div>`;
+      if (!labRuns.asked) $("dlAskBtn").hidden = false;
+    }
+    fitHeight();
+  }
+  function labQuestion() {
+    const d = labD; labRuns.asked = true;
+    $("dlAskBtn").hidden = true; $("dlAsk").hidden = false; asking("ntLab", true);
+    $("dlQ").textContent = d.q.text;
+    const right = d.q.opts.find(([v]) => v === d.q.ans)[1];
+    ask({ box: $("dlCats"), fb: $("dlFb"), spex: "nt", opts: shuffle(d.q.opts), correct: [d.q.ans], tip: d.q.tip, answer: `<b>${right}</b>. ${d.q.why}`, good: d.q.why,
+      onDone: (st) => {
+        addStars("nt", "lab-" + d.id, starsOf(st)); labStars();
+        const t = $("drugBank").querySelector(`[data-id="${d.id}"] .st`); if (t) t.textContent = "★" + P.stars.nt["lab-" + d.id];
+        $("dlAsk").hidden = true; $("dlBtns").hidden = true; asking("ntLab", false); $("dlNext").hidden = false;
+        const left = LAB_DRUGS.filter((x) => !has("nt", "lab-" + x.id)).length;
+        if (!left) say("nt", "You have tested all 10 drugs! Now find out how <b>🔁 addiction and tolerance</b> happen.", "happy", "good");
+        fitHeight();
+      } });
+    fitHeight();
+  }
+  function backToBrain() {
+    if (labBusy) return;
+    $("brainDrop").hidden = false; $("dlSynWrap").hidden = true; $("dlPick").hidden = false; $("dlView").hidden = true; asking("ntLab", false);
+    labBrainMap.light([]); $("drugBank").querySelectorAll(".tile").forEach((t) => t.classList.remove("sel"));
+    fitHeight();
+    say("nt", "Choose another drug: drag it onto the brain.");
+  }
+  $("dlNormal").addEventListener("click", () => labRun(false));
+  $("dlDrug").addEventListener("click", () => labRun(true));
+  $("dlAskBtn").addEventListener("click", labQuestion);
+  $("dlNext").addEventListener("click", backToBrain);
+  $("dlBrainBtn").addEventListener("click", () => {
+    if (labBusy) return;
+    const showBrain = $("brainDrop").hidden;
+    $("brainDrop").hidden = !showBrain; $("dlSynWrap").hidden = showBrain;
+    $("dlBrainBtn").textContent = showBrain ? "🔬 Synapse" : "🧠 Brain";
+    fitHeight();
+  });
+
+  // 🔁 Addiction and tolerance
+  const TOL = [{ rec: 6, dots: 6, feel: 0.5, word: "normal" }, { rec: 6, dots: 18, feel: 1, word: "very strong" }, { rec: 3, dots: 18, feel: 0.85, word: "very strong" },
+    { rec: 3, dots: 18, feel: 0.55, word: "weaker: needs more" }, { rec: 3, dots: 6, feel: 0.18, word: "feels bad" }, { rec: 3, dots: 6, feel: 0.18, word: "needs the drug to feel normal" }];
+  const RX = [90, 174, 258, 342, 426, 510];
+  let T = null, tolI = 0, tolBusy = false;
+  function setupTol() {
+    const svg = $("tolSvg"); svg.replaceChildren(); T = {};
+    txt(svg, 30, 42, "How it feels", { "font-size": 17, "font-weight": 700, fill: "#37474F" });
+    el("rect", { x: 170, y: 24, width: 400, height: 24, rx: 12, fill: "#ECEFF1", stroke: "#B0BEC5" }, svg);
+    T.bar = el("rect", { x: 170, y: 24, width: 200, height: 24, rx: 12, fill: "#66BB6A" }, svg);
+    T.word = txt(svg, 370, 70, "", { "text-anchor": "middle", "font-size": 16, "font-weight": 700, fill: "#37474F" });
+    for (const [x, s] of [[175, "bad"], [370, "normal"], [565, "very strong"]]) txt(svg, x, 88, s, { "text-anchor": x === 175 ? "start" : x === 565 ? "end" : "middle", "font-size": 13, fill: "#78909C" });
+    el("rect", { x: 30, y: 250, width: 540, height: 70, rx: 18, fill: "#F3E5F5", stroke: COL.relay, "stroke-width": 3 }, svg);
+    txt(svg, 300, 300, "next neurone (reward pathway)", { "text-anchor": "middle", "font-size": 16, "font-weight": 700, fill: "#6A1B9A" });
+    T.recs = RX.map((x) => { const g = el("g", {}, svg); el("path", { d: `M${x - 14} 252 v-18 h9 v10 h10 v-10 h9 v18z`, fill: "#FFB74D", stroke: "#E65100", "stroke-width": 1.5 }, g);
+      const xx = txt(g, x, 230, "✖", { "text-anchor": "middle", "font-size": 22, fill: "#C62828", opacity: 0 }); return { g, xx }; });
+    T.dots = [...Array(18)].map(() => el("circle", { r: 7, fill: "#F57C00", stroke: "#BF360C", "stroke-width": 1 }, svg));
+    T.note = txt(svg, 300, 128, "", { "text-anchor": "middle", "font-size": 16, "font-weight": 700, fill: "#C62828" });
+    T.pos = T.dots.map(() => [300, 105]);
+    tolI = 0; tolDraw(0, true);
+    say("nt", "Why do people need <b>more and more</b> of a drug? Press <b>Next step →</b>.");
+  }
+  function tolTargets(k) {
+    const st = TOL[k], live = RX.slice(0, st.rec === 6 ? 6 : 0).concat(st.rec === 3 ? [RX[0], RX[2], RX[4]] : []);
+    return T.dots.map((_, i) => i >= st.dots ? [300, -30] : i < live.length ? [live[i], 238] : [rnd(70, 530), rnd(140, 215)]);
+  }
+  async function tolDraw(k, instant) {
+    const st = TOL[k], to = tolTargets(k), from = T.pos.map((p) => p.slice()); T.pos = to;
+    T.recs.forEach((r, i) => { const gone = st.rec === 3 && i % 2 === 1; r.g.style.transition = "opacity .6s"; r.g.style.opacity = gone ? (k === 2 ? 0.35 : 0.12) : 1; r.xx.setAttribute("opacity", gone && k === 2 ? 1 : 0); });
+    T.word.textContent = st.word; T.note.textContent = k === 5 ? "Addiction: craving → use → tolerance → more → withdrawal → craving…" : k === 2 ? "receptors removed!" : "";
+    const f0 = +T.bar.getAttribute("width"), f1 = 400 * st.feel, col = st.feel < 0.3 ? "#E53935" : st.feel > 0.8 ? "#FB8C00" : "#66BB6A";
+    if (instant) { setT(T.dots, to); T.bar.setAttribute("width", f1); T.bar.setAttribute("fill", col); }
+    else await Promise.all([moveTo(T.dots, from, to, 900), tween(900, (t) => T.bar.setAttribute("width", f0 + (f1 - f0) * t))]).then(() => T.bar.setAttribute("fill", col));
+    $("tolSteps").innerHTML = `<li class="on">Step ${k + 1} of ${TOL.length}. ${TOL_STEPS[k]}</li>`;
+    $("tolBack").disabled = k === 0; $("tolNext").disabled = k >= TOL.length - 1;
+  }
+  async function tolGo(k) {
+    if (tolBusy || k < 0 || k >= TOL.length) return;
+    tolBusy = true; tolI = k; await tolDraw(k); tolBusy = false;
+    say("nt", TOL_STEPS[k], k === 5 ? "think" : "talk");
+    if (k === TOL.length - 1 && !P.done.tolAsked) tolQuestion();
+  }
+  function tolQuestion() {
+    P.done.tolAsked = 1; save();
+    $("tolAsk").hidden = false; asking("ntTol", true);
+    ask({ box: $("tolCats"), fb: $("tolFb"), spex: "nt", correct: ["a"],
+      opts: shuffle([["a", "The brain removes receptors, so the same dose gives a weaker effect (tolerance)"], ["b", "The drug gets weaker in the packet"], ["c", "The neurones grow bigger"], ["d", "The body makes more receptors"]]),
+      tip: "Look at steps 3 and 4: what happened to the receptors?", answer: "<b>The brain removes receptors, so the same dose gives a weaker effect (tolerance).</b>",
+      good: "With fewer receptors the same dose gives a weaker effect, so the person needs more: <b>tolerance</b>.",
+      onDone: (st) => { addStars("nt", "tol", starsOf(st)); $("tolAsk").hidden = true; asking("ntTol", false); fitHeight(); } });
+    fitHeight();
+  }
+  $("tolNext").addEventListener("click", () => tolGo(tolI + 1));
+  $("tolBack").addEventListener("click", () => tolGo(tolI - 1));
+  $("tolReset").addEventListener("click", () => { if (!tolBusy) { tolI = 0; tolDraw(0); fbSet($("tolFb"), "", ""); say("nt", TOL_STEPS[0]); } });
+  SUB_SAY.ntMeet = ["nt", "Neurotransmitters are the chemical messengers at synapses. Each has its own job. <b>Tap a card</b> to meet it."];
+  SUB_SAY.ntLab = ["nt", "Welcome to the <b>drug lab</b>! Drag a drug onto the brain to see where it acts and what it does at a synapse."];
+  SUB_SAY.ntTol = ["nt", "Why do people need <b>more and more</b> of a drug? Press <b>Next step →</b>."];
+  SUB_SAY.sDrug = ["nt", "First, a warm-up: some drugs <b>block the receptors</b>, others <b>stop the reabsorption</b>. Choose <b>No drug</b>, <b>Drug A</b> or <b>Drug B</b>."];
+
+  Object.assign(window.__NERV, { NTS, LAB_DRUGS, chooseDrug, labRun, labQuestion, backToBrain, tolGo, meetPick });
 })();
 </script>
 <script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
