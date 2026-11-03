@@ -174,6 +174,12 @@ main{flex:1;display:flex;flex-direction:column;gap:10px;padding:10px 16px 16px;m
 .stars{color:var(--star);font-size:1.2rem;letter-spacing:2px}
 .stars .off{color:var(--line)}
 .controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+/* step player: 👣 Step by step | ▶ Play all */
+.player{display:grid;gap:6px}
+.modesw{justify-content:center}
+.modesw .chip{min-height:38px}
+.stepn{text-align:center;color:var(--muted);font-weight:600;font-size:15px}
+.stepn:empty{display:none}
 .read{background:var(--soft-blue);border-left:5px solid var(--navy);border-radius:10px;padding:8px 12px}
 .qlabel{font-weight:700;color:var(--navy)}
 
@@ -327,7 +333,8 @@ main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
   .fit{grid-template-columns:max-content minmax(320px,1fr)}
   .fr{max-height:var(--avail,none);overflow:auto}
   .fitsvg{max-width:none}
-  .fit .controls{justify-content:flex-start}
+  .fit .controls,.fit .modesw{justify-content:flex-start}
+  .fit .stepn{text-align:left}
   .fit.asking .hideq{display:none!important}
   body.fitmode footer{display:none}
   .fit .read{font-size:19px;padding:6px 10px}
@@ -565,7 +572,7 @@ footer{font-size:16px}
         <div class="fr">
           <div class="mini hideq" id="trPick"></div>
           <ol class="steps hideq" id="trSteps"></ol>
-          <div class="controls hideq"><button class="btn primary" id="trGo">▶ Follow the hormone</button></div>
+          <div class="player hideq" id="trCtl"></div>
           <div id="trAsk" hidden><p class="qlabel" style="margin-bottom:6px" id="trQ"></p><div class="cats one" id="trCats"></div></div>
           <div class="feedback" id="trFb" aria-live="polite"></div>
         </div>
@@ -603,7 +610,7 @@ footer{font-size:16px}
         <div class="fl"><svg class="pic fitsvg" id="ruSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="Lena is scared by a dog: adrenaline changes her heart rate, breathing and blood glucose"></svg></div>
         <div class="fr">
           <ol class="steps hideq" id="ruSteps"></ol>
-          <div class="controls hideq"><button class="btn primary" id="ruGo">🐕 A dog barks!</button></div>
+          <div class="player hideq" id="ruCtl"></div>
           <div id="ruAsk" hidden><p class="qlabel" style="margin-bottom:6px">Why is it useful that adrenaline makes the heart beat faster and raises blood glucose?</p><div class="cats one" id="ruCats"></div></div>
           <div class="feedback" id="ruFb" aria-live="polite"></div>
         </div>
@@ -627,7 +634,7 @@ footer{font-size:16px}
         <div class="fl"><svg class="pic fitsvg" id="raSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="A nerve impulse and a hormone race to their targets"></svg></div>
         <div class="fr">
           <ol class="steps hideq" id="raSteps"></ol>
-          <div class="controls hideq"><button class="btn primary" id="raGo">🏁 Start the race</button></div>
+          <div class="player hideq" id="raCtl"></div>
           <div id="raAsk" hidden><p class="qlabel" style="margin-bottom:6px">Which is true?</p><div class="cats one" id="raCats"></div></div>
           <div class="feedback" id="raFb" aria-live="polite"></div>
         </div>
@@ -652,7 +659,7 @@ footer{font-size:16px}
         <div class="fl"><svg class="pic fitsvg" id="hyPic" viewBox="0 0 640 400" data-maxw="860" aria-label="The hypothalamus controls the pituitary gland, which controls other glands"></svg></div>
         <div class="fr">
           <ol class="steps hideq" id="hySteps"></ol>
-          <div class="controls hideq"><button class="btn primary" id="hyGo">▶ Watch the control</button></div>
+          <div class="player hideq" id="hyCtl"></div>
           <div id="hyAsk" hidden><p class="qlabel" style="margin-bottom:6px">Why is the pituitary called the “master gland”?</p><div class="cats one" id="hyCats"></div></div>
           <div class="feedback" id="hyFb" aria-live="polite"></div>
         </div>
@@ -711,7 +718,7 @@ footer{font-size:16px}
         <div class="fl"><svg class="pic fitsvg" id="poSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="Blood clotting: platelets stick at a cut and call more platelets"></svg></div>
         <div class="fr">
           <ol class="steps hideq" id="poSteps"></ol>
-          <div class="controls hideq"><button class="btn primary" id="poGo">✂ Cut the skin</button></div>
+          <div class="player hideq" id="poCtl"></div>
           <div class="typecards hideq"><div><span class="tt">➖ Negative feedback</span>Reverses a change: back to normal. Keeps things steady. Most of homeostasis.</div><div><span class="tt">➕ Positive feedback</span>Makes the change bigger and bigger until a job is done. Rare.</div></div>
           <div id="poAsk" hidden><p class="qlabel" style="margin-bottom:6px">Why is blood clotting <b>positive</b> feedback?</p><div class="cats one" id="poCats"></div></div>
           <div class="feedback" id="poFb" aria-live="polite"></div>
@@ -791,7 +798,7 @@ footer{font-size:16px}
       <div class="fit">
         <div class="fl"><svg class="pic fitsvg" id="dySvg" viewBox="0 0 640 400" data-maxw="860" aria-label="Graph of blood glucose during a day, with the pancreas, blood and liver"></svg></div>
         <div class="fr">
-          <div class="controls hideq"><button class="btn primary" id="dyGo">▶ Play the day</button><button class="btn" id="dyPause" disabled>⏸ Pause</button></div>
+          <div class="player hideq" id="dyCtl"></div>
           <div class="read hideq" id="dyRead"></div>
           <div id="dyAsk" hidden><p class="qlabel" style="margin-bottom:6px">After lunch the blood glucose goes up. What happens next?</p><div class="cats one" id="dyCats"></div></div>
           <div class="feedback" id="dyFb" aria-live="polite"></div>
@@ -867,6 +874,7 @@ footer{font-size:16px}
       <li><b>3 · Homeostasis</b>: a thermostat, the negative feedback loop, the six things your body keeps constant and one example of positive feedback.</li>
       <li><b>4 · Temperature</b>: what the skin does when you are too hot or too cold, four real situations, the flow diagram and why each response works.</li>
       <li><b>5 · Blood sugar</b>: a day of blood glucose, be the pancreas, diabetes and the two feedback loops.</li>
+      <li><b>Animations</b>: <b>👣 Step by step</b> plays one step at a time: read it, then press <b>Next step ▶</b>. <b>↺ Replay step</b> shows the same step again. <b>▶ Play all</b> plays everything, with a stop after each step (<b>⏸ Pause</b> to stop).</li>
       <li><b>✅ Check</b> (in tabs 1–5) has 3 quick questions. <b>6 · Test yourself</b> mixes everything (12 questions).</li>
       <li><b>Wrong answer?</b> The first time you get a tip. The second time the simulation shows the answer.
         Stars: right first time ★★★ · right after a tip ★★ · answer shown: no stars. Win 5 badges and print your
@@ -1069,12 +1077,16 @@ footer{font-size:16px}
   const h = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
   const shuffle = (arr) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const reduced = () => window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  // ANIM.k: the step player slows moves down (1.5) or fast-forwards earlier steps for ↺ Replay step (0)
+  const ANIM = { k: 1 };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms * ANIM.k));
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   // tween: calls f(t) with t from 0 to 1 over ms milliseconds
   function tween(ms, f) {
     return new Promise((res) => {
       if (reduced()) { f(1); return res(); }
+      ms *= ANIM.k;
+      if (ms <= 0) { requestAnimationFrame(() => { f(1); res(); }); return; }
       const t0 = performance.now();
       const step = (now) => { const t = Math.min(1, (now - t0) / ms); f(t); if (t < 1) requestAnimationFrame(step); else res(); };
       requestAnimationFrame(step);
@@ -1122,7 +1134,7 @@ footer{font-size:16px}
   /* sound: off by default; tiny tones made in the browser */
   let actx = null;
   function beep(f, d, type = "sine", v = 0.06, when = 0) {
-    if (!P.sound) return;
+    if (!P.sound || ANIM.k === 0) return;   // silent while fast-forwarding
     try {
       actx = actx || new (window.AudioContext || window.webkitAudioContext)();
       const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + when;
@@ -1348,6 +1360,78 @@ footer{font-size:16px}
   }
 
 
+  /* ============================ STEP PLAYER ============================ */
+  // every numbered-step animation: "👣 Step by step" (Next step ▶ · ↺ Replay step) or "▶ Play all" (slower, a 3 s stop after each step, ⏸ Pause)
+  const SLOW = 1.5, STOP_MS = 3000;
+  function stepper(o) {
+    // o: { host, list, steps: [async (ctx) => …], start: () => ctx, end(ctx), first, playLabel, nextLabel(i), onBusy(b), hold }
+    const host = $(o.host), n = o.steps.length;
+    host.innerHTML = `<div class="mini modesw" role="group" aria-label="How to watch"><button class="chip" data-m="step">👣 Step by step</button><button class="chip" data-m="play">▶ Play all</button></div>
+      <div class="controls"><button class="btn primary" data-b="go"></button><button class="btn" data-b="two"></button></div><div class="stepn" aria-live="polite"></div>`;
+    const go = host.querySelector('[data-b="go"]'), two = host.querySelector('[data-b="two"]'), num = host.querySelector(".stepn");
+    const S = { mode: "step", i: 0, ctx: null, busy: false, playing: false, stopReq: false, held: false };
+    const mark = (k) => { if (o.list) [...$(o.list).children].forEach((x, j) => { x.classList.toggle("on", j === k); x.classList.toggle("done", j < k); }); };
+    const busy = (b) => { S.busy = b; if (o.onBusy) o.onBusy(b); paint(); };
+    function paint() {
+      host.querySelectorAll(".modesw .chip").forEach((c) => { c.setAttribute("aria-pressed", c.dataset.m === S.mode); c.disabled = S.busy && c.dataset.m !== S.mode; });
+      if (S.mode === "step") {
+        go.textContent = S.i === 0 ? o.first : S.i >= n ? "↺ Start again" : (o.nextLabel && o.nextLabel(S.i)) || "Next step ▶";
+        go.disabled = S.busy; two.textContent = "↺ Replay step"; two.disabled = S.busy || S.i === 0;
+      } else if (!S.playing) {
+        go.textContent = S.i === 0 ? o.playLabel : S.i >= n ? "↺ Play again" : "▶ Go on"; go.disabled = false;
+        two.textContent = "⏸ Pause"; two.disabled = true;
+      } else {
+        go.textContent = S.held ? "▶ Go on" : o.playLabel; go.disabled = !S.held;
+        two.textContent = S.stopReq ? "⏸ Stopping after this step…" : "⏸ Pause"; two.disabled = S.held || S.stopReq;
+      }
+    }
+    function reset() {
+      if (S.ctx && S.ctx.stop) S.ctx.stop();
+      S.ctx = o.start(); S.i = 0; S.playing = S.stopReq = S.held = false; mark(-1); num.textContent = ""; paint();
+    }
+    async function run(k) {
+      mark(k); num.textContent = `Step ${k + 1} of ${n}`;
+      ANIM.k = SLOW;
+      try { await o.steps[k](S.ctx); } finally { ANIM.k = 1; }
+      S.i = k + 1;
+      if (S.i >= n) { mark(n); num.textContent = `✔ All ${n} steps`; o.end(S.ctx); }
+    }
+    async function next() {
+      if (S.busy) return;
+      if (S.i >= n) reset();
+      busy(true); await run(S.i); busy(false);
+    }
+    async function replay() {   // redraw, fast-forward the earlier steps, then play the last step again
+      if (S.busy || S.i === 0) return;
+      const k = S.i - 1; busy(true);
+      if (S.ctx && S.ctx.stop) S.ctx.stop();
+      S.ctx = o.start(); ANIM.k = 0;
+      try { for (let j = 0; j < k; j++) { mark(j); await o.steps[j](S.ctx); } } finally { ANIM.k = 1; }
+      await run(k); busy(false);
+    }
+    const hold = () => new Promise((r) => { const t0 = performance.now(); let held = 0, last = t0;
+      const tick = () => { const now = performance.now(); if (S.held) held += now - last; last = now;
+        if (S.stopReq || now - t0 - held >= STOP_MS) return r(); setTimeout(tick, 100); }; tick(); });
+    async function play() {
+      if (S.held) { S.held = false; if (S.ctx) S.ctx.hold = false; paint(); return; }
+      if (S.busy) return;
+      if (S.i >= n) reset();
+      S.playing = true; S.stopReq = false; busy(true);
+      while (S.i < n && !S.stopReq) { await run(S.i); if (S.i < n && !S.stopReq) await hold(); }
+      S.playing = S.stopReq = S.held = false; busy(false);
+    }
+    function pause() {
+      if (!S.playing) return;
+      if (o.hold) { S.held = true; S.ctx.hold = true; }   // stops at once (the day of glucose)
+      else S.stopReq = true;                              // stops at the end of this step
+      paint();
+    }
+    host.querySelectorAll(".modesw .chip").forEach((c) => c.addEventListener("click", () => { if (S.busy || S.mode === c.dataset.m) return; S.mode = c.dataset.m; reset(); }));
+    go.addEventListener("click", () => (S.mode === "step" ? next() : play()));
+    two.addEventListener("click", () => (S.mode === "step" ? replay() : pause()));
+    reset();
+    return { reset, S };
+  }
 
   /* ============================ 5 BODY ============================ */
   const hl = (on) => { document.querySelectorAll(".part-on").forEach((x) => x.classList.remove("part-on")); (Array.isArray(on) ? on : [on]).forEach((e) => e && e.classList.add("part-on")); };
@@ -1569,7 +1653,7 @@ footer{font-size:16px}
     if (kind === "circ") el("circle", { r: s, ...a }, w);
     else el("path", { d: kind === "tri" ? `M${-s} ${s * 0.8} L0 ${-s * 0.9} L${s} ${s * 0.8}Z` : `M${-s * 0.8} ${-s * 0.8} h${s * 1.6} v${s * 1.6} h${-s * 1.6}Z`, ...a }, w);
   }
-  let trKind = "ins", trBusy = false;
+  let trKind = "ins", trBusy = false, TRP = null;
   function trDraw() {
     const svg = $("trSvg"); svg.replaceChildren();
     const H = TR[trKind];
@@ -1603,62 +1687,65 @@ footer{font-size:16px}
     $("trPick").querySelectorAll(".chip").forEach((b) => b.addEventListener("click", () => { if (trBusy) return; trKind = b.dataset.k; trPaint(); trReset(); }));
     trPaint(); trReset();
   }
+  const trPos = (m) => m.getAttribute("transform").match(/[-\d.]+/g).map(Number);
   function trPaint() { $("trPick").querySelectorAll(".chip").forEach((b) => { b.setAttribute("aria-pressed", b.dataset.k === trKind); b.querySelector(".st").textContent = has("glands", "tr-" + b.dataset.k) ? "✔" : ""; }); }
   function trReset() {
     const H = TR[trKind];
     $("trSteps").innerHTML = [`The <b>${H.gland.toLowerCase()}</b> makes <b>${H.name.toLowerCase()}</b>.`, "No tube: the hormone goes <b>straight into the blood</b>.", "The blood carries it <b>all round the body</b>.",
       "It reaches every cell, but it only <b>fits receptors of the right shape</b>.", `Only the <b>target cells</b> respond.`].map((s) => `<li>${s}</li>`).join("");
-    $("trAsk").hidden = true; asking("gTravel", false); fbSet($("trFb"), "", "");
-    $("trGo").textContent = "▶ Follow the hormone";
-    trDraw();
+    if (TRP) TRP.reset();
+    else TRP = stepper({ host: "trCtl", list: "trSteps", first: "▶ Follow the hormone", playLabel: "▶ Play all", onBusy: (b) => { trBusy = b; }, start: trStart, steps: TR_RUN, end: trEnd });
   }
-  async function trRun() {
-    if (trBusy) return; trBusy = true; $("trGo").disabled = true; $("trAsk").hidden = true; asking("gTravel", false); fbSet($("trFb"), "", "");
-    const H = TR[trKind], S = trDraw(), li = [...$("trSteps").children];
-    const mark = (i) => li.forEach((x, j) => { x.classList.toggle("on", j === i); x.classList.toggle("done", j < i); });
-    let flow = true;
-    (async () => { while (flow) { await tween(1200, (t) => S.rbc.setAttribute("transform", `translate(${50 * t} 0)`)); if (reduced()) break; } })();
-    // 1 made in the gland
-    mark(0);
-    const start = [[52, 160], [86, 150], [76, 190], [54, 232], [90, 228], [40, 196], [110, 186]];
-    const mols = start.map(([x, y]) => hormoneShape(S.mols, H.shape, H.col, x, y, 0.1));
-    await tween(800, (t) => mols.forEach((m, i) => m.setAttribute("transform", `translate(${start[i][0]} ${start[i][1]}) scale(${t})`)));
-    await wait(reduced() ? 0 : 500);
-    // 2 into the blood
-    mark(1);
-    const inV = start.map((_, i) => [125 + i * 6, 192 + (i % 3) * 12]);
-    await tween(900, (t) => mols.forEach((m, i) => { const x = start[i][0] + (inV[i][0] - start[i][0]) * ease(t), y = start[i][1] + (inV[i][1] - start[i][1]) * ease(t); m.setAttribute("transform", `translate(${x} ${y})`); }));
-    // 3 + 4 carried along; each molecule goes to one cell (or off the edge)
-    mark(2);
-    const dest = ["skin", "bone", "liver", "muscle", "heart", null, null];
-    const pos = (m) => m.getAttribute("transform").match(/[-\d.]+/g).map(Number);
-    await Promise.all(mols.map((m, i) => {
-      const [x0, y0] = pos(m), c = TR_CELLS.find((x) => x.id === dest[i]);
-      const x1 = c ? c.x : 660 + i * 10;
-      return tween(1600 + i * 120, (t) => m.setAttribute("transform", `translate(${x0 + (x1 - x0) * t} ${y0})`));
-    }));
-    mark(3);
-    // try the receptors: a fit binds, a wrong shape bounces off
-    await Promise.all(mols.map(async (m, i) => {
-      const c = TR_CELLS.find((x) => x.id === dest[i]); if (!c) return m.remove();
-      const [x0, y0] = pos(m), fits = c.rec.includes(H.shape);
-      const idx = c.rec.indexOf(H.shape), rx = c.rec.length === 1 || idx < 0 ? c.x : c.x + (idx === 0 ? -26 : 26);
-      const ty = fits ? recY(c) : c.up ? 174 : 236;
-      await tween(700, (t) => m.setAttribute("transform", `translate(${x0 + (rx - x0) * t} ${y0 + (ty - y0) * t})`));
-      if (!fits) {
-        label(S.fx, c.x + 34, c.up ? 176 : 246, "✖", 18, "#C62828");
-        await tween(700, (t) => m.setAttribute("transform", `translate(${rx + 40 * t} ${ty + (205 - ty) * t})`));
-        await tween(900, (t) => m.setAttribute("transform", `translate(${rx + 40 + 260 * t} 205)`));
-        m.remove();
-      }
-    }));
-    // 5 the targets respond
-    mark(4);
-    for (const id of H.targets) { const C = S.cells[id]; C.body.setAttribute("fill", "#C8E6C9"); C.body.setAttribute("stroke", "#2E7D32"); C.body.setAttribute("stroke-width", 3); C.tag.textContent = H.resp[id]; }
-    SND.star();
-    flow = false;
-    mark(5);
-    trBusy = false; $("trGo").disabled = false; $("trGo").textContent = "↺ Again";
+  function trStart() {
+    $("trAsk").hidden = true; asking("gTravel", false); fbSet($("trFb"), "", "");
+    const C = trDraw(); C.H = TR[trKind]; C.flow = false; C.stop = () => { C.flow = false; };
+    return C;
+  }
+  const TR_DEST = ["skin", "bone", "liver", "muscle", "heart", null, null];
+  const TR_START = [[52, 160], [86, 150], [76, 190], [54, 232], [90, 228], [40, 196], [110, 186]];
+  const TR_RUN = [
+    async (C) => {   // 1 made in the gland
+      C.flow = true;
+      (async () => { while (C.flow) { await tween(1200, (t) => C.rbc.setAttribute("transform", `translate(${50 * t} 0)`)); if (reduced()) break; } })();
+      C.m = TR_START.map(([x, y]) => hormoneShape(C.mols, C.H.shape, C.H.col, x, y));
+      await tween(800, (t) => C.m.forEach((m, i) => m.setAttribute("transform", `translate(${TR_START[i][0]} ${TR_START[i][1]}) scale(${0.1 + 0.9 * t})`)));
+    },
+    async (C) => {   // 2 into the blood
+      const inV = TR_START.map((_, i) => [125 + i * 6, 192 + (i % 3) * 12]);
+      await tween(900, (t) => C.m.forEach((m, i) => { const x = TR_START[i][0] + (inV[i][0] - TR_START[i][0]) * ease(t), y = TR_START[i][1] + (inV[i][1] - TR_START[i][1]) * ease(t); m.setAttribute("transform", `translate(${x} ${y})`); }));
+    },
+    async (C) => {   // 3 carried along; each molecule goes to one cell (or off the edge)
+      await Promise.all(C.m.map((m, i) => {
+        const [x0, y0] = trPos(m), c = TR_CELLS.find((x) => x.id === TR_DEST[i]);
+        const x1 = c ? c.x : 660 + i * 10;
+        return tween(1600 + i * 120, (t) => m.setAttribute("transform", `translate(${x0 + (x1 - x0) * t} ${y0})`));
+      }));
+    },
+    async (C) => {   // 4 try the receptors: a fit binds, a wrong shape bounces off
+      const H = C.H;
+      await Promise.all(C.m.map(async (m, i) => {
+        const c = TR_CELLS.find((x) => x.id === TR_DEST[i]); if (!c) return m.remove();
+        const [x0, y0] = trPos(m), fits = c.rec.includes(H.shape);
+        const idx = c.rec.indexOf(H.shape), rx = c.rec.length === 1 || idx < 0 ? c.x : c.x + (idx === 0 ? -26 : 26);
+        const ty = fits ? recY(c) : c.up ? 174 : 236;
+        await tween(700, (t) => m.setAttribute("transform", `translate(${x0 + (rx - x0) * t} ${y0 + (ty - y0) * t})`));
+        if (!fits) {
+          label(C.fx, c.x + 34, c.up ? 176 : 246, "✖", 18, "#C62828");
+          await tween(700, (t) => m.setAttribute("transform", `translate(${rx + 40 * t} ${ty + (205 - ty) * t})`));
+          await tween(900, (t) => m.setAttribute("transform", `translate(${rx + 40 + 260 * t} 205)`));
+          m.remove();
+        }
+      }));
+    },
+    async (C) => {   // 5 the targets respond
+      const H = C.H;
+      for (const id of H.targets) { const X = C.cells[id]; X.body.setAttribute("fill", "#C8E6C9"); X.body.setAttribute("stroke", "#2E7D32"); X.body.setAttribute("stroke-width", 3); X.tag.textContent = H.resp[id]; }
+      SND.star(); C.flow = false;
+      await wait(reduced() ? 0 : 300);
+    },
+  ];
+  function trEnd(C) {
+    const H = C.H;
     say("glands", `${H.name} reached <b>every</b> cell, but only cells with the right <b>receptor shape</b> responded: its <b>target cells</b>.`, "happy");
     if (!has("glands", "tr-" + trKind)) {
       $("trQ").textContent = H.q; $("trAsk").hidden = false; asking("gTravel", true);
@@ -1668,7 +1755,6 @@ footer{font-size:16px}
           if (!has("glands", "tr-" + (k === "ins" ? "adr" : "ins"))) setTimeout(() => say("glands", `Now try the other hormone: <b>${TR[k === "ins" ? "adr" : "ins"].name}</b>!`), 2500); } });
     }
   }
-  $("trGo").addEventListener("click", trRun);
 
   // 🏷 label the glands (Lena or Sam)
   let GL = null;
@@ -1756,36 +1842,40 @@ footer{font-size:16px}
     RU = { svg, g, B, M, clock };
     return RU;
   }
-  function setupRush() { $("ruSteps").innerHTML = RU_STEPS.map((s) => `<li>${s}</li>`).join(""); ruDraw(); }
-  async function ruRun() {
-    if (ruBusy) return; ruBusy = true; $("ruGo").disabled = true;
-    const R = ruDraw(), B = R.B, li = [...$("ruSteps").children];
-    const mark = (i) => li.forEach((x, j) => { x.classList.toggle("on", j === i); x.classList.toggle("done", j < i); });
-    mark(0); R.clock.textContent = "time: 0 s";
-    const dog = txt(R.g, 410, 392, "🐕", { "font-size": 46, "text-anchor": "middle" });
-    const woof = label(R.g, 420, 336, "WOOF!", 22, "#E65100");
-    SND.tip();
-    await wait(reduced() ? 0 : 900);
-    await impulse(B.fx, "M319 32 Q314 25 308 22", 500, 3.5);
-    mark(1);
-    await impulse(B.fx, "M300 30 L300 140 Q304 150 321 152", 900, 3.5);
-    mark(2); woof.remove(); R.clock.textContent = "time: 2 s";
-    hl(B.adr);
-    const dots = [];
-    for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; dots.push([el("circle", { r: 3, fill: "#E53935", stroke: "#fff", "stroke-width": 0.8 }, B.fx), 321 + 4 * Math.cos(a), 154 + 4 * Math.sin(a), [[305, 118], [300, 22], [282, 145], [285, 112], [318, 112], [290, 300], [310, 300], [255, 160]][i % 8]]); }
-    await tween(1600, (t) => dots.forEach(([d, x0, y0, [x1, y1]]) => { d.setAttribute("cx", x0 + (x1 - x0) * t); d.setAttribute("cy", y0 + (y1 - y0) * t); }));
-    mark(3); R.clock.textContent = "time: 10 s";
-    B.heart.classList.add("pulse"); hl([B.heart, B.liver, ...B.lungs]);
-    await tween(1800, (t) => RU_M.forEach((m) => R.M[m.k](m.v0 + (m.v1 - m.v0) * ease(t))));
-    // wider pupils: more light in
-    B.eyes.forEach((e) => e.setAttribute("r", 1.9));
-    mark(4); R.clock.textContent = "time: 1 minute";
-    await wait(reduced() ? 0 : 1800);
-    mark(5); hl([]);
-    await tween(4500, (t) => { RU_M.forEach((m) => R.M[m.k](m.v1 + (m.v0 - m.v1) * ease(t))); dots.forEach(([d]) => d.setAttribute("opacity", 1 - t)); R.clock.textContent = `time: ${Math.round(1 + 14 * t)} minutes`; });
-    B.heart.classList.remove("pulse"); B.eyes.forEach((e) => e.setAttribute("r", 1.3)); dog.remove();
-    mark(6);
-    ruBusy = false; $("ruGo").disabled = false; $("ruGo").textContent = "↺ Again";
+  function setupRush() { $("ruSteps").innerHTML = RU_STEPS.map((s) => `<li>${s}</li>`).join(""); stepper({ host: "ruCtl", list: "ruSteps", first: "🐕 A dog barks!", playLabel: "▶ Play all", onBusy: (b) => { ruBusy = b; }, start: ruDraw, steps: RU_RUN, end: ruEnd }); }
+  const RU_RUN = [
+    async (R) => {
+      R.clock.textContent = "time: 0 s";
+      R.dog = txt(R.g, 410, 392, "🐕", { "font-size": 46, "text-anchor": "middle" });
+      R.woof = label(R.g, 420, 336, "WOOF!", 22, "#E65100");
+      SND.tip();
+      await wait(reduced() ? 0 : 900);
+      await impulse(R.B.fx, "M319 32 Q314 25 308 22", 500, 3.5);
+    },
+    async (R) => { await impulse(R.B.fx, "M300 30 L300 140 Q304 150 321 152", 900, 3.5); },
+    async (R) => {
+      R.woof.remove(); R.clock.textContent = "time: 2 s";
+      hl(R.B.adr);
+      R.dots = [];
+      for (let i = 0; i < 16; i++) { const a = (i / 16) * Math.PI * 2; R.dots.push([el("circle", { r: 3, fill: "#E53935", stroke: "#fff", "stroke-width": 0.8 }, R.B.fx), 321 + 4 * Math.cos(a), 154 + 4 * Math.sin(a), [[305, 118], [300, 22], [282, 145], [285, 112], [318, 112], [290, 300], [310, 300], [255, 160]][i % 8]]); }
+      await tween(1600, (t) => R.dots.forEach(([d, x0, y0, [x1, y1]]) => { d.setAttribute("cx", x0 + (x1 - x0) * t); d.setAttribute("cy", y0 + (y1 - y0) * t); }));
+    },
+    async (R) => {
+      R.clock.textContent = "time: 10 s";
+      R.B.heart.classList.add("pulse"); hl([R.B.heart, R.B.liver, ...R.B.lungs]);
+      await tween(1800, (t) => RU_M.forEach((m) => R.M[m.k](m.v0 + (m.v1 - m.v0) * ease(t))));
+    },
+    async (R) => {   // wider pupils: more light in
+      R.B.eyes.forEach((e) => e.setAttribute("r", 1.9));
+      R.clock.textContent = "time: 1 minute";
+    },
+    async (R) => {
+      hl([]);
+      await tween(4500, (t) => { RU_M.forEach((m) => R.M[m.k](m.v1 + (m.v0 - m.v1) * ease(t))); R.dots.forEach(([d]) => d.setAttribute("opacity", 1 - t)); R.clock.textContent = `time: ${Math.round(1 + 14 * t)} minutes`; });
+      R.B.heart.classList.remove("pulse"); R.B.eyes.forEach((e) => e.setAttribute("r", 1.3)); R.dog.remove();
+    },
+  ];
+  function ruEnd() {
     say("glands", "The nerves acted in a fraction of a second. Adrenaline's effects lasted for <b>many minutes</b>.", "happy");
     if ($("ruAsk").hidden && !has("glands", "rush")) {
       $("ruAsk").hidden = false; asking("gRush", true);
@@ -1794,7 +1884,6 @@ footer{font-size:16px}
         onDone: (st) => { addStars("glands", "rush", starsOf(st)); asking("gRush", false); } });
     }
   }
-  $("ruGo").addEventListener("click", ruRun);
 
   /* ============================ 7 TAB 2 · NERVES VS HORMONES ============================ */
   // 🏁 the race: impulse along a neurone vs adrenaline in the blood, then how long each effect lasts
@@ -1820,42 +1909,39 @@ footer{font-size:16px}
     const t1 = label(svg, 330, 150, "", 20, "#E65100"), t2 = label(svg, 330, 360, "", 20, "#E65100");
     return { svg, hand, heart, t1, t2 };
   }
-  function setupRace() { $("raSteps").innerHTML = RA_STEPS.map((s) => `<li>${s}</li>`).join(""); raDraw(); }
-  async function raRun() {
-    if (raBusy) return; raBusy = true; $("raGo").disabled = true;
-    const R = raDraw(), li = [...$("raSteps").children], svg = R.svg;
-    const mark = (i) => li.forEach((x, j) => { x.classList.toggle("on", j === i); x.classList.toggle("done", j < i); });
-    mark(0); R.t1.textContent = "⏱ 0.000 s"; R.t2.textContent = "⏱ 0 s";
-    const dots = [0, 1, 2, 3, 4, 5].map((i) => el("circle", { cx: 90, cy: 296 + (i % 3) * 13, r: 6, fill: "#E53935", stroke: "#fff", "stroke-width": 1.5 }, svg));
-    const nerve = impulse(svg, "M80 96 L565 96", reduced() ? 0 : 600, 7).then(() => { R.t1.textContent = "✔ arrived: about 0.01 s"; R.hand.setAttribute("transform", "translate(0 -10)"); SND.star(); });
-    mark(1);
-    let tt = 0;
-    const hormone = tween(6500, (t) => {
-      tt = t; dots.forEach((d, i) => d.setAttribute("cx", 90 + (470 - i * 16) * Math.min(1, t * (1 + i * 0.04)) * (0.96 + 0.04 * Math.sin(t * 20 + i))));
-      if (t > 0.12) R.t2.textContent = `⏱ ${Math.round(t * 15)} s`;
-    });
-    await nerve;
-    await hormone;
-    R.t2.textContent = "✔ arrived: about 15 s (seconds to minutes)"; R.heart.classList.add("pulse"); SND.star();
-    mark(2);
-    say("nvh", "The nerve impulse won by far! (The picture shows the impulse <b>slowed down</b>: really it arrives about 1000 times sooner.)", "wow");
-    await wait(reduced() ? 0 : 1800);
-    // how long the effects last
-    mark(3);
-    label(svg, 20, 172, "effect:", 15, "#606A72", { "text-anchor": "start" }); label(svg, 20, 384, "effect:", 15, "#606A72", { "text-anchor": "start" });
-    const b1 = el("rect", { x: 80, y: 160, height: 14, rx: 7, fill: "#FBC02D" }, svg), b2 = el("rect", { x: 80, y: 372, height: 14, rx: 7, fill: "#E53935" }, svg);
-    R.t1.textContent = ""; R.t2.textContent = "";
-    await tween(2500, (t) => {
-      b1.setAttribute("width", Math.max(6, 30 * Math.min(1, t * 6)));
-      b2.setAttribute("width", 480 * t);
-      if (t > 0.2) R.hand.setAttribute("transform", "");
-    });
-    label(svg, 125, 152, "short: the muscle relaxes when the impulses stop", 15, "#6D4C41", { "text-anchor": "start" });
-    label(svg, 330, 362, "long: the heart beats fast for minutes", 15, "#B71C1C");
-    dots.forEach((d) => d.remove());
-    await wait(reduced() ? 0 : 900); R.heart.classList.remove("pulse");
-    mark(4);
-    raBusy = false; $("raGo").disabled = false; $("raGo").textContent = "↺ Race again";
+  function setupRace() { $("raSteps").innerHTML = RA_STEPS.map((s) => `<li>${s}</li>`).join(""); stepper({ host: "raCtl", list: "raSteps", first: "🏁 Start the race", playLabel: "▶ Play all", onBusy: (b) => { raBusy = b; }, start: raDraw, steps: RA_RUN, end: raEnd }); }
+  const RA_RUN = [
+    async (R) => {   // the nerve impulse
+      R.t1.textContent = "⏱ 0.000 s"; R.t2.textContent = "⏱ 0 s";
+      await impulse(R.svg, "M80 96 L565 96", reduced() ? 0 : 600, 7);
+      R.t1.textContent = "✔ arrived: about 0.01 s"; R.hand.setAttribute("transform", "translate(0 -10)"); SND.star();
+    },
+    async (R) => {   // the hormone in the blood
+      R.dots = [0, 1, 2, 3, 4, 5].map((i) => el("circle", { cx: 90, cy: 296 + (i % 3) * 13, r: 6, fill: "#E53935", stroke: "#fff", "stroke-width": 1.5 }, R.svg));
+      await tween(5000, (t) => {
+        R.dots.forEach((d, i) => d.setAttribute("cx", 90 + (470 - i * 16) * Math.min(1, t * (1 + i * 0.04)) * (0.96 + 0.04 * Math.sin(t * 20 + i))));
+        if (t > 0.12) R.t2.textContent = `⏱ ${Math.round(t * 15)} s`;
+      });
+      R.t2.textContent = "✔ arrived: about 15 s (seconds to minutes)"; R.heart.classList.add("pulse"); SND.star();
+    },
+    async () => { say("nvh", "The nerve impulse won by far! (The picture shows the impulse <b>slowed down</b>: really it arrives about 1000 times sooner.)", "wow"); },
+    async (R) => {   // how long the effects last
+      const svg = R.svg;
+      label(svg, 20, 172, "effect:", 15, "#606A72", { "text-anchor": "start" }); label(svg, 20, 384, "effect:", 15, "#606A72", { "text-anchor": "start" });
+      const b1 = el("rect", { x: 80, y: 160, height: 14, rx: 7, fill: "#FBC02D" }, svg), b2 = el("rect", { x: 80, y: 372, height: 14, rx: 7, fill: "#E53935" }, svg);
+      R.t1.textContent = ""; R.t2.textContent = "";
+      await tween(2500, (t) => {
+        b1.setAttribute("width", Math.max(6, 30 * Math.min(1, t * 6)));
+        b2.setAttribute("width", 480 * t);
+        if (t > 0.2) R.hand.setAttribute("transform", "");
+      });
+      label(svg, 125, 152, "short: the muscle relaxes when the impulses stop", 15, "#6D4C41", { "text-anchor": "start" });
+      label(svg, 330, 362, "long: the heart beats fast for minutes", 15, "#B71C1C");
+      R.dots.forEach((d) => d.remove());
+      await wait(reduced() ? 0 : 900); R.heart.classList.remove("pulse");
+    },
+  ];
+  function raEnd() {
     if ($("raAsk").hidden && !has("nvh", "race")) {
       $("raAsk").hidden = false; asking("nRace", true);
       ask({ box: $("raCats"), fb: $("raFb"), spex: "nvh", opts: shuffle([["a", "Nerve impulses are faster; the effects of hormones last longer"], ["b", "Hormones are faster; the effects of nerve impulses last longer"], ["c", "Both are equally fast and last equally long"], ["d", "Hormones travel along neurones"]]), correct: ["a"],
@@ -1863,7 +1949,6 @@ footer{font-size:16px}
         onDone: (st) => { addStars("nvh", "race", starsOf(st)); asking("nRace", false); } });
     }
   }
-  $("raGo").addEventListener("click", raRun);
 
   // 🗂 sort the cards: nervous, endocrine or both
   const SORT = [
@@ -1969,33 +2054,33 @@ footer{font-size:16px}
     });
     return { svg, hy, pit, T };
   }
-  function setupHypo() { $("hySteps").innerHTML = HY_STEPS.map((s) => `<li>${s}</li>`).join(""); hyDraw(); }
-  async function hyRun() {
-    if (hyBusy) return; hyBusy = true; $("hyGo").disabled = true;
-    const R = hyDraw(), li = [...$("hySteps").children];
-    const mark = (i) => li.forEach((x, j) => { x.classList.toggle("on", j === i); x.classList.toggle("done", j < i); });
-    mark(0);
-    await Promise.all([impulse(R.svg, "M110 110 Q150 150 190 176", 900), impulse(R.svg, "M240 104 Q222 146 205 174", 900)]);
-    hl(R.hy);
-    await wait(reduced() ? 0 : 500);
-    mark(1);
-    for (let i = 0; i < 3; i++) travel(R.svg, [[203, 187], [207, 204]], 700, { r: 4, fill: GLANDS.hypo.col });
-    await wait(reduced() ? 0 : 900); hl(R.pit);
-    mark(2);
-    await wait(reduced() ? 0 : 600);
-    mark(3);
-    await Promise.all(R.T.map(async (x, i) => {
-      await wait(i * 250);
-      const p = el("path", { d: `M212 214 Q320 ${x.t.y} 408 ${x.t.y}`, fill: "none" }, R.svg), L = p.getTotalLength();
-      const d = el("circle", { r: 6, fill: GLANDS.pit.col, stroke: "#fff", "stroke-width": 1.5 }, R.svg);
-      await tween(1400, (t) => { const q = p.getPointAtLength(L * t); d.setAttribute("cx", q.x); d.setAttribute("cy", q.y); });
-      d.remove(); p.remove();
-      x.box.setAttribute("fill", "#F1F8E9"); x.out.textContent = x.t.out; x.out2.textContent = x.t.out2 || ""; SND.pop();
-    }));
-    mark(4); hl([]);
-    await wait(reduced() ? 0 : 400);
-    mark(5);
-    hyBusy = false; $("hyGo").disabled = false; $("hyGo").textContent = "↺ Again";
+  function setupHypo() { $("hySteps").innerHTML = HY_STEPS.map((s) => `<li>${s}</li>`).join(""); stepper({ host: "hyCtl", list: "hySteps", first: "▶ Watch the control", playLabel: "▶ Play all", onBusy: (b) => { hyBusy = b; }, start: () => { hl([]); return hyDraw(); }, steps: HY_RUN, end: hyEnd }); }
+  const HY_RUN = [
+    async (R) => {
+      await Promise.all([impulse(R.svg, "M110 110 Q150 150 190 176", 900), impulse(R.svg, "M240 104 Q222 146 205 174", 900)]);
+      hl(R.hy);
+    },
+    async (R) => {
+      for (let i = 0; i < 3; i++) travel(R.svg, [[203, 187], [207, 204]], 700, { r: 4, fill: GLANDS.hypo.col });
+      await wait(reduced() ? 0 : 900); hl(R.pit);
+    },
+    async (R) => {   // the pituitary releases its hormones
+      R.d = R.T.map((_, i) => el("circle", { cx: 212 + i * 4, cy: 214 + i * 3, r: 0, fill: GLANDS.pit.col, stroke: "#fff", "stroke-width": 1.5 }, R.svg));
+      SND.pop();
+      await tween(700, (t) => R.d.forEach((d) => d.setAttribute("r", 6 * t)));
+    },
+    async (R) => {
+      await Promise.all(R.T.map(async (x, i) => {
+        await wait(i * 250);
+        const p = el("path", { d: `M212 214 Q320 ${x.t.y} 408 ${x.t.y}`, fill: "none" }, R.svg), L = p.getTotalLength(), d = R.d[i];
+        await tween(1400, (t) => { const q = p.getPointAtLength(L * t); d.setAttribute("cx", q.x); d.setAttribute("cy", q.y); });
+        d.remove(); p.remove();
+        x.box.setAttribute("fill", "#F1F8E9"); x.out.textContent = x.t.out; x.out2.textContent = x.t.out2 || ""; SND.pop();
+      }));
+    },
+    async () => { hl([]); },
+  ];
+  function hyEnd() {
     say("nvh", "The pituitary gland is the <b>master gland</b>, and the hypothalamus is its boss!", "happy");
     if ($("hyAsk").hidden && !has("nvh", "hypo")) {
       $("hyAsk").hidden = false; asking("nHypo", true);
@@ -2004,7 +2089,6 @@ footer{font-size:16px}
         onDone: (st) => { addStars("nvh", "hypo", starsOf(st)); asking("nHypo", false); } });
     }
   }
-  $("hyGo").addEventListener("click", hyRun);
 
   /* ============================ 8 TAB 3 · HOMEOSTASIS ============================ */
   // 🏠 thermostat: a room, a heater and a live graph (model: dT/dt = k(outside − T) + heater)
@@ -2195,47 +2279,43 @@ footer{font-size:16px}
     const bars = el("g", {}, svg);
     return { svg, wallT, flow, cnt, bars, fx: el("g", {}, svg) };
   }
-  function setupPos() { $("poSteps").innerHTML = PO_STEPS.map((s) => `<li>${s}</li>`).join(""); poDraw(); }
-  async function poRun() {
-    if (poBusy) return; poBusy = true; $("poGo").disabled = true;
-    const R = poDraw(), li = [...$("poSteps").children];
-    const mark = (i) => li.forEach((x, j) => { x.classList.toggle("on", j === i); x.classList.toggle("done", j < i); });
-    let flowing = true;
-    (async () => { while (flowing) { await tween(1500, (t) => R.flow.setAttribute("transform", `translate(${42 * t} 0)`)); if (reduced()) break; } })();
-    // 1 the cut
-    mark(0);
-    const cut = el("path", { d: "M300 0 L312 46 L296 70 L310 114 L330 114 L318 70 L334 46 L322 0Z", fill: "#B71C1C" }, R.fx);
-    const drops = [0, 1, 2].map((i) => el("circle", { cx: 316, cy: 100, r: 6, fill: "#C62828" }, R.fx));
-    await tween(1200, (t) => drops.forEach((d, i) => d.setAttribute("cy", 100 - 110 * ((t * 1.6 + i * 0.3) % 1))));
-    // platelets stick, doubling; each round shows chemicals
-    const stuck = []; let n = 1; mark(1);
-    const spot = (k) => { const a = (k * 2.4) % (Math.PI * 2), r = 6 + Math.sqrt(k) * 4.2; return [318 + r * Math.cos(a) * 0.9, 104 + Math.abs(r * Math.sin(a)) * 0.7]; };
-    const hist = [];
-    for (let round = 0; round < 6; round++) {
-      if (round === 1) mark(2); if (round === 2) mark(3);
-      const add = n - stuck.length;
-      const news = [];
-      for (let k = 0; k < add; k++) {
-        const [x, y] = spot(stuck.length + k), p = el("ellipse", { cx: x - 160, cy: 200, rx: 6, ry: 4, fill: "#7E57C2", stroke: "#4527A0", "stroke-width": 1 }, R.fx);
-        news.push([p, x, y]);
-      }
-      await tween(900, (t) => news.forEach(([p, x, y]) => { p.setAttribute("cx", x - 160 * (1 - t)); p.setAttribute("cy", 200 + (y - 200) * t); }));
-      stuck.push(...news.map(([p]) => p));
-      hist.push(stuck.length);
-      R.cnt.textContent = `Platelets stuck: ${hist.join(" → ")}`;
-      R.bars.replaceChildren();
-      hist.forEach((v, i) => { const hh = Math.max(3, v * 1.8); el("rect", { x: 470 + i * 26, y: 388 - hh, width: 20, height: hh, fill: "#7E57C2" }, R.bars); });
-      if (round >= 1 && round < 5) { const sp = label(R.fx, 318 + (round % 2 ? 40 : -40), 150, "✨", 26, "#FFB300"); await wait(reduced() ? 0 : 350); sp.remove(); }
-      SND.pop(); n *= 2;
+  function setupPos() { $("poSteps").innerHTML = PO_STEPS.map((s) => `<li>${s}</li>`).join(""); stepper({ host: "poCtl", list: "poSteps", first: "✂ Cut the skin", playLabel: "▶ Play all", onBusy: (b) => { poBusy = b; }, start: poStart, steps: PO_RUN, end: poEnd }); }
+  function poStart() { const R = poDraw(); R.flowing = false; R.stop = () => { R.flowing = false; }; R.stuck = []; R.n = 1; R.hist = []; return R; }
+  const poSpot = (k) => { const a = (k * 2.4) % (Math.PI * 2), r = 6 + Math.sqrt(k) * 4.2; return [318 + r * Math.cos(a) * 0.9, 104 + Math.abs(r * Math.sin(a)) * 0.7]; };
+  async function poRound(R, round) {   // platelets stick, doubling; each round shows chemicals
+    const add = R.n - R.stuck.length, news = [];
+    for (let k = 0; k < add; k++) {
+      const [x, y] = poSpot(R.stuck.length + k), p = el("ellipse", { cx: x - 160, cy: 200, rx: 6, ry: 4, fill: "#7E57C2", stroke: "#4527A0", "stroke-width": 1 }, R.fx);
+      news.push([p, x, y]);
     }
-    // 5 sealed
-    mark(4);
-    drops.forEach((d) => d.remove());
-    el("path", { d: "M298 92 Q318 82 338 92 L334 120 Q318 130 302 120Z", fill: "#7E57C2", opacity: 0.8 }, R.fx);
-    label(R.fx, 400, 80, "✔ sealed: it stops", 18, "#2E7D32", { "text-anchor": "start" });
-    flowing = false;
-    mark(5);
-    poBusy = false; $("poGo").disabled = false; $("poGo").textContent = "↺ Again";
+    await tween(900, (t) => news.forEach(([p, x, y]) => { p.setAttribute("cx", x - 160 * (1 - t)); p.setAttribute("cy", 200 + (y - 200) * t); }));
+    R.stuck.push(...news.map(([p]) => p));
+    R.hist.push(R.stuck.length);
+    R.cnt.textContent = `Platelets stuck: ${R.hist.join(" → ")}`;
+    R.bars.replaceChildren();
+    R.hist.forEach((v, i) => { const hh = Math.max(3, v * 1.8); el("rect", { x: 470 + i * 26, y: 388 - hh, width: 20, height: hh, fill: "#7E57C2" }, R.bars); });
+    if (round >= 1 && round < 5) { const sp = label(R.fx, 318 + (round % 2 ? 40 : -40), 150, "✨", 26, "#FFB300"); await wait(reduced() ? 0 : 350); sp.remove(); }
+    SND.pop(); R.n *= 2;
+  }
+  const PO_RUN = [
+    async (R) => {   // 1 the cut
+      R.flowing = true;
+      (async () => { while (R.flowing) { await tween(1500, (t) => R.flow.setAttribute("transform", `translate(${42 * t} 0)`)); if (reduced()) break; } })();
+      el("path", { d: "M300 0 L312 46 L296 70 L310 114 L330 114 L318 70 L334 46 L322 0Z", fill: "#B71C1C" }, R.fx);
+      R.drops = [0, 1, 2].map(() => el("circle", { cx: 316, cy: 100, r: 6, fill: "#C62828" }, R.fx));
+      await tween(1200, (t) => R.drops.forEach((d, i) => d.setAttribute("cy", 100 - 110 * ((t * 1.6 + i * 0.3) % 1))));
+    },
+    async (R) => { await poRound(R, 0); },
+    async (R) => { await poRound(R, 1); },
+    async (R) => { for (let round = 2; round < 6; round++) await poRound(R, round); },
+    async (R) => {   // 5 sealed
+      R.drops.forEach((d) => d.remove());
+      el("path", { d: "M298 92 Q318 82 338 92 L334 120 Q318 130 302 120Z", fill: "#7E57C2", opacity: 0.8 }, R.fx);
+      label(R.fx, 400, 80, "✔ sealed: it stops", 18, "#2E7D32", { "text-anchor": "start" });
+      R.flowing = false;
+    },
+  ];
+  function poEnd() {
     say("homeo", "1 → 2 → 4 → 8 → 16 → 32: each step makes the next one bigger. That is <b>positive feedback</b>.", "wow");
     if ($("poAsk").hidden && !has("homeo", "pos")) {
       $("poAsk").hidden = false; asking("hPos", true);
@@ -2245,7 +2325,6 @@ footer{font-size:16px}
         onDone: (st) => { addStars("homeo", "pos", starsOf(st)); asking("hPos", false); } });
     }
   }
-  $("poGo").addEventListener("click", poRun);
 
   /* ============================ 9 TAB 4 · TEMPERATURE ============================ */
   const heatArrow = (g, x, y, len = 50, op = 1) => el("path", { d: `M${x} ${y} q8 -${len / 6} 0 -${len / 3} t0 -${len / 3} t0 -${len / 3} m-7 10 l7 -10 l7 10`, fill: "none", stroke: "#FF7043", "stroke-width": 3.5, "stroke-linecap": "round", "stroke-linejoin": "round", opacity: op }, g);
@@ -2701,12 +2780,36 @@ footer{font-size:16px}
   }
 
   // 📅 a day of blood glucose
-  const DY = { M: null, timer: null, paused: false, G: null, S: null, done: false };
-  function dyDraw() {
+  // one stop per event (at its glucose peak after a meal, its low point after sport), then the rest of the day
+  const DY_STOP = (() => {
+    const M = gModel(false), G = {};
+    while (M.t < T1) { gStep(M); G[M.t] = M.G; }
+    return DAY_EV.map((e, i) => {
+      const end = i < DAY_EV.length - 1 ? DAY_EV[i + 1].t : T1; let best = e.t + 1;
+      for (let t = e.t + 1; t < end; t++) if (e.k === "meal" ? G[t] > G[best] : G[t] < G[best]) best = t;
+      return best;
+    }).concat([T1]);
+  })();
+  function dyStart() {
     const svg = $("dySvg"); svg.replaceChildren();
-    DY.G = dayGraph(svg); DY.S = scene(svg); DY.M = gModel(false); DY.S.set(DY.M); DY.S.clock.textContent = "🕖 7:00";
+    const C = { G: dayGraph(svg), S: scene(svg), M: gModel(false), timer: null, hold: false };
+    C.S.set(C.M); C.S.clock.textContent = "🕖 7:00";
+    C.stop = () => { clearInterval(C.timer); C.timer = null; };
+    $("dyRead").innerHTML = "Lena's blood glucose from 7:00 to 22:00. Press the orange button and watch the <b>pancreas</b> and the <b>liver</b>.";
+    return C;
   }
-  function setupDay() { dyDraw(); $("dyRead").innerHTML = "Lena's blood glucose from 7:00 to 22:00. Press <b>▶ Play the day</b> and watch the pancreas and the liver."; }
+  function dyShow(C) { C.S.set(C.M); C.S.clock.textContent = "🕖 " + hhmm(C.M.t); $("dyRead").innerHTML = dyText(C.M); }
+  const dyStep = (stop) => async (C) => {
+    if (ANIM.k === 0) { while (C.M.t < stop) { gStep(C.M); C.G.add(C.M.t, C.M.G); } return dyShow(C); }   // fast-forward for ↺ Replay step
+    await new Promise((res) => {
+      C.timer = setInterval(() => {
+        if (C.hold || !$("sDay").offsetParent) return;   // paused, or the view is hidden
+        for (let k = 0; k < 2; k++) { if (C.M.t >= stop) break; gStep(C.M); C.G.add(C.M.t, C.M.G); }
+        dyShow(C);
+        if (C.M.t >= stop) { clearInterval(C.timer); C.timer = null; res(); }
+      }, 40 * ANIM.k);
+    });
+  };
   function dyText(M) {
     const ev = DAY_EV.find((e) => (e.k === "meal" ? M.t >= e.t && M.t < e.t + 90 : M.t >= e.t && M.t < e.t + e.d));
     const pre = `<b>${hhmm(M.t)}</b> · glucose <b>${M.G.toFixed(1)} mmol/L</b> (${mg(M.G)} mg/dL)` + (ev ? ` · ${ev.em} ${ev.name}` : "") + "<br>";
@@ -2715,30 +2818,22 @@ footer{font-size:16px}
     if (M.exNow) return pre + "Muscles use more glucose for respiration.";
     return pre + "Glucose is in the normal range: the pancreas releases only a little insulin.";
   }
-  function dyTick() {
-    if (DY.paused || !$("sDay").offsetParent) return;
-    for (let k = 0; k < 2; k++) { if (DY.M.t >= T1) break; gStep(DY.M); DY.G.add(DY.M.t, DY.M.G); }
-    DY.S.set(DY.M); DY.S.clock.textContent = "🕖 " + hhmm(DY.M.t);
-    $("dyRead").innerHTML = dyText(DY.M);
-    if (DY.M.t >= T1) {
-      clearInterval(DY.timer); DY.timer = null; $("dyGo").disabled = false; $("dyGo").textContent = "↺ Play again"; $("dyPause").disabled = true;
-      $("dyRead").innerHTML = "The day is over. Lena's glucose went <b>up</b> after each meal and <b>down</b> during sport, but it always came back to the normal range (green). <b>Negative feedback!</b>";
-      say("sugar", "Insulin and glucagon kept Lena's glucose between about 4.5 and 7 mmol/L all day.", "happy");
-      if ($("dyAsk").hidden && !has("sugar", "day")) {
-        $("dyAsk").hidden = false; asking("sDay", true);
-        ask({ box: $("dyCats"), fb: $("dyFb"), spex: "sugar", opts: shuffle([["a", "The pancreas releases insulin; the liver stores glucose as glycogen, so the glucose falls back"], ["b", "The pancreas releases glucagon; the liver releases more glucose"], ["c", "The brain releases insulin into the stomach"], ["d", "The kidneys make the glucose disappear"]]), correct: ["a"],
-          tip: "Which hormone LOWERS blood glucose? Look at the blue dots after lunch.", answer: "<b>the pancreas releases insulin and the liver stores glucose as glycogen</b>.",
-          good: "The <b>pancreas</b> detects the rise and releases <b>insulin</b>. The liver stores glucose as <b>glycogen</b> and cells take in glucose, so the level falls back to normal.",
-          onDone: (st) => { addStars("sugar", "day", starsOf(st)); asking("sDay", false); } });
-      }
+  function dyEnd() {
+    $("dyRead").innerHTML = "The day is over. Lena's glucose went <b>up</b> after each meal and <b>down</b> during sport, but it always came back to the normal range (green). <b>Negative feedback!</b>";
+    say("sugar", "Insulin and glucagon kept Lena's glucose between about 4.5 and 7 mmol/L all day.", "happy");
+    if ($("dyAsk").hidden && !has("sugar", "day")) {
+      $("dyAsk").hidden = false; asking("sDay", true);
+      ask({ box: $("dyCats"), fb: $("dyFb"), spex: "sugar", opts: shuffle([["a", "The pancreas releases insulin; the liver stores glucose as glycogen, so the glucose falls back"], ["b", "The pancreas releases glucagon; the liver releases more glucose"], ["c", "The brain releases insulin into the stomach"], ["d", "The kidneys make the glucose disappear"]]), correct: ["a"],
+        tip: "Which hormone LOWERS blood glucose? Look at the blue dots after lunch.", answer: "<b>the pancreas releases insulin and the liver stores glucose as glycogen</b>.",
+        good: "The <b>pancreas</b> detects the rise and releases <b>insulin</b>. The liver stores glucose as <b>glycogen</b> and cells take in glucose, so the level falls back to normal.",
+        onDone: (st) => { addStars("sugar", "day", starsOf(st)); asking("sDay", false); } });
     }
   }
-  $("dyGo").addEventListener("click", () => {
-    if (DY.timer) return;
-    dyDraw(); DY.paused = false; $("dyGo").disabled = true; $("dyPause").disabled = false; $("dyPause").textContent = "⏸ Pause";
-    DY.timer = setInterval(dyTick, 40);
-  });
-  $("dyPause").addEventListener("click", () => { DY.paused = !DY.paused; $("dyPause").textContent = DY.paused ? "▶ Go on" : "⏸ Pause"; });
+  function setupDay() {
+    stepper({ host: "dyCtl", first: `▶ Start: ${DAY_EV[0].em} ${DAY_EV[0].name}`, playLabel: "▶ Play the day", hold: true,
+      nextLabel: (i) => (i < DAY_EV.length ? `Next: ${DAY_EV[i].em} ${DAY_EV[i].name} ▶` : "Finish the day ▶"),
+      start: dyStart, steps: DY_STOP.map(dyStep), end: dyEnd });
+  }
 
   // 🎮 be the pancreas: 60 s, keep glucose 4–7 mmol/L
   const GM_EV = [{ em: "🍩", name: "Doughnut", k: "food", v: 2.8, d: 5 }, { em: "🍝", name: "Pasta", k: "food", v: 3.2, d: 8 }, { em: "🍎", name: "Apple", k: "food", v: 1.4, d: 4 },
@@ -3025,7 +3120,7 @@ footer{font-size:16px}
   const curSub = { glands: "gTravel", nvh: "nRace", homeo: "hThermo", temp: "tSkin", sugar: "sDay" };
   const ready = {};
   const SUB_SAY = {
-    gTravel: ["glands", "How does a hormone find its way? Choose a hormone and press <b>▶ Follow the hormone</b>."],
+    gTravel: ["glands", "How does a hormone find its way? Choose a hormone and press <b>▶ Follow the hormone</b>. Read each step, then press <b>Next step ▶</b>."],
     gLab: ["glands", "These are the main <b>endocrine glands</b>. Label them! Switch between <b>Lena</b> and <b>Sam</b> to see ovaries or testes."],
     gMatch: ["glands", "Each gland makes its own hormones. Put each hormone into the gland that makes it."],
     gRush: ["glands", "Imagine a big dog suddenly barks at you… Press <b>🐕 A dog barks!</b>"],
@@ -3041,7 +3136,7 @@ footer{font-size:16px}
     tScen: ["temp", "Four situations. Is the body too hot or too cold? Choose the <b>3 responses</b>."],
     tFlow: ["temp", "Complete the flow diagram for <b>too hot</b> and <b>too cold</b>."],
     tWhy: ["temp", "Why does each response work? Press <b>▶ Play</b>, then answer."],
-    sDay: ["sugar", "Follow Lena's blood glucose for a whole day. Watch the <b>pancreas</b> and the <b>liver</b>."],
+    sDay: ["sugar", "Follow Lena's blood glucose for a whole day, one meal or sport at a time. Watch the <b>pancreas</b> and the <b>liver</b>."],
     sGame: ["sugar", "You are the <b>pancreas</b>! Press <b>insulin</b> when glucose goes up and <b>glucagon</b> when it goes down."],
     sDia: ["sugar", "Follow the steps. Press the big button to go on."],
     sFlow: ["sugar", "Build the two feedback loops for blood glucose: too high and too low."],
@@ -3205,7 +3300,7 @@ footer{font-size:16px}
   if (!P.seenIntro && !TEACHER) openPresent(0);
 
   // for the automatic tests only
-  window.__ENDO = { P, showTab, showSub, GLANDS, CHECKS, QBANK, GM, DY, DI, TH, TS, gModel, gStep, trRun, ruRun, raRun, hyRun, poRun };
+  window.__ENDO = { P, showTab, showSub, GLANDS, CHECKS, QBANK, GM, DI, TH, TS, gModel, gStep, DY_STOP, stepper };
 })();
 </script>
 <script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
