@@ -223,6 +223,7 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
 .ctl .lab i,.ctl .lab sub,.ctl .lab .badge{text-transform:none}
 #controls .btn.go{min-width:120px}
 .sh{display:none}
+@media (max-width:1700px){ header .lg{display:none} header .sh{display:inline} }
 .badge{display:inline-block;font-size:.72rem;font-weight:700;color:#fff;background:#8E24AA;border-radius:99px;padding:1px 8px;
   text-transform:none;letter-spacing:0;vertical-align:1px}
 .readouts th{font-size:.8rem;color:var(--navy);text-align:right;font-weight:600;padding:2px 2px 2px 6px;border-bottom:1px solid var(--line)}
@@ -327,6 +328,7 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
     <button data-sc="sat" aria-pressed="false">🛰️ Satellite</button>
     <button data-sc="car" aria-pressed="false">🚗 Car<span class="lg"> on a bend</span></button>
     <button data-sc="kar" aria-pressed="false">🎠 Carousel</button>
+    <button data-sc="gear" aria-pressed="false">⚙️ Gears</button>
   </div>
   <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
   <div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
@@ -371,6 +373,8 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
           <button data-g="ax" aria-pressed="false"><i>a</i><sub>x</sub>–<i>t</i></button>
           <button data-g="sp" aria-pressed="false">speed–<i>t</i></button>
           <button data-g="F" aria-pressed="false" id="gF">Force</button>
+          <button data-g="th" aria-pressed="false" hidden><i>θ</i>–<i>t</i></button>
+          <button data-g="gv" aria-pressed="false" hidden>Rim speeds</button>
         </div>
         <span class="tools"><span class="hint">Graph tools:</span>
           <label class="switch"><input type="checkbox" id="areaChk"> Area</label>
@@ -406,7 +410,9 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   <div class="box">
     <h3 id="helpTitle">How to use this simulation</h3>
     <ol>
-      <li>Choose an <b>example</b> at the top: 🪑 rotating chair · 🛰️ satellite · 🚗 car on a bend · 🎠 playground carousel.</li>
+      <li>Choose an <b>example</b> at the top: 🪑 rotating chair (view <b>from above</b> or from the <b>side</b>) · 🛰️ satellite · 🚗 car on a bend ·
+        🎠 playground carousel · ⚙️ <b>gears</b>: two meshing gears, a gear train with an idler and two gears on one shaft, a bicycle chain, or a
+        motor, belt and pulley lifting a load.</li>
       <li>Set each value with <b>▼</b> and <b>▲</b> (hold to go faster; the <b>↑ ↓</b> keys or the mouse wheel in the box also work, Shift = ×10), or <b>type a value</b> in the box. <b>↺</b> puts it back to its start value. Outside the classroom range the box turns <b>amber ⚠</b>: fine to explore, but the lab can't do this.</li>
       <li>Move the pointer over any <b>graph</b> (or tap it): a dashed line shows the values where it cuts each curve, or the values of the nearest data point.</li>
       <li>Press <b>▶ Start</b>. The scene is a <b>top view</b>: the blue arrow is the velocity <i>v</i> (along the tangent), the orange
@@ -427,12 +433,16 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
       <li class="eq">a = v²/r = ω²r (towards the centre) · F = mv²/r = mω²r</li>
       <li>Satellite: gravity provides the force: <span class="eq">GMm/r² = mv²/r ⇒ v = √(GM/r)</span>; the mass of the satellite cancels.</li>
       <li>Car on a flat bend: static friction provides the force: <span class="eq">μ<sub>s</sub>mg ≥ mv²/r ⇒ v<sub>max</sub> = √(μ<sub>s</sub>gr)</span>; the mass cancels.</li>
+      <li>Gears (kinematics only): meshing gears and a chain or belt pass on the same <b>rim speed</b> <span class="eq">v = ω₁r₁ = ω₂r₂</span>,
+        so <span class="eq">ω₂/ω₁ = r₁/r₂ = N₁/N₂</span> (teeth are all the same size, so r ∝ N). Meshing gears turn in opposite directions, a chain
+        or belt keeps the direction; an idler gear only flips the direction. Gears fixed on <b>one shaft</b> have the same ω but different v.
+        rpm = revolutions per minute; ω = rpm × 2π/60.</li>
       <li>Rotating chair, <span class="badge">beyond SL</span> free spin: nothing turns the chair, so <span class="eq">Iω</span> stays the same
         (angular momentum, HL topic A.4). Pull the arms in → smaller <i>I</i> → larger <i>ω</i>.</li>
     </ul>
     <p class="hint">Model: G = 6.67 × 10⁻¹¹ N m² kg⁻², Earth mass 5.97 × 10²⁴ kg, radius 6.37 × 10⁶ m. Chair: body + chair
       <i>I</i> = 2.0 kg m² (arms included), hands at 0.20 m when closed. Car: sliding friction μ<sub>d</sub> = 0.8 μ<sub>s</sub>.
-      Carousel radius 2.0 m. No air resistance.</p>
+      Carousel radius 2.0 m. No air resistance. Gears: module 4 mm (pitch radius = N × 2 mm); bicycle chain pitch 12.7 mm, wheel radius 0.34 m.</p>
     <!-- NEWTON HELP --><h3>Newton's laws</h3>
 <p>The badge above the scene says which law applies at this moment: <b>1st law</b> — at rest or moving at a constant velocity, the resultant force is zero (Σ<i>F</i> = 0); <b>2nd law</b> — accelerating, Σ<i>F</i> = <i>ma</i>. The table under the free-body diagram adds up the forces (Σ<i>F</i>) and compares them with <i>m a</i> (▾ folds it). Tick <b>3rd-law pairs</b> to see every force with its partner: the same size and type, in the opposite direction, acting on the <b>other</b> body (the Earth, the floor, the string, the fluid…).</p><!-- /NEWTON HELP -->
 <p style="text-align:right"><button class="btn primary" id="helpClose">Close</button></p>
@@ -878,6 +888,10 @@ const PRESETS = [
 const COL = {W:"#2A5D8A", N:"#2E7D32", F:"#C62828", P:"#6A1B9A", v:"#1565C0", a:"#E65100",
              navy:"#1F3A5F", accent:"#E65100", ink:"#263238", muted:"#606A72", grid:"#E3E9F0", grey:"#90A4AE"};
 const surfById = id => SURF.find(s => s.id === id);
+// gears (kinematics only): module 4 mm → pitch radius r = N × 2 mm; bicycle chain pitch 12.7 mm, wheel radius 0.34 m
+const GMOD = 0.004, CHAIN_P = 0.0127, BIKE_R = 0.34;
+const GSETS = [{id:"two", name:"Two gears"}, {id:"train", name:"Gear train"}, {id:"bike", name:"Bicycle"}, {id:"belt", name:"Motor + belt"}];
+const GDEF = {two:{gN1:12, gN2:36, gRpm:60}, train:{gN1:12, gN2:24, gN3:36, gN4:12, gRpm:60}, bike:{gNc:44, gNs:16, gCad:80}, belt:{gR1:2, gR2:10, gRd:3, gRpm:300}};
 
 /* ============================ 4 PHYSICS ============================ */
 const f1 = x => (Math.round(x * 10) / 10).toFixed(1);
@@ -918,10 +932,37 @@ const kidForce = (m, r, T) => m * (TWO_PI / T) ** 2 * r;
 const gripPeriod = (m, r, Fmax) => TWO_PI * Math.sqrt(m * r / Fmax);
 function originFit(pts){ const sxx = pts.reduce((a, p) => a + p[0] * p[0], 0);
   return sxx && pts.length >= 2 ? {k:pts.reduce((a, p) => a + p[0] * p[1], 0) / sxx, b:0} : null; }
+// every wheel of the chosen gear set-up: N, r (m), ω (rad s⁻¹, anticlockwise +), rpm, T, rim speed v. Driver turns clockwise.
+// mesh: ω₂ = −ω₁N₁/N₂ · chain/belt: ω₂ = ω₁r₁/r₂ (same direction) · shaft: same ω
+function gearState(){
+  const s = set, G = [], W = rpm => rpm * TWO_PI / 60;
+  if (s.gSet === "two" || s.gSet === "train"){
+    const rr = N => N * GMOD / 2;
+    const A = {id:"A", name:"A (driver)", N:s.gN1, r:rr(s.gN1), w:-W(s.gRpm), x:0}; G.push(A);
+    const B = {id:"B", name:s.gSet === "two" ? "B (driven)" : "B (idler)", N:s.gN2, r:rr(s.gN2), x:A.r + rr(s.gN2), from:0, link:"mesh"}; B.w = -A.w * A.N / B.N; G.push(B);
+    if (s.gSet === "train"){
+      const C = {id:"C", name:"C (output)", N:s.gN3, r:rr(s.gN3), x:B.x + B.r + rr(s.gN3), from:1, link:"mesh"}; C.w = -B.w * B.N / C.N; G.push(C);
+      G.push({id:"D", name:"D (on C's shaft)", N:s.gN4, r:rr(s.gN4), x:C.x, from:2, link:"shaft", w:C.w});
+    }
+  } else if (s.gSet === "bike"){
+    const rr = N => N * CHAIN_P / TWO_PI;
+    const Cr = {id:"Chainring", name:"Chainring (pedals)", N:s.gNc, r:rr(s.gNc), w:-W(s.gCad)}; G.push(Cr);
+    const Sp = {id:"Sprocket", name:"Rear sprocket", N:s.gNs, r:rr(s.gNs), from:0, link:"chain"}; Sp.w = Cr.w * Cr.r / Sp.r; G.push(Sp);
+    G.push({id:"Wheel", name:"Rear wheel (same shaft)", N:0, r:BIKE_R, from:1, link:"shaft", w:Sp.w});
+  } else {
+    const M = {id:"Motor", name:"Motor pulley", N:0, r:s.gR1 / 100, w:-W(s.gRpm)}; G.push(M);
+    const P = {id:"Pulley", name:"Large pulley", N:0, r:s.gR2 / 100, from:0, link:"belt"}; P.w = M.w * M.r / P.r; G.push(P);
+    G.push({id:"Drum", name:"Drum (same shaft)", N:0, r:s.gRd / 100, from:1, link:"shaft", w:P.w});
+  }
+  return G.map(g => Object.assign(g, {rpm:Math.abs(g.w) * 60 / TWO_PI, T:g.w ? TWO_PI / Math.abs(g.w) : Infinity, v:Math.abs(g.w) * g.r}));
+}
+const gOut = G => set.gSet === "two" ? G[1] : set.gSet === "train" ? G[2] : set.gSet === "bike" ? G[2] : G[1];   // output wheel
+const gRatio = G => set.gSet === "two" ? G[0].N / G[1].N : set.gSet === "train" ? G[0].N / G[2].N : set.gSet === "bike" ? G[0].N / G[1].N : G[0].r / G[1].r;
 
 /* ============================ 5 RUN ============================ */
 const set = {sc:"chair",
-  chMode:"motor", chArms:"out", chT:2.0, chM:1.0, chR:0.75,
+  chMode:"motor", chArms:"out", chT:2.0, chM:1.0, chR:0.75, chView:"top",
+  gSet:"two", gN1:12, gN2:36, gN3:36, gN4:12, gRpm:60, gNc:44, gNs:16, gCad:80, gR1:2, gR2:10, gRd:3,
   sPre:"iss", sH:410, sM:4.2e5, sOwn:false, sV:7.66,
   cM:1200, cR:50, cV:15, cSurf:"dry", cBank:0,
   kSel:2, kM:[30, 30, 30], kR:[0.6, 1.2, 1.8], kT:4.0, kGrip:150};
@@ -951,6 +992,9 @@ function reset(){
         R.skid = {ts, dir:"in", ain:Math.max(ain, 0.3)}; R.tEnd = ts + Math.sqrt(2 * 5 / R.skid.ain) + 0.5;
       }
     }
+  } else if (set.sc === "gear"){
+    const G = gearState();
+    R.tEnd = set.gSet === "belt" ? clamp(0.5 / Math.max(G[2].v, 1e-6), 3, 30) : set.gSet === "bike" ? 10 : 12;
   } else {
     R.rel = KIDS.map((_, i) => kidForce(set.kM[i], set.kR[i], set.kT) > set.kGrip ? 0.5 : null);
     R.tEnd = clamp(3 * set.kT, 6, 36);
@@ -1055,6 +1099,7 @@ function selAt(t){
   if (set.sc === "chair") return hand(0, t);
   if (set.sc === "sat") return satAt(t);
   if (set.sc === "car") return carMotion(t);
+  if (set.sc === "gear"){ const o = gOut(gearState()); return circlePt(o.r, o.w * t, o.w); }
   return kidAt(set.kSel, t);
 }
 function toggleArms(){
@@ -1144,76 +1189,333 @@ function vaArrows(ctx, V, p, kv, ka, labels = true){
 function drawScene(){
   const {ctx, w, h} = fitCanvas(document.getElementById("scene"));
   ctx.clearRect(0, 0, w, h);
-  ({chair:sceneChair, sat:sceneSat, car:sceneCar, kar:sceneKar})[set.sc](ctx, w, h);
+  ({chair:sceneChair, sat:sceneSat, car:sceneCar, kar:sceneKar, gear:sceneGears})[set.sc](ctx, w, h);
   label(ctx, `t = ${fmtDur(R.t, true)}`, w - 10, h - 12, COL.P, "right", 14);
 }
-function sceneChair(ctx, w, h){
-  bg(ctx, w, h, "#F7F2EA", "#EDE3D3");
+/* ---- people + shading helpers (copied from the Impulse simulation, 7 Nov 2026) ---- */
+function lgr(ctx, x0, y0, x1, y1, stops){ const g = ctx.createLinearGradient(x0, y0, x1, y1); stops.forEach((c, i) => g.addColorStop(i / (stops.length - 1), c)); return g; }
+function rgr(ctx, x, y, r0, r1, stops){ const g = ctx.createRadialGradient(x, y, r0, x, y, r1); stops.forEach((c, i) => g.addColorStop(i / (stops.length - 1), c)); return g; }
+function softShadow(ctx, cx, y, w, h){
+  ctx.save(); ctx.translate(cx, y); ctx.scale(1, Math.max(0.04, h / w));
+  ctx.fillStyle = rgr(ctx, 0, 0, 0, w / 2, ["rgba(0,0,0,.34)", "rgba(0,0,0,.12)", "rgba(0,0,0,0)"]); ctx.beginPath(); ctx.arc(0, 0, w / 2, 0, TWO_PI); ctx.fill(); ctx.restore();
+}
+function hurtGlow(ctx, x, y, r){
+  ctx.save(); ctx.fillStyle = rgr(ctx, x, y, 0, r, ["rgba(244,67,54,.85)", "rgba(244,67,54,.45)", "rgba(244,67,54,0)"]); ctx.beginPath(); ctx.arc(x, y, r, 0, TWO_PI); ctx.fill(); ctx.restore();
+}
+function impactFlash(ctx, x, y, s, k){                       // star burst; k = force / injury limit (0…1)
+  if (k <= 0.03) return; const R1 = (7 + 15 * k) * s, n = 10;
+  ctx.save(); ctx.globalAlpha = Math.min(1, 0.35 + 0.65 * k);
+  ctx.fillStyle = rgr(ctx, x, y, 0, R1, ["rgba(255,255,255,1)", "rgba(255,213,79,.95)", "rgba(255,112,67,.6)", "rgba(255,112,67,0)"]);
+  ctx.beginPath(); for (let i = 0; i < 2 * n; i++){ const ang = Math.PI * i / n + 0.3, rr = i % 2 ? R1 * 0.42 : R1; ctx.lineTo(x + rr * Math.cos(ang), y + rr * Math.sin(ang)); }
+  ctx.closePath(); ctx.fill(); ctx.restore();
+}
+const ease = p => p * p * (3 - 2 * p);
+const lerp = (a, b, p) => a + (b - a) * p;
+const rot = (v, f) => [v[0] * Math.cos(f) - v[1] * Math.sin(f), v[0] * Math.sin(f) + v[1] * Math.cos(f)];
+// a rounded limb with light shading: dark edge, then a lighter core offset towards the light (top-left)
+function limb(ctx, pts, w, light, dark){
+  ctx.save(); ctx.lineCap = "round"; ctx.lineJoin = "round";
+  const path = () => { ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); };
+  ctx.strokeStyle = dark; ctx.lineWidth = w; path(); ctx.stroke();
+  ctx.translate(-w * 0.1, -w * 0.12); ctx.strokeStyle = light; ctx.lineWidth = w * 0.62; path(); ctx.stroke();
+  ctx.restore();
+}
+
+/* ---------- people: J = joints {head, r, up (unit vector to the top of the head), neck, sh, elF, haF, elB, haB, hip, knF, ftF, knB, ftB} ---------- */
+const LOOK_PE = {skin:"#F3C9A6", skin2:"#C98F68", shirt:"#1E63B5", shirt2:"#123E78", pants:"#263238", pants2:"#0F1A1F", shoe:"#ECEFF1", shoe2:"#90A4AE", hair:"#5D4037"};
+const LOOK_RIDER = {skin:"#F3C9A6", skin2:"#C98F68", shirt:"#E64A19", shirt2:"#9A2E0B", pants:"#37474F", pants2:"#1C262B", shoe:"#263238", shoe2:"#000", hair:"#3E2723"};
+const LOOK_DUMMY = {skin:"#FFD54F", skin2:"#C79100", shirt:"#FFCA28", shirt2:"#B88A00", pants:"#FFCA28", pants2:"#B88A00", shoe:"#424242", shoe2:"#111", hair:null, dummy:true};
+function drawPerson(ctx, J, s, look, opt = {}){
+  const sc = s * (opt.scale ?? 1), legW = 6.2 * sc, armW = 4.4 * sc, bodyW = 11 * sc;
+  // back limbs (darker)
+  if (J.ftB) limb(ctx, [J.hip, J.knB, J.ftB], legW, look.pants2, "#111");
+  if (J.ftB){ limb(ctx, [J.knB, J.ftB], legW * 0.9, look.skin2, look.dummy ? "#8D6E00" : "#9C6B4C"); }
+  if (J.haB) limb(ctx, [J.sh, J.elB, J.haB], armW, look.skin2, look.dummy ? "#8D6E00" : "#9C6B4C");
+  // torso (shirt)
+  limb(ctx, [J.sh, J.hip], bodyW, look.shirt, look.shirt2);
+  limb(ctx, [J.hip, [lerp(J.hip[0], J.sh[0], 0.12), lerp(J.hip[1], J.sh[1], 0.12)]], bodyW * 1.02, look.pants, look.pants2);    // waistband / shorts top
+  // front leg: thigh in shorts, shin skin (dummy: all yellow), shoe
+  if (J.ftF){
+    limb(ctx, [J.hip, J.knF], legW * 1.05, look.pants, look.pants2);
+    limb(ctx, [J.knF, J.ftF], legW * 0.92, look.dummy ? look.skin : look.skin, look.dummy ? "#B88A00" : "#B47A55");
+    if (look.dummy){ ctx.fillStyle = "#212121"; ctx.beginPath(); ctx.arc(J.knF[0], J.knF[1], legW * 0.42, 0, TWO_PI); ctx.fill(); }
+  }
+  for (const [ft, kn] of [[J.ftB, J.knB], [J.ftF, J.knF]]) if (ft && !opt.noShoes){
+    const dx = ft[0] - kn[0], dy = ft[1] - kn[1], ang = Math.atan2(dy, dx) - Math.PI / 2;
+    ctx.save(); ctx.translate(ft[0], ft[1]); ctx.rotate(ang); ctx.fillStyle = lgr(ctx, 0, -3 * sc, 0, 3 * sc, [look.shoe, look.shoe2]);
+    ctx.beginPath(); ctx.ellipse(2.4 * sc, -1.0 * sc, 5.2 * sc, 2.6 * sc, 0, 0, TWO_PI); ctx.fill(); ctx.restore();
+  }
+  // front arm
+  if (J.haF){ limb(ctx, [J.sh, J.elF], armW * 1.08, look.shirt, look.shirt2); limb(ctx, [J.elF, J.haF], armW, look.skin, look.dummy ? "#B88A00" : "#B47A55");
+    ctx.fillStyle = look.skin; ctx.beginPath(); ctx.arc(J.haF[0], J.haF[1], armW * 0.55, 0, TWO_PI); ctx.fill(); }
+  if (look.dummy){ for (const p of [J.sh, J.hip]){ dummyMark(ctx, p[0], p[1], 2.6 * sc); } }
+  // neck + head
+  limb(ctx, [J.neck, J.head], 5 * sc, look.skin, look.dummy ? "#B88A00" : "#B47A55");
+  drawHead(ctx, J, sc, look, opt);
+}
+function dummyMark(ctx, x, y, r){                            // round black-and-yellow crash-test target
+  ctx.save(); ctx.fillStyle = "#FFEB3B"; ctx.beginPath(); ctx.arc(x, y, r, 0, TWO_PI); ctx.fill();
+  ctx.fillStyle = "#111"; for (const a0 of [0, Math.PI]){ ctx.beginPath(); ctx.moveTo(x, y); ctx.arc(x, y, r, a0, a0 + Math.PI / 2); ctx.closePath(); ctx.fill(); }
+  ctx.strokeStyle = "#111"; ctx.lineWidth = Math.max(0.6, r * 0.18); ctx.beginPath(); ctx.arc(x, y, r, 0, TWO_PI); ctx.stroke(); ctx.restore();
+}
+function drawHead(ctx, J, sc, look, opt){
+  const [hx, hy] = J.head, r = J.r, up = J.up, ua = Math.atan2(up[1], up[0]), fw = J.fw ?? [-up[1], up[0]];
+  const sq = opt.squash ?? 0;                                // flattening on the side that hits (px)
+  ctx.save(); ctx.translate(hx, hy); ctx.rotate(ua + Math.PI / 2);   // local: −y = top of the head
+  ctx.fillStyle = rgr(ctx, -r * 0.35, -r * 0.35, r * 0.1, r * 1.1, [look.dummy ? "#FFF59D" : "#FFE0C7", look.skin, look.skin2]);
+  ctx.beginPath(); ctx.ellipse(0, 0, r + sq * 0.5, r - sq * 0.5, 0, 0, TWO_PI); ctx.fill();
+  ctx.strokeStyle = look.dummy ? "#8D6E00" : "#9C6B4C"; ctx.lineWidth = Math.max(0.6, 0.12 * sc); ctx.stroke();
+  const fs = Math.sign(fw[0] * Math.cos(ua + Math.PI / 2) + fw[1] * Math.sin(ua + Math.PI / 2)) || 1;   // which local x side is the face
+  if (look.hair){ ctx.fillStyle = look.hair; ctx.beginPath(); ctx.arc(0, 0, r * 1.02, Math.PI * (fs > 0 ? 1.0 : 1.35), Math.PI * (fs > 0 ? 1.65 : 2.0)); ctx.lineTo(0, -r * 0.1); ctx.fill();
+    ctx.beginPath(); ctx.arc(-fs * r * 0.25, -r * 0.2, r * 0.82, Math.PI * 1.05, Math.PI * 1.95); ctx.fill(); }
+  // face: eye, ear, nose bump
+  ctx.fillStyle = look.dummy ? "#111" : "#3E2723"; ctx.beginPath(); ctx.arc(fs * r * 0.5, -r * 0.12, Math.max(0.7, r * 0.11), 0, TWO_PI); ctx.fill();
+  if (!look.dummy){ ctx.fillStyle = look.skin2; ctx.beginPath(); ctx.ellipse(-fs * r * 0.08, r * 0.05, r * 0.16, r * 0.24, 0, 0, TWO_PI); ctx.fill();
+    ctx.strokeStyle = "#B47A55"; ctx.lineWidth = Math.max(0.6, r * 0.09); ctx.beginPath(); ctx.arc(fs * r * 0.55, r * 0.42, r * 0.22, fs > 0 ? 0.3 : 1.9, fs > 0 ? 1.3 : 2.9); ctx.stroke(); }
+  else dummyMark(ctx, -fs * r * 0.1, r * 0.05, r * 0.38);
+  // bicycle helmet: hard shell + white EPS foam on the top half, vents, strap
+  if (opt.helmet){ const f = Math.max(r * 0.15, opt.helmet - (opt.foamSquash ?? 0)), sh = opt.helmet * 0.38, R0 = r + f + sh;
+    const a0 = Math.PI * 0.95, a1 = Math.PI * 2.05;
+    // white EPS foam band (squashes), then the hard green shell with vents, then the strap
+    ctx.fillStyle = "#FAFAFA"; ctx.beginPath(); ctx.arc(0, 0, r + f, a0, a1); ctx.arc(0, 0, r * 0.97, a1, a0, true); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "rgba(158,158,158,.75)"; for (let i = 0; i < 10; i++){ const aa = a0 + (a1 - a0) * (i + 0.5) / 10, rr = r + f * 0.5; ctx.beginPath(); ctx.arc(rr * Math.cos(aa), rr * Math.sin(aa), Math.max(0.5, f * 0.11), 0, TWO_PI); ctx.fill(); }
+    ctx.fillStyle = lgr(ctx, -R0, -R0, R0 * 0.6, R0 * 0.2, ["#81C784", "#2E7D32", "#1B5E20"]); ctx.beginPath(); ctx.arc(0, 0, R0, a0 - 0.04, a1 + 0.04); ctx.arc(0, 0, r + f, a1, a0, true); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "rgba(0,0,0,.6)"; for (const aa of [1.22, 1.4, 1.6, 1.78]){ ctx.beginPath(); ctx.arc(0, 0, R0 - sh * 0.15, Math.PI * aa - 0.06, Math.PI * aa + 0.06); ctx.arc(0, 0, r + f + sh * 0.15, Math.PI * aa + 0.06, Math.PI * aa - 0.06, true); ctx.closePath(); ctx.fill(); }
+    ctx.fillStyle = "rgba(255,255,255,.35)"; ctx.beginPath(); ctx.arc(0, 0, R0 - sh * 0.3, Math.PI * 1.1, Math.PI * 1.35); ctx.arc(0, 0, R0 - sh * 0.7, Math.PI * 1.35, Math.PI * 1.1, true); ctx.closePath(); ctx.fill();
+    ctx.strokeStyle = "#212121"; ctx.lineWidth = Math.max(0.6, r * 0.08); ctx.beginPath(); ctx.moveTo(-fs * r * 0.1, -r * 0.2); ctx.lineTo(fs * r * 0.25, r * 0.85); ctx.stroke(); }
+  ctx.restore();
+}
+
+
+/* ---------- shared scenery helpers (7 Nov 2026) ---------- */
+function rnd(seed){ let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
+function hull(pts){                                          // convex hull (monotone chain), for the side-view torso
+  const p = pts.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]), cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+  const lo = [], up = [];
+  for (const q of p){ while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], q) <= 0) lo.pop(); lo.push(q); }
+  for (const q of p.slice().reverse()){ while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], q) <= 0) up.pop(); up.push(q); }
+  return lo.slice(0, -1).concat(up.slice(0, -1));
+}
+function poly(ctx, pts){ ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); }
+function ik2(a, b, L1, L2, bendSign){                        // two-link joint (knee/elbow) between a and b
+  const dx = b[0] - a[0], dy = b[1] - a[1], d = Math.min(Math.hypot(dx, dy), L1 + L2 - 1e-6), ang = Math.atan2(dy, dx);
+  const c = clamp((L1 * L1 + d * d - L2 * L2) / (2 * L1 * d || 1), -1, 1), off = Math.acos(c) * bendSign;
+  return [a[0] + L1 * Math.cos(ang + off), a[1] + L1 * Math.sin(ang + off)];
+}
+function curvedArrow(ctx, cx, cy, R, a0, a1, col, lw = 2.4, sy = 1){   // arc (screen angles) with a head at a1; sy squashes vertically
+  ctx.save(); ctx.strokeStyle = col; ctx.fillStyle = col; ctx.lineWidth = lw; ctx.lineCap = "round";
+  ctx.beginPath(); const n = 24; for (let i = 0; i <= n; i++){ const a = a0 + (a1 - a0) * i / n; const x = cx + R * Math.cos(a), y = cy + R * Math.sin(a) * sy; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); } ctx.stroke();
+  const d = Math.sign(a1 - a0), tx = -Math.sin(a1) * d, ty = Math.cos(a1) * d * sy, tl = Math.hypot(tx, ty) || 1, ux = tx / tl, uy = ty / tl, hx = cx + R * Math.cos(a1), hy = cy + R * Math.sin(a1) * sy, hs = 4 + lw * 1.6;
+  ctx.beginPath(); ctx.moveTo(hx + ux * hs * 0.6, hy + uy * hs * 0.6); ctx.lineTo(hx - ux * hs * 0.6 - uy * hs * 0.5, hy - uy * hs * 0.6 + ux * hs * 0.5); ctx.lineTo(hx - ux * hs * 0.6 + uy * hs * 0.5, hy - uy * hs * 0.6 - ux * hs * 0.5); ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+/* ---------- 🪑 rotating chair: top view and side view ---------- */
+const LOOK_SIT = {skin:"#F3C9A6", skin2:"#C98F68", shirt:"#26A69A", shirt2:"#00695C", pants:"#4A6FB5", pants2:"#22386B", shoe:"#ECEFF1", shoe2:"#90A4AE", hair:"#5D4037"};
+function dumbbell(ctx, x, y, ang, k, m){                    // a hand weight seen from the side/above, bar along ang
+  const L = Math.max(10, 0.16 * k), Rp = Math.max(4, (0.035 + 0.012 * Math.min(m, 3)) * k);
+  ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+  ctx.strokeStyle = "#90A4AE"; ctx.lineWidth = Math.max(2, 0.018 * k); ctx.beginPath(); ctx.moveTo(-L / 2, 0); ctx.lineTo(L / 2, 0); ctx.stroke();
+  for (const sx of [-1, 1]){ ctx.fillStyle = lgr(ctx, 0, -Rp, 0, Rp, ["#78909C", "#263238", "#455A64"]); ctx.fillRect(sx * L / 2 - (sx > 0 ? Rp * 0.7 : 0), -Rp, Rp * 0.7, 2 * Rp); }
+  ctx.restore();
+}
+function sceneChairTop(ctx, w, h){
+  // wooden floor
+  ctx.fillStyle = lgr(ctx, 0, 0, w, h, ["#E9D4B4", "#D9BC94"]); ctx.fillRect(0, 0, w, h);
   const rOpen = set.chR, Rw = Math.max(rOpen, CH.rIn) + 0.22, V = topView(w, h, Rw), k = V.ppm, t = R.t;
-  ctx.save(); ctx.strokeStyle = "rgba(141,110,99,.18)"; ctx.lineWidth = 1;            // floor tiles 0.25 m
-  for (let x = -4; x <= 4; x += 0.25){ ctx.beginPath(); ctx.moveTo(V.X(x), 0); ctx.lineTo(V.X(x), h); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, V.Y(x)); ctx.lineTo(w, V.Y(x)); ctx.stroke(); }
+  ctx.save(); ctx.strokeStyle = "rgba(120,80,40,.18)"; ctx.lineWidth = 1;
+  for (let y = -6; y <= 6; y += 0.14){ ctx.beginPath(); ctx.moveTo(0, V.Y(y)); ctx.lineTo(w, V.Y(y)); ctx.stroke();
+    const off = ((Math.round(y / 0.14) * 0.37) % 1.2); for (let x = -6 + off; x <= 6; x += 1.2){ ctx.beginPath(); ctx.moveTo(V.X(x), V.Y(y)); ctx.lineTo(V.X(x), V.Y(y + 0.14)); ctx.stroke(); } }
   ctx.restore();
-  dashedCircle(ctx, V.cx, V.cy, CH.rIn * k, "rgba(38,50,56,.35)");
-  dashedCircle(ctx, V.cx, V.cy, rOpen * k, "rgba(38,50,56,.35)");
+  dashedCircle(ctx, V.cx, V.cy, CH.rIn * k, "rgba(38,50,56,.4)");
+  dashedCircle(ctx, V.cx, V.cy, rOpen * k, "rgba(38,50,56,.4)");
   label(ctx, `dashed circles: hands with arms closed (${f2(CH.rIn)} m) and open (${f2(rOpen)} m)`, 10, 32, COL.muted, "left", 11.5);
-  // chair base (does not turn) and seat
-  ctx.save(); ctx.strokeStyle = "#455A64"; ctx.lineWidth = Math.max(3, 0.04 * k); ctx.lineCap = "round";
-  for (let i = 0; i < 5; i++){ const a = Math.PI / 2 + i * TWO_PI / 5; ctx.beginPath(); ctx.moveTo(V.cx, V.cy); ctx.lineTo(V.cx + Math.cos(a) * 0.33 * k, V.cy - Math.sin(a) * 0.33 * k); ctx.stroke();
-    ctx.fillStyle = "#263238"; ctx.beginPath(); ctx.arc(V.cx + Math.cos(a) * 0.33 * k, V.cy - Math.sin(a) * 0.33 * k, 0.03 * k, 0, TWO_PI); ctx.fill(); }
-  ctx.restore();
-  const th = chairTheta(t), r = rAt(t);
+  // chair base (does not turn): 5 legs with castors
+  softShadow(ctx, V.cx + 4, V.cy + 6, 0.8 * k, 0.8 * k);
+  for (let i = 0; i < 5; i++){ const a = Math.PI / 2 + i * TWO_PI / 5, ex = V.cx + Math.cos(a) * 0.33 * k, ey = V.cy - Math.sin(a) * 0.33 * k;
+    limb(ctx, [[V.cx, V.cy], [ex, ey]], Math.max(4, 0.045 * k), "#78909C", "#263238");
+    ctx.fillStyle = rgr(ctx, ex - 1, ey - 1, 0, 0.035 * k, ["#616161", "#111"]); ctx.beginPath(); ctx.arc(ex, ey, Math.max(3, 0.03 * k), 0, TWO_PI); ctx.fill(); }
+  const th = chairTheta(t), r = rAt(t), m = set.chM;
   ctx.save(); ctx.translate(V.cx, V.cy); ctx.rotate(-th);
-  ctx.fillStyle = "#78909C"; ctx.strokeStyle = "#455A64"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, 0.24 * k, 0, TWO_PI); ctx.fill(); ctx.stroke();
-  ctx.lineCap = "round"; ctx.strokeStyle = "#C99A5B"; ctx.lineWidth = Math.max(5, 0.075 * k);   // arms
-  ctx.beginPath(); ctx.moveTo(-0.15 * k, 0); ctx.lineTo(-r * k, 0); ctx.moveTo(0.15 * k, 0); ctx.lineTo(r * k, 0); ctx.stroke();
-  ctx.strokeStyle = "#F1C27D"; ctx.lineWidth = Math.max(3, 0.055 * k); ctx.stroke();
-  ctx.fillStyle = "#26A69A"; ctx.strokeStyle = "#00796B"; ctx.lineWidth = 2;                     // shoulders
-  ctx.beginPath(); ctx.ellipse(0, 0, 0.21 * k, 0.11 * k, 0, 0, TWO_PI); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = "#6D4C41"; ctx.beginPath(); ctx.arc(0, 0, 0.085 * k, 0, TWO_PI); ctx.fill();   // hair
-  ctx.fillStyle = "#F1C27D"; ctx.beginPath(); ctx.arc(0, -0.03 * k, 0.05 * k, 0, TWO_PI); ctx.fill();  // face points forward
-  for (const sx of [-1, 1]){ ctx.fillStyle = "#37474F"; ctx.strokeStyle = "#1F2A30"; ctx.beginPath(); ctx.arc(sx * r * k, 0, Math.max(6, 0.055 * k), 0, TWO_PI); ctx.fill(); ctx.stroke(); }
+  // seat cushion + backrest (behind the person, i.e. +y local)
+  ctx.fillStyle = rgr(ctx, -0.06 * k, -0.06 * k, 0.02 * k, 0.26 * k, ["#546E7A", "#37474F", "#263238"]); ctx.beginPath(); ctx.arc(0, 0, 0.24 * k, 0, TWO_PI); ctx.fill();
+  ctx.fillStyle = lgr(ctx, 0, 0.14 * k, 0, 0.24 * k, ["#90A4AE", "#546E7A"]); ctx.beginPath(); ctx.ellipse(0, 0.2 * k, 0.23 * k, 0.05 * k, 0, 0, TWO_PI); ctx.fill();   // backrest seen from above
+  // legs: thighs forward (−y local), knees
+  const LS = LOOK_SIT, P = (x, y) => [x * k, y * k];
+  for (const sx of [-1, 1]){ limb(ctx, [P(sx * 0.09, 0.02), P(sx * 0.11, -0.40)], 0.11 * k, LS.pants, LS.pants2);
+    ctx.fillStyle = LS.pants2; ctx.beginPath(); ctx.arc(sx * 0.11 * k, -0.40 * k, 0.065 * k, 0, TWO_PI); ctx.fill(); }
+  // arms: shoulder (±0.19) → elbow (IK, elbows forward) → hand at ±r on the x axis
+  const L1 = 0.29, L2 = 0.28;
+  for (const sx of [-1, 1]){ const S = [sx * 0.19, 0], Hd = [sx * r, 0], E = ik2(S, Hd, L1, L2, -sx);
+    limb(ctx, [P(...S), P(...E)], 0.085 * k, LS.shirt, LS.shirt2); limb(ctx, [P(...E), P(...Hd)], 0.07 * k, LS.skin, "#B47A55");
+    dumbbell(ctx, Hd[0] * k, 0, Math.PI / 2, k, m); }
+  // shoulders / back (T-shirt) and head with hair seen from above, nose forward
+  ctx.fillStyle = rgr(ctx, -0.05 * k, -0.04 * k, 0.02 * k, 0.24 * k, ["#4DB6AC", LS.shirt, LS.shirt2]); ctx.beginPath(); ctx.ellipse(0, 0.01 * k, 0.22 * k, 0.12 * k, 0, 0, TWO_PI); ctx.fill();
+  ctx.fillStyle = LS.skin; ctx.beginPath(); ctx.ellipse(0, -0.085 * k, 0.025 * k, 0.03 * k, 0, 0, TWO_PI); ctx.fill();   // nose
+  for (const sx of [-1, 1]){ ctx.beginPath(); ctx.ellipse(sx * 0.085 * k, -0.01 * k, 0.018 * k, 0.03 * k, 0, 0, TWO_PI); ctx.fill(); }   // ears
+  ctx.fillStyle = rgr(ctx, -0.03 * k, -0.03 * k, 0.01 * k, 0.1 * k, ["#8D6E63", LS.hair, "#3E2723"]); ctx.beginPath(); ctx.arc(0, -0.01 * k, 0.085 * k, 0, TWO_PI); ctx.fill();
   ctx.restore();
   // v and a arrows at both hands (same scale for open and closed arms)
   const wO = chairOmega(set.chMode, set.chT, set.chM, rOpen, rOpen), wC = chairOmega(set.chMode, set.chT, set.chM, rOpen, CH.rIn);
   const vRef = Math.max(wO * rOpen, wC * CH.rIn), aRef = Math.max(wO * wO * rOpen, wC * wC * CH.rIn);
   const kv = Rw * k * 0.42 / vRef, ka = Rw * k * 0.32 / aRef;
   vaArrows(ctx, V, hand(0, t), kv, ka, true); vaArrows(ctx, V, hand(1, t), kv, ka, false);
-  const wNow = chairW(t);
+  label(ctx, "view from above", 10, h - 12, COL.muted, "left", 11.5);
+}
+// 3-D head for the side view: a shaded ball whose hair, face and ears are fixed to the head, so they all turn together.
+// th = turn angle (same as the body); forward = (−sin th, cos th) in (X, Z), Z = away from the viewer.
+const HEAD_CV = document.createElement("canvas");
+function drawHead3D(ctx, cx, cy, R, th, look){
+  const dpr = window.devicePixelRatio || 1, N = Math.max(8, Math.ceil(2 * R * dpr)), fX = -Math.sin(th), fZ = Math.cos(th), sX = Math.cos(th), sZ = Math.sin(th);
+  if (HEAD_CV.width !== N){ HEAD_CV.width = N; HEAD_CV.height = N; }
+  const hx = HEAD_CV.getContext("2d"), img = hx.createImageData(N, N), D = img.data;
+  const hex = c => [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)];
+  const SK = hex(look.skin), HR = hex(look.hair), L = [-0.45, 0.55, 0.70];
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++){
+    const x = (i + 0.5) / N * 2 - 1, y = 1 - (j + 0.5) / N * 2, r2 = x * x + y * y; if (r2 > 1) continue;
+    const z = Math.sqrt(1 - r2), X = x, Z = -z, H = y;                      // view → world (Z away from the viewer)
+    const af = X * fX + Z * fZ, au = H;                                      // along the face direction, up
+    const hairT = clamp(Math.max((au - 0.40) * 6, (0.02 - af) * 6) * (au > -0.6 ? 1 : 0), 0, 1);   // back half + top cap, soft hairline
+    const lam = 0.38 + 0.62 * Math.max(0, x * L[0] + y * L[1] + z * L[2]);
+    const k4 = (j * N + i) * 4, edge = clamp((1 - Math.sqrt(r2)) * N * 0.5, 0, 1);
+    for (let c = 0; c < 3; c++) D[k4 + c] = Math.round((SK[c] * (1 - hairT) + HR[c] * hairT) * lam);
+    D[k4 + 3] = Math.round(255 * edge);
+  }
+  hx.putImageData(img, 0, 0);
+  // features: head-space point (along face af, along the arms as, up au) → screen; drawn only on the visible half
+  const P = (af, as, au, rr = 1) => { const n = Math.hypot(af, as, au), X = (af * fX + as * sX) / n * rr, Z = (af * fZ + as * sZ) / n * rr;
+    return {x:cx + X * R, y:cy - au / n * rr * R, z:-Z}; };
+  // ears first (they can stick out at the edge), then the ball, then the face
+  for (const sd of [-1, 1]){ const e = P(0.05, sd, 0.02, 1.0); if (e.z > -0.35){ ctx.fillStyle = look.skin2; ctx.beginPath(); ctx.ellipse(e.x, e.y, R * 0.13 * Math.max(0.35, 1 - Math.abs(e.z)), R * 0.2, 0, 0, TWO_PI); ctx.fill(); } }
+  ctx.drawImage(HEAD_CV, cx - R, cy - R, 2 * R, 2 * R);
+  const nose = P(1, 0, -0.08, 1.07);
+  for (const sd of [-1, 1]){ const e = P(0.94, sd * 0.33, 0.12); if (e.z > 0.12){ ctx.fillStyle = "#3E2723"; ctx.beginPath(); ctx.ellipse(e.x, e.y, R * 0.085 * Math.max(0.35, e.z), R * 0.085, 0, 0, TWO_PI); ctx.fill(); } }
+  const m1 = P(0.9, -0.22, -0.36), m2 = P(0.92, 0, -0.42), m3 = P(0.9, 0.22, -0.36);
+  if (m2.z > 0.15){ ctx.strokeStyle = "#A0522D"; ctx.lineWidth = Math.max(1, R * 0.07); ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(m1.x, m1.y); ctx.quadraticCurveTo(m2.x, m2.y + R * 0.05, m3.x, m3.y); ctx.stroke(); }
+  if (nose.z > -0.3){ ctx.fillStyle = look.skin2; ctx.beginPath(); ctx.ellipse(nose.x, nose.y, R * 0.09, R * 0.11, 0, 0, TWO_PI); ctx.fill(); }
+}
+function sceneChairSide(ctx, w, h){
+  // a room: wall + floor
+  const floorY = h - 40;
+  ctx.fillStyle = lgr(ctx, 0, 0, 0, floorY, ["#F6F1E9", "#E7DCCB"]); ctx.fillRect(0, 0, w, floorY);
+  ctx.fillStyle = lgr(ctx, 0, floorY, 0, h, ["#CDAE86", "#B08A5E"]); ctx.fillRect(0, floorY, w, h - floorY);
+  ctx.fillStyle = "#FFFFFF"; ctx.fillRect(0, floorY - 8, w, 8);
+  const t = R.t, th = chairTheta(t), r = rAt(t), m = set.chM;
+  const k = Math.min((h - 90) / 1.75, w / 2.1), cx = w / 2, tilt = 0.20;
+  // project a point: X (right), Z (top-view y: + = away from the viewer), height H → screen
+  const S = (X, Z, Hh) => [cx + X * k, floorY - Hh * k - Z * k * tilt];
+  const sv = [Math.cos(th), Math.sin(th)], fv = [-Math.sin(th), Math.cos(th)];
+  const at = (a, b, Hh) => S(a * sv[0] + b * fv[0], a * sv[1] + b * fv[1], Hh);   // a along the arms, b forward
+  const depth = (a, b) => a * sv[1] + b * fv[1];                                    // + = further away
+  // base (fixed) with castors, gas column
+  softShadow(ctx, cx, floorY + 2, 0.9 * k, 0.12 * k);
+  const legs = [0, 1, 2, 3, 4].map(i => { const a = Math.PI / 2 + i * TWO_PI / 5; return {a, z:Math.sin(a)}; }).sort((p, q) => q.z - p.z);
+  for (const L of legs){ const e = S(Math.cos(L.a) * 0.32, Math.sin(L.a) * 0.32, 0.07), c = S(0, 0, 0.13);
+    limb(ctx, [c, e], Math.max(3, 0.035 * k), "#78909C", "#263238");
+    ctx.fillStyle = "#111"; ctx.beginPath(); ctx.arc(e[0], e[1] + 0.035 * k, Math.max(2.5, 0.035 * k), 0, TWO_PI); ctx.fill(); }
+  limb(ctx, [S(0, 0, 0.13), S(0, 0, 0.48)], Math.max(4, 0.05 * k), "#B0BEC5", "#455A64");
+  // body parts as 3-D points, drawn back to front
+  const LS = LOOK_SIT, items = [];
+  const backrest = () => { const c = [[-0.21, -0.26, 0.60], [0.21, -0.26, 0.60], [0.21, -0.24, 1.05], [-0.21, -0.24, 1.05]].map(p => at(...p));
+    ctx.fillStyle = lgr(ctx, c[0][0], 0, c[1][0], 0, ["#37474F", "#546E7A", "#263238"]); poly(ctx, c); ctx.fill(); ctx.strokeStyle = "#1C262B"; ctx.lineWidth = 1; ctx.stroke();
+    limb(ctx, [at(0, -0.25, 0.52), at(0, -0.25, 0.62)], Math.max(3, 0.03 * k), "#78909C", "#263238"); };
+  items.push({z:depth(0, -0.25), draw:backrest});
+  items.push({z:0.0001, draw:() => { const c = S(0, 0, 0.52); ctx.fillStyle = rgr(ctx, c[0] - 0.05 * k, c[1] - 0.02 * k, 1, 0.3 * k, ["#607D8B", "#37474F", "#263238"]);
+    ctx.beginPath(); ctx.ellipse(c[0], c[1], 0.25 * k, 0.25 * k * tilt + 0.035 * k, 0, 0, TWO_PI); ctx.fill(); }});
+  for (const sx of [-1, 1]){                                 // legs: thigh forward, shin down
+    const hip = [sx * 0.09, -0.02], knee = [sx * 0.11, 0.42], foot = [sx * 0.11, 0.36];
+    items.push({z:depth(...knee) - 0.001, draw:() => { const H1 = at(...hip, 0.60), K = at(...knee, 0.62), F = at(...foot, 0.26);
+      limb(ctx, [H1, K], 0.13 * k, LS.pants, LS.pants2); limb(ctx, [K, F], 0.10 * k, LS.pants, LS.pants2);
+      ctx.fillStyle = lgr(ctx, 0, F[1] - 4, 0, F[1] + 4, [LS.shoe, LS.shoe2]); ctx.beginPath(); ctx.ellipse(F[0] + fv[0] * 0.04 * k, F[1] + 0.02 * k, 0.07 * k, 0.035 * k, 0, 0, TWO_PI); ctx.fill(); }});
+  }
+  // torso: hull of chest/back points at shoulder and hip height
+  items.push({z:0, draw:() => {
+    const pts = []; for (const a of [-0.2, 0.2]) for (const b of [-0.1, 0.09]){ pts.push(at(a, b, 1.10)); pts.push(at(a * 0.75, b, 0.62)); }
+    const hp = hull(pts); ctx.fillStyle = lgr(ctx, Math.min(...hp.map(p => p[0])), 0, Math.max(...hp.map(p => p[0])), 0, ["#4DB6AC", LS.shirt, LS.shirt2]);
+    poly(ctx, hp); ctx.fill();
+    // head: hair at the back, face on the front side
+    const hc = S(0, 0, 1.31), hr = 0.11 * k, fz = -fv[1], fx = fv[0];
+    limb(ctx, [S(0, 0, 1.10), S(0, 0, 1.2)], 0.07 * k, LS.skin, "#B47A55");
+    drawHead3D(ctx, hc[0], hc[1], hr, th, LS);                                     // hair, face and ears turn together
+  }});
+  for (const sx of [-1, 1]){                                 // arms at shoulder height, hands at ±r
+    const Sh = [sx * 0.19, 0], Hd = [sx * r, 0], E = ik2(Sh, Hd, 0.29, 0.28, -sx);
+    items.push({z:depth(sx * Math.max(r, 0.2), 0), draw:() => { const A = at(...Sh, 1.06), Ee = at(E[0], E[1], 1.02), Hh = at(...Hd, 1.04);
+      limb(ctx, [A, Ee], 0.085 * k, LS.shirt, LS.shirt2); limb(ctx, [Ee, Hh], 0.07 * k, LS.skin, "#B47A55");
+      dumbbell(ctx, Hh[0], Hh[1], Math.atan2(fv[1] * tilt * -1, fv[0]) , k, m); }});
+  }
+  items.sort((p, q) => q.z - p.z).forEach(it => it.draw());
+  // ω arrow around the vertical axis above the head; v arrows at the hands
+  const top = S(0, 0, 1.58), dir = chairW(t) >= 0 ? 1 : -1;
+  ctx.save(); ctx.setLineDash([3, 3]); ctx.strokeStyle = "rgba(38,50,56,.35)"; ctx.beginPath(); ctx.moveTo(...S(0, 0, 0.1)); ctx.lineTo(...S(0, 0, 1.68)); ctx.stroke(); ctx.restore();
+  curvedArrow(ctx, top[0], top[1], 0.26 * k, dir > 0 ? Math.PI * 0.15 : Math.PI * 0.85, dir > 0 ? Math.PI * 0.85 : Math.PI * 0.15, COL.navy, 2.6, tilt);
+  label(ctx, `ω = ${f2(chairW(t))} rad s⁻¹`, top[0] + 0.3 * k, top[1] - 12, COL.navy, "left", 12.5);
+  const kv = 0.5 * k / Math.max(chairW(t) * Math.max(r, set.chR), 0.01);
+  for (const sx of [-1, 1]){ const hx = sx * r, v = [chairW(t) * (-sx * r * Math.sin(th)) , chairW(t) * (sx * r * Math.cos(th))];
+    const p = at(hx, 0, 1.04), q = [p[0] + v[0] * kv, p[1] - v[1] * kv * tilt * -1];
+    if (Math.hypot(q[0] - p[0], q[1] - p[1]) > 4) arrow(ctx, p[0], p[1] - 0.09 * k, q[0], q[1] - 0.09 * k, COL.v, 3); }
+  label(ctx, "side view: the person turns round the vertical axis", 10, h - 12, COL.muted, "left", 11.5);
+}
+function sceneChair(ctx, w, h){
+  (set.chView === "side" ? sceneChairSide : sceneChairTop)(ctx, w, h);
+  const wNow = chairW(R.t);
   label(ctx, set.chMode === "motor" ? `Motor-driven: ω stays ${f2(wNow)} rad s⁻¹` : `Free spin (beyond SL): Iω stays the same · ω = ${f2(wNow)} rad s⁻¹`, 10, 14, COL.navy, "left", 13);
-  label(ctx, "top view", 10, h - 12, COL.muted, "left", 11.5);
+}
+
+/* ---------- 🛰️ satellite: Earth from above the North Pole, in space ---------- */
+const CONT = [[0.2, 0.55, 0.9, 0.35], [1.4, 0.5, 0.7, 0.4], [2.3, 0.62, 0.5, 0.3], [3.1, 0.45, 0.8, 0.45], [4.1, 0.6, 0.6, 0.32], [5.2, 0.5, 0.7, 0.4], [0.9, 0.85, 0.45, 0.12], [3.7, 0.88, 0.5, 0.1]];
+function drawEarth(ctx, x, y, rE, spin){
+  ctx.save();
+  ctx.fillStyle = rgr(ctx, x, y, rE * 0.95, rE * 1.12, ["rgba(129,212,250,.55)", "rgba(129,212,250,0)"]); ctx.beginPath(); ctx.arc(x, y, rE * 1.12, 0, TWO_PI); ctx.fill();   // atmosphere glow
+  ctx.beginPath(); ctx.arc(x, y, rE, 0, TWO_PI); ctx.clip();
+  ctx.fillStyle = rgr(ctx, x - rE * 0.3, y - rE * 0.3, rE * 0.1, rE * 1.05, ["#4FC3F7", "#1976D2", "#0D3C7A"]); ctx.fillRect(x - rE, y - rE, 2 * rE, 2 * rE);
+  if (rE > 14){ const R1 = rnd(7);
+    for (const [a, rr, wa, wr] of CONT){ const n = 12; ctx.beginPath();
+      for (let i = 0; i < n; i++){ const u = i / n * TWO_PI, aa = a + spin + Math.cos(u) * wa * 0.5, ra = rr + Math.sin(u) * wr * 0.5 * (0.75 + 0.5 * R1());
+        const px = x + Math.cos(aa) * ra * rE, py = y - Math.sin(aa) * ra * rE; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+      ctx.closePath(); ctx.fillStyle = lgr(ctx, x - rE, y - rE, x + rE, y + rE, ["#9CCC65", "#558B2F", "#8D6E63"]); ctx.fill(); }
+    ctx.fillStyle = "rgba(255,255,255,.92)"; ctx.beginPath(); ctx.arc(x, y, rE * 0.18, 0, TWO_PI); ctx.fill();             // Arctic ice
+    ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineCap = "round";
+    for (let i = 0; i < 7; i++){ const a = i * 0.9 + spin * 1.3, rr = rE * (0.35 + 0.08 * i % 0.5); ctx.lineWidth = Math.max(1.5, rE * 0.05); ctx.beginPath(); ctx.arc(x, y, rr + rE * 0.08 * (i % 3), a, a + 0.7); ctx.stroke(); }
+  }
+  ctx.fillStyle = lgr(ctx, x - rE, y, x + rE, y, ["rgba(0,0,0,0)", "rgba(0,0,0,0)", "rgba(2,8,30,.55)"]); ctx.fillRect(x - rE, y - rE, 2 * rE, 2 * rE);   // night side (Sun on the left)
+  ctx.restore();
+}
+function drawSatellite(ctx, X, Y, ang){
+  ctx.save(); ctx.translate(X, Y); ctx.rotate(ang);
+  for (const sy of [-1, 1]){ ctx.fillStyle = lgr(ctx, 0, sy * 6, 0, sy * 22, ["#1A237E", "#3949AB"]); ctx.fillRect(-7, sy > 0 ? 7 : -23, 14, 16);
+    ctx.strokeStyle = "rgba(197,202,233,.7)"; ctx.lineWidth = 0.6; for (let i = 1; i < 4; i++){ ctx.beginPath(); ctx.moveTo(-7, (sy > 0 ? 7 : -23) + i * 4); ctx.lineTo(7, (sy > 0 ? 7 : -23) + i * 4); ctx.stroke(); }
+    ctx.beginPath(); ctx.moveTo(0, sy > 0 ? 7 : -23); ctx.lineTo(0, sy > 0 ? 23 : -7); ctx.stroke();
+    ctx.strokeStyle = "#B0BEC5"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(0, sy * 5); ctx.lineTo(0, sy * 7); ctx.stroke(); }
+  ctx.fillStyle = lgr(ctx, -6, -6, 6, 6, ["#FFE082", "#C79100", "#FFD54F", "#8D6E00"]); ctx.fillRect(-7, -6, 14, 12);
+  ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 0.8; ctx.strokeRect(-7, -6, 14, 12);
+  ctx.fillStyle = "#ECEFF1"; ctx.beginPath(); ctx.ellipse(9, 0, 3, 5, 0, 0, TWO_PI); ctx.fill(); ctx.strokeStyle = "#90A4AE"; ctx.stroke();
+  ctx.restore();
 }
 function sceneSat(ctx, w, h){
-  bg(ctx, w, h, "#F4F7FC", "#E6EDF7");
+  ctx.fillStyle = rgr(ctx, w * 0.4, h * 0.4, 10, Math.max(w, h), ["#16264A", "#0B1631", "#050A18"]); ctx.fillRect(0, 0, w, h);
+  const st = rnd(42); for (let i = 0; i < 140; i++){ const sx = st() * w, sy = st() * h, s = st(); ctx.fillStyle = `rgba(255,255,255,${0.25 + 0.6 * s})`; ctx.fillRect(sx, sy, s > 0.9 ? 2 : 1, s > 0.9 ? 2 : 1); }
   const P = R.path; let Rw = R.r0 * 1.12;
   if (P){ let mx = 0; for (let i = 0; i < P.pts.length; i += 5) mx = Math.max(mx, Math.hypot(P.pts[i][0], P.pts[i][1])); Rw = Math.max(Rw, Math.min(mx, 6 * R.r0) * 1.08); }
   const V = topView(w, h, Rw), k = V.ppm, rE = Math.max(3, R_E * k);
-  const gr = ctx.createRadialGradient(V.cx - rE * .3, V.cy - rE * .3, rE * .1, V.cx, V.cy, rE);
-  gr.addColorStop(0, "#64B5F6"); gr.addColorStop(1, "#1565C0");
-  ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(V.cx, V.cy, rE, 0, TWO_PI); ctx.fill();
-  if (rE > 20){ ctx.fillStyle = "rgba(102,187,106,.85)";                                      // simple continents
-    [[-.3, .2, .35, .22], [.25, -.25, .3, .2], [.35, .35, .18, .12]].forEach(([x, y, a, b]) => { ctx.beginPath(); ctx.ellipse(V.cx + x * rE, V.cy + y * rE, a * rE, b * rE, .5, 0, TWO_PI); ctx.fill(); });
-    label(ctx, "Earth", V.cx, V.cy, "#0D47A1", "center", 13); }
-  else label(ctx, "Earth", V.cx, V.cy + rE + 10, "#0D47A1", "center", 12);
+  drawEarth(ctx, V.cx, V.cy, rE, R.t / 86164 * TWO_PI);
+  label(ctx, "Earth", V.cx, rE > 20 ? V.cy + rE + 12 : V.cy + rE + 10, "#0D47A1", "center", 12);
   const s = satAt(R.t);
-  if (!P) dashedCircle(ctx, V.cx, V.cy, R.r0 * k, "rgba(38,50,56,.4)");
+  if (!P) dashedCircle(ctx, V.cx, V.cy, R.r0 * k, "rgba(255,255,255,.55)");
   else {
-    ctx.save(); ctx.strokeStyle = "rgba(38,50,56,.3)"; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5; ctx.beginPath();
+    ctx.save(); ctx.strokeStyle = "rgba(255,255,255,.35)"; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.5; ctx.beginPath();
     P.pts.forEach((q, i) => i ? ctx.lineTo(V.X(q[0]), V.Y(q[1])) : ctx.moveTo(V.X(q[0]), V.Y(q[1]))); ctx.stroke(); ctx.restore();
-    ctx.save(); ctx.strokeStyle = COL.ink; ctx.lineWidth = 2; ctx.beginPath();
+    ctx.save(); ctx.strokeStyle = "#FFD54F"; ctx.lineWidth = 2; ctx.beginPath();
     const n = Math.min(P.pts.length - 1, Math.floor(R.t / P.dt));
     for (let i = 0; i <= n; i++){ const q = P.pts[i]; i ? ctx.lineTo(V.X(q[0]), V.Y(q[1])) : ctx.moveTo(V.X(q[0]), V.Y(q[1])); }
     ctx.lineTo(V.X(s.x), V.Y(s.y)); ctx.stroke(); ctx.restore();
-    dashedCircle(ctx, V.cx, V.cy, R.r0 * k, "rgba(46,125,50,.35)", [2, 6]);
+    dashedCircle(ctx, V.cx, V.cy, R.r0 * k, "rgba(165,214,167,.45)", [2, 6]);
   }
   const X = V.X(s.x), Y = V.Y(s.y), rr = Math.hypot(s.x, s.y);
-  ctx.save(); ctx.strokeStyle = "rgba(96,106,114,.6)"; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(V.cx, V.cy); ctx.lineTo(X, Y); ctx.stroke(); ctx.restore();
-    const nx = -(Y - V.cy), ny = X - V.cx, nn = Math.hypot(nx, ny) || 1;
+  ctx.save(); ctx.strokeStyle = "rgba(255,255,255,.45)"; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(V.cx, V.cy); ctx.lineTo(X, Y); ctx.stroke(); ctx.restore();
+  const nx = -(Y - V.cy), ny = X - V.cx, nn = Math.hypot(nx, ny) || 1;
   if (nn > 110) label(ctx, `r = ${sci(rr)} m`, V.cx + (X - V.cx) * 0.3 + nx / nn * 16, V.cy + (Y - V.cy) * 0.3 + ny / nn * 16, COL.muted, "center", 12);
-  // satellite: body + solar panels, turned to the velocity
-  ctx.save(); ctx.translate(X, Y); ctx.rotate(-Math.atan2(s.vy, s.vx));
-  ctx.fillStyle = "#1E88E5"; ctx.fillRect(-4, -15, 8, 9); ctx.fillRect(-4, 6, 8, 9);
-  ctx.fillStyle = "#B0BEC5"; ctx.strokeStyle = "#455A64"; ctx.lineWidth = 1.5; ctx.fillRect(-6, -5, 12, 10); ctx.strokeRect(-6, -5, 12, 10);
-  ctx.restore();
+  drawSatellite(ctx, X, Y, -Math.atan2(s.vy, s.vx));
   const v = Math.hypot(s.vx, s.vy), a = Math.hypot(s.ax, s.ay), a0 = GM / (R.r0 * R.r0);
   vaArrows(ctx, V, s, 62 / R.v0, 46 / a0, true);
   label(ctx, `v = ${f2(v / 1000)} km s⁻¹ · a = ${sig(a)} m s⁻² (to the centre)`, 10, h - 12, COL.ink, "left", 12);
@@ -1221,65 +1523,285 @@ function sceneSat(ctx, w, h){
           : R.path.end === "escape" ? "fast enough to escape the Earth" : R.v0 < orbit(R.r0).v ? "too slow for a circle: an ellipse inside" : "faster than circular: an ellipse outside")
           : "circular orbit (gravity provides the force)";
   label(ctx, (PRESETS.find(p => p.id === set.sPre)?.name ?? "") + " · " + msg, 10, 14, COL.navy, "left", 13);
+  label(ctx, "view from above the North Pole", 10, 32, COL.muted, "left", 11.5);
   if (R.path && R.path.end === "crash" && R.t >= R.tEnd) label(ctx, "💥 hits the Earth", X, Y - 22, COL.F, "center", 14);
 }
+
+/* ---------- 🚗 car on a bend: road with kerbs, trees, car seen from above ---------- */
+function drawCarTop(ctx, Lc, Wc, paint = ["#EF5350", "#C62828", "#8E0000"]){
+  softShadow(ctx, 2, 3, Lc * 1.05, Wc * 1.1);
+  ctx.fillStyle = "#111"; for (const sx of [-0.3, 0.3]) for (const sy of [-1, 1]) ctx.fillRect(sx * Lc - Lc * 0.09, sy * Wc * 0.47 - Wc * 0.08, Lc * 0.18, Wc * 0.16);
+  ctx.fillStyle = lgr(ctx, 0, -Wc / 2, 0, Wc / 2, paint); ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(-Lc / 2, -Wc / 2, Lc, Wc, Wc * 0.32); else ctx.rect(-Lc / 2, -Wc / 2, Lc, Wc); ctx.fill();
+  ctx.fillStyle = lgr(ctx, 0, -Wc * 0.38, 0, Wc * 0.38, ["#455A64", "#1C262B", "#455A64"]);
+  poly(ctx, [[Lc * 0.20, -Wc * 0.36], [Lc * 0.07, -Wc * 0.40], [Lc * 0.07, Wc * 0.40], [Lc * 0.20, Wc * 0.36]]); ctx.fill();          // windscreen
+  poly(ctx, [[-Lc * 0.30, -Wc * 0.34], [-Lc * 0.22, -Wc * 0.38], [-Lc * 0.22, Wc * 0.38], [-Lc * 0.30, Wc * 0.34]]); ctx.fill();        // rear window
+  ctx.fillStyle = lgr(ctx, 0, -Wc * 0.38, 0, Wc * 0.38, [paint[0], paint[1]]); ctx.fillRect(-Lc * 0.22, -Wc * 0.38, Lc * 0.29, Wc * 0.76);   // roof
+  ctx.fillStyle = "rgba(255,255,255,.25)"; ctx.fillRect(-Lc * 0.2, -Wc * 0.33, Lc * 0.25, Wc * 0.12);
+  ctx.fillStyle = "#FFF59D"; for (const sy of [-1, 1]){ ctx.beginPath(); ctx.ellipse(Lc * 0.47, sy * Wc * 0.33, Lc * 0.025, Wc * 0.09, 0, 0, TWO_PI); ctx.fill(); }
+  ctx.fillStyle = "#B71C1C"; for (const sy of [-1, 1]) ctx.fillRect(-Lc * 0.5, sy * Wc * 0.33 - Wc * 0.07, Lc * 0.03, Wc * 0.14);
+  ctx.fillStyle = paint[2]; for (const sy of [-1, 1]){ ctx.beginPath(); ctx.ellipse(Lc * 0.10, sy * Wc * 0.55, Lc * 0.035, Wc * 0.07, 0, 0, TWO_PI); ctx.fill(); }   // mirrors
+}
+function drawTree(ctx, x, y, r){
+  softShadow(ctx, x + r * 0.35, y + r * 0.35, r * 2.2, r * 2.2);
+  ctx.fillStyle = rgr(ctx, x - r * 0.35, y - r * 0.35, r * 0.1, r * 1.05, ["#81C784", "#388E3C", "#1B5E20"]); ctx.beginPath(); ctx.arc(x, y, r, 0, TWO_PI); ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,.12)"; ctx.beginPath(); ctx.arc(x - r * 0.3, y - r * 0.3, r * 0.45, 0, TWO_PI); ctx.fill();
+}
 function sceneCar(ctx, w, h){
-  bg(ctx, w, h, "#DCEDC8", "#C5E1A5");
-  const r = set.cR, Rw = r + 14, V = topView(w, h, Rw), k = V.ppm;
-  ctx.fillStyle = "#8D9EA6"; ctx.beginPath(); ctx.arc(V.cx, V.cy, (r + 4) * k, 0, TWO_PI); ctx.arc(V.cx, V.cy, Math.max(0, r - 4) * k, 0, TWO_PI, true); ctx.fill();
-  ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(V.cx, V.cy, (r + 4) * k, 0, TWO_PI); ctx.stroke();
-  ctx.beginPath(); ctx.arc(V.cx, V.cy, Math.max(0, r - 4) * k, 0, TWO_PI); ctx.stroke();
+  ctx.fillStyle = lgr(ctx, 0, 0, w, h, ["#9CCC65", "#7CB342"]); ctx.fillRect(0, 0, w, h);
+  const gr = rnd(3); ctx.fillStyle = "rgba(51,105,30,.18)"; for (let i = 0; i < 260; i++) ctx.fillRect(gr() * w, gr() * h, 2, 2);
+  const r = set.cR, Rw = r + 14, V = topView(w, h, Rw), k = V.ppm, rO = (r + 4) * k, rI = Math.max(0, r - 4) * k;
+  ctx.fillStyle = rgr(ctx, V.cx, V.cy, rI, rO, ["#5C6166", "#4A4F55", "#5C6166"]); ctx.beginPath(); ctx.arc(V.cx, V.cy, rO, 0, TWO_PI); ctx.arc(V.cx, V.cy, rI, 0, TWO_PI, true); ctx.fill();
+  const as = rnd(9); ctx.fillStyle = "rgba(255,255,255,.07)"; for (let i = 0; i < 300; i++){ const a = as() * TWO_PI, rr = rI + as() * (rO - rI); ctx.fillRect(V.cx + Math.cos(a) * rr, V.cy + Math.sin(a) * rr, 1.5, 1.5); }
+  for (const [rr, ww] of [[rO, Math.max(3, 0.7 * k)], [rI, Math.max(3, 0.7 * k)]]){                          // red/white kerbs
+    const n = Math.max(24, Math.round(TWO_PI * rr / Math.max(8, 2 * k)));
+    for (let i = 0; i < n; i++){ ctx.strokeStyle = i % 2 ? "#FFFFFF" : "#D32F2F"; ctx.lineWidth = ww; ctx.beginPath(); ctx.arc(V.cx, V.cy, rr, i * TWO_PI / n, (i + 1) * TWO_PI / n); ctx.stroke(); } }
   dashedCircle(ctx, V.cx, V.cy, r * k, "rgba(255,255,255,.9)", [10, 10], 2);
-  ctx.fillStyle = "#AED581"; ctx.beginPath(); ctx.arc(V.cx, V.cy, Math.max(0, r - 4) * k, 0, TWO_PI); ctx.fill();
+  ctx.fillStyle = lgr(ctx, 0, V.cy - rI, 0, V.cy + rI, ["#AED581", "#8BC34A"]); ctx.beginPath(); ctx.arc(V.cx, V.cy, Math.max(0, rI - 0.35 * k), 0, TWO_PI); ctx.fill();
+  const tr = rnd(11), tR = Math.max(5, 2.2 * k);                                       // trees inside and outside the bend
+  for (let i = 0; i < 26; i++){ const a = tr() * TWO_PI, inside = i % 3 === 0, rr = inside ? (rI - tR * 1.6) * (0.25 + 0.7 * tr()) : rO + tR * (1.6 + 2.5 * tr());
+    if (inside && rr < tR) continue; drawTree(ctx, V.cx + Math.cos(a) * rr, V.cy + Math.sin(a) * rr, tR * (0.7 + 0.5 * tr())); }
   ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(V.cx, V.cy, 3, 0, TWO_PI); ctx.fill();
   label(ctx, "centre", V.cx, V.cy + 12, COL.muted, "center", 11);
-  if (set.cBank > 0) label(ctx, `road banked at ${set.cBank}° (outside edge higher)`, V.cx, V.cy - (r + 4) * k - 8, COL.muted, "center", 11.5);
+  if (set.cBank > 0) label(ctx, `road banked at ${set.cBank}° (outside edge higher)`, V.cx, V.cy - rO - 8, COL.ink, "center", 11.5);
   const S = R.skid, t = R.t, p = carMotion(t);
-  if (S && t > S.ts){                                       // skid marks
-    ctx.save(); ctx.strokeStyle = "rgba(33,33,33,.55)"; ctx.lineWidth = 3; ctx.setLineDash([2, 3]); ctx.beginPath();
+  if (S && t > S.ts){
+    ctx.save(); ctx.strokeStyle = "rgba(20,20,20,.6)"; ctx.lineWidth = 3; ctx.setLineDash([2, 3]); ctx.beginPath();
     for (let tt = S.ts; tt <= t + 1e-9; tt += 0.03){ const q = carMotion(Math.min(tt, t)); tt === S.ts ? ctx.moveTo(V.X(q.x), V.Y(q.y)) : ctx.lineTo(V.X(q.x), V.Y(q.y)); }
     ctx.stroke(); ctx.restore();
   }
-  // car body turned to its direction of travel (keeps the last direction once stopped)
   let dir = Math.atan2(p.vy, p.vx); if (Math.hypot(p.vx, p.vy) < 1e-3){ const q = carMotion(Math.max(0, (S ? S.ts : 0))); dir = Math.atan2(q.vy, q.vx); }
-  const Lc = Math.max(26, 4.4 * k), Wc = Math.max(12, 1.8 * k);
-  ctx.save(); ctx.translate(V.X(p.x), V.Y(p.y)); ctx.rotate(-dir);
-  ctx.fillStyle = "#C62828"; ctx.strokeStyle = "#7F0000"; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-Lc / 2, -Wc / 2, Lc, Wc, 4) : ctx.rect(-Lc / 2, -Wc / 2, Lc, Wc); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = "#263238"; ctx.fillRect(Lc * 0.08, -Wc * 0.38, Lc * 0.2, Wc * 0.76); ctx.fillRect(-Lc * 0.36, -Wc * 0.34, Lc * 0.14, Wc * 0.68);
-  ctx.restore();
+  const Lc = Math.max(28, 4.4 * k), Wc = Math.max(13, 1.8 * k);
+  ctx.save(); ctx.translate(V.X(p.x), V.Y(p.y)); ctx.rotate(-dir); drawCarTop(ctx, Lc, Wc); ctx.restore();
   const v = set.cV;
   if (v > 0) vaArrows(ctx, V, p, 70 / v, 52 / Math.max(v * v / r, S && S.ad ? S.ad : 0, 0.01), true);
-  const sb = niceUp(Rw / 5);                               // scale bar
+  const sb = niceUp(Rw / 5);
   ctx.strokeStyle = COL.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(12, h - 14); ctx.lineTo(12 + sb * k, h - 14); ctx.stroke();
   label(ctx, `${sb} m`, 12 + sb * k / 2, h - 26, COL.ink, "center", 11.5);
   const C = carNow();
   label(ctx, `${surfById(set.cSurf).name} · friction needed ${fmtF(Math.abs(C.Ff))}, max ${fmtF(C.Fmax)} ${C.ok ? "✔ grips" : "✘ skids"}`, 10, 14, C.ok ? COL.navy : COL.F, "left", 13);
   if (S && t > S.ts) label(ctx, S.dir === "out" ? "slides off along the tangent" : "slides down the banked road", V.X(p.x), V.Y(p.y) - 40, COL.F, "center", 13);
 }
+
+/* ---------- 🎠 playground carousel (roundabout) with three children, from above ---------- */
+const KHAIR = ["#6D4C41", "#F9A825", "#212121"];
+function drawKidTop(ctx, X, Y, ang, k, i, held){             // child seen from above; ang = direction the child faces (screen)
+  const s = Math.max(0.55, 0.2 * k / 9);
+  ctx.save(); ctx.translate(X, Y); ctx.rotate(ang);
+  softShadow(ctx, 3, 3, 26 * s, 20 * s);
+  const arm = held ? [[6 * s, -7 * s], [14 * s, -4 * s]] : [[4 * s, -9 * s], [9 * s, -12 * s]];
+  for (const sy of [-1, 1]){ limb(ctx, [[0, sy * 7 * s], [arm[0][0], sy * -arm[0][1]], [arm[1][0], sy * -arm[1][1]]], 4.2 * s, "#F3C9A6", "#B47A55"); }
+  ctx.fillStyle = lgr(ctx, 0, -10 * s, 0, 10 * s, [KCOL[i], KCOL[i], "rgba(0,0,0,.35)"]); ctx.beginPath(); ctx.ellipse(0, 0, 6.5 * s, 10 * s, 0, 0, TWO_PI); ctx.fill();
+  ctx.fillStyle = KCOL[i]; ctx.beginPath(); ctx.ellipse(-1, 0, 6 * s, 9.5 * s, 0, 0, TWO_PI); ctx.fill();
+  ctx.fillStyle = rgr(ctx, -1.5 * s, -1.5 * s, 0.5, 6 * s, ["#8D6E63", KHAIR[i], "#111"]); ctx.beginPath(); ctx.arc(1 * s, 0, 5.2 * s, 0, TWO_PI); ctx.fill();
+  ctx.restore();
+  ctx.save(); ctx.font = `700 ${Math.round(9 + 2 * s)}px "Segoe UI",Arial,sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.lineWidth = 3; ctx.strokeStyle = "rgba(255,255,255,.95)"; ctx.strokeText(KIDS[i], X, Y + 16 * s); ctx.fillStyle = KCOL[i]; ctx.fillText(KIDS[i], X, Y + 16 * s); ctx.restore();
+}
 function sceneKar(ctx, w, h){
-  bg(ctx, w, h, "#F3EBDD", "#E7DAC2");
+  ctx.fillStyle = lgr(ctx, 0, 0, w, h, ["#B85C4A", "#9C4A3A"]); ctx.fillRect(0, 0, w, h);                // rubber safety surface
+  const sp = rnd(5); for (let i = 0; i < 700; i++){ ctx.fillStyle = sp() > 0.5 ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.10)"; ctx.fillRect(sp() * w, sp() * h, 2, 2); }
   const Rw = 3.0, V = topView(w, h, Rw), k = V.ppm, t = R.t, T = set.kT, th = TWO_PI / T * t;
+  softShadow(ctx, V.cx + 6, V.cy + 8, (KR + 0.2) * 2 * k, (KR + 0.2) * 2 * k);
   ctx.save(); ctx.translate(V.cx, V.cy); ctx.rotate(-th);
-  for (let i = 0; i < 8; i++){ ctx.fillStyle = i % 2 ? "#FFCC80" : "#90CAF9"; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, KR * k, i * Math.PI / 4, (i + 1) * Math.PI / 4); ctx.closePath(); ctx.fill(); }
-  ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, KR * k, 0, TWO_PI); ctx.stroke();
-  ctx.strokeStyle = "#78909C"; ctx.lineWidth = Math.max(3, 0.05 * k); ctx.lineCap = "round";        // handle bars
-  for (let i = 0; i < 3; i++){ const a = -(Math.PI / 2 + i * TWO_PI / 3); ctx.beginPath(); ctx.moveTo(0.25 * k * Math.cos(a), 0.25 * k * Math.sin(a)); ctx.lineTo(1.95 * k * Math.cos(a), 1.95 * k * Math.sin(a)); ctx.stroke(); }
-  ctx.fillStyle = "#546E7A"; ctx.beginPath(); ctx.arc(0, 0, 0.22 * k, 0, TWO_PI); ctx.fill();
+  const SECT = ["#E53935", "#FDD835", "#1E88E5", "#43A047"];
+  for (let i = 0; i < 8; i++){ ctx.fillStyle = SECT[i % 4]; ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, KR * k, i * Math.PI / 4, (i + 1) * Math.PI / 4); ctx.closePath(); ctx.fill(); }
+  ctx.fillStyle = rgr(ctx, -0.6 * k, -0.6 * k, 0.1 * k, KR * k * 1.1, ["rgba(255,255,255,.35)", "rgba(255,255,255,0)", "rgba(0,0,0,.25)"]); ctx.beginPath(); ctx.arc(0, 0, KR * k, 0, TWO_PI); ctx.fill();
+  ctx.strokeStyle = "rgba(0,0,0,.18)"; ctx.lineWidth = 1; for (let rr = 0.5; rr < KR; rr += 0.5){ ctx.beginPath(); ctx.arc(0, 0, rr * k, 0, TWO_PI); ctx.stroke(); }   // anti-slip rings
+  ctx.lineWidth = Math.max(4, 0.08 * k); ctx.strokeStyle = lgr(ctx, -KR * k, 0, KR * k, 0, ["#B0BEC5", "#ECEFF1", "#78909C"]); ctx.beginPath(); ctx.arc(0, 0, KR * k, 0, TWO_PI); ctx.stroke();   // steel rim
+  for (let i = 0; i < 3; i++){ const a = -(Math.PI / 2 + i * TWO_PI / 3), c = Math.cos(a), s = Math.sin(a);
+    limb(ctx, [[0.25 * k * c, 0.25 * k * s], [1.95 * k * c, 1.95 * k * s]], Math.max(4, 0.06 * k), "#ECEFF1", "#607D8B");
+    ctx.fillStyle = "#455A64"; for (const rr of [0.25, 1.95]){ ctx.beginPath(); ctx.arc(rr * k * c, rr * k * s, Math.max(2.5, 0.04 * k), 0, TWO_PI); ctx.fill(); } }
+  ctx.fillStyle = rgr(ctx, -0.06 * k, -0.06 * k, 0.02 * k, 0.24 * k, ["#ECEFF1", "#90A4AE", "#455A64"]); ctx.beginPath(); ctx.arc(0, 0, 0.22 * k, 0, TWO_PI); ctx.fill();
   ctx.restore();
   const w0 = TWO_PI / T, kv = Rw * k * 0.36 / (w0 * KR), ka = Rw * k * 0.26 / (w0 * w0 * KR);
   KIDS.forEach((nm, i) => {
     const p = kidAt(i, t), X = V.X(p.x), Y = V.Y(p.y);
     if (!p.held){ ctx.save(); ctx.strokeStyle = KCOL[i]; ctx.lineWidth = 2; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(V.X(p.rx), V.Y(p.ry)); ctx.lineTo(X, Y); ctx.stroke(); ctx.restore();
       label(ctx, `${nm} let go`, V.X(p.rx), V.Y(p.ry) + 16, COL.F, "center", 12); }
-    const rr = Math.max(9, 0.2 * k);
-    if (i === set.kSel){ ctx.strokeStyle = COL.accent; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X, Y, rr + 5, 0, TWO_PI); ctx.stroke(); }
-    ctx.fillStyle = KCOL[i]; ctx.strokeStyle = "#263238"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(X, Y, rr, 0, TWO_PI); ctx.fill(); ctx.stroke();
-    ctx.save(); ctx.fillStyle = "#fff"; ctx.font = `700 ${Math.round(rr * 1.1)}px "Segoe UI",Arial,sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(nm, X, Y + 1); ctx.restore();
+    if (i === set.kSel){ ctx.strokeStyle = COL.accent; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(X, Y, Math.max(14, 0.32 * k), 0, TWO_PI); ctx.stroke(); }
+    drawKidTop(ctx, X, Y, -Math.atan2(p.vy, p.vx), k, i, p.held);
     vaArrows(ctx, V, p, kv, ka, i === set.kSel);
   });
   label(ctx, `ω = ${f2(w0)} rad s⁻¹ for every child · grip limit ${sig(set.kGrip)} N`, 10, 14, COL.navy, "left", 13);
-  label(ctx, "top view · orange ring = selected child", 10, h - 12, COL.muted, "left", 11.5);
+  label(ctx, "view from above · orange ring = selected child", 10, h - 12, COL.muted, "left", 11.5);
+}
+
+/* ---------- ⚙️ gears, chain and belt (kinematics only) ---------- */
+const GLOOK = [{metal:["#FFFFFF", "#CFD8DC", "#78909C"], edge:"#455A64", mark:"#E53935"},
+               {metal:["#FFF8E1", "#E0B04A", "#8D6E00"], edge:"#6D4C00", mark:"#1E88E5"},
+               {metal:["#F1F8E9", "#AED581", "#558B2F"], edge:"#33691E", mark:"#8E24AA"},
+               {metal:["#FFF3E0", "#FFB74D", "#E65100"], edge:"#8D3B00", mark:"#1565C0"}];
+// a spur gear: pitch radius Rp (px), N teeth, angle th (maths angle, anticlockwise +); tooth 0 is painted as the marker
+function drawGear(ctx, cx, cy, Rp, N, th, look, opt = {}){
+  const m = 2 * Rp / N, Ra = Rp + m * 0.95, Rr = Rp - m * 1.15, hwR = Math.PI / N * 0.56, hwT = Math.PI / N * 0.30;
+  const Pt = (r, a) => [cx + r * Math.cos(a), cy - r * Math.sin(a)];
+  const outline = () => { ctx.beginPath();
+    for (let j = 0; j < N; j++){ const c = th + TWO_PI * j / N, p1 = Pt(Rr, c - hwR), p2 = Pt(Ra, c - hwT), p3 = Pt(Ra, c + hwT), p4 = Pt(Rr, c + hwR);
+      j ? ctx.lineTo(p1[0], p1[1]) : ctx.moveTo(p1[0], p1[1]); ctx.lineTo(p2[0], p2[1]); ctx.lineTo(p3[0], p3[1]); ctx.lineTo(p4[0], p4[1]);
+      ctx.arc(cx, cy, Rr, -(c + hwR), -(c + TWO_PI / N - hwR), true); }
+    ctx.closePath(); };
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,.3)"; ctx.shadowBlur = 6; ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 3;
+  outline(); ctx.fillStyle = rgr(ctx, cx - Rp * 0.35, cy - Rp * 0.4, Rp * 0.05, Ra * 1.1, look.metal); ctx.fill();
+  ctx.shadowColor = "transparent"; ctx.strokeStyle = look.edge; ctx.lineWidth = 1; ctx.stroke();
+  // recessed web, lightening holes, hub with bore and key
+  if (Rr > 14){ ctx.strokeStyle = "rgba(0,0,0,.18)"; ctx.lineWidth = Math.max(1, Rr * 0.05); ctx.beginPath(); ctx.arc(cx, cy, Rr * 0.86, 0, TWO_PI); ctx.stroke();
+    if (Rr > 30 && !opt.noHoles){ const nh = N > 30 ? 6 : 4; for (let j = 0; j < nh; j++){ const a = th + TWO_PI * (j + 0.5) / nh, p = Pt(Rr * 0.55, a);
+      ctx.fillStyle = rgr(ctx, p[0], p[1], 0, Rr * 0.2, ["rgba(20,25,30,.85)", "rgba(20,25,30,.6)"]); ctx.beginPath(); ctx.arc(p[0], p[1], Rr * 0.19, 0, TWO_PI); ctx.fill(); } } }
+  const Rh = Math.max(4, Math.min(Rr * 0.3, 14));
+  ctx.fillStyle = rgr(ctx, cx - Rh * 0.3, cy - Rh * 0.3, 0.5, Rh, ["#FFFFFF", "#B0BEC5", "#546E7A"]); ctx.beginPath(); ctx.arc(cx, cy, Rh, 0, TWO_PI); ctx.fill();
+  ctx.fillStyle = "#263238"; ctx.beginPath(); ctx.arc(cx, cy, Rh * 0.42, 0, TWO_PI); ctx.fill();
+  // marker: a coloured stripe to tooth 0 + a painted tooth tip, so turns can be counted
+  const pm = Pt(Rr * 0.95, th), ph = Pt(Rh * 1.1, th);
+  ctx.strokeStyle = look.mark; ctx.lineWidth = Math.max(2, m * 0.45); ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(ph[0], ph[1]); ctx.lineTo(pm[0], pm[1]); ctx.stroke();
+  const t1 = Pt(Ra - m * 0.25, th); ctx.fillStyle = look.mark; ctx.beginPath(); ctx.arc(t1[0], t1[1], Math.max(2.2, m * 0.4), 0, TWO_PI); ctx.fill();
+  ctx.restore();
+}
+function pegboard(ctx, w, h){
+  ctx.fillStyle = lgr(ctx, 0, 0, 0, h, ["#EFE6D6", "#E2D4BC"]); ctx.fillRect(0, 0, w, h);
+  ctx.fillStyle = "rgba(90,70,40,.18)"; for (let y = 18; y < h; y += 22) for (let x = 12 + (y / 22 % 2) * 11; x < w; x += 22){ ctx.beginPath(); ctx.arc(x, y, 1.8, 0, TWO_PI); ctx.fill(); }
+}
+function rimV(ctx, cx, cy, Rpx, w, rm, a, kv, txt, side = 1){  // velocity arrow at the rim point at maths angle a; length ∝ v = |ω| r
+  const v = Math.abs(w) * rm * kv, sg = Math.sign(w) || 1, px = cx + Rpx * Math.cos(a), py = cy - Rpx * Math.sin(a);
+  const ux = -Math.sin(a) * sg, uy = -Math.cos(a) * sg;          // screen direction of the rim velocity
+  if (v > 3) arrow(ctx, px, py, px + ux * v, py + uy * v, COL.v, 3);
+  if (txt) label(ctx, txt, px + ux * v + 6 * side, py + uy * v + (uy > 0 ? 12 : -12), COL.v, side > 0 ? "left" : "right", 12.5);
+}
+function spinArrow(ctx, cx, cy, R, w, col){ if (Math.abs(w) < 1e-9) return;                // ↻ / ↺ around a gear (screen angles)
+  if (w < 0) curvedArrow(ctx, cx, cy, R, -Math.PI * 0.82, -Math.PI * 0.42, col, 2.4); else curvedArrow(ctx, cx, cy, R, -Math.PI * 0.42, -Math.PI * 0.82, col, 2.4); }
+const dirTxt = w => w < 0 ? "↻ clockwise" : "↺ anticlockwise";
+function sceneGears(ctx, w, h){
+  const GS = gearState(), t = R.t;
+  if (set.gSet === "bike") return sceneBike(ctx, w, h, GS);
+  if (set.gSet === "belt") return sceneBelt(ctx, w, h, GS);
+  pegboard(ctx, w, h);
+  // layout: gears in a row; px per metre so that the row fits
+  const pad = 0.012, x0 = Math.min(...GS.map(g => g.x - g.r)) - pad, x1 = Math.max(...GS.map(g => g.x + g.r)) + pad, ymax = Math.max(...GS.map(g => g.r)) + pad;
+  const k = Math.min((w - 40) / (x1 - x0), (h - 150) / (2 * ymax)), ox = w / 2 - (x0 + x1) / 2 * k, oy = h / 2 + 4;
+  const thA = GS[0].w * t, ang = [thA];
+  GS.forEach((g, i) => { if (!i) return;
+    if (g.link === "shaft") ang[i] = ang[g.from];
+    else { const f = GS[g.from], al = 0; ang[i] = al + Math.PI + Math.PI / g.N - (ang[g.from] - al) * f.N / g.N; } });
+  const order = GS.map((g, i) => i).sort((a, b) => (GS[a].x === GS[b].x ? GS[b].r - GS[a].r : 0));
+  for (const i of order){ const g = GS[i]; drawGear(ctx, ox + g.x * k, oy, g.r * k, g.N, ang[i], GLOOK[i % 4]); }
+  const vmax = Math.max(...GS.map(g => Math.abs(g.w) * g.r)), kv = 0.18 * Math.min(w, h) / Math.max(vmax, 1e-9);
+  GS.forEach((g, i) => { const cx = ox + g.x * k, R1 = g.r * k + 2 * GMOD * k + 8;
+    if (g.link !== "shaft") spinArrow(ctx, cx, oy, R1, g.w, GLOOK[i % 4].mark);
+    if (g.link === "shaft") label(ctx, `${g.id}`, cx + g.r * k * 0.75 + 4, oy + g.r * k * 0.75 + 6, GLOOK[i % 4].edge, "left", 14);
+    else label(ctx, `${g.id} · ${sig(g.rpm, 3)} rpm`, cx, oy + R1 + 14, GLOOK[i % 4].edge, "center", 13);
+  });
+  // rim speed at each contact (the same for both gears) and on the shaft gear
+  GS.forEach((g, i) => { if (!i || g.link !== "mesh") return; const f = GS[g.from], cx = ox + f.x * k;
+    rimV(ctx, cx, oy, f.r * k, f.w, f.r, 0, kv, null); });
+  const last = GS[GS.length - 1];
+  if (last.link === "shaft") rimV(ctx, ox + last.x * k, oy, last.r * k, last.w, last.r, Math.PI / 2, kv, null);
+  const v1 = Math.abs(GS[0].w) * GS[0].r;
+  label(ctx, set.gSet === "two" ? "Meshing gears: same rim speed v, opposite directions" : "A → B (idler) → C; D is fixed on C's shaft (same ω as C)", 10, 14, COL.navy, "left", 13);
+  label(ctx, `rim speed at every mesh v = ωr = ${sig(v1 * 100, 3)} cm s⁻¹${last.link === "shaft" ? ` · D's rim ${sig(Math.abs(last.w) * last.r * 100, 3)} cm s⁻¹` : ""}`, 10, 32, COL.v, "left", 12);
+  label(ctx, "view from the front · coloured tooth = count the turns", 10, h - 12, COL.muted, "left", 11.5);
+}
+// bicycle: crank → chainring → chain → sprocket → rear wheel (same shaft), road moves past
+function sceneBike(ctx, w, h, GS){
+  const t = R.t, [C, S, Wh] = GS, vBike = Math.abs(Wh.w) * Wh.r;
+  const ground = h - 34, k = Math.min((w - 30) / 1.85, (ground - 52) / 1.62), bb = [w * 0.5 + 0.02 * k, ground - 0.29 * k];
+  const P = (x, y) => [bb[0] + x * k, ground - y * k];
+  // sky, hills (slow parallax), trees, road with moving dashes
+  ctx.fillStyle = lgr(ctx, 0, 0, 0, ground, ["#BBDEFB", "#E3F2FD", "#F1F8E9"]); ctx.fillRect(0, 0, w, ground);
+  const hsh = (t * vBike * k * 0.08) % (w + 400);
+  ctx.fillStyle = "#C5E1A5"; for (let i = -1; i < 4; i++){ const x = i * 360 - hsh % 360; ctx.beginPath(); ctx.ellipse(x + 180, ground - 0.15 * k, 230, 0.55 * k, 0, Math.PI, 0); ctx.fill(); }
+  const tsh = (t * vBike * k * 0.5) % 260;
+  for (let i = -1; i < w / 260 + 2; i++){ const x = i * 260 - tsh + 60; if (Math.abs(x - w * 0.5) < 0.55 * k) continue; limb(ctx, [[x, ground - 0.1 * k], [x, ground - 0.55 * k]], 0.06 * k, "#8D6E63", "#5D4037");
+    ctx.fillStyle = rgr(ctx, x - 0.1 * k, ground - 0.85 * k, 2, 0.4 * k, ["#81C784", "#43A047", "#2E7D32"]); ctx.beginPath(); ctx.arc(x, ground - 0.78 * k, 0.32 * k, 0, TWO_PI); ctx.fill(); }
+  ctx.fillStyle = lgr(ctx, 0, ground, 0, h, ["#616161", "#424242"]); ctx.fillRect(0, ground, w, h - ground);
+  ctx.fillStyle = "#FFFFFF"; const dsh = (t * vBike * k) % 120; for (let x = -dsh; x < w; x += 120) ctx.fillRect(x, ground + (h - ground) * 0.55, 60, 3);
+  // geometry (m, relative to the bottom bracket at 0.29 m)
+  const rear = [-0.41, 0.34], front = [0.62, 0.34], seatC = [-0.12, 0.80], saddle = [-0.15, 0.89], htTop = [0.50, 0.84], htBot = [0.54, 0.70], bar = [0.47, 0.98];
+  const thC = C.w * t, thW = Wh.w * t, rc = C.r, rs = S.r, crankL = 0.17;
+  const wheel = (c) => { const [x, y] = P(...c), Rw = Wh.r * k;
+    ctx.strokeStyle = "#111"; ctx.lineWidth = 0.045 * k; ctx.beginPath(); ctx.arc(x, y, Rw - 0.02 * k, 0, TWO_PI); ctx.stroke();
+    ctx.strokeStyle = "#B0BEC5"; ctx.lineWidth = 0.02 * k; ctx.beginPath(); ctx.arc(x, y, Rw - 0.055 * k, 0, TWO_PI); ctx.stroke();
+    ctx.strokeStyle = "rgba(120,144,156,.85)"; ctx.lineWidth = 0.8; for (let i = 0; i < 24; i++){ const a = thW + TWO_PI * i / 24; ctx.beginPath(); ctx.moveTo(x + Math.cos(a) * 0.03 * k, y - Math.sin(a) * 0.03 * k); ctx.lineTo(x + Math.cos(a + 0.25) * (Rw - 0.06 * k), y - Math.sin(a + 0.25) * (Rw - 0.06 * k)); ctx.stroke(); }
+    ctx.fillStyle = "#E53935"; ctx.beginPath(); ctx.arc(x + Math.cos(thW) * (Rw - 0.07 * k), y - Math.sin(thW) * (Rw - 0.07 * k), Math.max(2.5, 0.018 * k), 0, TWO_PI); ctx.fill();   // valve = marker
+    ctx.fillStyle = "#455A64"; ctx.beginPath(); ctx.arc(x, y, 0.025 * k, 0, TWO_PI); ctx.fill(); };
+  softShadow(ctx, w * 0.5, ground + 2, 1.3 * k, 0.1 * k);
+  wheel(rear); wheel(front);
+  // chain: top and bottom runs + wraps; dashes move at the chain speed
+  const [rx, ry] = P(...rear), [cx, cy] = [bb[0], bb[1]], Rc = rc * k, Rs = rs * k;
+  ctx.save(); ctx.strokeStyle = "#37474F"; ctx.lineWidth = Math.max(2, 0.012 * k); ctx.lineCap = "butt"; ctx.setLineDash([Math.max(2, 0.0064 * k), Math.max(1.5, 0.0064 * k)]);
+  ctx.lineDashOffset = -(Math.abs(C.w) * rc * t * k) % (0.0128 * k);
+  ctx.beginPath(); ctx.moveTo(rx, ry - Rs); ctx.lineTo(cx, cy - Rc); ctx.arc(cx, cy, Rc, -Math.PI / 2, Math.PI / 2); ctx.lineTo(rx, ry + Rs); ctx.arc(rx, ry, Rs, Math.PI / 2, -Math.PI / 2); ctx.stroke(); ctx.restore();
+  drawGear(ctx, rx, ry, Rs, S.N, Wh.w * t, GLOOK[1], {noHoles:true});
+  // frame
+  const tube = (a, b, wd = 0.03) => limb(ctx, [P(...a), P(...b)], wd * k, "#EF5350", "#B71C1C");
+  tube(rear, [0, 0.29], 0.022); tube(rear, seatC, 0.02); tube([0, 0.29], seatC); tube(seatC, htTop); tube([0, 0.29], htBot, 0.036); tube(htTop, htBot, 0.04);
+  limb(ctx, [P(...htBot), P(...front)], 0.022 * k, "#90A4AE", "#455A64"); limb(ctx, [P(...htTop), P(...bar)], 0.022 * k, "#90A4AE", "#455A64");
+  limb(ctx, [P(...bar), P(bar[0] + 0.08, bar[1] - 0.02)], 0.028 * k, "#424242", "#111");
+  limb(ctx, [P(...seatC), P(...saddle)], 0.02 * k, "#90A4AE", "#455A64");
+  ctx.fillStyle = "#212121"; ctx.beginPath(); ctx.ellipse(...P(saddle[0] + 0.02, saddle[1] + 0.01), 0.12 * k, 0.025 * k, 0, 0, TWO_PI); ctx.fill();
+  // rider (far leg first), chainring + crank, near leg, body, arms
+  const ped = s => [crankL * Math.cos(thC + (s > 0 ? 0 : Math.PI)), 0.29 + crankL * Math.sin(thC + (s > 0 ? 0 : Math.PI))];
+  const hip = [-0.13, 0.95], sh = [0.22, 1.33], hd = [0.31, 1.47];
+  const legOf = s => { const f = P(...ped(s)), hpx = P(...hip), kn = ik2(hpx, f, 0.46 * k, 0.46 * k, -1); return [hpx, kn, f]; };
+  const LR = LOOK_RIDER, sc = 0.016 * k;
+  const far = legOf(-1); limb(ctx, far, 0.11 * k, LR.pants2, "#111");
+  limb(ctx, [P(0, 0.29), P(...ped(-1))], 0.025 * k, "#616161", "#212121");
+  drawGear(ctx, cx, cy, Rc, C.N, thC, GLOOK[0], {noHoles:false});
+  limb(ctx, [P(0, 0.29), P(...ped(1))], 0.028 * k, "#9E9E9E", "#424242");
+  const J = {r:0.105 * k, head:P(...hd), neck:P(0.27, 1.38), sh:P(...sh), hip:P(...hip), up:[0.45, -0.9], fw:[1, 0.3]};
+  const near = legOf(1); J.knF = near[1]; J.ftF = near[2]; J.knB = far[1]; J.ftB = far[2];
+  const handP = P(bar[0] + 0.06, bar[1] - 0.01); J.haF = handP; J.elF = ik2(J.sh, handP, 0.30 * k, 0.30 * k, 1); J.haB = [handP[0] - 2, handP[1] - 2]; J.elB = [J.elF[0] - 2, J.elF[1] - 2];
+  J.up = [0.45 / 1.006, -0.9 / 1.006]; drawPerson(ctx, J, sc, LR, {helmet:0.035 * k});
+  wheel(front);
+  const vChain = Math.abs(C.w) * rc;
+  rimV(ctx, cx, cy, Rc, C.w, rc, Math.PI / 2, 0.25 * k / Math.max(Math.abs(C.w) * rc, 0.05), null);
+  label(ctx, `gear ${C.N}/${S.N} · chain ${sig(vChain, 3)} m s⁻¹ on both sprockets`, 10, 14, COL.navy, "left", 13);
+  label(ctx, `pedals ${sig(C.rpm, 3)} rpm · wheel ${sig(Wh.rpm, 3)} rpm`, 10, 32, COL.muted, "left", 12);
+  label(ctx, `bike ${sig(vBike, 3)} m s⁻¹ = ${sig(vBike * 3.6, 3)} km/h →`, w - 10, 32, COL.v, "right", 13);
+}
+// motor → belt → large pulley; the drum on the same shaft winds a rope and lifts a load
+function sceneBelt(ctx, w, h, GS){
+  const t = R.t, [M, Pl, Dr] = GS, vLoad = Math.abs(Dr.w) * Dr.r;
+  ctx.fillStyle = lgr(ctx, 0, 0, 0, h, ["#ECEFF1", "#CFD8DC"]); ctx.fillRect(0, 0, w, h);
+  const floorY = h - 26; ctx.fillStyle = lgr(ctx, 0, floorY, 0, h, ["#9E9E9E", "#757575"]); ctx.fillRect(0, floorY, w, h - floorY);
+  const k = Math.min((w - 40) / 0.75, (h - 70) / 0.95);
+  const cM = [w * 0.24, h * 0.66], cP = [w * 0.24 + 0.36 * k, Math.max(h * 0.36, 70)], rM = M.r * k, rP = Pl.r * k, rD = Dr.r * k;
+  // motor body behind its pulley, frame posts
+  limb(ctx, [[cP[0], cP[1]], [cP[0], floorY]], 0.025 * k, "#90A4AE", "#455A64"); limb(ctx, [[cP[0] - 0.08 * k, floorY], [cP[0] + 0.08 * k, floorY]], 0.02 * k, "#90A4AE", "#455A64");
+  ctx.fillStyle = lgr(ctx, cM[0] - 0.09 * k, 0, cM[0] + 0.09 * k, 0, ["#546E7A", "#90A4AE", "#37474F"]); ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(cM[0] - 0.09 * k, cM[1] - 0.08 * k, 0.18 * k, floorY - cM[1] + 0.08 * k, 8); else ctx.rect(cM[0] - 0.09 * k, cM[1] - 0.08 * k, 0.18 * k, floorY - cM[1] + 0.08 * k); ctx.fill();
+  ctx.strokeStyle = "rgba(0,0,0,.25)"; for (let y = cM[1] + 0.03 * k; y < floorY - 6; y += 0.025 * k){ ctx.beginPath(); ctx.moveTo(cM[0] - 0.08 * k, y); ctx.lineTo(cM[0] + 0.08 * k, y); ctx.stroke(); }
+  label(ctx, "motor", cM[0], cM[1] + 0.13 * k, COL.ink, "center", 11.5);
+  // open belt: two outer tangents + wraps; dashes move at the belt speed
+  const dx = cP[0] - cM[0], dy = cP[1] - cM[1], d = Math.hypot(dx, dy), phi = Math.atan2(dy, dx), del = Math.asin((rM - rP) / d);
+  const aT = phi - Math.PI / 2 - del, aB = phi + Math.PI / 2 + del;            // screen angles of the tangent points
+  const PtS = (c, r, a) => [c[0] + r * Math.cos(a), c[1] + r * Math.sin(a)];
+  ctx.save(); ctx.strokeStyle = "#263238"; ctx.lineWidth = Math.max(3, 0.012 * k); ctx.lineJoin = "round";
+  ctx.beginPath(); const a1 = PtS(cM, rM, aT), a2 = PtS(cP, rP, aT), b2 = PtS(cP, rP, aB), b1 = PtS(cM, rM, aB);
+  ctx.moveTo(...a1); ctx.lineTo(...a2); ctx.arc(cP[0], cP[1], rP, aT, aB); ctx.lineTo(...b1); ctx.arc(cM[0], cM[1], rM, aB, aT + TWO_PI); ctx.stroke();
+  ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 1.2; ctx.setLineDash([4, 10]); ctx.lineDashOffset = (Math.abs(M.w) * M.r * t * k) % 14 * (M.w < 0 ? 1 : -1); ctx.stroke(); ctx.restore();
+  const pulley = (c, r, th, look) => { ctx.fillStyle = rgr(ctx, c[0] - r * 0.3, c[1] - r * 0.3, 1, r * 1.05, look.metal); ctx.beginPath(); ctx.arc(c[0], c[1], r, 0, TWO_PI); ctx.fill();
+    ctx.strokeStyle = look.edge; ctx.lineWidth = 1.2; ctx.stroke(); ctx.beginPath(); ctx.arc(c[0], c[1], r * 0.86, 0, TWO_PI); ctx.stroke();
+    if (r > 20){ ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.lineWidth = Math.max(2, r * 0.08); for (let i = 0; i < 4; i++){ const a = -th + i * Math.PI / 2; ctx.beginPath(); ctx.moveTo(c[0] + Math.cos(a) * r * 0.2, c[1] + Math.sin(a) * r * 0.2); ctx.lineTo(c[0] + Math.cos(a) * r * 0.8, c[1] + Math.sin(a) * r * 0.8); ctx.stroke(); } }
+    ctx.fillStyle = look.mark; ctx.beginPath(); ctx.arc(c[0] + Math.cos(-th) * r * 0.9, c[1] + Math.sin(-th) * r * 0.9, Math.max(2.5, r * 0.08), 0, TWO_PI); ctx.fill();
+    ctx.fillStyle = "#263238"; ctx.beginPath(); ctx.arc(c[0], c[1], Math.max(2.5, r * 0.1), 0, TWO_PI); ctx.fill(); };
+  pulley(cP, rP, Pl.w * t, GLOOK[1]);
+  pulley(cM, rM, M.w * t, GLOOK[0]);
+  // drum (front, same shaft) with wound rope; rope down to the load
+  ctx.fillStyle = rgr(ctx, cP[0] - rD * 0.3, cP[1] - rD * 0.3, 1, rD, ["#D7CCC8", "#A1887F", "#5D4037"]); ctx.beginPath(); ctx.arc(cP[0], cP[1], rD, 0, TWO_PI); ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.lineWidth = 1; for (let i = 1; i < 4; i++){ ctx.beginPath(); ctx.arc(cP[0], cP[1], rD * (0.6 + 0.12 * i), 0, TWO_PI); ctx.stroke(); }
+  ctx.fillStyle = GLOOK[2].mark; ctx.beginPath(); ctx.arc(cP[0] + Math.cos(-Dr.w * t) * rD * 0.75, cP[1] + Math.sin(-Dr.w * t) * rD * 0.75, Math.max(2, rD * 0.12), 0, TWO_PI); ctx.fill();
+  const ropeX = cP[0] + rD * (Dr.w < 0 ? 1 : -1), boxH = 0.10 * k, y0 = floorY - boxH, lift = Math.min(vLoad * t * k, y0 - cP[1] - rD - 10), by = y0 - lift;
+  ctx.strokeStyle = "#8D6E63"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(ropeX, cP[1]); ctx.lineTo(ropeX, by); ctx.stroke();
+  softShadow(ctx, ropeX, floorY + 1, 0.16 * k * Math.max(0.3, 1 - lift / (y0 - cP[1])), 4);
+  ctx.fillStyle = lgr(ctx, ropeX - 0.07 * k, 0, ropeX + 0.07 * k, 0, ["#BCAAA4", "#8D6E63", "#6D4C41"]); ctx.fillRect(ropeX - 0.07 * k, by, 0.14 * k, boxH);
+  ctx.strokeStyle = "rgba(0,0,0,.35)"; ctx.strokeRect(ropeX - 0.07 * k, by, 0.14 * k, boxH); ctx.beginPath(); ctx.moveTo(ropeX - 0.07 * k, by); ctx.lineTo(ropeX + 0.07 * k, by + boxH); ctx.moveTo(ropeX + 0.07 * k, by); ctx.lineTo(ropeX - 0.07 * k, by + boxH); ctx.stroke();
+  // ruler for the height
+  const rxp = Math.min(w - 30, ropeX + 0.16 * k); ctx.fillStyle = "#FFF8E1"; ctx.fillRect(rxp, cP[1], 16, floorY - cP[1]); ctx.strokeStyle = "#8D6E63"; ctx.strokeRect(rxp, cP[1], 16, floorY - cP[1]);
+  for (let cm = 0; cm * 0.01 * k < floorY - cP[1]; cm += 5){ const yy = floorY - cm * 0.01 * k; ctx.beginPath(); ctx.moveTo(rxp, yy); ctx.lineTo(rxp + (cm % 10 ? 5 : 9), yy); ctx.stroke(); if (cm % 20 === 0 && cm) label(ctx, `${cm}`, rxp + 18, yy, COL.muted, "left", 10); }
+  label(ctx, "cm", rxp + 8, cP[1] - 8, COL.muted, "center", 10);
+  spinArrow(ctx, cM[0], cM[1], rM + 10, M.w, GLOOK[0].mark); spinArrow(ctx, cP[0], cP[1], rP + 10, Pl.w, GLOOK[1].mark);
+  arrow(ctx, ropeX + 0.1 * k, by + boxH * 0.6, ropeX + 0.1 * k, by + boxH * 0.6 - Math.max(18, vLoad / Math.abs(M.w * M.r) * 60), COL.v, 3);
+  label(ctx, `load rises at v = ω × r(drum) = ${sig(vLoad * 100, 3)} cm s⁻¹`, 10, 32, COL.v, "left", 12);
+  label(ctx, `belt ${sig(Math.abs(M.w) * M.r, 3)} m s⁻¹ on both pulleys · motor ${sig(M.rpm, 3)} rpm → pulley ${sig(Pl.rpm, 3)} rpm`, 10, 14, COL.navy, "left", 13);
 }
 
 /* ============================ 7 FBD ============================ */
@@ -1294,6 +1816,7 @@ function wrap(ctx, text, maxW, size){
 function drawFBD(){
   const {ctx, w, h} = fitCanvas(document.getElementById("fbd"));
   ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  if (set.sc === "gear"){ NF.none("Gears: kinematics only — no forces here"); gearLinks(ctx, w, h); return; }
   const small = h < 430, top = small ? h : Math.round(h * 0.66), cx = w * 0.56, cy = top * (small ? 0.50 : 0.44);
   const D = fbdData();
 /*NF*/  { const sc = set.sc, m = sc === "chair" ? set.chM : sc === "sat" ? set.sM : sc === "car" ? carNow().W / g : set.kM[set.kSel];
@@ -1341,6 +1864,24 @@ function drawFBD(){
                    : ["No inward force any more.", "It moves on in a straight line along the tangent (Newton's first law) — it is not thrown outwards."];
   let yy = top + 34;
   msg.forEach((m, i) => wrap(ctx, m, maxW, 11.5).forEach(L => { label(ctx, L, tx, yy, i ? COL.muted : COL.ink, "left", 11.5); yy += 15; }));
+}
+// gears: one row per wheel (size ∝ r, ω arrow, rpm) and the rule that links it to the one before
+function gearLinks(ctx, w, h){
+  const G = gearState(), rmax = Math.max(...G.map(g => g.r)), n = G.length, rowH = Math.min(92, (h - 120) / n);
+  const RULE = {mesh:"mesh → same rim speed v, opposite direction", chain:"chain → same v, same direction", belt:"belt → same v, same direction", shaft:"same shaft → same ω (different v)"};
+  G.forEach((g, i) => {
+    const y = 18 + rowH * (i + 0.5), rp = Math.max(6, rowH * 0.36 * Math.sqrt(g.r / rmax)), cx = 18 + rowH * 0.36 + 4;
+    if (i){ label(ctx, RULE[g.link], cx + rowH * 0.4 + 6, y - rowH / 2, COL.accent, "left", 11.5);
+      ctx.save(); ctx.strokeStyle = COL.accent; ctx.setLineDash([3, 3]); ctx.beginPath(); ctx.moveTo(cx, y - rowH + 8); ctx.lineTo(cx, y - rp - 4); ctx.stroke(); ctx.restore(); }
+    ctx.fillStyle = rgr(ctx, cx - rp * 0.3, y - rp * 0.3, 1, rp, GLOOK[i % 4].metal); ctx.beginPath(); ctx.arc(cx, y, rp, 0, TWO_PI); ctx.fill(); ctx.strokeStyle = GLOOK[i % 4].edge; ctx.stroke();
+    spinArrow(ctx, cx, y, rp + 6, g.w, GLOOK[i % 4].mark);
+    const tx = cx + rowH * 0.4 + 6;
+    label(ctx, `${g.name}${g.N ? ` · ${g.N} teeth` : ""} · r = ${sig(g.r * 100, 3)} cm`, tx, y - 8, COL.ink, "left", 12.5);
+    label(ctx, `${sig(g.rpm, 3)} rpm · ω = ${sig(Math.abs(g.w), 3)} rad s⁻¹ ${g.w < 0 ? "↻" : "↺"} · v = ${sig(g.v * 100, 3)} cm s⁻¹`, tx, y + 9, COL.v, "left", 12);
+  });
+  const yy = 18 + rowH * n + 10, msg = ["v = ωr: the same rim speed means the larger wheel turns more slowly.", "ω = 2π/T = 2πf, and rpm × 2π/60 = ω in rad s⁻¹.",
+    `Here: ω(out)/ω(in) = ${set.gSet === "belt" ? "r(in)/r(out)" : "N(in)/N(out)"} = ${sig(gRatio(G), 3)}.`];
+  let y2 = yy; msg.forEach((m, i) => wrap(ctx, m, w - 24, 11.5).forEach(L => { label(ctx, L, 12, y2, i ? COL.muted : COL.ink, "left", 11.5); y2 += 15; }));
 }
 const speedTxt = v => set.sc === "sat" ? `${f2(v / 1000)} km s⁻¹` : `${f2(v)} m s⁻¹`;
 function fbdData(){
@@ -1496,6 +2037,7 @@ function drawGraph(){
   const {ctx, w, h} = fitCanvas(cv);
   ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
   const box = {x:62, y:16, w:w - 78, h:h - 66};
+  if (set.sc === "gear"){ gearGraph(ctx, box, w, h); return; }
   if (gq === "F"){ forceGraph(ctx, box); return; }
   const U = gUnits(), q = GQ[gq], T1 = R.tEnd / U.t, N = 300, vals = [];
   const fD = td => q.f(selAt(clamp(td, 0, T1) * U.t)) / U[q.u];
@@ -1523,6 +2065,31 @@ function drawGraph(){
   const yv = fD(tNow); ctx.fillStyle = COL.accent; ctx.beginPath(); ctx.arc(X(tNow), Y(yv), 5, 0, 7); ctx.fill();
   const right = X(tNow) > box.x + box.w * 0.6;
   label(ctx, `t = ${f2(tNow)} ${U.tn}: ${f2(yv)} ${U[q.u + "n"]}`, X(tNow) + (right ? -8 : 8), box.y + box.h - 14, COL.accent, right ? "right" : "left", 13.5);
+}
+// gears: angle turned θ–t for every wheel (gradient = ω), or the rim speeds as bars
+function gearGraph(ctx, box, w, h){
+  const G = gearState(), cols = G.map((g, i) => GLOOK[i % 4].mark), T1 = R.tEnd;
+  if (gq === "gv"){
+    const vmax = Math.max(...G.map(g => g.v)) * 1.2, bw = Math.min(70, box.w / G.length * 0.55);
+    const {X, Y} = axesR(ctx, box, 0, G.length, 0, niceCeil(vmax * 100), [["","n"]], [["rim speed ","n"],["v","i"],[" / cm s⁻¹","n"]], true);
+    G.forEach((g, i) => { const cx = X(i + 0.5); ctx.fillStyle = cols[i]; ctx.globalAlpha = 0.85; ctx.fillRect(cx - bw / 2, Y(g.v * 100), bw, Y(0) - Y(g.v * 100)); ctx.globalAlpha = 1;
+      label(ctx, `${sig(g.v * 100, 3)}`, cx, Y(g.v * 100) - 10, COL.ink, "center", 12.5); label(ctx, g.id, cx, box.y + box.h + 12, cols[i], "center", 12.5); });
+    label(ctx, "linked by a mesh, chain or belt: equal bars · on one shaft: same ω, v ∝ r", box.x + 6, box.y + 10, COL.ink, "left", 12);
+    return;
+  }
+  const leg = 17 * G.length + 4; box = {...box, y:box.y + leg, h:box.h - leg};
+  const lo = Math.min(0, ...G.map(g => g.w * T1)), hi = Math.max(0, ...G.map(g => g.w * T1)), span = hi - lo || 1;
+  const yHi = hi > 0 ? niceCeil(hi + span * 0.05) : niceUp(span * 0.1), yLo = lo < 0 ? -niceCeil(-lo + span * 0.05) : 0;
+  const {X, Y} = axesR(ctx, box, 0, niceCeil(T1 * 1.02), yLo, yHi, [["time ","n"],["t","i"],[" / s","n"]], [["angle turned ","n"],["θ","i"],[" / rad (↺ +)","n"]]);
+  const tNow = R.t, out = gOut(G);
+  G.forEach((g, i) => { ctx.save(); ctx.strokeStyle = cols[i]; ctx.lineWidth = g === out ? 3 : 2; if (g.link === "shaft") ctx.setLineDash([7, 4]);
+    ctx.beginPath(); ctx.moveTo(X(0), Y(0)); ctx.lineTo(X(T1), Y(g.w * T1)); ctx.stroke(); ctx.restore();
+    label(ctx, `${g.id}: ω = ${sig(g.w, 3)} rad s⁻¹${g === out ? " (output)" : ""}`, box.x + 8, box.y - leg + 8 + 17 * i, cols[i], "left", 12.5); });
+  ctx.save(); ctx.strokeStyle = COL.accent; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(X(tNow), box.y); ctx.lineTo(X(tNow), box.y + box.h); ctx.stroke(); ctx.restore();
+  const tl = [];
+  if (toolOn("tanChk")){ const kk = drawTangent(ctx, X, Y, t => out.w * t, tNow, 0, T1, box, T1 * 0.15); if (kk !== null) tl.push(`tangent gradient on ${out.id} = ω = ${sig(kk, 3)} rad s⁻¹`); }
+  if (toolOn("areaChk")) tl.push("Area: not used for θ–t");
+  toolLabels(ctx, box, tl);
 }
 // force graphs: what force is needed, and what the real force can give
 function forceGraph(ctx, box){
@@ -1581,7 +2148,7 @@ function forceGraph(ctx, box){
 }
 
 /* ============================ 9 DATA ============================ */
-let trials = [], anaId = {chair:"aw", sat:"Tr", car:"Fv", kar:"Fr"};
+let trials = [], anaId = {chair:"aw", sat:"Tr", car:"Fv", kar:"Fr", gear:"wr"};
 const noisy = x => document.getElementById("noiseChk").checked ? x * (1 + 0.02 * (2 * Math.random() - 1)) : x;
 function recordTrial(){
   const t = R.t; let d;
@@ -1589,6 +2156,9 @@ function recordTrial(){
   else if (set.sc === "sat"){ if (set.sOwn){ flash("Record works for circular orbits: switch off 'choose my own'."); return; }
     const o = orbit(R.r0); d = {r:R.r0, h:set.sH, v:noisy(o.v), T:noisy(o.T), a:noisy(o.a)}; }
   else if (set.sc === "car"){ const C = carNow(); d = {m:set.cM, r:set.cR, v:set.cV, mu:surfById(set.cSurf).mu, th:set.cBank, F:noisy(Math.abs(C.Ff)), vmax:noisy(C.vmax)}; }
+  else if (set.sc === "gear"){ const G = gearState(), o = gOut(G), sh = G.filter((g, i) => g.link === "shaft" || (i && G[i + 1] && G[i + 1].link === "shaft"));
+    d = {gs:GSETS.find(q => q.id === set.gSet).name, ratio:gRatio(G), win:Math.abs(G[0].w), wout:noisy(Math.abs(o.w)), rpmIn:G[0].rpm, rpmOut:o.rpm, vm:noisy(G[0].v),
+         shaft:sh.map(g => [g.r, noisy(g.v)])}; }
   else { const i = set.kSel, m = set.kM[i], r = set.kR[i], T = set.kT, w = TWO_PI / T;
     d = {ch:KIDS[i], m, r, T, w, v:noisy(w * r), F:noisy(m * w * w * r)}; }
   trials.push({sc:set.sc, ...d}); save(); renderTrials();
@@ -1599,6 +2169,8 @@ const DCOLS = {
   sat:[["<i>h</i> / km", t => sig(t.h, 4)], ["<i>r</i> / m", t => sci(t.r, 3)], ["<i>v</i> / km s⁻¹", t => f2(t.v / 1000)], ["<i>T</i> / min", t => sig(t.T / 60, 4)], ["<i>a</i> / m s⁻²", t => sig(t.a, 3)]],
   car:[["<i>m</i> / kg", t => sig(t.m, 4)], ["<i>r</i> / m", t => sig(t.r, 3)], ["<i>v</i> / m s⁻¹", t => f2(t.v)], ["<i>μ</i><sub>s</sub>", t => f2(t.mu)],
        ["<i>F</i><sub>f</sub> / N", t => sig(t.F, 4)], ["<i>v</i><sub>max</sub> / m s⁻¹", t => isFinite(t.vmax) ? f2(t.vmax) : "—"]],
+  gear:[["set-up", t => t.gs], ["ratio in/out", t => sig(t.ratio, 3)], ["in / rpm", t => sig(t.rpmIn, 3)], ["out / rpm", t => sig(t.rpmOut, 3)],
+        ["<i>ω</i><sub>out</sub> / rad s⁻¹", t => sig(t.wout, 3)], ["<i>v</i> link / cm s⁻¹", t => sig(t.vm * 100, 3)]],
   kar:[["child", t => t.ch], ["<i>m</i> / kg", t => sig(t.m, 3)], ["<i>r</i> / m", t => f2(t.r)], ["<i>T</i> / s", t => f2(t.T)], ["<i>v</i> / m s⁻¹", t => f2(t.v)], ["<i>F</i> / N", t => f1(t.F)]],
 };
 function renderTrials(){
@@ -1623,6 +2195,10 @@ const ANA = {
          g:k => `gradient = m/r = ${sig(k)} kg m⁻¹`, hint:"Keep m and r the same (flat road); change v."},
         {id:"vr", name:"v_max²–r", x:t => t.r, y:t => t.vmax ** 2, xs:[["r","i"]], xu:"m", ys:[["v","i"],["max","s"],["²","n"]], yu:"m² s⁻²",
          g:k => `gradient = μs g = ${sig(k)} m s⁻² → μs = ${sig(k / g)}`, hint:"Same surface, flat road; change r."}],
+  gear:[{id:"wr", name:"ω_out–ratio", x:t => t.ratio, y:t => t.wout, xs:[["N","i"],["in","s"],["/","n"],["N","i"],["out","s"]], xu:"(or r_in/r_out)", ys:[["ω","i"],["out","s"]], yu:"rad s⁻¹",
+          g:k => `gradient = ω of the driver = ${sig(k)} rad s⁻¹`, hint:"Same driver speed; change the teeth (or radii)."},
+         {id:"vr", name:"v–r one shaft", pts:t => t.shaft, xs:[["r","i"]], xu:"m", ys:[["v","i"]], yu:"m s⁻¹",
+          g:k => `gradient = ω of the shaft = ${sig(k)} rad s⁻¹`, hint:"Wheels on one shaft: train (C, D), bike (sprocket, wheel), belt (pulley, drum)."}],
   kar:[{id:"Fr", name:"F–r", x:t => t.r, y:t => t.F, xs:[["r","i"]], xu:"m", ys:[["F","i"]], yu:"N",
          g:k => `gradient = mω² = ${sig(k)} N m⁻¹`, hint:"Same mass and T; move the child."},
         {id:"Fw", name:"F–ω²", x:t => t.w * t.w, y:t => t.F, xs:[["ω","i"],["²","n"]], xu:"rad² s⁻²", ys:[["F","i"]], yu:"N",
@@ -1633,8 +2209,8 @@ function drawAna(){
   const cv = document.getElementById("ana"); if (!cv.offsetParent) return;
   const {ctx, w, h} = fitCanvas(cv);
   ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
-  const A = ANA[set.sc].find(a => a.id === anaId[set.sc]), tr = trials.filter(t => t.sc === set.sc && isFinite(A.y(t)));
-  const pts = tr.map(t => [A.x(t), A.y(t)]);
+  const A = ANA[set.sc].find(a => a.id === anaId[set.sc]) || ANA[set.sc][0], tr = trials.filter(t => t.sc === set.sc && (A.pts || isFinite(A.y(t))));
+  const pts = tr.flatMap(t => A.pts ? A.pts(t) || [] : [[A.x(t), A.y(t)]]);
   const sx = scaled(Math.max(...pts.map(p => p[0]), 0)), sy = scaled(Math.max(...pts.map(p => p[1]), 0));
   const xMax = niceCeil(Math.max(1e-12, ...pts.map(p => p[0] / sx.k)) * 1.1), yMax = niceCeil(Math.max(1e-12, ...pts.map(p => p[1] / sy.k)) * 1.15);
   const box = {x:64, y:44, w:w - 80, h:h - 94};
@@ -1658,6 +2234,8 @@ const CHAIR0 = {sc:"chair", chMode:"motor", chArms:"out", chT:2.0, chM:1.0, chR:
 const CAR0 = {sc:"car", cM:1200, cR:50, cV:15, cSurf:"dry", cBank:0};
 const KAR0 = {sc:"kar", kSel:2, kM:[30, 30, 30], kR:[0.6, 1.2, 1.8], kT:4.0, kGrip:150};
 const SAT0 = {sc:"sat", sPre:"iss", sH:410, sM:4.2e5, sOwn:false};
+const TWO0 = {sc:"gear", gSet:"two", gN1:12, gN2:36, gRpm:60}, TRAIN0 = {sc:"gear", gSet:"train", gN1:12, gN2:24, gN3:36, gN4:12, gRpm:60};
+const BIKE0 = {sc:"gear", gSet:"bike", gNc:44, gNs:16, gCad:80}, BELT0 = {sc:"gear", gSet:"belt", gR1:2, gR2:10, gRd:3, gRpm:300};
 const TASKS = [
  {id:"pre", title:"1 · Pre-lab: predict", time:"≈ 15 min", steps:[
   {type:"do", setup:{...CAR0},
@@ -1682,6 +2260,12 @@ const TASKS = [
    why:"v = √(GM/r): larger r ⇒ smaller v (and a longer period). The ISS at 410 km: 7.66 km s⁻¹; GPS at 20 200 km: 3.87 km s⁻¹. The satellite's mass cancels."},
   {type:"num", setup:{...CAR0}, text:"Calculate the friction force needed by the 1200 kg car on the 50 m bend at 15 m s⁻¹.",
    answer:() => 1200 * 15 * 15 / 50, unit:"N", hint:"F = mv²/r. Check with the FBD (red arrow)."},
+  {type:"predict", setup:{...TWO0}, text:"⚙️ Gear A (12 teeth) turns at 60 rpm and drives gear B (36 teeth). Gear B turns…",
+   opts:["3 × faster, the same way", "3 × slower, the opposite way", "3 × slower, the same way", "at the same speed, the opposite way"], correct:1,
+   why:"The teeth pass the contact point at the same rate, so the rim speed v = ωr is the same for both gears. B's radius is 3 × larger, so ω<sub>B</sub> = ω<sub>A</sub>/3: 20 rpm. Meshing gears turn in opposite directions."},
+  {type:"predict", setup:{...TWO0}, text:"Which quantity is the <b>same</b> for gears A and B?",
+   opts:["angular speed ω", "period T", "rim speed v", "number of turns in 10 s"], correct:2,
+   why:"v = ω<sub>A</sub>r<sub>A</sub> = ω<sub>B</sub>r<sub>B</sub> = 7.54 cm s⁻¹ here. ω, T and the number of turns are different (B makes 1 turn while A makes 3)."},
  ]},
  {id:"lab", title:"2 · During the lab: compare", time:"≈ 20 min", steps:[
   {type:"do", setup:{...CHAIR0, chM:0.20, chR:0.50},
@@ -1700,6 +2284,14 @@ const TASKS = [
   {type:"num", text:"<span class=\"badge\">beyond SL</span> After pulling the arms in, what is the new period? (Read it from the readouts.)",
    answer:() => TWO_PI / chairOmega("free", 3.0, 1.0, 0.75, 0.20), unit:"s",
    hint:"Iω stays the same: I goes from 3.125 to 2.08 kg m², so ω increases by the same factor."},
+  {type:"num", setup:{...TRAIN0}, text:"⚙️ Gear train A (12 teeth, 60 rpm) → B (24, idler) → C (36). Read the speed of C in rpm.",
+   answer:() => 60 * 12 / 36, unit:"rpm", hint:"The rim speed is passed on at every mesh: ω<sub>C</sub> = ω<sub>A</sub> N<sub>A</sub>/N<sub>C</sub>."},
+  {type:"predict", setup:{...TRAIN0}, text:"The idler B is changed from 24 to 48 teeth. What happens to gear C?",
+   opts:["C turns more slowly", "C turns faster", "C's speed and direction stay the same", "C changes direction"], correct:2,
+   why:"ω<sub>C</sub> = ω<sub>A</sub> N<sub>A</sub>/N<sub>C</sub> whatever the idler: it only passes the rim speed on. With the idler, C turns the same way as A. Try it with the N<sub>B</sub> box."},
+  {type:"num", setup:{...TRAIN0}, text:"D (12 teeth) is fixed on C's shaft. Calculate the rim speed of D in cm s⁻¹. (Pitch radius = N × 2 mm.)",
+   answer:() => (20 * TWO_PI / 60) * 0.024 * 100, unit:"cm s⁻¹", hint:"D has the same ω as C (20 rpm = 2.09 rad s⁻¹); r<sub>D</sub> = 12 × 2 mm = 0.024 m; v = ωr."},
+  {type:"do", setup:{...TRAIN0}, text:"Record trials with D = 12, 24 and 36 teeth (N<sub>D</sub> box). Data tab → <b>v–r one shaft</b>: the gradient is ω of C's shaft."},
  ]},
  {id:"hw", title:"3 · Homework: analyse", time:"≈ 30 min", steps:[
   {type:"do", setup:{...CAR0},
@@ -1720,6 +2312,12 @@ const TASKS = [
    hint:"GM/r² = 4π²r/T² ⇒ r³ = GMT²/(4π²). Use T = 86 400 s."},
   {type:"num", setup:{...CHAIR0, chT:1.5}, text:"🪑 Motor-driven chair, T = 1.5 s, arms open (0.75 m), 1.0 kg in each hand. Calculate the force each arm exerts on its mass towards the centre.",
    answer:() => uniform(1.0, 0.75, 1.5).F, unit:"N", hint:"ω = 2π/T; F = mω²r. (The arm also holds the mass up with mg — the FBD shows both parts.)"},
+  {type:"num", setup:{...BIKE0}, text:"🚲 Gear 44/16, pedalling at 80 rpm, wheel radius 0.34 m. Calculate the speed of the bike.",
+   answer:() => 80 * TWO_PI / 60 * 44 / 16 * 0.34, unit:"m s⁻¹", hint:"ω<sub>pedals</sub> = 80 × 2π/60; the chain gives ω<sub>wheel</sub> = ω<sub>pedals</sub> × 44/16; v = ω<sub>wheel</sub> × 0.34 m."},
+  {type:"num", setup:{...BIKE0, gNc:34, gNs:28}, text:"Climbing gear 34/28 at the same 80 rpm: calculate the bike's speed.",
+   answer:() => 80 * TWO_PI / 60 * 34 / 28 * 0.34, unit:"m s⁻¹", hint:"Same steps with the ratio 34/28."},
+  {type:"num", setup:{...BELT0}, text:"Motor at 300 rpm, motor pulley 2.0 cm, large pulley 10 cm, drum 3.0 cm on the large pulley's shaft. How fast does the load rise, in cm s⁻¹?",
+   answer:() => 300 * TWO_PI / 60 * 2 / 10 * 3, unit:"cm s⁻¹", hint:"Belt: ω<sub>pulley</sub> = ω<sub>motor</sub> × 2/10. Drum on the same shaft: v = ω<sub>pulley</sub> × r<sub>drum</sub>."},
  ]},
 ];
 let taskState = {}, curSet = "pre";
@@ -1798,6 +2396,7 @@ function flash(msg){ let el = $("toast");
 // Controls: every slider has a number box next to it. Type a value and press Enter (or leave the box):
 // it is kept to the allowed range and keeps the precision you typed; the slider follows.
 const CTL = [
+  {id:"chView", sc:"chair", kind:"seg", lab:"View", opts:[["top", "From above"], ["side", "Side view"]]},
   {id:"chMode", sc:"chair", kind:"seg", lab:"Mode", opts:[["motor", "Motor (same ω)"], ["free", "Free spin ★"]]},
   {id:"chArms", sc:"chair", kind:"btn", lab:"Arms", text:() => set.chArms === "out" ? "🤏 Pull arms in" : "👐 Open arms"},
   {id:"chT", sc:"chair", kind:"range", lab:() => set.chMode === "motor" ? "Period <i>T</i>" : "Period, arms open <i>T</i>", unit:"s", min:0.8, max:8, tmin:0.2, tmax:60, step:0.05},
@@ -1819,6 +2418,17 @@ const CTL = [
   {id:"kT", sc:"kar", kind:"range", lab:"Period <i>T</i>", unit:"s", min:1.5, max:12, tmin:0.3, tmax:120, step:0.1},
   {id:"kGrip", sc:"kar", kind:"range", lab:"Strongest grip <i>F</i><sub>max</sub>", unit:"N", min:50, max:600, tmin:1, tmax:5000, step:10},
   {id:"kGo", sc:"kar", kind:"btn", lab:"Let go", text:() => `✋ ${KIDS[set.kSel]} lets go`},
+  {id:"gSet", sc:"gear", kind:"select", lab:"Set-up", opts:GSETS.map(q => [q.id, q.name])},
+  {id:"gRpm", sc:"gear", kind:"range", lab:() => set.gSet === "belt" ? `Motor speed · ω = ${sig(set.gRpm * TWO_PI / 60, 3)} rad s⁻¹` : `Speed of A · ω = ${sig(set.gRpm * TWO_PI / 60, 3)} rad s⁻¹`, unit:"rpm",
+   min:5, max:300, tmin:0.5, tmax:3000, step:1, show:() => set.gSet !== "bike", def:() => GDEF[set.gSet].gRpm},
+  ...["A", "B", "C", "D"].map((L, i) => ({id:"gN" + (i + 1), sc:"gear", kind:"range", lab:`Teeth <i>N</i><sub>${L}</sub>`, unit:"teeth", min:8, max:72, tmin:6, tmax:200, step:1,
+   show:() => i < 2 ? set.gSet === "two" || set.gSet === "train" : set.gSet === "train", def:() => GDEF[set.gSet]["gN" + (i + 1)] ?? 12})),
+  {id:"gCad", sc:"gear", kind:"range", lab:() => `Pedalling (cadence) · ω = ${sig(set.gCad * TWO_PI / 60, 3)} rad s⁻¹`, unit:"rpm", min:20, max:130, tmin:1, tmax:300, step:1, show:() => set.gSet === "bike", def:() => 80},
+  {id:"gNc", sc:"gear", kind:"range", lab:"Chainring teeth", unit:"teeth", min:22, max:53, tmin:10, tmax:80, step:1, show:() => set.gSet === "bike", def:() => 44},
+  {id:"gNs", sc:"gear", kind:"range", lab:"Rear sprocket teeth", unit:"teeth", min:11, max:34, tmin:9, tmax:60, step:1, show:() => set.gSet === "bike", def:() => 16},
+  {id:"gR1", sc:"gear", kind:"range", lab:"Motor pulley radius", unit:"cm", min:1, max:8, tmin:0.5, tmax:30, step:0.5, show:() => set.gSet === "belt", def:() => 2},
+  {id:"gR2", sc:"gear", kind:"range", lab:"Large pulley radius", unit:"cm", min:4, max:20, tmin:1, tmax:50, step:0.5, show:() => set.gSet === "belt", def:() => 10},
+  {id:"gRd", sc:"gear", kind:"range", lab:"Drum radius", unit:"cm", min:1, max:10, tmin:0.5, tmax:30, step:0.5, show:() => set.gSet === "belt", def:() => 3},
 ];
 const getV = id => id === "kM" ? set.kM[set.kSel] : id === "kR" ? set.kR[set.kSel] : set[id];
 function putV(id, v){ if (id === "kM") set.kM[set.kSel] = v; else if (id === "kR") set.kR[set.kSel] = v; else set[id] = v; }
@@ -1856,7 +2466,7 @@ function buildControls(){
       let d0;   // ▼ [box] ▲ ↺ (shared stepper): start value = the value when the page has loaded
       STEPPER.attach(nb, {get:() => +getV(c.id), unit:() => c.unit, toast:flash, room:() => [c.min, c.max], hard:() => [c.tmin ?? c.min, c.tmax ?? c.max],
         log:!!c.log, step:() => c.bstep ?? c.step, base:() => c.min,
-        def:() => { if (d0 === undefined) d0 = JSON.parse(JSON.stringify(set)); const d = d0[c.id]; return Array.isArray(d) ? d[set.kSel] : d; },
+        def:() => { if (c.def) return c.def(); if (d0 === undefined) d0 = JSON.parse(JSON.stringify(set)); const d = d0[c.id]; return Array.isArray(d) ? d[set.kSel] : d; },
         apply:v => { nb.value = STEPPER.fmt(v); nb._auto = null; commit(); }});
     } else if (c.kind === "seg") el.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return;
       changed(c, typeof c.opts[0][0] === "number" ? +b.dataset.v : b.dataset.v); });
@@ -1868,6 +2478,8 @@ function buildControls(){
 function changed(c, v){
   if (c.id === "kSel"){ set.kSel = v; syncControls(); return; }         // selecting a child does not restart the motion
   putV(c.id, v);
+  if (c.id === "chView"){ syncControls(); return; }                       // only the picture changes
+  if (c.id === "gSet") Object.assign(set, GDEF[v]);
   if (c.id === "sPre"){ const p = PRESETS.find(q => q.id === v); if (p.h){ set.sH = p.h; set.sM = p.m; set.sOwn = false; } }
   if (c.id === "sH" || c.id === "sM"){ const p = PRESETS.find(q => q.id === set.sPre); if (p && p.h && Math.abs(p.h - set.sH) > 1e-6) set.sPre = "custom"; }
   if (c.id === "sOwn" && v) set.sV = +(orbit(R_E + set.sH * 1000).v / 1000).toFixed(2);
@@ -1875,8 +2487,8 @@ function changed(c, v){
 }
 function syncControls(){
   for (const c of CTL){
-    const box = $(c.id + "C"); box.classList.toggle("hide", c.sc !== set.sc);
-    if (c.sc !== set.sc) continue;
+    const on = c.sc === set.sc && (!c.show || c.show()), box = $(c.id + "C"); box.classList.toggle("hide", !on);
+    if (!on) continue;
     $(c.id + "Lab").innerHTML = txt(c.lab);
     const el = $(c.id), v = getV(c.id);
     if (c.kind === "range"){
@@ -1891,11 +2503,17 @@ function syncControls(){
 }
 function setScenarioUI(){
   document.querySelectorAll("#scen button").forEach(b => b.setAttribute("aria-pressed", b.dataset.sc === set.sc));
+  const gear = set.sc === "gear";
+  document.querySelectorAll("#gsel button").forEach(b => { const gb = b.dataset.g === "th" || b.dataset.g === "gv"; b.hidden = gear ? !gb : gb; });
+  if (gear && gq !== "th" && gq !== "gv") gq = "th"; if (!gear && (gq === "th" || gq === "gv")) gq = "x";
+  document.querySelectorAll("#gsel button").forEach(b => b.setAttribute("aria-pressed", b.dataset.g === gq));
+  $("fbdTitle").textContent = gear ? "How the speeds are linked" : "Free-body diagram";
   $("graphHint").innerHTML = {
     chair:"Graphs follow the mass in the right hand. <i>x</i>–<i>t</i> is a sine curve: the shadow of circular motion. Force: what the arm must pull with at each radius.",
     sat:"Graphs follow the satellite (time in minutes, hours or days). Force: the gravitational field strength <i>g</i> = <i>GM</i>/<i>r</i>² — the satellite's acceleration.",
     car:"Graphs follow the car. Force: the friction needed (red) against the most friction the road can give (green). Where they cross is <i>v</i><sub>max</sub>.",
-    kar:"Graphs follow the selected child. Force: grip needed against distance from the centre for each child; the dashed line is the strongest grip."}[set.sc];
+    kar:"Graphs follow the selected child. Force: grip needed against distance from the centre for each child; the dashed line is the strongest grip.",
+    gear:"<i>θ</i>–<i>t</i>: one straight line per wheel, gradient = <i>ω</i> (negative = clockwise; dashed = on the same shaft as the wheel before). Tangent: on the output wheel. Rim speeds: equal across a mesh, chain or belt."}[set.sc];
 }
 function updateButtons(){
   $("startBtn").disabled = R.playing && !R.paused;
@@ -1949,6 +2567,13 @@ function updateReadouts(){
       ${set.cBank ? row("normal force <i>F</i><sub>N</sub>", fmtF(C.N), "no-friction speed √(<i>gr</i> tan<i>θ</i>)", `${f2(C.v0)} m s⁻¹`, COL.N) : ""}
       <tr><td colspan="5" class="ev">${pill(C.ok, "✔ grips: static friction is enough", C.Ff > 0 ? "✘ too fast: skids outwards" : "✘ too slow for this bank: slides down")}
         ${skid ? " · now sliding: friction μ<sub>d</sub>F<sub>N</sub> only slows it" : ""}</td></tr></table>`;
+  } else if (set.sc === "gear"){
+    const G = gearState();
+    html = `<table><tr><th></th><th>${set.gSet === "belt" ? "<i>r</i>" : set.gSet === "bike" ? "teeth / <i>r</i>" : "teeth"}</th><th>rpm</th><th><i>ω</i> / rad s⁻¹</th><th><i>T</i> / s</th><th><i>v</i> = <i>ωr</i></th></tr>` +
+      G.map((g, i) => `<tr><td><b style="color:${GLOOK[i % 4].mark}">${g.id}</b> ${g.w < 0 ? "↻" : "↺"}</td><td class="v">${g.N ? g.N : `${sig(g.r * 100, 3)} cm`}</td><td class="v">${sig(g.rpm, 3)}</td>
+        <td class="v">${sig(Math.abs(g.w), 3)}</td><td class="v">${sig(g.T, 3)}</td><td class="v" style="color:${COL.v}">${sig(g.v * 100, 3)} cm s⁻¹</td></tr>`).join("") +
+      `<tr><td colspan="6" class="ev">${set.gSet === "bike" ? `bike speed = <i>ω</i><sub>wheel</sub> × 0.34 m = <b>${sig(G[2].v, 3)} m s⁻¹ = ${sig(G[2].v * 3.6, 3)} km/h</b>` :
+        set.gSet === "belt" ? `the load rises at <i>ω</i><sub>drum</sub><i>r</i><sub>drum</sub> = <b>${sig(G[2].v * 100, 3)} cm s⁻¹</b>` : `ratio <i>ω</i><sub>out</sub>/<i>ω</i><sub>in</sub> = N<sub>in</sub>/N<sub>out</sub> = ${sig(gRatio(G), 3)}`}</td></tr></table>`;
   } else {
     const T = set.kT, w = TWO_PI / T;
     html = `<table><tr><td colspan="6"><i>T</i> = ${f2(T)} s · <i>ω</i> = ${f2(w)} rad s⁻¹ (the same for every child) · strongest grip ${sig(set.kGrip)} N</td></tr>
