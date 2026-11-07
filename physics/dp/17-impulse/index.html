@@ -12,7 +12,7 @@
 
   File sections (same order as Simulation 01):
     1 STYLE     layout, colours (force colours match the slide decks)
-    2 MARKUP    header with the three examples · scene + readouts · FBD · tabs (graphs / data / tasks) · controls
+    2 MARKUP    header with the four examples · scene + readouts · FBD · tabs (graphs / data / tasks) · controls
     3 CONFIG    bumpers, surfaces, balls
     4 PHYSICS   force pulse of each example (pure functions), velocity and position during the contact
     5 RUN       run state; the approach and the bounce play in slow motion
@@ -238,6 +238,13 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
 @media (min-width:1100px){ main{grid-template-columns:minmax(0,1.25fr) minmax(0,0.85fr) minmax(0,1.25fr)} }
 .readouts table.ba td.v{width:28%}
 .readouts table.ba{margin-bottom:2px}
+.readouts table.lanes td{padding:3px 2px}
+.readouts table.lanes tr.sel td{background:var(--soft-blue)}
+.readouts table.lanes td.v{width:auto}
+body.safeMode #controls{gap:8px 10px}
+body.safeMode #plus button{padding:4px 9px}
+body.safeMode #controls .fld .nb{width:58px!important}
+body.safeMode #controls select{max-width:130px}
 .plusTag{display:inline-block;font-weight:700;color:var(--navy);background:var(--soft-blue);border-radius:6px;padding:0 6px}
 .sub a.home{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55);white-space:nowrap}.sub a.home:hover{border-bottom-color:#fff}
 /* ==== SHARED-UI CSS START: ▼ [box] ▲ steppers (10 Oct 2026) — the sliders are hidden, the number box is the control ==== */
@@ -333,6 +340,7 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
     <button data-sc="cart" aria-pressed="true">🛒 Cart<span class="lg"> + force sensor</span></button>
     <button data-sc="egg" aria-pressed="false">🥚 Egg<span class="lg"> into a sheet</span></button>
     <button data-sc="ball" aria-pressed="false">🎾 Ball<span class="lg">, racket, club</span></button>
+    <button data-sc="safe" aria-pressed="false" title="Airbags, seat belts, helmets, crumple zones, landing">🚗 Safety</button>
   </div>
   <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
   <div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
@@ -375,6 +383,7 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
           <button data-g="F" aria-pressed="true"><i>F</i>–<i>t</i></button>
           <button data-g="v" aria-pressed="false"><i>v</i>–<i>t</i></button>
           <button data-g="p" aria-pressed="false"><i>p</i>–<i>t</i></button>
+          <button data-g="bars" aria-pressed="false" id="barsBtn" hidden>Compare</button>
         </div>
         <span class="tools"><span class="hint">Graph tools:</span>
           <label class="switch"><input type="checkbox" id="areaChk"> Area</label>
@@ -412,7 +421,9 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
     <h3 id="helpTitle">How to use this simulation</h3>
     <ol>
       <li>Choose an <b>example</b> at the top: 🛒 Smart Cart bouncing off a force sensor · 🥚 egg thrown into a sheet, a cushion or a wall ·
-        🎾 ball hit by a racket, a wall or a golf club.</li>
+        🎾 ball hit by a racket, a wall or a golf club · 🚗 <b>Safety</b>: a car driver (no belt · seat belt · belt + airbag), a cyclist's head
+        (no helmet · helmet), a car body (rigid · crumple zone) or a landing (stiff legs · crash mat · bent knees). Safety plays every protection
+        <b>side by side</b> with the same mass and speed: tap a lane to see its forces; <b>Compare</b> (Graphs tab) shows Δ<i>p</i> and the forces as bars.</li>
       <li>Set each value with <b>▼</b> and <b>▲</b> (hold to go faster; the <b>↑ ↓</b> keys or the mouse wheel in the box also work, Shift = ×10), or <b>type a value</b> in the box. <b>↺</b> puts it back to its start value. Outside the classroom range the box turns <b>amber ⚠</b>: fine to explore, but the lab can't do this.</li>
       <li>Move the pointer over any <b>graph</b> (or tap it): a dashed line shows the values where it cuts each curve, or the values of the nearest data point.</li>
       <li>Choose the <b>positive direction</b> (→ right or ← left). Every velocity, momentum, force and impulse gets its sign from it.</li>
@@ -436,7 +447,10 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
     <p class="hint">Model: the bumpers behave like springs that give back part of the energy (spring 80 %, magnetic 90 % of the speed; clay
       almost nothing). Bumper data fitted to the class PASCO sample runs (0.500 kg cart at 0.62 m s⁻¹). Egg, ball and club: a smooth (half-sine)
       or triangular force pulse lasting Δ<i>t</i>. The egg cracks if the force goes above 25 N (a typical value). The weight is far too small
-      to matter during the short contact, so the motion is drawn along a horizontal line.</p>
+      to matter during the short contact, so the motion is drawn along a horizontal line.
+      Safety: each protection is a smooth (half-sine) pulse that stops the body in its stopping time Δ<i>t</i> (peak = π/2 × average force); the
+      weight is ignored, as on the slides (the floor really pushes <i>mg</i> more). "Serious injury" uses typical, rounded limits on the peak:
+      30 <i>g</i> deceleration for the people in a car, 300 <i>g</i> for the head (helmet tests), 10 kN on the legs. Lanes are not to scale.</p>
     <!-- NEWTON HELP --><h3>Newton's laws</h3>
 <p>The badge above the scene says which law applies at this moment: <b>1st law</b> — at rest or moving at a constant velocity, the resultant force is zero (Σ<i>F</i> = 0); <b>2nd law</b> — accelerating, Σ<i>F</i> = <i>ma</i>. The table under the free-body diagram adds up the forces (Σ<i>F</i>) and compares them with <i>m a</i> (▾ folds it). Tick <b>3rd-law pairs</b> to see every force with its partner: the same size and type, in the opposite direction, acting on the <b>other</b> body (the Earth, the floor, the string, the fluid…).</p><!-- /NEWTON HELP -->
 <p style="text-align:right"><button class="btn primary" id="helpClose">Close</button></p>
@@ -872,9 +886,29 @@ const BALLS = [
   {id:"wall",   name:"Ball against a wall",  m:0.40,  u:10, v:8,    dt:50, shape:"smooth", r:0.11,  col:"#EF6C00", hit:"wall"},
   {id:"golf",   name:"Golf ball + club",     m:0.046, u:0,  v:52.2, dt:6,  shape:"tri",    r:0.021, col:"#F5F5F5", hit:"club"},
 ];
-const SC = {cart:{side:1, D:0.40}, egg:{side:-1, D:1.5}, ball:{side:-1, D:1.2}};   // side: +1 barrier on the right
+// Safety: every protection is a lane; all lanes share m and u (same Δp), each has its own stopping time (ms).
+// Presets = the Impulse slides (car 1200 kg at 15 m s⁻¹, 0.050 / 0.25 s; landing 60 kg at 4.0 m s⁻¹, 0.020 / 0.40 s).
+// lim = serious-injury limit on the PEAK force: g = deceleration in g (force = n·g·m), F = force in N. Typical, rounded.
+const SAFE = [
+  {id:"driver", name:"Car driver", short:"Car driver", who:"Driver", m:70, u:15, vert:false, lim:{g:30}, limTxt:"30 g", dPx:58, lanes:[
+    {id:"none",  name:"No seat belt",       sh:"No belt",  dt:10,  col:"#C62828", by:"the steering wheel"},
+    {id:"belt",  name:"Seat belt",          sh:"Belt",     dt:100, col:"#EF6C00", by:"the seat belt"},
+    {id:"bag",   name:"Seat belt + airbag", sh:"Airbag",   dt:150, col:"#2E7D32", by:"the belt and the airbag"}]},
+  {id:"head", name:"Cyclist's head", short:"Cyclist's head", who:"Head", m:5.0, u:6.0, vert:true, lim:{g:300}, limTxt:"300 g", dPx:9, lanes:[
+    {id:"bare",   name:"No helmet", sh:"No helmet", dt:2,  col:"#C62828", by:"the road"},
+    {id:"helmet", name:"Helmet",    sh:"Helmet",    dt:12, col:"#2E7D32", by:"the helmet foam"}]},
+  {id:"car", name:"Car body (crumple zone)", short:"Car body", who:"Car", m:1200, u:15, vert:false, lim:{g:30}, limTxt:"30 g", dPx:24, lanes:[
+    {id:"rigid",   name:"Rigid car",    sh:"Rigid",   dt:50,  col:"#C62828", by:"the wall"},
+    {id:"crumple", name:"Crumple zone", sh:"Crumple", dt:250, col:"#2E7D32", by:"the wall (through the crumple zone)"}]},
+  {id:"land", name:"Landing from a jump", short:"Landing", who:"Jumper", m:60, u:4.0, vert:true, lim:{F:10000}, limTxt:"10 kN", dPx:16, lanes:[
+    {id:"stiff", name:"Stiff legs on the floor", sh:"Stiff legs", dt:20,  col:"#C62828", by:"the floor"},
+    {id:"mat",   name:"Crash mat",               sh:"Mat",        dt:200, col:"#EF6C00", by:"the mat"},
+    {id:"knees", name:"Bent knees",              sh:"Knees",      dt:400, col:"#2E7D32", by:"the floor (knees bend)"}]},
+];
+const sitById = id => SAFE.find(q => q.id === id) || SAFE[0];
+const SC = {cart:{side:1, D:0.40}, egg:{side:-1, D:1.5}, ball:{side:-1, D:1.2}, safe:{side:1, D:1}};   // side: +1 barrier on the right
 const COL = {W:"#2A5D8A", N:"#2E7D32", F:"#C62828", P:"#6A1B9A", v:"#1565C0", a:"#E65100", p:"#00838F",
-             navy:"#1F3A5F", accent:"#E65100", ink:"#263238", muted:"#606A72", grid:"#E3E9F0", grey:"#90A4AE"};
+             navy:"#1F3A5F", accent:"#E65100", ok:"#2E7D32", ink:"#263238", muted:"#606A72", grid:"#E3E9F0", grey:"#90A4AE"};
 const bumpById = id => BUMP.find(b => b.id === id), surfById = id => SURF.find(s => s.id === id), ballById = id => BALLS.find(b => b.id === id);
 
 /* ============================ 4 PHYSICS ============================ */
@@ -913,6 +947,7 @@ function pulseBall(m, u, v, dtms, shape){
 function pulseNow(){
   if (set.sc === "cart") return pulseCart(set.cM, set.cU, set.cB);
   if (set.sc === "egg") return pulseEgg(set.eM, set.eU, set.eDt);
+  if (set.sc === "safe") return pulseEgg(set.sM, set.sU, laneDt(set.sL));
   return pulseBall(set.bM, set.bU, set.bV, set.bDt, set.bShape);
 }
 // velocity and position (towards the barrier = +) during the contact, by numerical integration
@@ -932,6 +967,11 @@ function summary(C, sg){
           KEb:C.m * C.u * C.u / 2, KEa:C.m * C.vout * C.vout / 2};
 }
 const eggCracks = C => C.Fm > EGG_BREAK;
+// Safety helpers
+const sitNow = () => sitById(set.sSit);
+const laneDt = i => set["sDt" + i];
+const safeLim = (sit = sitNow(), m = set.sM) => sit.lim.F ?? sit.lim.g * g * m;     // N, on the peak force
+const injured = Cx => Cx.Fm > safeLim();
 function originFit(pts){ const sxx = pts.reduce((a, p) => a + p[0] * p[0], 0);
   return sxx && pts.length >= 2 ? {k:pts.reduce((a, p) => a + p[0] * p[1], 0) / sxx, b:0} : null; }
 
@@ -939,11 +979,24 @@ function originFit(pts){ const sxx = pts.reduce((a, p) => a + p[0] * p[0], 0);
 const set = {sc:"cart", plus:"right",
   cB:"spring", cM:0.500, cU:0.62,
   eS:"sheet", eDt:100, eU:10, eM:0.060,
-  bObj:"tennis", bM:0.058, bU:20, bV:30, bDt:5, bShape:"smooth"};
+  bObj:"tennis", bM:0.058, bU:20, bV:30, bDt:5, bShape:"smooth",
+  sSit:"driver", sM:70, sU:15, sDt0:10, sDt1:100, sDt2:150, sL:0};
 const R = {playing:false, paused:false, t:0, tc:1, tA:1, tEnd:2};
-let C = null, TAB = null;
+let C = null, TAB = null, LANES = [];
+const isSafe = () => set.sc === "safe";
+const cDt = () => isSafe() && LANES.length ? Math.max(...LANES.map(L => L.C.dt)) : C.dt;   // the longest contact (Safety: all lanes)
 const sgScreen = () => SC[set.sc].side * (set.plus === "right" ? 1 : -1);   // display sign of "towards the barrier"
 function reset(){
+  LANES = [];
+  if (isSafe()){
+    const sit = sitNow(); set.sL = Math.min(set.sL, sit.lanes.length - 1);
+    LANES = sit.lanes.map((ln, i) => { const Cx = pulseEgg(set.sM, set.sU, laneDt(i)); return {C:Cx, TAB:integrate(Cx), ln, i}; });
+    C = LANES[set.sL].C; TAB = LANES[set.sL].TAB;
+    R.tc = 0.5; R.tA = 0.6;
+    R.tEnd = R.tc + cDt() + R.tA;
+    R.t = 0; R.playing = false; R.paused = false;
+    updateButtons(); updateStepLabels(); return;
+  }
   C = pulseNow(); TAB = integrate(C);
   const D = SC[set.sc].D;
   R.tc = C.u > 0 ? D / C.u : 0.35;
@@ -956,11 +1009,11 @@ function reset(){
 const SCREEN = {a:1.2, c:2.4, f:1.2};
 function rate(t){
   if (t < R.tc) return Math.min(1, R.tc / SCREEN.a);
-  if (t < R.tc + C.dt) return Math.min(1, C.dt / SCREEN.c);
+  if (t < R.tc + cDt()) return Math.min(1, cDt() / SCREEN.c);
   return Math.min(1, R.tA / SCREEN.f);
 }
-const slowFactor = () => 1 / rate(R.tc + C.dt / 2);
-function stepDt(){ return niceUp(C.dt / 10); }
+const slowFactor = () => 1 / rate(R.tc + cDt() / 2);
+function stepDt(){ return niceUp(cDt() / 10); }
 function start(){ R.t = 0; R.playing = true; R.paused = false; updateButtons(); }
 function stepBy(d){
   R.t = Math.min(R.tEnd, Math.max(0, R.t + d));
@@ -973,7 +1026,7 @@ function step(dt){
   if (R.t >= R.tEnd){ R.t = R.tEnd; R.playing = false; updateButtons(); }
 }
 // state at time t in the barrier frame (x = front face, + towards the barrier, 0 = first touch)
-function at(t){
+function atOf(C, TAB, t){
   const s = t - R.tc;
   if (s <= 0) return {x:C.u * s, v:C.u, F:0, ph:"before"};
   const N = TAB.s.length - 1;
@@ -981,8 +1034,12 @@ function at(t){
   const f = s / C.dt * N, i = Math.min(N - 1, Math.floor(f)), k = f - i;
   return {x:TAB.x[i] + (TAB.x[i + 1] - TAB.x[i]) * k, v:TAB.v[i] + (TAB.v[i + 1] - TAB.v[i]) * k, F:C.F(s), ph:"during"};
 }
-// signed (displayed) quantities at time t
-function disp(t){ const a = at(t), sg = sgScreen(); return {v:a.v * sg, p:C.m * a.v * sg, F:-a.F * sg, ph:a.ph, x:a.x, Fmag:a.F}; }
+const at = t => atOf(C, TAB, t);
+// signed (displayed) quantities at time t (L = one Safety lane; default = the shown body)
+function dispOf(L, t){ const a = atOf(L.C, L.TAB, t), sg = sgScreen(); return {v:a.v * sg, p:L.C.m * a.v * sg, F:-a.F * sg, ph:a.ph, x:a.x, Fmag:a.F}; }
+const disp = t => dispOf({C, TAB}, t);
+// Safety: the moment the peak force first passes the injury limit (Infinity if never)
+const hurtTime = L => L.C.Fm > safeLim() ? R.tc + L.C.dt / Math.PI * Math.asin(safeLim() / L.C.Fm) : Infinity;
 const crackTime = () => eggCracks(C) ? R.tc + C.dt / Math.PI * Math.asin(EGG_BREAK / C.Fm) : Infinity;
 
 /* ============================ 6 SCENE ============================ */
@@ -1037,13 +1094,13 @@ function bg(ctx, w, h, c0 = "#FAFCFF", c1 = "#EEF3F8"){ const gr = ctx.createLin
 function drawScene(){
   const {ctx, w, h} = fitCanvas(document.getElementById("scene"));
   ctx.clearRect(0, 0, w, h);
-  ({cart:sceneCart, egg:sceneEgg, ball:sceneBall})[set.sc](ctx, w, h);
-  plusAxis(ctx, w, h);
-  const sf = slowFactor(), inC = R.t > R.tc && R.t < R.tc + C.dt;
+  ({cart:sceneCart, egg:sceneEgg, ball:sceneBall, safe:sceneSafe})[set.sc](ctx, w, h);
+  if (!isSafe()) plusAxis(ctx, w, h);
+  const sf = slowFactor(), inC = R.t > R.tc && R.t < R.tc + cDt();
   label(ctx, `t = ${fmtT(R.t)}`, w - 10, h - 12, COL.P, "right", 14);
   if (sf > 1.5) label(ctx, `contact in slow motion ×${sig(sf, 2)}`, w - 10, h - 30, inC ? COL.accent : COL.muted, "right", 12);
 }
-function fmtT(t){ return C.dt < 0.1 && Math.abs(t - R.tc) < 3 * C.dt ? `${f2(t)} s (contact ${f1((t - R.tc) * 1000)} ms)` : `${f2(t)} s`; }
+function fmtT(t){ return cDt() < 0.1 && Math.abs(t - R.tc) < 3 * cDt() ? `${f2(t)} s (contact ${f1((t - R.tc) * 1000)} ms)` : `${f2(t)} s`; }
 function plusAxis(ctx, w, h){
   const right = set.plus === "right", x0 = 14, y = 40;
   arrow(ctx, right ? x0 : x0 + 46, y, right ? x0 + 46 : x0, y, COL.navy, 2.5);
@@ -1146,6 +1203,132 @@ function sceneBall(ctx, w, h){
   label(ctx, `${O.name} · ${sig(set.bM * 1000)} g · contact ${sig(set.bDt)} ms (${set.bShape === "tri" ? "triangle" : "smooth"} pulse)`, 10, 14, COL.navy, "left", 13);
 }
 
+/* ---- Safety: every protection in its own lane, all at the same time ---- */
+let SAFE_RECTS = [];
+const kmh = u => `${sig(u * 3.6, 3)} km/h`;
+const dropH = u => u * u / (2 * g);
+const CIRC = ["①", "②", "③"];
+const fmtMs = t => `${sig(t * 1000)} ms`;
+function rrect(ctx, x, y, w, h, r){ ctx.beginPath(); if (ctx.roundRect) ctx.roundRect(x, y, w, h, r); else ctx.rect(x, y, w, h); }
+function sceneSafe(ctx, w, h){
+  const sit = sitNow(), n = LANES.length, vert = sit.vert;
+  bg(ctx, w, h, "#F7FAFE", "#E8EFF7");
+  label(ctx, `${sit.name} · ${sig(set.sM)} kg at ${sig(set.sU)} m s⁻¹ (${kmh(set.sU)}${sit.id === "land" ? `, a drop of ${sig(dropH(set.sU), 2)} m` : ""})`, 10, 13, COL.navy, "left", 13);
+  label(ctx, `same Δp = ${sig(set.sM * set.sU)} N s in every lane · injury above ${sit.limTxt}`, 10, 30, COL.muted, "left", 12);
+  // positive direction (along the motion: → for rows, ↓ for columns), top right
+  { const pr = set.plus === "right", x0 = w - 30, y = 22;
+    if (!vert){ arrow(ctx, pr ? x0 - 18 : x0 + 18, y, pr ? x0 + 18 : x0 - 18, y, COL.navy, 2.2); label(ctx, "+", x0, y - 10, COL.navy, "center", 13); }
+    else { arrow(ctx, x0, pr ? y - 12 : y + 12, x0, pr ? y + 12 : y - 12, COL.navy, 2.2); label(ctx, "+", x0 + 8, y - 4, COL.navy, "left", 13); } }
+  const top = 40, bot = h - 34, gap = 6;
+  SAFE_RECTS = LANES.map((L, i) => vert
+    ? {x:8 + i * (w - 16 + gap) / n, y:top, w:(w - 16 + gap) / n - gap, h:bot - top}
+    : {x:8, y:top + i * (bot - top + gap) / n, w:w - 16, h:(bot - top + gap) / n - gap});
+  const maxStop = Math.max(1e-9, ...LANES.map(L => L.TAB.x[L.TAB.x.length - 1]));
+  LANES.forEach((L, i) => {
+    const r = SAFE_RECTS[i], sel = i === set.sL, a = atOf(L.C, L.TAB, R.t);
+    ctx.save(); rrect(ctx, r.x, r.y, r.w, r.h, 8); ctx.fillStyle = sel ? "rgba(255,255,255,.95)" : "rgba(255,255,255,.55)"; ctx.fill();
+    ctx.lineWidth = sel ? 2.4 : 1; ctx.strokeStyle = sel ? COL.navy : "#C5D2DF"; ctx.stroke(); ctx.clip();
+    const s = vert ? clamp(Math.min(r.w / 140, r.h / 200), 0.55, 1.7) : clamp((r.h - 18) / 64, 0.45, 1.6);
+    const along = vert ? r.h : r.w, dmax = Math.min(sit.dPx * s, along * 0.22), k = dmax / maxStop;
+    const tt = R.t / R.tc, d = a.ph === "before" ? -(1 - tt) * along * (vert ? 0.42 : 0.40) : a.x * k;   // px past the first touch
+    ({driver:laneDriver, head:laneHead, car:laneCar, land:laneLand})[sit.id](ctx, r, L, d, s, dmax, a);
+    ctx.restore();
+    // lane name, Δt and the result
+    const hurt = R.t >= hurtTime(L), done = R.t >= R.tc + L.C.dt, col = L.ln.col;
+    const nm = `${CIRC[i]} ${vert && r.w < 170 ? L.ln.sh : L.ln.name}`, dtT = `Δt = ${fmtMs(L.C.dt)}`;
+    if (vert){ label(ctx, nm, r.x + 8, r.y + 11, col, "left", 12.5); label(ctx, dtT, r.x + 8, r.y + 27, COL.muted, "left", 11.5); }
+    else label(ctx, `${nm} · ${dtT}`, r.x + 8, r.y + 11, col, "left", 12.5);
+    let st = "", sc = COL.P;
+    if (hurt){ st = "💥 serious injury"; sc = COL.F; }
+    else if (done){ st = "✔ safe"; sc = COL.ok; }
+    const live = a.F > 0.01 ? `F = ${fmtF(-a.F * sgScreen()).replace(/^-/, "−")}` : "";
+    if (vert){ if (live && !st) label(ctx, live, r.x + 8, r.y + 45, COL.P, "left", 12);
+               if (st) label(ctx, st, r.x + 8, r.y + 45, sc, "left", 12.5); }
+    else { if (st) label(ctx, st, r.x + r.w - 8, r.y + 11, sc, "right", 12.5);
+           if (live && !st) label(ctx, live, r.x + r.w - 8, r.y + 11, COL.P, "right", 12); }
+  });
+}
+// ---- one lane each: r = lane box, d = px moved past the first touch (negative before it), s = drawing scale
+function laneDriver(ctx, r, L, d, s, dmax, a){
+  // seen from inside the car: before the crash the driver sits still (the road moves); the car stops at the first touch,
+  // then the driver moves forward by d and is stopped by the wheel (①), the belt (②) or the belt + airbag (③)
+  const id = L.ln.id, yG = r.y + r.h - 6, Xb = r.x + r.w * 0.5, front = Xb + Math.max(0, d), moving = a.ph === "before";
+  const Xd = Xb + dmax + 12 * s;                                       // dashboard: the belted driver never reaches it
+  const Xw = id === "none" ? Math.max(Xb + 2 * s, front) : Xd - 4 * s;   // steering wheel (bends a little when it is hit)
+  ctx.fillStyle = "#90A4AE"; ctx.fillRect(r.x, yG, r.w, 8);           // road, moving while the car moves
+  if (moving){ ctx.fillStyle = "#fff"; const off = ((R.t * 400) % 40); for (let x = r.x - off; x < r.x + r.w; x += 40) ctx.fillRect(x, yG + 3, 18, 2); }
+  ctx.fillStyle = "#546E7A"; ctx.beginPath(); ctx.moveTo(Xd, yG - 34 * s); ctx.lineTo(r.x + r.w, yG - 40 * s); ctx.lineTo(r.x + r.w, yG); ctx.lineTo(Xd + 10 * s, yG); ctx.fill();
+  ctx.strokeStyle = "#90CAF9"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(Xd + 16 * s, yG - 38 * s); ctx.lineTo(Xd + 60 * s, r.y + 16); ctx.stroke();   // windscreen
+  ctx.strokeStyle = "#455A64"; ctx.lineWidth = 3 * s; ctx.beginPath(); ctx.moveTo(Xw + 2 * s, yG - 28 * s); ctx.lineTo(Xd + 6 * s, yG - 30 * s); ctx.stroke();   // steering column
+  ctx.strokeStyle = "#263238"; ctx.lineWidth = 5 * s; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(Xw, yG - 46 * s); ctx.lineTo(Xw + 3 * s, yG - 22 * s); ctx.stroke();
+  // seat
+  const sx = Xb - 40 * s; ctx.fillStyle = "#8D6E63"; ctx.fillRect(sx - 8 * s, yG - 58 * s, 8 * s, 52 * s); ctx.fillRect(sx - 8 * s, yG - 14 * s, 44 * s, 8 * s);
+  // airbag: fires at the first touch, the driver squashes it against the wheel
+  if (id === "bag" && !moving){ const left = Math.max(Xb + 1, front), wid = Math.max(6, Xd - 4 * s - left), hh = 40 * s * Math.min(1.4, Math.sqrt((Xd - Xb) / wid));
+    ctx.fillStyle = "rgba(245,245,245,.97)"; ctx.strokeStyle = "#90A4AE"; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.ellipse(left + wid / 2, yG - 40 * s, wid / 2 + 3, hh / 2, 0, 0, TWO_PI); ctx.fill(); ctx.stroke(); }
+  // driver: chest front at 'front', leaning forward as d grows
+  const tw = 20 * s, th = 32 * s, lean = Math.max(0, d) * 0.6, base = front - tw - Math.max(0, d) * 0.4;
+  ctx.fillStyle = "#1565C0"; ctx.fillRect(sx, yG - 18 * s, 38 * s, 9 * s);                                             // thighs on the seat
+  ctx.fillStyle = "#1E88E5"; ctx.beginPath(); ctx.moveTo(base, yG - 12 * s); ctx.lineTo(base + tw, yG - 12 * s); ctx.lineTo(front, yG - 12 * s - th); ctx.lineTo(front - tw, yG - 12 * s - th); ctx.fill();
+  const hx = front - tw / 2 + 2 * s + lean * 0.3, hy = yG - 12 * s - th - 9 * s;
+  ctx.fillStyle = "#FFCC80"; ctx.strokeStyle = "#8D6E63"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(hx, hy, 9 * s, 0, TWO_PI); ctx.fill(); ctx.stroke();
+  // seat belt: from the shoulder anchor on the seat, across the chest, to the buckle; orange while it stretches
+  if (id !== "none"){ const tight = !moving && d > 0.5;
+    ctx.strokeStyle = tight ? "#EF6C00" : "#37474F"; ctx.lineWidth = 3.5 * s; ctx.beginPath(); ctx.moveTo(sx - 4 * s, yG - 12 * s - th);
+    ctx.lineTo(front - 2 * s, yG - 12 * s - th * 0.45); ctx.lineTo(sx + 26 * s, yG - 12 * s); ctx.stroke(); }
+  if (moving) label(ctx, `car at ${sig(L.C.u)} m s⁻¹ →`, r.x + 10, yG - 10, COL.muted, "left", 11);
+  else label(ctx, "car stopped", r.x + 10, yG - 10, COL.muted, "left", 11);
+  vArrowL(ctx, hx, hy - 20 * s, a, L, 40);
+}
+function laneCar(ctx, r, L, d, s, dmax, a){
+  const id = L.ln.id, yG = r.y + r.h - 6, Xw = r.x + r.w * 0.66, Lc = Math.min(110 * s, r.w * 0.3);
+  ctx.fillStyle = "#B0BEC5"; ctx.fillRect(r.x, yG, r.w, 8);
+  ctx.fillStyle = "#A1887F"; ctx.fillRect(Xw, r.y, 16, r.h); ctx.strokeStyle = "#6D4C41"; ctx.lineWidth = 1;
+  for (let y = r.y + 6; y < yG; y += 10){ ctx.beginPath(); ctx.moveTo(Xw, y); ctx.lineTo(Xw + 16, y); ctx.stroke(); }
+  const rear = Xw - Lc + d, frontX = Math.min(Xw, rear + Lc), crushed = Math.max(0, rear + Lc - Xw);
+  const ch = 24 * s, cy = yG - 9 * s - ch, zone = id === "crumple" ? Lc * 0.3 : 0;
+  ctx.fillStyle = "#1E88E5"; rrect(ctx, rear, cy, frontX - rear, ch, 4 * s); ctx.fill();
+  if (zone){ const zx = Math.max(rear, frontX - zone + crushed), zw = frontX - zx;          // the crumple zone: yellow, it gets shorter
+    ctx.fillStyle = "#FFD54F"; ctx.fillRect(zx, cy, zw, ch); ctx.strokeStyle = "#F57F17"; ctx.lineWidth = 1.5; ctx.beginPath();
+    const nz = Math.max(2, Math.round(zone / 9)); for (let j = 0; j <= nz; j++){ const xx = zx + zw * j / nz; j ? ctx.lineTo(xx, cy + (j % 2 ? ch : 0)) : ctx.moveTo(xx, cy); } ctx.stroke(); }
+  else if (crushed > 1){ ctx.fillStyle = "#0D47A1"; ctx.fillRect(frontX - Math.min(crushed, 8), cy, Math.min(crushed, 8), ch); }
+  ctx.fillStyle = "#90CAF9"; ctx.beginPath(); ctx.moveTo(rear + Lc * 0.22, cy); ctx.lineTo(rear + Lc * 0.3, cy - 14 * s); ctx.lineTo(rear + Lc * 0.58, cy - 14 * s); ctx.lineTo(rear + Lc * 0.66, cy); ctx.fill();
+  ctx.fillStyle = "#212121"; for (const fx of [0.2, 0.72]){ ctx.beginPath(); ctx.arc(Math.min(rear + Lc * fx, frontX - 9 * s), yG - 7 * s, 7 * s, 0, TWO_PI); ctx.fill(); }
+  vArrowL(ctx, rear + Lc / 2, cy - 26 * s, a, L, 40);
+}
+function laneHead(ctx, r, L, d, s, dmax, a){
+  const id = L.ln.id, Yb = r.y + r.h - 44, cx = r.x + r.w / 2, R0 = 16 * s, foam = id === "helmet" ? 10 * s : 0;
+  ctx.fillStyle = "#616161"; ctx.fillRect(r.x, Yb, r.w, r.h); ctx.fillStyle = "#FFF"; ctx.fillRect(cx - 14, Yb + 6, 28, 3);     // road + line
+  const bottom = Yb + d, headBot = bottom - foam + (id === "helmet" ? Math.max(0, d) : 0);   // the helmet stops at the road, the head sinks into the foam
+  const squash = id === "bare" ? Math.max(0, d) : 0, hb = Math.min(headBot, Yb), cyH = hb - R0 + squash / 2;
+  if (id === "helmet"){ const shellBot = Math.min(bottom, Yb);
+    ctx.fillStyle = "#43A047"; ctx.beginPath(); ctx.ellipse(cx, shellBot - R0 - foam / 2, R0 + foam, R0 + foam / 2 + 2, 0, 0, Math.PI); ctx.fill();
+    ctx.fillStyle = "#FFF59D"; ctx.beginPath(); ctx.ellipse(cx, shellBot - R0 - foam / 2, R0 + foam - 3, Math.max(R0 + 1, shellBot - 3 - (shellBot - R0 - foam / 2)), 0, 0, Math.PI); ctx.fill(); }
+  ctx.fillStyle = "#FFCC80"; ctx.strokeStyle = "#8D6E63"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.ellipse(cx, cyH, R0 + squash / 2, R0 - squash / 2, 0, 0, TWO_PI); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#4E342E"; ctx.beginPath(); ctx.arc(cx - R0 * 0.35, cyH - R0 * 0.2, 2 * s, 0, TWO_PI); ctx.fill();                // eye (head on its side)
+  ctx.fillStyle = "#6D4C41"; ctx.beginPath(); ctx.arc(cx, cyH, R0, Math.PI * 1.05, Math.PI * 1.95); ctx.lineTo(cx, cyH); ctx.fill();   // hair
+  vArrowL(ctx, cx + R0 + foam + 14, cyH, a, L, 34, true);
+}
+function laneLand(ctx, r, L, d, s, dmax, a){
+  const id = L.ln.id, Yb = r.y + r.h - 44, cx = r.x + r.w / 2, mat = id === "mat" ? 16 * s : 0, Yc = Yb - mat;
+  ctx.fillStyle = "#BCAAA4"; ctx.fillRect(r.x, Yb, r.w, r.h); ctx.fillStyle = "#8D6E63"; ctx.fillRect(r.x, Yb, r.w, 3);              // floor
+  const sink = id === "knees" ? 0 : Math.max(0, d), bend = id === "knees" ? Math.max(0, d) : 0;
+  const feet = Math.min(Yc + d, Yc) + sink;                              // feet stop at the floor / sink into the mat
+  if (mat){ const mt = Yc + sink; ctx.fillStyle = "#1E88E5"; rrect(ctx, cx - 40 * s, mt, 80 * s, Yb - mt, 4); ctx.fill(); }
+  const lg = 15 * s, bd = Math.min(bend, 1.3 * lg), hipY = feet - 2 * lg + bd, kx = Math.sqrt(Math.max(0, lg * lg - ((2 * lg - bd) / 2) ** 2));
+  ctx.strokeStyle = "#263238"; ctx.lineWidth = 3.2 * s; ctx.lineCap = "round"; ctx.lineJoin = "round";
+  for (const sd of [-1, 1]){ ctx.beginPath(); ctx.moveTo(cx + sd * 4 * s, hipY); ctx.lineTo(cx + sd * 4 * s + kx, (hipY + feet) / 2); ctx.lineTo(cx + sd * 4 * s, feet); ctx.stroke(); }
+  ctx.beginPath(); ctx.moveTo(cx, hipY); ctx.lineTo(cx, hipY - 24 * s); ctx.stroke();                                                  // body
+  ctx.beginPath(); ctx.moveTo(cx - 14 * s, hipY - 26 * s); ctx.lineTo(cx, hipY - 19 * s); ctx.lineTo(cx + 14 * s, hipY - 26 * s); ctx.stroke(); // arms
+  ctx.fillStyle = "#FFCC80"; ctx.beginPath(); ctx.arc(cx, hipY - 31 * s, 7 * s, 0, TWO_PI); ctx.fill(); ctx.stroke();
+  vArrowL(ctx, cx + 26 * s, hipY - 12 * s, a, L, 34, true);
+}
+// velocity arrow of one lane (rows: along x; columns: down the screen); length ∝ v/u
+function vArrowL(ctx, X, Y, a, L, len, vert = false){
+  const f = a.v / Math.max(L.C.u, 1e-9) * len; if (Math.abs(f) < 4) return;
+  if (vert) arrow(ctx, X, Y - f / 2, X, Y + f / 2, COL.v, 3); else arrow(ctx, X - f / 2, Y, X + f / 2, Y, COL.v, 3);
+}
+
 /* ============================ 7 FBD ============================ */
 function wrap(ctx, text, maxW, size){
   ctx.save(); ctx.font = `600 ${size}px "Segoe UI",Calibri,Arial,sans-serif`;
@@ -1158,20 +1341,23 @@ function drawFBD(){
   ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
   const small = h < 430, top = small ? h : Math.round(h * 0.56), cx = w * 0.5, cy = top * 0.50;
   const a = at(R.t), m = C.m, W = m * g, sideF = -SC[set.sc].side;     // contact force points away from the barrier (screen)
-  const nm = {cart:"Cart", egg:"Egg", ball:"Ball"}[set.sc];
+  const sitF = isSafe() ? sitNow() : null, vertF = !!sitF?.vert, lnF = isSafe() ? LANES[set.sL]?.ln : null;
+  const nm = isSafe() ? sitF.who : {cart:"Cart", egg:"Egg", ball:"Ball"}[set.sc];
+  if (isSafe()) label(ctx, `${CIRC[set.sL]} ${lnF.name}`, w / 2, 30, lnF.col, "center", 12.5);
   label(ctx, `${nm} ${a.ph === "during" ? "during the contact" : a.ph === "before" ? "before the contact" : "after the contact"} (side view)`, w / 2, 14, COL.navy, "center", 13);
   const forces = [{sym:"W", sub:"", x:0, y:-W, col:COL.W, lx:12, ly:-4, al:"left"}];
   if (set.sc === "cart") forces.push({sym:"F", sub:"N", x:0, y:W, col:COL.N, lx:12, ly:4, al:"left"});
-  if (a.F > 1e-6) forces.push({sym:"F", sub:"", x:sideF * a.F, y:0, col:COL.P, lx:0, ly:-16, al:"center"});
-/*NF*/  { const by = {cart:"the bumper / force sensor", egg:set.eSurf ? "the surface it hits" : "the surface it hits", ball:"the racket / club"}[set.sc];
-    NF.body(nm === "Cart" ? "the cart" : nm === "Egg" ? "the egg" : "the ball", m, a.F > 1e-6 ? sideF * a.F / m : 0, 0, {v:1});
+  if (a.F > 1e-6) forces.push(vertF ? {sym:"F", sub:"", x:0, y:a.F, col:COL.P, lx:12, ly:4, al:"left"} : {sym:"F", sub:"", x:sideF * a.F, y:0, col:COL.P, lx:0, ly:-16, al:"center"});
+/*NF*/  { const by = isSafe() ? lnF.by : {cart:"the bumper / force sensor", egg:set.eSurf ? "the surface it hits" : "the surface it hits", ball:"the racket / club"}[set.sc];
+    NF.body(isSafe() ? `the ${nm.toLowerCase()}` : nm === "Cart" ? "the cart" : nm === "Egg" ? "the egg" : "the ball", m, a.F > 1e-6 && !vertF ? sideF * a.F / m : 0, a.F > 1e-6 && vertF ? a.F / m : 0, {v:1});
     if (set.sc === "cart"){ NF.force("W", 0, -W, COL.W, "the Earth", "grav"); NF.force("F<sub>N</sub>", 0, W, COL.N, "the track", "normal"); }
-    if (a.F > 1e-6) NF.force("F", sideF * a.F, 0, COL.P, by, "impact"); }/*/NF*/
+    if (a.F > 1e-6) NF.force("F", vertF ? 0 : sideF * a.F, vertF ? a.F : 0, COL.P, by, "impact"); }/*/NF*/
   const Fmax = Math.max(C.Fm, set.sc === "cart" ? W : 0, 1e-9);
   const kk = Math.min(top * (small ? 0.30 : 0.34), w * 0.36) / Fmax;
   // the body (faint)
   ctx.save(); ctx.globalAlpha = .5;
   if (set.sc === "cart"){ ctx.fillStyle = "#C62828"; ctx.fillRect(cx - 40, cy - 16, 80, 32); ctx.fillStyle = "#212121"; ctx.beginPath(); ctx.arc(cx - 24, cy + 20, 6, 0, TWO_PI); ctx.arc(cx + 24, cy + 20, 6, 0, TWO_PI); ctx.fill(); }
+  else if (isSafe()){ ctx.fillStyle = lnF.col; ctx.beginPath(); ctx.arc(cx, cy, 20, 0, TWO_PI); ctx.fill(); }
   else { ctx.fillStyle = set.sc === "egg" ? "#FFF8E1" : (ballById(set.bObj) || BALLS[0]).col; ctx.strokeStyle = "#455A64"; ctx.beginPath(); ctx.ellipse(cx, cy, set.sc === "egg" ? 22 : 18, set.sc === "egg" ? 17 : 18, 0, 0, TWO_PI); ctx.fill(); ctx.stroke(); }
   ctx.restore();
   for (const f of forces){
@@ -1183,7 +1369,7 @@ function drawFBD(){
     subLabel(ctx, f.sym, f.sub, ` = ${mn(val)}${L <= 3 ? " (tiny)" : ""}`, L > 3 ? lx : cx, L > 3 ? ly : cy + 36, f.col, L > 3 ? f.al : "center", 13.5);
   }
   ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, TWO_PI); ctx.fill();
-  const note = a.F > 1e-6 ? `resultant ≈ F: it changes the momentum (F = Δp/Δt)` : set.sc === "cart" ? "W and F_N cancel: no resultant force → constant velocity" : "no contact force: the velocity stays the same (weight ignored)";
+  const note = a.F > 1e-6 ? `resultant ≈ F: it changes the momentum (F = Δp/Δt)${isSafe() && C.Fm > safeLim() ? ` · peak ${fmtF(C.Fm)} > ${sitF.limTxt}: serious injury` : ""}` : set.sc === "cart" ? "W and F_N cancel: no resultant force → constant velocity" : "no contact force: the velocity stays the same (weight ignored)";
   const nl = wrap(ctx, note, w - 20, 11.5); nl.forEach((L, i) => label(ctx, L, w / 2, top - (small ? 10 : 18) - (nl.length - 1 - i) * 14, COL.muted, "center", 11.5));
   if (small) return;
   // momentum before / after on a number line: Δp = p_after − p_before = J
@@ -1197,11 +1383,11 @@ function drawFBD(){
   rows.forEach(([sym, sub, p, col], i) => {
     const y = top + 30 + dy * (i + 0.6);
     if (Math.abs(p) * kp > 3) arrow(ctx, x0, y, x0 + p * kp, y, col, 4);
-    subLabel(ctx, sym, sub, ` = ${mn(f3(p))} kg m s⁻¹`, p >= 0 ? x0 - 8 : x0 + 8, y - 14, col, p >= 0 ? "right" : "left", 13);
+    subLabel(ctx, sym, sub, ` = ${mn(Math.abs(p) >= 100 ? sig(p, 4) : f3(p))} kg m s⁻¹`, p >= 0 ? x0 - 8 : x0 + 8, y - 14, col, p >= 0 ? "right" : "left", 13);
   });
   const yy = top + 30 + dy * 3.4;
-  const msg = [`Δp = p(after) − p(before) = ${mn(f3(S.dp))} N s = impulse J (area under F–t).`,
-               C.vout > 0 && set.sc !== "egg" ? "It bounces back: p changes sign, so |Δp| is larger than if it just stopped." : "It stops: Δp = 0 − p(before)."];
+  const msg = [`Δp = p(after) − p(before) = ${mn(Math.abs(S.dp) >= 100 ? sig(S.dp, 4) : f3(S.dp))} N s = impulse J (area under F–t).`,
+               C.vout > 0 && set.sc !== "egg" && !isSafe() ? "It bounces back: p changes sign, so |Δp| is larger than if it just stopped." : "It stops: Δp = 0 − p(before)."];
   let y2 = yy; msg.forEach((s, i) => wrap(ctx, s, w - 24, 11.5).forEach(L => { label(ctx, L, 12, y2, i ? COL.muted : COL.ink, "left", 11.5); y2 += 15; }));
 }
 
@@ -1299,13 +1485,14 @@ const GQ = {F:{sym:[["F","i"]], un:"N", col:COL.P, f:d => d.F, area:["Impulse", 
             p:{sym:[["p","i"]], un:"kg m s⁻¹", col:COL.p, f:d => d.p, d:["force F = Δp/Δt", "N"]}};
 function gWindow(){
   const zoom = toolOn("zoomChk");
-  let t0 = zoom ? Math.max(0, R.tc - 0.4 * C.dt) : 0, t1 = zoom ? Math.min(R.tEnd, R.tc + 1.6 * C.dt) : R.tEnd;
+  let t0 = zoom ? Math.max(0, R.tc - 0.4 * cDt()) : 0, t1 = zoom ? Math.min(R.tEnd, R.tc + (isSafe() ? 1.3 : 1.6) * cDt()) : R.tEnd;
   const ms = t1 - t0 < 0.5; return {t0, t1, tu:ms ? 1000 : 1, tn:ms ? "ms" : "s"};
 }
 function drawGraph(){
   const cv = document.getElementById("graph"); if (!cv.offsetParent) return;
   const {ctx, w, h} = fitCanvas(cv);
   ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+  if (isSafe()) return gq === "bars" ? drawBars(ctx, w, h) : drawGraphSafe(ctx, w, h);
   const box = {x:62, y:16, w:w - 78, h:h - 66}, q = GQ[gq], W = gWindow(), N = 400;
   const fD = td => q.f(disp(clamp(td / W.tu, 0, R.tEnd)));      // td in display units (s or ms)
   const a = W.t0 * W.tu, b = W.t1 * W.tu, vals = [];
@@ -1340,10 +1527,94 @@ function drawGraph(){
   label(ctx, `t = ${W.tu === 1000 ? f1(tNow) : f2(tNow)} ${W.tn}: ${mn(sig(yv))} ${q.un}`, X(tNow) + (right ? -8 : 8), box.y + box.h - 14, COL.accent, right ? "right" : "left", 13.5);
 }
 
+// Safety: every lane on one graph (lane colours; the chosen lane thicker). F–t areas are shaded: all the same = the same impulse.
+function drawGraphSafe(ctx, w, h){
+  const n = LANES.length, q = GQ[gq], W = gWindow(), N = 500, sit = sitNow();
+  const one = h < 330, nl = one ? 1 : n;                // short graph: the legend on one line
+  const box = {x:62, y:12 + 17 * nl + 4, w:w - 78, h:h - 66 - 17 * nl - 4};
+  const a = W.t0 * W.tu, b = W.t1 * W.tu;
+  const big = gq === "F" && Math.max(safeLim(), ...LANES.map(L => L.C.Fm)) >= 1e4, ky = big ? 1000 : 1, unit = big ? "kN" : q.un;
+  const fL = L => td => q.f(dispOf(L, clamp(td / W.tu, 0, R.tEnd))) / ky;
+  const vals = LANES.map(L => { const f = fL(L), v = []; for (let i = 0; i <= N; i++) v.push(f(a + (b - a) * i / N)); return v; });
+  let lo = Math.min(0, ...vals.flat()), hi = Math.max(0, ...vals.flat());
+  const Fl = -safeLim() * sgScreen() / ky;
+  if (gq === "F"){ lo = Math.min(lo, Fl * 1.1); hi = Math.max(hi, Fl * 1.1); }
+  const span = hi - lo || 1;
+  hi = hi > 0 ? niceCeil(hi + span * 0.06) : niceUp(span * 0.1); lo = lo < 0 ? -niceCeil(-lo + span * 0.06) : 0;
+  const {X, Y} = axesR(ctx, box, a, b, lo, hi, [["time ","n"],["t","i"],[` / ${W.tn}`,"n"]], [...q.sym, [` / ${unit}`,"n"]]);
+  const tNow = clamp(R.t, W.t0, W.t1) * W.tu, tl = [];
+  if (gq === "F"){
+    const yb = Y(Fl); ctx.save(); ctx.strokeStyle = COL.F; ctx.setLineDash([6, 5]); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(box.x, yb); ctx.lineTo(box.x + box.w, yb); ctx.stroke(); ctx.restore();
+    label(ctx, `serious injury beyond ${fmtF(safeLim())} (${sit.limTxt})`, box.x + box.w - 6, yb + (sgScreen() > 0 ? 12 : -12), COL.F, "right", 12);
+    // shaded areas up to now (lightly, in the lane colour) — the Area tool writes the impulse of each lane in the legend
+    LANES.forEach((L, i) => { const f = fL(L); ctx.save(); ctx.fillStyle = L.ln.col; ctx.globalAlpha = 0.13; ctx.beginPath(); ctx.moveTo(X(a), Y(0));
+      for (let j = 0; j <= 240; j++){ const td = a + (tNow - a) * j / 240; ctx.lineTo(X(td), Y(f(td))); } ctx.lineTo(X(tNow), Y(0)); ctx.closePath(); ctx.fill(); ctx.restore(); });
+  }
+  LANES.forEach((L, i) => { ctx.save(); ctx.strokeStyle = L.ln.col; ctx.lineWidth = i === set.sL ? 3 : 2; ctx.beginPath();
+    vals[i].forEach((v, j) => { const xx = X(a + (b - a) * j / N); j ? ctx.lineTo(xx, Y(v)) : ctx.moveTo(xx, Y(v)); }); ctx.stroke(); ctx.restore(); });
+  ctx.save(); ctx.strokeStyle = COL.accent; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(X(tNow), box.y); ctx.lineTo(X(tNow), box.y + box.h); ctx.stroke(); ctx.restore();
+  // legend above the graph: one line per lane
+  const area = toolOn("areaChk");
+  if (one){ let x = box.x;
+    LANES.forEach((L, i) => { const S = summary(L.C, sgScreen()); ctx.fillStyle = L.ln.col; ctx.fillRect(x, 7, 12, 10);
+      const t = `${CIRC[i]} ${fmtMs(L.C.dt)}: ${mn(fmtF(S.Favg))}`; label(ctx, t, x + 16, 12, i === set.sL ? COL.ink : COL.muted, "left", 11.5);
+      ctx.font = '600 11.5px "Segoe UI",Calibri,Arial,sans-serif'; x += 16 + ctx.measureText(t).width + 14; });
+    if (gq === "F" && area) label(ctx, `total area = ${mn(sig(-set.sM * set.sU * sgScreen()))} N s each`, box.x + box.w, 12, COL.accent, "right", 11.5);
+  } else LANES.forEach((L, i) => {
+    const y = 12 + 17 * i, S = summary(L.C, sgScreen()), f = fL(L);
+    let A = 0; if (gq === "F" && area){ const M = 400; for (let j = 1; j <= M; j++){ const t1 = a + (tNow - a) * j / M, t0 = a + (tNow - a) * (j - 1) / M; A += (f(t0) + f(t1)) / 2 * (t1 - t0); } A *= ky / W.tu; }
+    ctx.fillStyle = L.ln.col; ctx.fillRect(box.x, y - 5, 14, 10);
+    const txt = `${CIRC[i]} ${L.ln.name}: Δt = ${fmtMs(L.C.dt)} · F(avg) = ${mn(fmtF(S.Favg))}` + (gq === "F" && area ? ` · area so far = ${mn(sig(A))} N s` : gq === "p" ? ` · Δp = ${mn(sig(S.dp))} N s` : "");
+    label(ctx, txt, box.x + 20, y, i === set.sL ? COL.ink : COL.muted, "left", 12);
+  });
+  if (area && gq !== "F") tl.push("Area: use the F–t graph");
+  if (toolOn("tanChk")){
+    if (!q.d) tl.push("Tangent: use the v–t or p–t graph");
+    else { const L = LANES[set.sL], kk = drawTangent(ctx, X, Y, fL(L), tNow, a, b, box, (b - a) * 0.12);
+      if (kk !== null) tl.push(`${CIRC[set.sL]} tangent gradient = ${q.d[0]} = ${sig(kk * W.tu)} ${q.d[1]}`); }
+  }
+  tl.forEach((t, i) => label(ctx, t, box.x + box.w - 6, box.y + box.h - 30 - 18 * i, COL.accent, "right", 13));
+  const yv = fL(LANES[set.sL])(tNow); ctx.fillStyle = COL.accent; ctx.beginPath(); ctx.arc(X(tNow), Y(yv), 5, 0, 7); ctx.fill();
+}
+// Safety · Compare: |Δp| bars (all equal) next to the average and peak force bars (very different)
+function drawBars(ctx, w, h){
+  const n = LANES.length, Sx = LANES.map(L => summary(L.C, 1));
+  const top = 46, bot = h - 84, gapX = 26, pw = (w - 40 - gapX) / 2;
+  label(ctx, "Same change in momentum …", 20 + pw / 2, 14, COL.navy, "center", 13.5);
+  label(ctx, "… but very different forces", 20 + pw + gapX + pw / 2, 14, COL.navy, "center", 13.5);
+  const panel = (x0, vals, max, unit, lines, lim) => {
+    ctx.strokeStyle = COL.ink; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x0, top - 6); ctx.lineTo(x0, bot); ctx.lineTo(x0 + pw, bot); ctx.stroke();
+    const bw = Math.min(56, pw / n * 0.6), Yv = v => bot - (bot - top) * v / max;
+    if (lim){ const yl = Yv(lim); ctx.save(); ctx.strokeStyle = COL.F; ctx.setLineDash([6, 5]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(x0, yl); ctx.lineTo(x0 + pw, yl); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x0 + 4, top - 16); ctx.lineTo(x0 + 22, top - 16); ctx.stroke(); ctx.restore();
+      label(ctx, `injury limit (peak) ${fmtF(lim)}`, x0 + 26, top - 16, COL.F, "left", 11); }
+    vals.forEach((v, i) => {
+      const cx = x0 + pw * (i + 0.5) / n, L = LANES[i];
+      if (v.peak !== undefined){ ctx.save(); ctx.strokeStyle = L.ln.col; ctx.setLineDash([4, 3]); ctx.lineWidth = 1.5; ctx.strokeRect(cx - bw / 2, Yv(v.peak), bw, bot - Yv(v.peak)); ctx.restore(); }
+      ctx.fillStyle = L.ln.col; ctx.globalAlpha = 0.85; ctx.fillRect(cx - bw / 2, Yv(v.v), bw, bot - Yv(v.v)); ctx.globalAlpha = 1;
+      label(ctx, CIRC[i] + " " + L.ln.sh, cx, bot + 13, L.ln.col, "center", 11.5);
+      lines(v).forEach((t, j) => label(ctx, t, cx, bot + 29 + 14 * j, COL.ink, "center", 11));
+    });
+    label(ctx, unit, x0 + pw / 2, h - 12, COL.muted, "center", 11.5);
+  };
+  const dp = Sx.map(S => ({v:Math.abs(S.dp)})), F = Sx.map((S, i) => ({v:Math.abs(S.Favg), peak:LANES[i].C.Fm}));
+  panel(20, dp, Math.max(...dp.map(d => d.v)) * 1.1, "|Δp| = impulse", v => [`${sig(v.v)} N s`], 0);
+  const fm = Math.max(safeLim(), ...F.map(f => f.peak)) * 1.05;
+  panel(20 + pw + gapX, F, fm, "solid = average force · dashed = peak", v => [`avg ${fmtF(v.v)}`, `peak ${fmtF(v.peak)}`], safeLim());
+}
+
 /* ============================ 9 DATA ============================ */
-let trials = [], anaId = {cart:"Jp", egg:"Fdt", ball:"Jp"};
+let trials = [], anaId = {cart:"Jp", egg:"Fdt", ball:"Jp", safe:"Fdt"};
 const noisy = x => document.getElementById("noiseChk").checked ? x * (1 + 0.02 * (2 * Math.random() - 1)) : x;
 function recordTrial(){
+  if (isSafe()){                                         // Safety: one row per lane, all at once
+    const sit = sitNow();
+    for (const L of LANES){ const S = summary(L.C, sgScreen()), d = {m:L.C.m, u:S.u, v:0, J:noisy(S.J), Fpeak:noisy(S.Fpeak), dt:noisy(S.dt)};
+      d.dp = -d.m * S.u; d.Favg = d.J / d.dt; d.what = `${sit.who}: ${L.ln.name}`; d.res = Math.abs(d.Fpeak) > safeLim() ? "serious injury" : "safe";
+      trials.push({sc:"safe", ...d}); }
+    save(); renderTrials(); flash(`${LANES.length} lanes recorded`); return;
+  }
   const S = summary(C, SC[set.sc].side * (set.plus === "right" ? 1 : -1));
   const d = {m:C.m, u:S.u, v:noisy(S.v), dp:0, J:noisy(S.J), Fpeak:noisy(S.Fpeak), dt:noisy(S.dt)};
   d.dp = C.m * (d.v - S.u); d.Favg = d.J / d.dt;
@@ -1359,6 +1630,8 @@ const DCOLS = {
        ["<i>F</i><sub>avg</sub> / N", t => sig(t.Favg)], ["<i>F</i><sub>peak</sub> / N", t => sig(t.Fpeak)], ["egg", t => t.res]],
   ball:[["object", t => t.what], ["<i>m</i> / kg", t => f3(t.m)], ["<i>u</i> / m s⁻¹", t => f1(t.u)], ["<i>v</i> / m s⁻¹", t => f1(t.v)],
         ["Δ<i>t</i> / ms", t => sig(t.dt * 1000)], ["Δ<i>p</i> / N s", t => f3(t.dp)], ["<i>F</i><sub>avg</sub> / N", t => sig(t.Favg)], ["<i>F</i><sub>peak</sub> / N", t => sig(t.Fpeak)]],
+  safe:[["lane", t => t.what], ["<i>m</i> / kg", t => sig(t.m)], ["<i>u</i> / m s⁻¹", t => sig(t.u)], ["Δ<i>t</i> / ms", t => sig(t.dt * 1000)],
+        ["Δ<i>p</i> / N s", t => sig(t.dp)], ["<i>F</i><sub>avg</sub> / N", t => sig(t.Favg)], ["<i>F</i><sub>peak</sub> / N", t => sig(t.Fpeak)], ["result", t => t.res]],
 };
 function renderTrials(){
   const cols = DCOLS[set.sc], list = trials.map((t, i) => [t, i]).filter(([t]) => t.sc === set.sc);
@@ -1378,6 +1651,8 @@ const ANA = {
           g:k => `gradient = Δp = ${f3(k)} N s`, hint:"Same egg and speed; change the stopping time."}, JP],
   ball:[JP, {id:"Fdt", name:"F_avg–1/Δt", x:t => 1 / t.dt, y:t => Math.abs(t.Favg), xs:[["1/Δ","n"],["t","i"]], xu:"s⁻¹", ys:[["F","i"],["avg","s"]], yu:"N",
           g:k => `gradient = Δp = ${f3(k)} N s`, hint:"Same m, u and v; change the contact time."}],
+  safe:[{id:"Fdt", name:"F_avg–1/Δt", x:t => 1 / t.dt, y:t => Math.abs(t.Favg), xs:[["1/Δ","n"],["t","i"]], xu:"s⁻¹", ys:[["F","i"],["avg","s"]], yu:"N",
+          g:k => `gradient = Δp = ${sig(k)} N s`, hint:"Same situation, m and u; change the stopping times."}, JP],
 };
 function scaled(max){ const e = max > 0 ? Math.floor(Math.log10(max)) : 0; return Math.abs(e) >= 4 ? {k:Math.pow(10, e), txt:`10${sup(e)} `} : {k:1, txt:""}; }
 function drawAna(){
@@ -1410,6 +1685,8 @@ const EGG0 = {sc:"egg", plus:"right", eS:"sheet", eDt:100, eU:10, eM:0.060};
 const TEN0 = {sc:"ball", plus:"right", bObj:"tennis", bM:0.058, bU:20, bV:30, bDt:5, bShape:"smooth"};
 const WALL0 = {sc:"ball", plus:"right", bObj:"wall", bM:0.40, bU:10, bV:8, bDt:50, bShape:"smooth"};
 const GOLF0 = {sc:"ball", plus:"right", bObj:"golf", bM:0.046, bU:0, bV:52.2, bDt:6, bShape:"tri"};
+const safe0 = id => { const q = sitById(id), o = {sc:"safe", plus:"right", sSit:id, sM:q.m, sU:q.u, sL:0}; q.lanes.forEach((ln, i) => o["sDt" + i] = ln.dt); return o; };
+const DRIVER0 = safe0("driver"), HEAD0 = safe0("head"), CAR0 = safe0("car"), LAND0 = safe0("land");
 const sumOf = (pulse, side, plus = 1) => summary(pulse, side * plus);
 const TASKS = [
  {id:"pre", title:"1 · Pre-lab: predict", time:"≈ 15 min", steps:[
@@ -1431,6 +1708,12 @@ const TASKS = [
    why:"Both stop the egg from 10 m s⁻¹: same Δp = 0.60 N s. The wall does it in about 2 ms (average 300 N: cracks), the sheet in about 0.1 s (average 6 N: survives). F = Δp/Δt."},
   {type:"num", setup:{...EGG0}, text:"Calculate the average force of the sheet on the 60 g egg (10 m s⁻¹, stopping time 0.10 s). Give the size.",
    answer:() => 0.060 * 10 / 0.10, unit:"N", hint:"F = Δp/Δt = mu/Δt."},
+  {type:"predict", setup:{...DRIVER0}, text:"🚗 Safety · a 70 kg driver at 15 m s⁻¹ is stopped in a crash ① without a seat belt, ② by a seat belt, ③ by a seat belt + airbag. Which lane has the <b>largest impulse</b> on the driver?",
+   opts:["① no seat belt", "② seat belt", "③ seat belt + airbag", "all three are the same"], correct:3,
+   why:"The driver stops from 15 m s⁻¹ in every lane: Δp = 0 − 70 × 15 = −1050 N s each time. The areas under the three F–t curves are equal. Only the stopping time — and so the force — is different."},
+  {type:"predict", setup:{...DRIVER0}, text:"Which lane has the <b>smallest average force</b> on the driver?",
+   opts:["① no seat belt", "② seat belt", "③ seat belt + airbag", "all three are the same"], correct:2,
+   why:"F = Δp/Δt: the same Δp spread over the longest time (0.15 s) gives the smallest force, 7.0 kN. Without a belt the driver stops in about 0.010 s on the wheel: 105 kN, 15 × more. Press Compare in the Graphs tab."},
  ]},
  {id:"lab", title:"2 · During the lab: compare", time:"≈ 20 min", steps:[
   {type:"do", setup:{...CART0}, text:"🛒 Same set-up as the class demo (0.500 kg, 0.62 m s⁻¹). Record a trial with the spring bumper, then the magnetic bumper, then clay (choose them in the Bumper list)."},
@@ -1446,6 +1729,14 @@ const TASKS = [
    why:"Both bounce the cart back at almost the same speed, so Δp — the area under F–t — is almost the same. Peak force, contact time and average force are very different."},
   {type:"num", setup:{...CART0, cU:1.24}, text:"The cart is pushed twice as fast (1.24 m s⁻¹) into the spring bumper. Read the peak force.",
    answer:() => pulseCart(0.5, 1.24, "spring").Fm, unit:"N", hint:"A spring-like bumper: the peak force is proportional to the speed (the contact time stays the same)."},
+  {type:"do", setup:{...CAR0}, text:"🚗 Safety · Car body (slides): a 1200 kg car at 15 m s⁻¹ hits a wall. Press ▶ Start, then <b>Area</b> on <i>F</i>–<i>t</i>. Check that both lanes end with the same area, then press ● Record (it records both lanes)."},
+  {type:"num", setup:{...CAR0}, text:"Read the <b>average force</b> on the car with the crumple zone (Δ<i>t</i> = 0.25 s). Give the size.",
+   answer:() => 1200 * 15 / 0.25, unit:"N", hint:"F(avg) = Δp/Δt = 1200 × 15 / 0.25 — or read the readouts table."},
+  {type:"num", setup:{...CAR0}, text:"How many times smaller is the average force with the crumple zone than for the rigid car (Δ<i>t</i> = 0.050 s)?",
+   answer:() => 0.25 / 0.050, unit:"", hint:"Same Δp: F ∝ 1/Δt, so the ratio of the forces is the ratio of the times."},
+  {type:"predict", setup:{...HEAD0}, text:"🚲 Cyclist's head (5.0 kg at 6.0 m s⁻¹). The helmet foam makes the stop last 12 ms instead of 2 ms. Which is true?",
+   opts:["The helmet reduces the impulse on the head", "The helmet makes the stop longer, so the force is smaller", "The helmet reduces the speed before the hit", "Both give the same force"], correct:1,
+   why:"Δp = 0 − 5.0 × 6.0 = −30 N s with or without the helmet. Spread over 12 ms instead of 2 ms, the average force falls from 15 kN to 2.5 kN — the peak goes from far above the 300 g limit to well below it."},
  ]},
  {id:"hw", title:"3 · Homework: analyse", time:"≈ 30 min", steps:[
   {type:"do", setup:{...GOLF0}, text:"🏌️ Golf (slide 5): a club hits a 0.046 kg ball at rest. The force rises to 800 N and falls back to zero in 6.0 ms (a triangle). Press ▶ Start; then the <b>Area</b> tool on <i>F</i>–<i>t</i>."},
@@ -1464,6 +1755,11 @@ const TASKS = [
    hint:"F = Δp × (1/Δt): the gradient is the change in momentum mu."},
   {type:"num", setup:{...EGG0}, text:"What is the shortest stopping time for which the egg (10 m s⁻¹) survives? (The peak force must stay below 25 N; this model's peak force = (π/2) × average force.)",
    answer:() => Math.PI * 0.060 * 10 / (2 * EGG_BREAK) * 1000, unit:"ms", hint:"F_peak = π mu / (2Δt) = 25 N ⇒ Δt = π mu / 50. Check it in the sim."},
+  {type:"num", setup:{...LAND0}, text:"🦘 Landing (backup slide 21): a 60 kg student lands at 4.0 m s⁻¹ with stiff legs and stops in 0.020 s. Calculate the size of the average force of the floor (ignore the weight, as on the slide).",
+   answer:() => 60 * 4.0 / 0.020, unit:"N", hint:"F = Δp/Δt = mu/Δt = 240 N s / 0.020 s."},
+  {type:"num", setup:{...HEAD0}, text:"🚲 Cyclist's head, 5.0 kg at 6.0 m s⁻¹. The limit for a serious head injury is a peak of 300 <i>g</i>, i.e. 300 × 9.81 × 5.0 N. In this model F(peak) = (π/2) × F(avg). Calculate the <b>shortest stopping time</b> that keeps the head safe. Check it with the Δt ② box.",
+   answer:() => Math.PI * 5.0 * 6.0 / (2 * 300 * 9.81 * 5.0) * 1000, unit:"ms", hint:"F(peak) = π mu / (2Δt) = 300 × 9.81 × 5.0 N ⇒ Δt = π mu / (2 × 14 715 N)."},
+  {type:"do", setup:{...DRIVER0}, text:"🚗 Car driver: type the same speed with different stopping times into the three Δ<i>t</i> boxes (e.g. 10, 20, 50, then 100, 150, 300 ms) and ● Record after each set. Data tab → <b>F<sub>avg</sub>–1/Δt</b>: the gradient is Δ<i>p</i> = 1050 N s."},
   {type:"predict", text:"Why does an airbag protect the driver's head in a crash?",
    opts:["It reduces the head's change in momentum", "It increases the stopping time, so the force is smaller for the same Δp", "It makes the impulse on the head zero", "It reduces the speed of the car"], correct:1,
    why:"The head must stop either way: Δp is fixed. The airbag spreads it over a longer Δt, so F = Δp/Δt is smaller (and over a bigger area). Same idea as the bedsheet, crumple zones, crash mats and bending your knees."},
@@ -1505,7 +1801,7 @@ function renderTasks(){
 }
 function applySetup(su){
   const c = JSON.parse(JSON.stringify(su));
-  Object.assign(set, c); setScenarioUI(); syncControls(); reset(); renderTrials();
+  Object.assign(set, c); reset(); setScenarioUI(); syncControls(); renderTrials();
 }
 function taskClick(e){
   const t = e.target.closest("[data-setup],[data-lock],[data-check],[data-chknum],[data-hint],[data-set]"); if (!t) return;
@@ -1559,6 +1855,13 @@ const CTL = [
   {id:"bV", sc:"ball", kind:"range", lab:"Speed out <i>v</i>", unit:"m s⁻¹", min:0, max:80, tmin:0, tmax:300, step:0.1},
   {id:"bDt", sc:"ball", kind:"range", log:true, lab:"Contact time Δ<i>t</i>", unit:"ms", min:0.5, max:100, tmin:0.05, tmax:1000},
   {id:"bShape", sc:"ball", kind:"seg", lab:"Force pulse", opts:[["smooth", "smooth"], ["tri", "triangle"]]},
+  {id:"sSit", sc:"safe", kind:"select", lab:"Situation", opts:SAFE.map(q => [q.id, q.short])},
+  {id:"sM", sc:"safe", kind:"range", log:true, lab:() => `Mass <i>m</i> (${sitNow().who.toLowerCase()})`, unit:"kg", min:1, max:2000, tmin:0.1, tmax:100000,
+   def:() => sitNow().m},
+  {id:"sU", sc:"safe", kind:"range", lab:() => `Speed <i>u</i> · ${kmh(set.sU)}${sitNow().id === "land" ? ` · drop ${sig(dropH(set.sU), 2)} m` : ""}`,
+   unit:"m s⁻¹", min:0.5, max:40, tmin:0.1, tmax:150, step:0.5, def:() => sitNow().u},
+  ...[0, 1, 2].map(i => ({id:"sDt" + i, sc:"safe", kind:"range", log:true, lab:() => `Δ<i>t</i> ${CIRC[i]} ${sitNow().lanes[i]?.sh ?? ""}`, unit:"ms",
+   min:0.5, max:1000, tmin:0.1, tmax:5000, show:() => i < sitNow().lanes.length, def:() => sitNow().lanes[i]?.dt ?? 100})),
 ];
 const getV = id => set[id];
 function putV(id, v){ set[id] = v; }
@@ -1596,7 +1899,7 @@ function buildControls(){
       let d0;   // ▼ [box] ▲ ↺ (shared stepper): start value = the value when the page has loaded
       STEPPER.attach(nb, {get:() => +getV(c.id), unit:() => c.unit, toast:flash, room:() => [c.min, c.max], hard:() => [c.tmin ?? c.min, c.tmax ?? c.max],
         log:!!c.log, step:() => c.bstep ?? c.step, base:() => c.min,
-        def:() => { if (d0 === undefined) d0 = JSON.parse(JSON.stringify(set)); const d = d0[c.id]; return Array.isArray(d) ? d[set.kSel] : d; },
+        def:() => { if (c.def) return c.def(); if (d0 === undefined) d0 = JSON.parse(JSON.stringify(set)); const d = d0[c.id]; return Array.isArray(d) ? d[set.kSel] : d; },
         apply:v => { nb.value = STEPPER.fmt(v); nb._auto = null; commit(); }});
     } else if (c.kind === "seg") el.addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return;
       changed(c, typeof c.opts[0][0] === "number" ? +b.dataset.v : b.dataset.v); });
@@ -1613,27 +1916,35 @@ function changed(c, v){
   if (c.id === "bObj"){ const b = ballById(v); if (b) Object.assign(set, {bM:b.m, bU:b.u, bV:b.v, bDt:b.dt, bShape:b.shape}); }
   if (["bM", "bU", "bV", "bDt", "bShape"].includes(c.id)){ /* keeps the picture of the chosen example */ }
   if (c.id === "plus"){ syncControls(); updateStepLabels(); return; }          // only the signs change
+  if (c.id === "sSit"){ const q = sitById(v); Object.assign(set, {sM:q.m, sU:q.u, sL:0}); q.lanes.forEach((ln, i) => set["sDt" + i] = ln.dt); }
   syncControls(); reset();
 }
 function syncControls(){
   for (const c of CTL){
-    const on = c.sc === "all" || c.sc === set.sc, box = $(c.id + "C"); box.classList.toggle("hide", !on);
+    const on = (c.sc === "all" || c.sc === set.sc) && (!c.show || c.show()), box = $(c.id + "C"); box.classList.toggle("hide", !on);
     if (!on) continue;
     $(c.id + "Lab").innerHTML = txt(c.lab);
     const el = $(c.id), v = getV(c.id);
     if (c.kind === "range"){
       el.value = c.log ? Math.log10(v) : v; const nb = $(c.id + "N");
       if (document.activeElement !== nb) nb.value = fmtBox(v);
-    } else if (c.kind === "seg") el.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v) === String(v)));
+    } else if (c.kind === "seg"){ el.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v) === String(v)));
+      if (c.id === "plus"){ const vt = isSafe() && sitNow().vert; el.querySelectorAll("button").forEach(b => b.textContent = b.dataset.v === "right" ? (vt ? "+ ↓ down" : "+ → right") : (vt ? "+ ↑ up" : "+ ← left")); } }
     else if (c.kind === "select") el.value = v;
   }
 }
+function selectLane(i){
+  set.sL = clamp(+i, 0, LANES.length - 1); C = LANES[set.sL].C; TAB = LANES[set.sL].TAB;
+}
 function setScenarioUI(){
   document.querySelectorAll("#scen button").forEach(b => b.setAttribute("aria-pressed", b.dataset.sc === set.sc));
+  $("barsBtn").hidden = !isSafe(); document.body.classList.toggle("safeMode", isSafe());
+  if (!isSafe() && gq === "bars"){ gq = "F"; document.querySelectorAll("#gsel button").forEach(x => x.setAttribute("aria-pressed", x.dataset.g === "F")); }
   $("graphHint").innerHTML = {
     cart:"<i>F</i>–<i>t</i>: the force sensor's reading. Area = impulse <i>J</i> = Δ<i>p</i>. <i>p</i>–<i>t</i>: gradient = force. Like Capstone, the force on the cart is negative when + is to the right.",
     egg:"Same Δ<i>p</i> for every surface: a longer stopping time gives a smaller force. The dashed red line is where the shell cracks.",
-    ball:"A ball that bounces back changes its momentum from −<i>mu</i> to +<i>mv</i>: Δ<i>p</i> = <i>m</i>(<i>v</i> + <i>u</i>) in size. Triangle pulse: area = ½ × base × height."}[set.sc];
+    ball:"A ball that bounces back changes its momentum from −<i>mu</i> to +<i>mv</i>: Δ<i>p</i> = <i>m</i>(<i>v</i> + <i>u</i>) in size. Triangle pulse: area = ½ × base × height.",
+    safe:"Every lane stops the same body from the same speed: the <b>same area</b> under <i>F</i>–<i>t</i> (same impulse), but a longer Δ<i>t</i> gives a lower, wider curve. Dashed red line = serious injury. <b>Compare</b> shows it as bars."}[set.sc];
 }
 function updateButtons(){
   $("startBtn").disabled = R.playing && !R.paused;
@@ -1649,6 +1960,7 @@ function pill(ok, yes, no){ return `<span class="pill ${ok ? "rest" : "slide"}">
 const mn = x => String(x).replace(/^-/, "−");
 const vec = (x, u) => `${x >= 0 ? "+" : "−"}${Math.abs(x) < 1e3 ? Number(Math.abs(x)).toPrecision(3) : Math.round(Math.abs(x))} ${u}`;
 function updateReadouts(){
+  if (isSafe()) return safeReadouts();
   const S = summary(C, sgScreen()), mTxt = C.m < 1 ? f3(C.m) : sig(C.m);
   let html = `<table class="ba"><tr><th><i>m</i> = ${mTxt} kg</th><th>before</th><th>after</th></tr>
     <tr><td>velocity</td><td class="v" style="color:${COL.v}"><i>u</i> = ${vec(S.u, "m s⁻¹")}</td><td class="v" style="color:${COL.v}"><i>v</i> = ${vec(S.v, "m s⁻¹")}</td></tr>
@@ -1661,9 +1973,22 @@ function updateReadouts(){
   html += "</table>";
   if (html !== lastRO){ $("readouts").innerHTML = html; lastRO = html; }
 }
+function safeReadouts(){
+  const sit = sitNow(), S = summary(C, sgScreen());
+  let html = `<table class="lanes"><tr><th>${sit.who} · <i>m</i> = ${sig(set.sM)} kg · <i>u</i> = ${vec(S.u, "m s⁻¹")}</th><th>Δ<i>t</i></th><th><i>F</i><sub>avg</sub></th><th><i>F</i><sub>peak</sub></th><th></th></tr>`;
+  LANES.forEach((L, i) => { const Si = summary(L.C, sgScreen()), ok = !injured(L.C);
+    html += `<tr${i === set.sL ? ' class="sel"' : ""} data-lane="${i}" style="cursor:pointer"><td style="color:${L.ln.col};font-weight:600">${CIRC[i]} ${L.ln.name}</td><td class="v">${fmtMs(L.C.dt)}</td>
+      <td class="v" style="color:${COL.P}">${mn(fmtF(Si.Favg))}</td><td class="v" style="color:${COL.P}">${mn(fmtF(Si.Fpeak))}</td><td>${pill(ok, "✔ safe", "✘ injury")}</td></tr>`; });
+  html += `<tr><td colspan="5" class="ev"><span class="plusTag">+ = ${sit.vert ? (set.plus === "right" ? "↓ down" : "↑ up") : (set.plus === "right" ? "→ right" : "← left")}</span>
+    every lane: Δ<i>p</i> = 0 − <i>mu</i> = <b style="color:${COL.accent}">${mn(vec(S.dp, "N s"))}</b> = area under <i>F</i>–<i>t</i> · tap a lane</td></tr></table>`;
+  if (html !== lastRO){ $("readouts").innerHTML = html; lastRO = html; }
+}
+$("readouts").addEventListener("click", e => { const r = e.target.closest("[data-lane]"); if (r && isSafe()) selectLane(+r.dataset.lane); });
+$("scene").addEventListener("pointerdown", e => { if (!isSafe()) return; const b = $("scene").getBoundingClientRect(), x = e.clientX - b.left, y = e.clientY - b.top;
+  const i = SAFE_RECTS.findIndex(r => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h); if (i >= 0) selectLane(i); });
 
 $("scen").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return;
-  set.sc = b.dataset.sc; setScenarioUI(); syncControls(); reset(); renderTrials(); });
+  set.sc = b.dataset.sc; reset(); setScenarioUI(); syncControls(); renderTrials(); });
 $("startBtn").addEventListener("click", start);
 $("pauseBtn").addEventListener("click", () => { R.paused = !R.paused; updateButtons(); });
 $("resetBtn").addEventListener("click", () => { reset(); });
@@ -1697,7 +2022,7 @@ document.addEventListener("keydown", e => {
   else if (e.key === "ArrowRight"){ stepBy(stepDt()); e.preventDefault(); }
 });
 
-load(); buildControls(); setScenarioUI(); syncControls(); reset(); renderTrials(); renderTaskSets(); renderTasks();
+load(); buildControls(); reset(); setScenarioUI(); syncControls(); renderTrials(); renderTaskSets(); renderTasks();
 let last = performance.now();
 function frame(now){
   const dt = Math.min(0.05, (now - last) / 1000); last = now;
