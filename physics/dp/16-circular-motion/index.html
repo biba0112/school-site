@@ -17,7 +17,8 @@
     4 PHYSICS   pure functions (no drawing)
     5 RUN       run state, play-back, motion of every object at time t
     6 SCENE     top view of each example
-    7 FBD       side-view free-body diagram (real forces + resultant) and a top-view v/a diagram
+    7 FBD       side-view free-body diagram (real forces + resultant) and a top-view v/a diagram;
+                car: named forces, net force on the car, optional components (Components switch)
     8 GRAPHS    x–t, vx–t, ax–t, speed–t (Area / Tangent tools) and the force graph of each example
     9 DATA      recorded trials and analysis graphs with best-fit lines
    10 TASKS     data-driven task list (predict / numeric / do)
@@ -65,6 +66,7 @@ main{flex:1;min-height:500px;display:grid;grid-template-columns:minmax(0,1.1fr) 
 #scene{width:100%;height:100%;display:block}
 #fbdWrap{flex:1;min-height:220px}
 #fbd{width:100%;height:100%;display:block}
+.fbdhead .switch{min-height:30px;font-size:.85rem;gap:6px}.fbdhead .switch input{width:18px;height:18px}.switch[hidden]{display:none}
 .readouts{padding:6px 12px;flex:0 1 auto;min-height:0;overflow:auto}  /* natural height; the scene takes the rest */
 .readouts table{width:100%;border-collapse:collapse;font-size:.9rem}
 .readouts td.v{white-space:nowrap;padding-left:6px}
@@ -295,7 +297,7 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   .fbdcol{order:4;flex:none}
   .right{order:5;flex:none;height:auto!important}
   #sceneWrap{flex:none!important;height:min(58vh,340px)!important;min-height:200px}
-  #fbdWrap{flex:none!important;height:300px!important}
+  #fbdWrap{flex:none!important;height:460px!important}   /* tall enough for the full FBD with force names + top view */
   .scenecard .cardhead{position:sticky;top:0;z-index:2}    /* run buttons stay at hand while the scene is on screen */
   .cardhead .btn{min-height:40px;padding:4px 10px}
   .panel{overflow:visible}
@@ -354,7 +356,8 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   </section>
 
   <section class="card fbdcol" aria-label="Free-body diagram">
-    <h2 id="fbdTitle">Free-body diagram</h2>
+    <div class="cardhead fbdhead"><h2 id="fbdTitle">Free-body diagram</h2>
+      <label class="switch" id="compSw" hidden title="Split the normal force and friction into horizontal and vertical components"><input type="checkbox" id="compChk" checked> Components</label></div>
     <div id="fbdWrap"><canvas id="fbd" aria-label="Free-body diagram and velocity–acceleration diagram"></canvas></div>
 <!-- NEWTON TABLE --><div class="ntab" id="ntab"></div><!-- /NEWTON TABLE -->
   </section>
@@ -420,6 +423,12 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
       <li>The middle column is the <b>free-body diagram</b> seen from the side, with only real forces (weight, normal force, friction,
         tension or grip, gravity). The dashed orange arrow is their <b>resultant</b>: this resultant <i>is</i> the centripetal force
         <i>mv</i>²/<i>r</i>. There is never an extra "centripetal force" arrow.</li>
+      <li>🚗 <b>Car</b>: the forces are labelled with symbols only (<i>mg</i>, <i>F</i><sub>N</sub>, <i>F</i><sub>f</sub>), and the dashed orange <i>F</i><sub>c</sub> (the net force) starts on the car and points to the centre.
+        Under the diagram: the equation for <i>F</i><sub>c</sub> and the friction rules — static <i>F</i><sub>f</sub> ≤ <i>μ</i><sub>s</sub><i>F</i><sub>N</sub> (grips),
+        dynamic <i>F</i><sub>f</sub> = <i>μ</i><sub>d</sub><i>F</i><sub>N</sub> (sliding) — with the coefficients of the chosen road.
+        On a banked road, tick <b>Components</b> (top of the FBD) to split <i>F</i><sub>N</sub> and <i>F</i><sub>f</sub> into horizontal and vertical parts
+        (thin dashed arrows). The horizontal parts are drawn head-to-tail, so they end exactly where Σ<i>F</i> ends:
+        <i>F</i><sub>c</sub> = <i>F</i><sub>N</sub> sin <i>θ</i> ± <i>F</i><sub>f</sub> cos <i>θ</i>. Vertically: <i>F</i><sub>N</sub> cos <i>θ</i> balances <i>W</i> ± <i>F</i><sub>f</sub> sin <i>θ</i>.</li>
       <li><b>◂ / ▸</b> (or the <b>← →</b> keys) step the motion and pause it. <b>Graph tools</b>: <i>Tangent</i> gives the gradient at
         that moment (gradient of <i>x</i>–<i>t</i> = <i>v</i><sub>x</sub>, of <i>v</i><sub>x</sub>–<i>t</i> = <i>a</i><sub>x</sub>);
         <i>Area</i> shades the area under a velocity or acceleration graph up to that moment.</li>
@@ -1827,7 +1836,8 @@ function drawFBD(){
     for (const q of D.forces){ const b = BY[q.sub || q.sym] || ["", "contact"]; NF.force(q.sym + (q.sub ? `<sub>${q.sub}</sub>` : ""), q.in, q.up, q.col, b[0], b[1]); } }/*/NF*/
   label(ctx, D.title, w / 2, 14, COL.navy, "center", 13);
   arrow(ctx, Math.min(w * 0.26, 120), 36, 14, 36, COL.muted, 1.5); label(ctx, "towards the centre", 16, 50, COL.muted, "left", 11.5);
-  ctx.save(); ctx.globalAlpha = .55; D.draw(ctx, cx, cy, top); ctx.restore();
+  if (!D.car){ ctx.save(); ctx.globalAlpha = .55; D.draw(ctx, cx, cy, top); ctx.restore(); }
+  if (D.car) carFBD(ctx, D, w, top, small); else {
   const Fm = Math.max(...D.forces.map(f => Math.hypot(f.in, f.up)), Math.abs(D.net), 1e-9);
   const kk = Math.min(top * (small ? 0.20 : 0.28), w * 0.40) / Fm;
   for (const f of D.forces){
@@ -1846,6 +1856,7 @@ function drawFBD(){
     label(ctx, `resultant of the forces = ${fmtF(D.net)} ${D.netNote}`, w / 2, ry - 15, COL.a, "center", 12.5);
   } else label(ctx, "resultant = 0 → no centripetal force", w / 2, ry - 6, COL.a, "center", 12.5);
   if (D.note && !small) label(ctx, D.note, w / 2, top - 14, COL.muted, "center", 11.5);
+  }
   // top view: v along the tangent, a towards the centre, at 90° to each other
   if (small) return;                                       // short FBD card (tablet): free-body diagram only
   ctx.strokeStyle = COL.grid; ctx.beginPath(); ctx.moveTo(10, top); ctx.lineTo(w - 10, top); ctx.stroke();
@@ -1883,6 +1894,97 @@ function gearLinks(ctx, w, h){
     `Here: ω(out)/ω(in) = ${set.gSet === "belt" ? "r(in)/r(out)" : "N(in)/N(out)"} = ${sig(gRatio(G), 3)}.`];
   let y2 = yy; msg.forEach((m, i) => wrap(ctx, m, w - 24, 11.5).forEach(L => { label(ctx, L, 12, y2, i ? COL.muted : COL.ink, "left", 11.5); y2 += 15; }));
 }
+// one line of an equation: "F_N", "μ_s" → italic letter with a subscript, θ in italics; shrinks the font until it fits maxW
+function eqLine(ctx, str, x, y, color, size, align = "center", maxW = Infinity){
+  const parts = []; str.split(/([A-ZΣμ]_[A-Za-z]+|θ)/).forEach(t => { if (!t) return;
+    if (t === "θ") parts.push([t, "i"]); else if (/^[A-ZΣμ]_/.test(t)) parts.push([t[0], "i"], [t.slice(2), "s"]); else parts.push([t, "n"]); });
+  const font = (st, sz) => (st === "i" ? "italic " : "") + `600 ${st === "s" ? Math.round(sz * .72) : sz}px "Segoe UI",Calibri,Arial,sans-serif`;
+  ctx.save(); let sz = size, ws, W;
+  for (;;){ ws = parts.map(([t, st]) => { ctx.font = font(st, sz); return ctx.measureText(t).width; }); W = ws.reduce((a, b) => a + b, 0);
+    if (W <= maxW || sz <= 9) break; sz -= 0.5; }
+  let x0 = align === "center" ? x - W / 2 : align === "right" ? x - W : x;
+  ctx.textBaseline = "middle"; ctx.lineWidth = 4; ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.fillStyle = color;
+  parts.forEach(([t, st], i) => { ctx.font = font(st, sz); const yy = st === "s" ? y + sz * .3 : y;
+    ctx.strokeText(t, x0, yy); ctx.fillText(t, x0, yy); x0 += ws[i]; });
+  ctx.restore(); return W;
+}
+// car: real forces with their names, the angle θ, the components (optional) and the net force = centripetal force on the car.
+// Horizontal components go head-to-tail along the centre line, so together they end exactly where the net force ends.
+function carFBD(ctx, D, w, top, small){
+  const K = D.car, {N, Ff, W, net, th, c, s, comps, fOn} = K, fs = small ? 11.5 : 12.5;
+  const cx = Math.round(w * 0.62);
+  const sg = Ff >= 0 ? "+" : "−", mu = surfById(set.cSurf).mu, f2c = v => v.toFixed(2);
+  // text under the diagram (bottom up): the equation for F_c, and the friction rules with μs and μd
+  const end = K.skid ? " < mv²/r" : " = mv²/r";
+  const eq = th === 0 ? `F_c = F_f${end}` : fOn ? `F_c = F_N sin θ ${sg} F_f cos θ${end}` : `F_c = F_N sin θ${end}`;
+  const lines = [[eq, COL.a, 13.5]];
+  if (fOn && small) lines.push([`static F_f ≤ μ_s F_N, μ_s = ${f2c(mu)} · dynamic F_f = μ_d F_N, μ_d = ${f2c(MU_D * mu)}  ${K.skid ? "✘ skids" : "✔ grips"}`, K.skid ? COL.F : COL.N, 12]);
+  else if (fOn) lines.push([`static: F_f ≤ μ_s F_N,  μ_s = ${f2c(mu)}` + (K.skid ? "" : "  ✔ grips"), K.skid ? COL.muted : COL.N, 12],
+                      [`dynamic (sliding): F_f = μ_d F_N,  μ_d = ${f2c(MU_D * mu)}` + (K.skid ? "  ✘ skids" : ""), K.skid ? COL.F : COL.muted, 12]);
+  let ly = top - 12; for (let i = lines.length - 1; i >= 0; i--){ eqLine(ctx, lines[i][0], w / 2, ly, lines[i][1], lines[i][2], "center", w - 16); ly -= 16; }
+  const yBot = ly - 4, mUp = small ? 40 : 44, mDn = small ? 8 : 16;
+  // rows of the left column (labels of the horizontal arrows), relative to cy
+  const banked = th > 0, fDownIn = fOn && Ff > 0, fRow = small ? (comps ? 20 : 12) : comps ? 26 : 14;
+  const rowNet = !banked ? (small ? 24 : 48) : fDownIn ? fRow + (small ? 15 : 18) : small ? 22 : 40;
+  // scale: everything must fit between the title and the text, and leave room for the left labels
+  const up = N * c + (comps ? Math.max(-Ff * s, 0) : 0), dn = W + (comps ? Math.max(Ff * s, 0) : 0);
+  const left = Math.max(Math.abs(net), N * s + (comps ? Math.max(Ff * c, 0) : 0), fOn && Ff > 0 ? Ff * c : 0, 1e-9);
+  const room = Math.max(40, cx - Math.min(150, w * 0.42));
+  // centre point: share the height between the up and the down arrows (the net-force row must fit below as well)
+  const H = yBot - mUp - mDn, kV = H / (up + Math.max(dn, 1e-9)), kk0 = Math.min(kV, room / left);
+  const cy = Math.round(Math.min(mUp + up * kk0, yBot - rowNet - (small ? 6 : 22)));
+  const kk = Math.min(kk0, (cy - mUp) / Math.max(up, 1e-9), (yBot - mDn - cy) / Math.max(dn, 1e-9));
+  const yR = cy + rowNet, xs = x => cx - x * kk, ys = y => cy - y * kk;
+  // the car, faded, tilted with the road
+  ctx.save(); ctx.globalAlpha = comps ? .32 : .45; D.draw(ctx, cx, cy, top); ctx.restore();
+  // θ between F_N and the vertical
+  if (banked){
+    const rA = 26; ctx.save(); ctx.strokeStyle = COL.grey; ctx.setLineDash([2, 3]); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - rA - 12); ctx.stroke();
+    ctx.setLineDash([]); ctx.strokeStyle = COL.N; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cx, cy, rA, -Math.PI / 2 - th, -Math.PI / 2); ctx.stroke(); ctx.restore();
+    const am = -Math.PI / 2 - th / 2; eqLine(ctx, "θ", cx + (rA + 8) * Math.cos(am), cy + (rA + 8) * Math.sin(am), COL.N, 13);
+  }
+  const xN = xs(N * s), yN = ys(N * c), xF = xs(Ff * c), yF = ys(-Ff * s), xL = Math.min(cx - left * kk, xN) - 8;   // xL: right edge of the left labels
+  const labs = [];   // drawn last, on top of every arrow
+  // components (thin, dashed) with dotted projection lines
+  if (comps){
+    ctx.save(); ctx.globalAlpha = .55; ctx.setLineDash([2, 3]); ctx.lineWidth = 1; ctx.strokeStyle = COL.N;
+    ctx.beginPath(); ctx.moveTo(xN, yN); ctx.lineTo(xN, cy); ctx.moveTo(xN, yN); ctx.lineTo(cx, yN); ctx.stroke(); ctx.restore();
+    arrow(ctx, cx, cy, xN, cy, COL.N, 2.2, true);
+    arrow(ctx, cx, cy, cx, yN, COL.N, 2.2, true);
+    labs.push(["F_N sin θ", xL, cy - 10, COL.N, "right"], ["F_N cos θ", cx + 8, (cy + yN) / 2 + 6, COL.N, "left"]);
+    if (fOn){
+      const hx = Ff * c * kk, vy = Ff * s * kk, yh = Ff > 0 ? cy : cy + 5;    // F_f cos θ continues from the tip of F_N sin θ
+      arrow(ctx, xN, yh, xN - hx, yh, COL.F, 2.2, true);
+      labs.push([`${sg} F_f cos θ`, xL, cy + 8, COL.F, "right"]);
+      if (Ff > 0){ const y0 = ys(-W); arrow(ctx, cx, y0, cx, y0 + vy, COL.F, 2.2, true);           // down: continues after W
+        labs.push(["F_f sin θ", cx + 8, Math.max(y0 + vy / 2, y0 + 12), COL.F, "left"]); }
+      else { arrow(ctx, cx, yN, cx, yN + vy, COL.F, 2.2, true);                                       // up: continues after F_N cos θ
+        labs.push(["F_f sin θ", cx - 8, yN + vy / 2 - 4, COL.F, "right"]); }
+    }
+  }
+  // real forces (thick, solid), each with its name
+  arrow(ctx, cx, cy, cx, ys(-W), COL.W, 4);
+  labs.push(["mg", cx + 8, ys(-W) - 6, COL.W, "left", 14]);
+  arrow(ctx, cx, cy, xN, yN, COL.N, 4);
+  labs.push(["F_N", Math.max(xN + 8, cx + 8), yN - 4, COL.N, "left", 14]);
+  if (fOn){
+    arrow(ctx, cx, cy, xF, yF, COL.F, 4);
+    if (!banked) labs.push(["F_f", xL, cy - 10, COL.F, "right", 14]);
+    else if (Ff > 0) labs.push(["F_f", xL, cy + fRow, COL.F, "right", 14]);
+    else labs.push(["F_f", Math.max(xF, cx) + 10, cy + 14, COL.F, "left", 14]);
+  }
+  ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, TWO_PI); ctx.fill();
+  // net force = centripetal force: dashed orange, starts on the car, points to the centre
+  const L = net * kk;
+  if (Math.abs(L) > 3){
+    ctx.save(); ctx.strokeStyle = COL.a; ctx.globalAlpha = .7; ctx.setLineDash([2, 3]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx - L, cy); ctx.lineTo(cx - L, yR); ctx.stroke(); ctx.restore();
+    arrow(ctx, cx, yR, cx - L, yR, COL.a, 3.5, true);
+    labs.push(["F_c", Math.min(cx - L, xL + 8) - 8, yR, COL.a, "right", 14]);
+  } else labs.push(["F_c = 0", cx - 8, yR, COL.a, "right", 14]);
+  for (const q of labs) if (q){ const [t, x, y, col, al, sz] = q; eqLine(ctx, t, x, y, col, sz ?? fs, al, al === "right" ? x - 4 : al === "left" ? w - x - 4 : w); }
+}
+let lastBank = 0;
 const speedTxt = v => set.sc === "sat" ? `${f2(v / 1000)} km s⁻¹` : `${f2(v)} m s⁻¹`;
 function fbdData(){
   const t = R.t;
@@ -1907,15 +2009,18 @@ function fbdData(){
         ctx.fillStyle = "#B0BEC5"; ctx.strokeStyle = "#455A64"; ctx.fillRect(x - 9, y - 8, 18, 16); ctx.strokeRect(x - 9, y - 8, 18, 16); }};
   }
   if (set.sc === "car"){
+    if (lastBank === 0 && set.cBank > 0) $("compChk").checked = true;   // banking switched on: show the components
+    lastBank = set.cBank;
     const C = carNow(), th = rad(set.cBank), c = Math.cos(th), s = Math.sin(th), mu = surfById(set.cSurf).mu;
     const skid = R.skid && t > R.skid.ts;
     let N = C.N, Ff = C.Ff, net = C.Fc, note = `friction needed ${fmtF(Math.abs(C.Ff))} ≤ maximum μs × normal force = ${fmtF(C.Fmax)} ✔`;
     if (!C.ok){ Ff = Math.sign(C.Ff) * C.Fmax; net = N * s + Ff * c; note = `needs ${fmtF(Math.abs(C.Ff))} of friction, but the maximum is ${fmtF(C.Fmax)} ✘`; }
-    const forces = [{sym:"W", sub:"", in:0, up:-C.W, col:COL.W, lx:12, ly:-4, al:"left"},
-                    {sym:"F", sub:"N", in:N * s, up:N * c, col:COL.N, lx:12, al:"left"}];
-    if (Math.abs(Ff) > 1) forces.push({sym:"F", sub:"f", in:Ff * c, up:-Ff * s, col:COL.F, ly:-16, lx:-4, al:"right"});
+    const comps = th > 0 && $("compChk").checked, fOn = Math.abs(Ff) > 1;
+    const forces = [{sym:"W", sub:"", in:0, up:-C.W, col:COL.W},
+                    {sym:"F", sub:"N", in:N * s, up:N * c, col:COL.N}];
+    if (fOn) forces.push({sym:"F", sub:"f", in:Ff * c, up:-Ff * s, col:COL.F});
     return {title:"Car seen from behind (side view of the bend)", inward:!skid, net, netNote:skid ? "too small → skids" : "= mv²/r",
-      forces, note,
+      forces, note, car:{N, Ff, W:C.W, net, th, c, s, comps, fOn, skid},
       draw:(ctx, x, y, top) => { ctx.save(); ctx.translate(x, y); ctx.rotate(-th);
         ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-140, 34); ctx.lineTo(140, 34); ctx.stroke();
         ctx.fillStyle = "#C62828"; ctx.strokeStyle = "#7F0000"; ctx.lineWidth = 1.5; ctx.beginPath();
@@ -2508,6 +2613,7 @@ function setScenarioUI(){
   if (gear && gq !== "th" && gq !== "gv") gq = "th"; if (!gear && (gq === "th" || gq === "gv")) gq = "x";
   document.querySelectorAll("#gsel button").forEach(b => b.setAttribute("aria-pressed", b.dataset.g === gq));
   $("fbdTitle").textContent = gear ? "How the speeds are linked" : "Free-body diagram";
+  $("compSw").hidden = set.sc !== "car";
   $("graphHint").innerHTML = {
     chair:"Graphs follow the mass in the right hand. <i>x</i>–<i>t</i> is a sine curve: the shadow of circular motion. Force: what the arm must pull with at each radius.",
     sat:"Graphs follow the satellite (time in minutes, hours or days). Force: the gravitational field strength <i>g</i> = <i>GM</i>/<i>r</i>² — the satellite's acceleration.",
@@ -2564,7 +2670,7 @@ function updateReadouts(){
     html = `<table>${row("acceleration <i>a</i> = <i>v</i>²/<i>r</i>", `${f2(C.a)} m s⁻²`, "force needed <i>mv</i>²/<i>r</i>", fmtF(C.Fc), COL.a, COL.a)}
       ${row("friction needed <i>F</i><sub>f</sub>", fmtF(Math.abs(C.Ff)), "max friction <i>μ</i><sub>s</sub><i>F</i><sub>N</sub>", fmtF(C.Fmax), COL.F, COL.N)}
       ${row("<i>μ</i><sub>s</sub> needed", f2(C.muNeed), "<i>v</i><sub>max</sub>", isFinite(C.vmax) ? `${f2(C.vmax)} m s⁻¹` : "no limit")}
-      ${set.cBank ? row("normal force <i>F</i><sub>N</sub>", fmtF(C.N), "no-friction speed √(<i>gr</i> tan<i>θ</i>)", `${f2(C.v0)} m s⁻¹`, COL.N) : ""}
+      ${row("normal force <i>F</i><sub>N</sub>", fmtF(C.N), "no-friction speed √(<i>gr</i> tan<i>θ</i>)", `${f2(C.v0)} m s⁻¹`, COL.N)}
       <tr><td colspan="5" class="ev">${pill(C.ok, "✔ grips: static friction is enough", C.Ff > 0 ? "✘ too fast: skids outwards" : "✘ too slow for this bank: slides down")}
         ${skid ? " · now sliding: friction μ<sub>d</sub>F<sub>N</sub> only slows it" : ""}</td></tr></table>`;
   } else if (set.sc === "gear"){
