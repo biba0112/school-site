@@ -423,7 +423,7 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
       <li>The middle column is the <b>free-body diagram</b> seen from the side, with only real forces (weight, normal force, friction,
         tension or grip, gravity). The dashed orange arrow is their <b>resultant</b>: this resultant <i>is</i> the centripetal force
         <i>mv</i>²/<i>r</i>. There is never an extra "centripetal force" arrow.</li>
-      <li>🚗 <b>Car</b>: every force is labelled with its name and symbol, and the dashed orange net force Σ<i>F</i> = <i>F</i><sub>c</sub> starts on the car and points to the centre.
+      <li>🚗 <b>Car</b>: the forces are labelled with symbols only (<i>mg</i>, <i>F</i><sub>N</sub>, <i>F</i><sub>f</sub>), and the dashed orange <i>F</i><sub>c</sub> (the net force) starts on the car and points to the centre.
         Under the diagram: the equation for <i>F</i><sub>c</sub> and the friction rules — static <i>F</i><sub>f</sub> ≤ <i>μ</i><sub>s</sub><i>F</i><sub>N</sub> (grips),
         dynamic <i>F</i><sub>f</sub> = <i>μ</i><sub>d</sub><i>F</i><sub>N</sub> (sliding) — with the coefficients of the chosen road.
         On a banked road, tick <b>Components</b> (top of the FBD) to split <i>F</i><sub>N</sub> and <i>F</i><sub>f</sub> into horizontal and vertical parts
@@ -1922,10 +1922,10 @@ function carFBD(ctx, D, w, top, small){
   else if (fOn) lines.push([`static: F_f ≤ μ_s F_N,  μ_s = ${f2c(mu)}` + (K.skid ? "" : "  ✔ grips"), K.skid ? COL.muted : COL.N, 12],
                       [`dynamic (sliding): F_f = μ_d F_N,  μ_d = ${f2c(MU_D * mu)}` + (K.skid ? "  ✘ skids" : ""), K.skid ? COL.F : COL.muted, 12]);
   let ly = top - 12; for (let i = lines.length - 1; i >= 0; i--){ eqLine(ctx, lines[i][0], w / 2, ly, lines[i][1], lines[i][2], "center", w - 16); ly -= 16; }
-  const yBot = ly - 4, mUp = small ? 40 : 56, mDn = small ? 8 : 30;
+  const yBot = ly - 4, mUp = small ? 40 : 44, mDn = small ? 8 : 16;
   // rows of the left column (labels of the horizontal arrows), relative to cy
-  const banked = th > 0, fDownIn = fOn && Ff > 0, fRow = small ? (comps ? 20 : 12) : comps ? 40 : 14;
-  const rowNet = !banked ? (small ? 24 : 48) : fDownIn ? fRow + (small ? 15 : comps ? 24 : 36) : small ? 22 : 40;
+  const banked = th > 0, fDownIn = fOn && Ff > 0, fRow = small ? (comps ? 20 : 12) : comps ? 26 : 14;
+  const rowNet = !banked ? (small ? 24 : 48) : fDownIn ? fRow + (small ? 15 : 18) : small ? 22 : 40;
   // scale: everything must fit between the title and the text, and leave room for the left labels
   const up = N * c + (comps ? Math.max(-Ff * s, 0) : 0), dn = W + (comps ? Math.max(Ff * s, 0) : 0);
   const left = Math.max(Math.abs(net), N * s + (comps ? Math.max(Ff * c, 0) : 0), fOn && Ff > 0 ? Ff * c : 0, 1e-9);
@@ -1957,22 +1957,21 @@ function carFBD(ctx, D, w, top, small){
       arrow(ctx, xN, yh, xN - hx, yh, COL.F, 2.2, true);
       labs.push([`${sg} F_f cos θ`, xL, cy + 8, COL.F, "right"]);
       if (Ff > 0){ const y0 = ys(-W); arrow(ctx, cx, y0, cx, y0 + vy, COL.F, 2.2, true);           // down: continues after W
-        labs.push(["F_f sin θ", cx + 8, Math.max(y0 + vy / 2, y0 + (small ? 10 : 25)), COL.F, "left"]); }
+        labs.push(["F_f sin θ", cx + 8, Math.max(y0 + vy / 2, y0 + 12), COL.F, "left"]); }
       else { arrow(ctx, cx, yN, cx, yN + vy, COL.F, 2.2, true);                                       // up: continues after F_N cos θ
         labs.push(["F_f sin θ", cx - 8, yN + vy / 2 - 4, COL.F, "right"]); }
     }
   }
   // real forces (thick, solid), each with its name
   arrow(ctx, cx, cy, cx, ys(-W), COL.W, 4);
-  labs.push(["weight W = mg", cx + 8, ys(-W) - 6, COL.W, "left", 13.5], small ? null : ["(pull of the Earth)", cx + 8, ys(-W) + 9, COL.W, "left", 11.5]);
+  labs.push(["mg", cx + 8, ys(-W) - 6, COL.W, "left", 14]);
   arrow(ctx, cx, cy, xN, yN, COL.N, 4);
-  labs.push(["normal force F_N", Math.max(xN + 8, cx + 8), yN - 4, COL.N, "left", 13.5], small ? null : ["(the road pushes)", Math.max(xN + 8, cx + 8), yN - 19, COL.N, "left", 11.5]);
+  labs.push(["F_N", Math.max(xN + 8, cx + 8), yN - 4, COL.N, "left", 14]);
   if (fOn){
     arrow(ctx, cx, cy, xF, yF, COL.F, 4);
-    const fn = !banked ? "(towards the centre)" : Ff > 0 ? "(down the slope)" : "(up the slope)", ft = "friction F_f";
-    if (!banked) labs.push([ft, xL, cy - 10, COL.F, "right", 13.5], small ? null : [fn, xL, cy - 25, COL.F, "right", 11.5]);
-    else if (Ff > 0) labs.push([ft, xL, cy + fRow, COL.F, "right", 13.5], small ? null : [fn, xL, cy + (comps ? 26 : 28), COL.F, "right", 11.5]);
-    else labs.push([ft, Math.max(xF, cx) + 10, cy + 14, COL.F, "left", 13.5], small ? null : [fn, Math.max(xF, cx) + 10, cy + 28, COL.F, "left", 11.5]);
+    if (!banked) labs.push(["F_f", xL, cy - 10, COL.F, "right", 14]);
+    else if (Ff > 0) labs.push(["F_f", xL, cy + fRow, COL.F, "right", 14]);
+    else labs.push(["F_f", Math.max(xF, cx) + 10, cy + 14, COL.F, "left", 14]);
   }
   ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, TWO_PI); ctx.fill();
   // net force = centripetal force: dashed orange, starts on the car, points to the centre
@@ -1981,9 +1980,8 @@ function carFBD(ctx, D, w, top, small){
     ctx.save(); ctx.strokeStyle = COL.a; ctx.globalAlpha = .7; ctx.setLineDash([2, 3]); ctx.lineWidth = 1;
     ctx.beginPath(); ctx.moveTo(cx - L, cy); ctx.lineTo(cx - L, yR); ctx.stroke(); ctx.restore();
     arrow(ctx, cx, yR, cx - L, yR, COL.a, 3.5, true);
-    labs.push(["net force ΣF = F_c", Math.min(cx - L, xL + 8) - 8, yR, COL.a, "right", 13.5],
-              small ? null : [K.skid ? "(too small → skids)" : "(centripetal force)", Math.min(cx - L, xL + 8) - 8, yR + 15, COL.a, "right", 11.5]);
-  } else labs.push(["ΣF = 0 → no centripetal force", cx - 8, yR, COL.a, "right", 12.5]);
+    labs.push(["F_c", Math.min(cx - L, xL + 8) - 8, yR, COL.a, "right", 14]);
+  } else labs.push(["F_c = 0", cx - 8, yR, COL.a, "right", 14]);
   for (const q of labs) if (q){ const [t, x, y, col, al, sz] = q; eqLine(ctx, t, x, y, col, sz ?? fs, al, al === "right" ? x - 4 : al === "left" ? w - x - 4 : w); }
 }
 let lastBank = 0;
@@ -2672,7 +2670,7 @@ function updateReadouts(){
     html = `<table>${row("acceleration <i>a</i> = <i>v</i>²/<i>r</i>", `${f2(C.a)} m s⁻²`, "force needed <i>mv</i>²/<i>r</i>", fmtF(C.Fc), COL.a, COL.a)}
       ${row("friction needed <i>F</i><sub>f</sub>", fmtF(Math.abs(C.Ff)), "max friction <i>μ</i><sub>s</sub><i>F</i><sub>N</sub>", fmtF(C.Fmax), COL.F, COL.N)}
       ${row("<i>μ</i><sub>s</sub> needed", f2(C.muNeed), "<i>v</i><sub>max</sub>", isFinite(C.vmax) ? `${f2(C.vmax)} m s⁻¹` : "no limit")}
-      ${set.cBank ? row("normal force <i>F</i><sub>N</sub>", fmtF(C.N), "no-friction speed √(<i>gr</i> tan<i>θ</i>)", `${f2(C.v0)} m s⁻¹`, COL.N) : ""}
+      ${row("normal force <i>F</i><sub>N</sub>", fmtF(C.N), "no-friction speed √(<i>gr</i> tan<i>θ</i>)", `${f2(C.v0)} m s⁻¹`, COL.N)}
       <tr><td colspan="5" class="ev">${pill(C.ok, "✔ grips: static friction is enough", C.Ff > 0 ? "✘ too fast: skids outwards" : "✘ too slow for this bank: slides down")}
         ${skid ? " · now sliding: friction μ<sub>d</sub>F<sub>N</sub> only slows it" : ""}</td></tr></table>`;
   } else if (set.sc === "gear"){
