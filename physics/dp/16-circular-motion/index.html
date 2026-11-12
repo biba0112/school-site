@@ -17,7 +17,8 @@
     4 PHYSICS   pure functions (no drawing)
     5 RUN       run state, play-back, motion of every object at time t
     6 SCENE     top view of each example
-    7 FBD       side-view free-body diagram (real forces + resultant) and a top-view v/a diagram
+    7 FBD       side-view free-body diagram (real forces + resultant) and a top-view v/a diagram;
+                car: named forces, net force on the car, optional components (Components switch)
     8 GRAPHS    x–t, vx–t, ax–t, speed–t (Area / Tangent tools) and the force graph of each example
     9 DATA      recorded trials and analysis graphs with best-fit lines
    10 TASKS     data-driven task list (predict / numeric / do)
@@ -53,7 +54,7 @@ header .grow{flex:1}
 header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
 
 /* layout: scene + state | FBD (always visible) | tabs; fills the screen height */
-main{flex:1;min-height:500px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1.3fr);
+main{flex:1;min-height:500px;display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1.4fr) minmax(0,1fr);
   grid-template-rows:minmax(0,1fr) auto;gap:12px;padding:12px 16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .card h2{font-size:.95rem;margin:0;padding:6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line);
@@ -62,9 +63,13 @@ main{flex:1;min-height:500px;display:grid;grid-template-columns:minmax(0,1.1fr) 
 .scenecard{flex:1 1 0;display:flex;flex-direction:column;min-height:0}
 .fbdcol{display:flex;flex-direction:column;min-width:0;min-height:0}
 #sceneWrap{position:relative;flex:1;min-height:150px}
+#sceneCut{position:absolute;right:10px;top:30px;z-index:2;display:none;font:700 15px "Segoe UI",Calibri,Arial,sans-serif;color:#fff;background:#E65100;border:0;border-radius:10px;padding:9px 16px;min-height:44px;box-shadow:0 2px 6px rgba(0,0,0,.25);cursor:pointer}
+#sceneCut:hover{background:#BF360C}
+#sceneCut.again{background:#1F3A5F}
 #scene{width:100%;height:100%;display:block}
 #fbdWrap{flex:1;min-height:220px}
 #fbd{width:100%;height:100%;display:block}
+.fbdhead .switch{min-height:30px;font-size:.85rem;gap:6px}.fbdhead .switch input{width:18px;height:18px}.switch[hidden]{display:none}
 .readouts{padding:6px 12px;flex:0 1 auto;min-height:0;overflow:auto}  /* natural height; the scene takes the rest */
 .readouts table{width:100%;border-collapse:collapse;font-size:.9rem}
 .readouts td.v{white-space:nowrap;padding-left:6px}
@@ -212,6 +217,11 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   min-height:40px;padding:4px 14px;cursor:pointer;white-space:nowrap}
 .scen button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);font-weight:600}
 .rn{display:flex;align-items:center;gap:6px}
+.sitbar{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:6px 16px;background:#E8EEF5;border-bottom:1px solid var(--line)}
+.sitbar .hint{font-size:.85rem;color:var(--muted);margin-right:4px}
+.sitbar button{font:inherit;font-size:.9rem;border:1px solid #B8C6D6;background:#fff;color:var(--navy);border-radius:99px;min-height:36px;padding:3px 12px;cursor:pointer;white-space:nowrap}
+.sitbar button[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
+@media (max-width:759px){ .sitbar{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:6px 10px} .sitbar .hint{display:none} }
 .nb{font:inherit;font-size:.95rem;width:80px;min-height:44px;padding:2px 6px;border:1px solid #B0BEC5;border-radius:8px;
   text-align:right;font-variant-numeric:tabular-nums;background:#fff;-moz-appearance:textfield}
 .nb::-webkit-outer-spin-button,.nb::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
@@ -230,6 +240,9 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
 .readouts th:first-child{text-align:left}
 #anaSel{margin-right:auto}
 @media (max-width:1300px){ #controls .rn input[type=range]{width:100px} .nb{width:72px} .scen button{padding:4px 10px} }
+@media (max-width:2000px){ header .lg{display:none} header .sh{display:inline} }
+@media (min-width:1200px){ .scen{flex-wrap:nowrap} header > div:first-child{flex:1 1 220px;min-width:0} header .grow{flex:0 0 0} }
+@media (min-width:1100px) and (max-width:1500px){ .scen button{padding:3px 8px;font-size:.84rem} .scen{gap:3px} header{gap:8px} header .sub{font-size:.78rem} header .credit{font-size:.72rem} }
 @media (max-width:1099px){ #controls .rn input[type=range]{width:84px} .nb{width:66px} .scen button{font-size:.85rem;padding:3px 9px}
   .lg{display:none} .sh{display:inline} header h1{font-size:1.05rem} header{gap:10px} }
 @media (max-width:759px){ .scen{order:4;flex-basis:100%} }
@@ -295,7 +308,7 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   .fbdcol{order:4;flex:none}
   .right{order:5;flex:none;height:auto!important}
   #sceneWrap{flex:none!important;height:min(58vh,340px)!important;min-height:200px}
-  #fbdWrap{flex:none!important;height:300px!important}
+  #fbdWrap{flex:none!important;height:460px!important}   /* tall enough for the full FBD with force names + top view */
   .scenecard .cardhead{position:sticky;top:0;z-index:2}    /* run buttons stay at hand while the scene is on screen */
   .cardhead .btn{min-height:40px;padding:4px 10px}
   .panel{overflow:visible}
@@ -323,16 +336,16 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
     <div class="sub"><a class="home" href="https://school.taneski.com/physics/dp/#A2" title="Back to all A.2 simulations">← All simulations</a> · IBDP Physics SL · A.2 Forces and momentum · g = 9.81 m s⁻²</div>
   </div>
   <div class="grow"></div>
-  <div class="scen" id="scen" role="group" aria-label="Example">
-    <button data-sc="chair" aria-pressed="true">🪑 <span class="lg">Rotating chair</span><span class="sh">Chair</span></button>
-    <button data-sc="sat" aria-pressed="false">🛰️ Satellite</button>
-    <button data-sc="car" aria-pressed="false">🚗 Car<span class="lg"> on a bend</span></button>
-    <button data-sc="kar" aria-pressed="false">🎠 Carousel</button>
-    <button data-sc="gear" aria-pressed="false">⚙️ Gears</button>
+  <div class="scen" id="scen" role="tablist" aria-label="Kind of circle">
+    <button data-g="hor" aria-pressed="true">↔ Horizontal</button>
+    <button data-g="ver" aria-pressed="false">↕ Vertical</button>
+    <button data-g="ang" aria-pressed="false">↗ At an angle</button>
+    <button data-g="gears" aria-pressed="false">⚙️ Gears</button>
   </div>
   <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
   <div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
 </header>
+<nav class="sitbar" id="sitbar" aria-label="Situation"></nav>
 
 <main>
   <section class="left">
@@ -348,13 +361,14 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
         </div>
       </div>
 <!-- NEWTON BAR --><div class="nbar"><span class="nlaw" id="nlaw"></span><label class="switch" title="Show every force together with its Newton's 3rd-law partner"><input type="checkbox" id="n3"> 3rd-law pairs</label></div><!-- /NEWTON BAR -->
-      <div id="sceneWrap"><canvas id="scene" aria-label="Top view of the circular motion"></canvas></div>
+      <div id="sceneWrap"><canvas id="scene" aria-label="Top view of the circular motion"></canvas><button id="sceneCut" type="button">✂ Cut the string</button></div>
     </div>
     <div class="card readouts" id="readouts"></div>
   </section>
 
   <section class="card fbdcol" aria-label="Free-body diagram">
-    <h2 id="fbdTitle">Free-body diagram</h2>
+    <div class="cardhead fbdhead"><h2 id="fbdTitle">Free-body diagram</h2>
+      <label class="switch" id="compSw" hidden title="Split the normal force and friction into horizontal and vertical components"><input type="checkbox" id="compChk" checked> Components</label></div>
     <div id="fbdWrap"><canvas id="fbd" aria-label="Free-body diagram and velocity–acceleration diagram"></canvas></div>
 <!-- NEWTON TABLE --><div class="ntab" id="ntab"></div><!-- /NEWTON TABLE -->
   </section>
@@ -410,9 +424,11 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   <div class="box">
     <h3 id="helpTitle">How to use this simulation</h3>
     <ol>
-      <li>Choose an <b>example</b> at the top: 🪑 rotating chair (view <b>from above</b> or from the <b>side</b>) · 🛰️ satellite · 🚗 car on a bend ·
+      <li>Choose the <b>kind of circle</b> with the tabs at the top (↔ horizontal · ↕ vertical · ↗ at an angle · ⚙️ gears), then a
+        <b>situation</b> in the bar under them. The situations: 🪑 rotating chair (view <b>from above</b> or from the <b>side</b>) · 🛰️ satellite · 🚗 car on a bend ·
         🎠 playground carousel · ⚙️ <b>gears</b>: two meshing gears, a gear train with an idler and two gears on one shaft, a bicycle chain, or a
-        motor, belt and pulley lifting a load.</li>
+        motor, belt and pulley lifting a load · 🎢 <b>loop-the-loop</b> · ✂ <b>string breaks</b> (a ball whirled in a horizontal circle, gravity ignored; press ✂ Cut the string on the scene and it flies off along the tangent; the FBD shows F_c = T, then the v arrow after the cut; view from above or from the side) ·
+        ⛓️ <b>conical pendulum</b> (swing ride) · 🚗 <b>banked road</b>.</li>
       <li>Set each value with <b>▼</b> and <b>▲</b> (hold to go faster; the <b>↑ ↓</b> keys or the mouse wheel in the box also work, Shift = ×10), or <b>type a value</b> in the box. <b>↺</b> puts it back to its start value. Outside the classroom range the box turns <b>amber ⚠</b>: fine to explore, but the lab can't do this.</li>
       <li>Move the pointer over any <b>graph</b> (or tap it): a dashed line shows the values where it cuts each curve, or the values of the nearest data point.</li>
       <li>Press <b>▶ Start</b>. The scene is a <b>top view</b>: the blue arrow is the velocity <i>v</i> (along the tangent), the orange
@@ -420,6 +436,18 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
       <li>The middle column is the <b>free-body diagram</b> seen from the side, with only real forces (weight, normal force, friction,
         tension or grip, gravity). The dashed orange arrow is their <b>resultant</b>: this resultant <i>is</i> the centripetal force
         <i>mv</i>²/<i>r</i>. There is never an extra "centripetal force" arrow.</li>
+      <li>🚗 <b>Car</b>: the forces are labelled with symbols only (<i>mg</i>, <i>F</i><sub>N</sub>, <i>F</i><sub>f</sub>), and the dashed orange <i>F</i><sub>c</sub> (the net force) starts on the car and points to the centre.
+        Under the diagram: the equation for <i>F</i><sub>c</sub> and the friction rules — static <i>F</i><sub>f</sub> ≤ <i>μ</i><sub>s</sub><i>F</i><sub>N</sub> (grips),
+        dynamic <i>F</i><sub>f</sub> = <i>μ</i><sub>d</sub><i>F</i><sub>N</sub> (sliding) — with the coefficients of the chosen road.
+        On a banked road, tick <b>Components</b> (top of the FBD) to split <i>F</i><sub>N</sub> and <i>F</i><sub>f</sub> into horizontal and vertical parts
+        (thin dashed arrows). The horizontal parts are drawn head-to-tail, so they end exactly where Σ<i>F</i> ends:
+        <i>F</i><sub>c</sub> = <i>F</i><sub>N</sub> sin <i>θ</i> ± <i>F</i><sub>f</sub> cos <i>θ</i>. Vertically: <i>F</i><sub>N</sub> cos <i>θ</i> balances <i>W</i> ± <i>F</i><sub>f</sub> sin <i>θ</i>.</li>
+      <li>🎢 <b>Loop-the-loop</b> (a vertical circle; slow motion): energy is conserved, so the object is slowest at the top and fastest
+        at the bottom. The FBD shows the forces <b>now</b> and, under it, the forces at the <b>top · side · bottom</b> to the same scale (orange frame = where
+        it is now). The dashed orange <i>F</i><sub>c</sub> is the inward part of the forces (= <i>mv</i>²/<i>r</i>). If <i>v</i><sub>top</sub> &lt; √(<i>gr</i>),
+        <i>F</i><sub>N</sub> reaches zero before the top: the cart leaves the track and falls as a projectile.
+        ⛓️ <b>Conical pendulum</b>: set the period; the chain angle follows from cos <i>θ</i> = <i>g</i>/(<i>ω</i>²<i>L</i>). Here the tension is
+        written <i>F</i><sub>T</sub>, because <i>T</i> is the period.</li>
       <li><b>◂ / ▸</b> (or the <b>← →</b> keys) step the motion and pause it. <b>Graph tools</b>: <i>Tangent</i> gives the gradient at
         that moment (gradient of <i>x</i>–<i>t</i> = <i>v</i><sub>x</sub>, of <i>v</i><sub>x</sub>–<i>t</i> = <i>a</i><sub>x</sub>);
         <i>Area</i> shades the area under a velocity or acceleration graph up to that moment.</li>
@@ -433,6 +461,10 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
       <li class="eq">a = v²/r = ω²r (towards the centre) · F = mv²/r = mω²r</li>
       <li>Satellite: gravity provides the force: <span class="eq">GMm/r² = mv²/r ⇒ v = √(GM/r)</span>; the mass of the satellite cancels.</li>
       <li>Car on a flat bend: static friction provides the force: <span class="eq">μ<sub>s</sub>mg ≥ mv²/r ⇒ v<sub>max</sub> = √(μ<sub>s</sub>gr)</span>; the mass cancels.</li>
+      <li>Vertical circle: <span class="eq">top: F_N + mg = mv²/r · side: F_N = mv²/r · bottom: F_N − mg = mv²/r</span> (<i>T</i> instead of
+        <i>F</i><sub>N</sub> for a string); energy: <span class="eq">v_bottom² = v_top² + 4gr</span>; slowest safe speed at the top
+        <span class="eq">v = √(gr)</span>; always <span class="eq">F_bottom − F_top = 6mg</span>.</li>
+      <li>Conical pendulum: <span class="eq">F_T cos θ = mg · F_T sin θ = mω²r · r = L sin θ ⇒ F_T = mω²L, cos θ = g/(ω²L)</span>.</li>
       <li>Gears (kinematics only): meshing gears and a chain or belt pass on the same <b>rim speed</b> <span class="eq">v = ω₁r₁ = ω₂r₂</span>,
         so <span class="eq">ω₂/ω₁ = r₁/r₂ = N₁/N₂</span> (teeth are all the same size, so r ∝ N). Meshing gears turn in opposite directions, a chain
         or belt keeps the direction; an idler gear only flips the direction. Gears fixed on <b>one shaft</b> have the same ω but different v.
@@ -965,8 +997,24 @@ const set = {sc:"chair",
   gSet:"two", gN1:12, gN2:36, gN3:36, gN4:12, gRpm:60, gNc:44, gNs:16, gCad:80, gR1:2, gR2:10, gRd:3,
   sPre:"iss", sH:410, sM:4.2e5, sOwn:false, sV:7.66,
   cM:1200, cR:50, cV:15, cSurf:"dry", cBank:0,
-  kSel:2, kM:[30, 30, 30], kR:[0.6, 1.2, 1.8], kT:4.0, kGrip:150};
-const R = {playing:false, paused:false, t:0, tEnd:10, ev:[], r0:0.75, rel:[null, null, null], skid:null, path:null, orbT:1, v0:0};
+  kSel:2, kM:[30, 30, 30], kR:[0.6, 1.2, 1.8], kT:4.0, kGrip:150,
+  lM:60, lR:8.0, lV:12, pM:2.0, pL:1.5, pT:2.29,
+  hM:0.20, hR:0.50, hV:6.28, hView:"top", carBank:false};
+// the situations, grouped by the kind of circle (tabs in the header, buttons in the bar under it)
+const GROUPS = [{id:"hor", name:"↔ Horizontal circles"}, {id:"ver", name:"↕ Vertical circles"}, {id:"ang", name:"↗ At an angle"}, {id:"gears", name:"⚙️ Gears (kinematics)"}];
+const SITS = [
+  {id:"chair", g:"hor", lab:"🪑 Rotating chair", st:{sc:"chair"}},
+  {id:"carflat", g:"hor", lab:"🚗 Car on a flat bend", st:{sc:"car", carBank:false, cBank:0}},
+  {id:"kar", g:"hor", lab:"🎠 Carousel", st:{sc:"kar"}},
+  {id:"hs", g:"hor", lab:"✂ String breaks", st:{sc:"hs"}},
+  {id:"sat", g:"hor", lab:"🛰️ Satellite", st:{sc:"sat"}},
+  {id:"loop", g:"ver", lab:"🎢 Loop-the-loop", st:{sc:"loop"}},
+  {id:"cone", g:"ang", lab:"⛓️ Conical pendulum (swing ride)", st:{sc:"cone"}},
+  {id:"carbank", g:"ang", lab:"🚗 Banked road", st:{sc:"car", carBank:true}},
+  {id:"gear", g:"gears", lab:"⚙️ Gears, chain and belt", st:{sc:"gear"}},
+];
+const sitNow = () => set.sc === "car" ? (set.carBank ? "carbank" : "carflat") : set.sc;
+const R = {playing:false, paused:false, t:0, tEnd:10, ev:[], r0:0.75, rel:[null, null, null], skid:null, path:null, orbT:1, v0:0, vc:null, cut:null};
 const carNow = () => carForces(set.cM, set.cR, set.cV, surfById(set.cSurf).mu, set.cBank);
 
 function reset(){
@@ -992,6 +1040,9 @@ function reset(){
         R.skid = {ts, dir:"in", ain:Math.max(ain, 0.3)}; R.tEnd = ts + Math.sqrt(2 * 5 / R.skid.ain) + 0.5;
       }
     }
+  } else if (set.sc === "loop"){ buildVC();
+  } else if (set.sc === "cone"){ R.tEnd = clamp(3 * set.pT, 6, 40);
+  } else if (set.sc === "hs"){ R.cut = null; R.tEnd = clamp(3 * TWO_PI * set.hR / Math.max(set.hV, 1e-6), 2, 30);
   } else if (set.sc === "gear"){
     const G = gearState();
     R.tEnd = set.gSet === "belt" ? clamp(0.5 / Math.max(G[2].v, 1e-6), 3, 30) : set.gSet === "bike" ? 10 : 12;
@@ -1021,9 +1072,9 @@ function buildPath(){
   if (end === "orbit" && E >= 0) end = "escape";
   R.path = {dt, pts, end, E, aSemi}; R.tEnd = (pts.length - 1) * dt;
 }
-const rate = () => set.sc === "sat" ? R.orbT / 6 : 1;    // one orbit in about 6 s
+const rate = () => set.sc === "sat" ? R.orbT / 6 : set.sc === "hs" ? 0.25 : set.sc === "loop" ? 0.5 : 1;    // one orbit in about 6 s; vertical circles in slow motion
 function stepDt(){
-  if (set.sc !== "sat") return 0.1;
+  if (set.sc !== "sat") return set.sc === "hs" ? 0.02 : set.sc === "loop" ? 0.05 : 0.1;
   const x = R.orbT / 60, u = x < 3600 ? 60 : x < 86400 ? 3600 : 86400;
   return niceUp(x / u) * u;
 }
@@ -1094,8 +1145,65 @@ function kidAt(i, t){
   const p = circlePt(set.kR[i], ph + w * tr, w), d = t - tr;
   return {x:p.x + p.vx * d, y:p.y + p.vy * d, vx:p.vx, vy:p.vy, ax:0, ay:0, held:false, rx:p.x, ry:p.y};
 }
+// ---- vertical circle (🎢 loop-the-loop): energy is conserved, so v² = v_top² + 2gr(1 − sin θ)
+// θ = maths angle of the object about the centre (−90° = bottom, 0 = right side, 90° = top); it goes round anticlockwise.
+// Inward force (F_N of the track or T of the string): F + mg sin θ = mv²/r  ⇒  F = mv_top²/r + 2mg − 3mg sin θ.
+// If v_top² < gr, F reaches 0 before the top (sin θ = (v_top²/gr + 2)/3): the object leaves the circle and moves as a projectile.
+function vcParams(){ return {m:set.lM, r:set.lR, vt:set.lV, loop:true}; }
+const vcV2 = (P, th) => P.vt * P.vt + 2 * g * P.r * (1 - Math.sin(th));
+const vcF = (P, th) => P.m * P.vt * P.vt / P.r + 2 * P.m * g - 3 * P.m * g * Math.sin(th);
+function vcKey(P){ const vb2 = P.vt * P.vt + 4 * g * P.r;
+  return {vb:Math.sqrt(vb2), Ft:P.m * P.vt * P.vt / P.r - P.m * g, Fs:P.m * (P.vt * P.vt + 2 * g * P.r) / P.r, Fb:P.m * vb2 / P.r + P.m * g,
+          vmin:Math.sqrt(g * P.r), safe:P.vt * P.vt >= g * P.r - 1e-9}; }
+function buildVC(){
+  const P = vcParams(), r = P.r, th0 = -Math.PI / 2, K = vcKey(P);
+  const thD = K.safe ? null : Math.asin(clamp((P.vt * P.vt / (g * r) + 2) / 3, -1, 1));   // where F = 0 (right side, on the way up)
+  const thEnd = thD === null ? th0 + TWO_PI : thD, n = 1440, ths = [th0], ts = [0];
+  for (let i = 1; i <= n; i++){ const a = th0 + (thEnd - th0) * (i - 1) / n, b = th0 + (thEnd - th0) * i / n, mid = (a + b) / 2;
+    ths.push(b); ts.push(ts[i - 1] + r * (b - a) / Math.sqrt(Math.max(vcV2(P, mid), 1e-9))); }
+  const V = {P, r, ths, ts, T:ts[n], det:null};
+  if (thD !== null){                                   // projectile after leaving the circle, until it is back on the circle (track or tight string)
+    const c = Math.cos(thD), s = Math.sin(thD), v = Math.sqrt(vcV2(P, thD)), x0 = r * c, y0 = r * s, vx = -v * s, vy = v * c;
+    let tHit = 3;
+    for (let tau = 0.02; tau < 3; tau += 0.002){ const x = x0 + vx * tau, y = y0 + vy * tau - g * tau * tau / 2; if (x * x + y * y >= r * r){ tHit = tau; break; } }
+    V.det = {th:thD, t:ts[n], x0, y0, vx, vy, tHit};
+    R.tEnd = ts[n] + tHit;
+  } else R.tEnd = (P.loop ? 2 : 3) * V.T;
+  R.vc = V;
+}
+function vcAt(t){
+  const V = R.vc, P = V.P, r = V.r, D = V.det;
+  if (!D || t <= D.t){
+    const tt = D ? Math.max(0, t) : ((t % V.T) + V.T) % V.T, ts = V.ts;
+    let lo = 0, hi = ts.length - 1; while (hi - lo > 1){ const mid = (lo + hi) >> 1; if (ts[mid] <= tt) lo = mid; else hi = mid; }
+    const u = ts[hi] > ts[lo] ? clamp((tt - ts[lo]) / (ts[hi] - ts[lo]), 0, 1) : 0, th = V.ths[lo] + (V.ths[hi] - V.ths[lo]) * u;
+    const c = Math.cos(th), s = Math.sin(th), v = Math.sqrt(Math.max(vcV2(P, th), 0)), ac = v * v / r;
+    return {x:r * c, y:r * s, vx:-v * s, vy:v * c, ax:-ac * c + g * c * s, ay:-ac * s - g * c * c, th, v, on:true, F:Math.max(0, vcF(P, th))};
+  }
+  const tau = Math.min(t - D.t, D.tHit), vy = D.vy - g * tau;
+  return {x:D.x0 + D.vx * tau, y:D.y0 + D.vy * tau - g * tau * tau / 2, vx:D.vx, vy, ax:0, ay:-g, th:null, v:Math.hypot(D.vx, vy), on:false, F:0};
+}
+// ---- conical pendulum (⛓️ swing ride): period T set ⇒ ω = 2π/T, cos θ = g/(ω²L) = gT²/(4π²L), r = L sin θ, F_T = mω²L
+function coneState(m = set.pM, L = set.pL, T = set.pT){
+  const w = TWO_PI / T, c = g / (w * w * L);
+  if (c >= 1) return {w, th:0, r:0, FT:m * g, v:0, Fc:0, hangs:true, Tmax:TWO_PI * Math.sqrt(L / g), m, L, T};
+  const th = Math.acos(c), r = L * Math.sin(th), FT = m * w * w * L;
+  return {w, th, r, FT, v:w * r, Fc:FT * Math.sin(th), a:w * w * r, hangs:false, Tmax:TWO_PI * Math.sqrt(L / g), m, L, T};
+}
+// ⚪ horizontal circle on a string, gravity ignored (like the hammer throw): T = mv²/r is the only force. ✂ cuts the string.
+function hsAt(t){
+  const r = set.hR, v = set.hV, w = v / r, th0 = -Math.PI / 2, tc = R.cut;
+  if (tc === null || t <= tc) return {...circlePt(r, th0 + w * t, w), held:true};
+  const p = circlePt(r, th0 + w * tc, w), d = t - tc;
+  return {x:p.x + p.vx * d, y:p.y + p.vy * d, vx:p.vx, vy:p.vy, ax:0, ay:0, held:false, rx:p.x, ry:p.y};
+}
+function cutString(){ if (R.cut !== null && R.cut <= R.t) return; R.cut = R.t; R.tEnd = Math.min(60, R.t + 1.6); if (!R.playing){ R.playing = true; R.paused = false; } updateButtons(); syncControls(); }
+const coneAt = t => { const C = coneState(); return circlePt(C.r, C.w * t, C.w); };
 // the object followed by the graphs and the free-body diagram
 function selAt(t){
+  if (set.sc === "loop") return vcAt(t);
+  if (set.sc === "cone") return coneAt(t);
+  if (set.sc === "hs") return hsAt(t);
   if (set.sc === "chair") return hand(0, t);
   if (set.sc === "sat") return satAt(t);
   if (set.sc === "car") return carMotion(t);
@@ -1189,8 +1297,11 @@ function vaArrows(ctx, V, p, kv, ka, labels = true){
 function drawScene(){
   const {ctx, w, h} = fitCanvas(document.getElementById("scene"));
   ctx.clearRect(0, 0, w, h);
-  ({chair:sceneChair, sat:sceneSat, car:sceneCar, kar:sceneKar, gear:sceneGears})[set.sc](ctx, w, h);
+  ({chair:sceneChair, sat:sceneSat, car:sceneCar, kar:sceneKar, gear:sceneGears, loop:sceneLoop, cone:sceneCone, hs:sceneHS})[set.sc](ctx, w, h);
   label(ctx, `t = ${fmtDur(R.t, true)}`, w - 10, h - 12, COL.P, "right", 14);
+  // ✂ string breaks: a big "Cut the string" button on the scene (teacher, 12 Nov 2026); after the cut it whirls again
+  const cb = $("sceneCut"), cut = set.sc === "hs" && R.cut !== null && R.cut <= R.t, txt = cut ? "↺ Whirl again" : "✂ Cut the string";
+  cb.style.display = set.sc === "hs" ? "block" : "none"; if (cb.textContent !== txt){ cb.textContent = txt; cb.classList.toggle("again", cut); }
 }
 /* ---- people + shading helpers (copied from the Impulse simulation, 7 Nov 2026) ---- */
 function lgr(ctx, x0, y0, x1, y1, stops){ const g = ctx.createLinearGradient(x0, y0, x1, y1); stops.forEach((c, i) => g.addColorStop(i / (stops.length - 1), c)); return g; }
@@ -1626,6 +1737,266 @@ function sceneKar(ctx, w, h){
   label(ctx, "view from above · orange ring = selected child", 10, h - 12, COL.muted, "left", 11.5);
 }
 
+/* ---------- 🎢 loop-the-loop and 🔄 ball on a string: side view of a vertical circle ---------- */
+function sideView(w, h, r, top = 34, bottom = 40){                 // side view, y up, the circle fits with room for labels; the force bar sits top right
+  const aw = w > 2 * h && w > 520 ? w - 180 : w, ppm = Math.min((aw - 36) / (2.7 * r), (h - top - bottom) / (2.3 * r)), cx = aw / 2, cy = top + 1.12 * r * ppm;
+  return {cx, cy, ppm, X:x => cx + x * ppm, Y:y => cy - y * ppm};
+}
+function forceBar(ctx, x, y, bw, F, Fmax, col, sym, txt){              // the deck's bar: how big the inward force is now (full bar = at the bottom)
+  ctx.save(); ctx.fillStyle = "rgba(255,255,255,.88)"; ctx.fillRect(x - 6, y - 30, bw + 12, 54);
+  ctx.fillStyle = col; ctx.globalAlpha = 0.85; ctx.fillRect(x, y, bw * clamp(F / Fmax, 0, 1), 16); ctx.globalAlpha = 1;
+  ctx.strokeStyle = "#455A64"; ctx.lineWidth = 1.2; ctx.strokeRect(x, y, bw, 16); ctx.restore();
+  eqLine(ctx, `${sym} = ${txt}`, x, y - 13, col, 14, "left", bw + 6);
+}
+function vcForceArrows(ctx, V, p, P, kF, sym, col, ox = 0, oy = 0){  // forces on the object in the scene (drawn to scale): mg down, F_N or T exactly towards the centre "+"
+  const X = V.X(p.x) + ox, Y = V.Y(p.y) + oy, mg = P.m * g, dx = V.cx - X, dy = V.cy - Y, d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d;
+  arrow(ctx, X, Y, X, Y + mg * kF, COL.W, 3.4);
+  const near = Math.abs(ux) < 0.4;                                                   // top/bottom: keep the two pills apart
+  forceLabel(ctx, "mg", X, Y + mg * kF, COL.W, 13, near ? -0.8 : (ux > 0 ? -0.7 : 0.7), 0.7);
+  if (p.on && p.F * kF > 3){ const L = p.F * kF; arrow(ctx, X, Y, X + ux * L, Y + uy * L, col, 3.4);
+    forceLabel(ctx, sym, X + ux * L, Y + uy * L, col, 13.5, near ? 0.8 : ux, near ? 0.3 : uy); }
+}
+// the loop cart with its rider: (X, Y) = where the wheels touch the track, ang = direction of motion; the rider's head points to the centre
+function drawCart(ctx, X, Y, ang, cw, ch, alpha = 1){
+  ctx.save(); ctx.globalAlpha = alpha; ctx.translate(X, Y); ctx.rotate(ang);
+  ctx.fillStyle = "#263238"; for (const sx of [-0.32, 0.32]){ ctx.beginPath(); ctx.arc(sx * cw, -0.05 * ch, 0.2 * ch, 0, TWO_PI); ctx.fill(); }
+  ctx.fillStyle = lgr(ctx, 0, -ch, 0, 0, ["#FFB74D", "#E65100"]); ctx.strokeStyle = "#8D3B00"; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-cw / 2, -ch * 0.95, cw, ch * 0.8, 4) : ctx.rect(-cw / 2, -ch * 0.95, cw, ch * 0.8); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#1565C0"; ctx.beginPath(); ctx.arc(-0.05 * cw, -ch * 1.25, 0.32 * ch, 0, TWO_PI); ctx.fill();          // helmet
+  ctx.fillStyle = "#F3C9A6"; ctx.beginPath(); ctx.arc(0.1 * cw, -ch * 1.2, 0.2 * ch, 0, TWO_PI); ctx.fill();               // face
+  ctx.strokeStyle = "#455A64"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(-0.3 * cw, -ch * 0.95); ctx.lineTo(-0.1 * cw, -ch * 1.25); ctx.stroke();   // safety bar
+  ctx.restore();
+}
+function sceneLoop(ctx, w, h){
+  const P = vcParams(), r = P.r, t = R.t, p = vcAt(t), K = vcKey(P), narrow = !(w > 2 * h && w > 520), V = sideView(w, h, r, narrow ? 48 : 40, narrow ? 72 : 46), k = V.ppm;
+  ctx.fillStyle = lgr(ctx, 0, 0, 0, h, ["#90CAF9", "#E3F2FD"]); ctx.fillRect(0, 0, w, h);                  // sky
+  const cl = rnd(21); ctx.fillStyle = "rgba(255,255,255,.85)";
+  for (let i = 0; i < 4; i++){ const x = cl() * w, y = 20 + cl() * h * 0.25, s = 14 + cl() * 16; for (const [dx, dy, q] of [[0, 0, 1], [s, 4, .8], [-s, 5, .75], [s * .4, -s * .4, .8]]){ ctx.beginPath(); ctx.arc(x + dx, y + dy, s * q, 0, TWO_PI); ctx.fill(); } }
+  const gy = V.Y(-r) + Math.max(5, 0.35 * k);
+  ctx.fillStyle = lgr(ctx, 0, gy, 0, h, ["#8BC34A", "#689F38"]); ctx.fillRect(0, gy, w, h - gy);              // grass
+  const tr = rnd(4); for (let i = 0; i < 9; i++){ const x = tr() * w; if (Math.abs(x - V.cx) < r * k * 1.15) continue; drawTree(ctx, x, gy - 4 - tr() * 6, 7 + tr() * 7); }
+  const rail = Math.max(4, 0.22 * k), leg = Math.max(3, 0.14 * k);
+  ctx.strokeStyle = "#78909C"; ctx.lineWidth = leg;                                                                 // steel supports
+  for (const a of [-0.25, 0.25, 0.75, 1.25].map(q => q * Math.PI)){ const x = V.X((r + 0.2) * Math.cos(a)), y = V.Y((r + 0.2) * Math.sin(a)); if (y < gy){ ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + (x < V.cx ? -1 : 1) * 0.25 * r * k, gy); ctx.stroke(); } }
+  ctx.beginPath(); ctx.moveTo(V.X(0), V.Y(r + 0.2)); ctx.lineTo(V.X(0), gy); ctx.globalAlpha = .5; ctx.stroke(); ctx.globalAlpha = 1;
+  ctx.lineCap = "round";
+  ctx.strokeStyle = "#B71C1C"; ctx.lineWidth = rail; ctx.beginPath(); ctx.arc(V.cx, V.cy, (r + 0.18) * k, 0, TWO_PI); ctx.stroke();      // track (outer tube)
+  ctx.strokeStyle = "#EF5350"; ctx.lineWidth = rail * 0.35; ctx.beginPath(); ctx.arc(V.cx, V.cy, (r + 0.18) * k, 0, TWO_PI); ctx.stroke();
+  ctx.strokeStyle = "#B71C1C"; ctx.lineWidth = rail; ctx.beginPath(); ctx.moveTo(8, V.Y(-r - 0.18)); ctx.lineTo(w - 8, V.Y(-r - 0.18)); ctx.stroke();   // run-in and run-out
+  ctx.lineCap = "butt";
+  ctx.save(); ctx.fillStyle = COL.ink; ctx.font = '600 13px "Segoe UI",Arial,sans-serif'; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("+", V.cx, V.cy); ctx.restore();
+  const D = R.vc.det;
+  if (D){ ctx.save(); ctx.strokeStyle = "rgba(198,40,40,.8)"; ctx.setLineDash([4, 4]); ctx.lineWidth = 2; ctx.beginPath();          // the fall: a parabola inside the loop
+    for (let tau = 0; tau <= D.tHit + 1e-9; tau += D.tHit / 60){ const x = D.x0 + D.vx * tau, y = D.y0 + D.vy * tau - g * tau * tau / 2; tau ? ctx.lineTo(V.X(x), V.Y(y)) : ctx.moveTo(V.X(x), V.Y(y)); }
+    ctx.stroke(); ctx.restore(); }
+  // cart + rider: wheels on the track, the rider's head points to the centre
+  const ang = Math.atan2(-p.vy, p.vx), cw = Math.max(26, 2.3 * k), ch = Math.max(13, 1.05 * k), X0 = V.X(p.x), Y0 = V.Y(p.y);
+  drawCart(ctx, X0, Y0, ang, cw, ch);
+  const vmaxS = K.vb, kF = 0.75 * r * k / K.Fb, kv = 0.42 * r * k / vmaxS, dd = Math.hypot(V.cx - X0, V.cy - Y0) || 1, cx = X0 + (V.cx - X0) / dd * ch * 0.55, cy = Y0 + (V.cy - Y0) / dd * ch * 0.55;
+  if (p.v * kv > 4){ arrow(ctx, cx, cy, cx + p.vx * kv, cy - p.vy * kv, COL.v, 3); eqLine(ctx, "v", cx + p.vx * kv * 1.12 + 7, cy - p.vy * kv * 1.12, COL.v, 14); }
+  vcForceArrows(ctx, V, p, P, kF, "F_N", COL.N, cx - X0, cy - Y0);
+  const bx = narrow ? 12 : w - 172, by = narrow ? h - 50 : 52;                       // the bar never covers the loop
+  forceBar(ctx, bx, by, 150, p.F, K.Fb, COL.N, "F_N", p.on ? fmtF(p.F) : "0");
+  eqLine(ctx, `v = ${f2(p.v)} m s⁻¹`, narrow ? bx + 168 : bx, narrow ? by + 8 : 88, COL.v, 13.5, "left");
+  label(ctx, `${sig(P.m)} kg · r = ${sig(P.r)} m · v_top = ${sig(P.vt)} m s⁻¹ · slow motion ×½`, 10, 14, COL.navy, "left", 13);
+  const wy = narrow ? 32 : h - 34;
+  if (!p.on) label(ctx, "✘ F_N = 0: the cart leaves the track and falls (a projectile)", w / 2, wy, COL.F, "center", 12.5);
+  else if (!K.safe) label(ctx, `too slow: needs v_top ≥ √(gr) = ${f2(K.vmin)} m s⁻¹`, w / 2, wy, COL.F, "center", 12.5);
+  label(ctx, "side view · arrows to scale: mg (blue), F_N (green), v", 10, h - 12, COL.muted, "left", 11.5);
+}
+/* ---------- ✂ string breaks: a ball whirled in a horizontal circle (gravity ignored), seen from above or from the side ---------- */
+function drawMarble(ctx, X, Y, R, cols = ["#9FA8DA", "#3949AB", "#1A237E"]){
+  ctx.fillStyle = rgr(ctx, X - R * 0.35, Y - R * 0.35, R * 0.1, R, cols); ctx.beginPath(); ctx.arc(X, Y, R, 0, TWO_PI); ctx.fill();
+  ctx.fillStyle = "rgba(255,255,255,.55)"; ctx.beginPath(); ctx.arc(X - R * 0.35, Y - R * 0.4, R * 0.25, 0, TWO_PI); ctx.fill();
+}
+function fist(ctx, X, Y, s){ ctx.fillStyle = rgr(ctx, X - 3, Y - 3, 1, s, ["#F8D9C0", "#C98F68"]); ctx.beginPath(); ctx.arc(X, Y, s, 0, TWO_PI); ctx.fill(); }
+// "edge-on" view of a circle: the object moves along a line through the hand; nearer = bigger; forces show only their part along the line
+function edgeOnView(ctx, w, h, r, p, opt){
+  const k = Math.min((w - 60) / (2.6 * r), 1e9), cx = w / 2, cy = h * 0.52, X = cx + p.x * k, depth = clamp(opt.depth(p) / r, -1, 1), br = Math.max(7, 0.06 * r * k) * (1 + 0.3 * depth);
+  ctx.save(); ctx.strokeStyle = "rgba(38,50,56,.45)"; ctx.setLineDash([5, 5]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx - r * k, cy); ctx.lineTo(cx + r * k, cy); ctx.stroke(); ctx.restore();
+  for (const sx of [-1, 1]){ ctx.fillStyle = COL.muted; ctx.fillRect(cx + sx * r * k - 1, cy - 6, 2, 12); }
+  limb(ctx, opt.arm(cx, cy), Math.max(10, 0.14 * r * k), "#F3C9A6", "#C98F68"); fist(ctx, cx, cy, Math.max(9, 0.12 * r * k));
+  if (opt.held){ ctx.strokeStyle = "#37474F"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(X, cy); ctx.stroke(); }
+  if (opt.behind(p)){ ctx.save(); ctx.globalAlpha = 0.55; drawMarble(ctx, X, cy, br); ctx.restore(); } else drawMarble(ctx, X, cy, br);
+  return {k, cx, cy, X, br};
+}
+function sceneHS(ctx, w, h){
+  const m = set.hM, r = set.hR, v = set.hV, p = hsAt(R.t), F = m * v * v / r;
+  const top = `${sig(m)} kg · r = ${sig(r)} m · v = ${sig(v)} m s⁻¹ · gravity ignored · slow motion ×¼`;
+  if (set.hView === "side"){
+    ctx.fillStyle = lgr(ctx, 0, 0, 0, h, ["#E3F2FD", "#F5F5F0"]); ctx.fillRect(0, 0, w, h);
+    ctx.fillStyle = lgr(ctx, 0, h * 0.8, 0, h, ["#BCAAA4", "#8D6E63"]); ctx.fillRect(0, h * 0.8, w, h * 0.2);
+    const E = edgeOnView(ctx, w, h, r, p, {depth:q => -q.y, behind:q => q.y > 0, held:p.held, arm:(cx, cy) => [[cx - 30, h + 10], [cx - 18, cy + 0.45 * (h - cy)], [cx - 4, cy + 4]]});
+    if (p.held){ const L = 0.55 * r * E.k * (-p.x / r); if (Math.abs(L) > 4){ arrow(ctx, E.X, E.cy, E.X + L, E.cy, COL.P, 3.4); forceLabel(ctx, "T = F_c", E.X + L, E.cy, COL.P, 13.5, 0, -1.2); } }
+    else { label(ctx, "✂ string cut: it flies off along the tangent", 10, 36, COL.F, "left", 13);
+      const kv = 0.42 * r * E.k / Math.max(v, 1e-9), L = p.vx * kv;
+      if (Math.abs(L) > 4){ arrow(ctx, E.X, E.cy, E.X + L, E.cy, COL.v, 3.2); forceLabel(ctx, "v", E.X + L, E.cy, COL.v, 13, Math.sign(L), -0.8); } }
+    label(ctx, top, 10, 14, COL.navy, "left", 12.5);
+    label(ctx, "from the side the circle looks like a line · nearer = bigger", 10, h - 12, COL.muted, "left", 11);
+    return;
+  }
+  ctx.fillStyle = lgr(ctx, 0, 0, w, h, ["#9CCC65", "#7CB342"]); ctx.fillRect(0, 0, w, h);                       // a field, seen from above
+  const gr = rnd(5); ctx.fillStyle = "rgba(51,105,30,.18)"; for (let i = 0; i < 220; i++) ctx.fillRect(gr() * w, gr() * h, 2, 2);
+  const V = topView(w, h, r * 1.35), k = V.ppm, X = V.X(p.x), Y = V.Y(p.y);
+  dashedCircle(ctx, V.cx, V.cy, r * k, "rgba(255,255,255,.95)", [8, 6], 2);
+  limb(ctx, [[V.cx + 0.25 * r * k, h + 20], [V.cx + 0.12 * r * k, V.cy + 0.4 * r * k], [V.cx + 4, V.cy + 4]], Math.max(10, 0.14 * r * k), "#F3C9A6", "#C98F68");
+  fist(ctx, V.cx, V.cy, Math.max(9, 0.11 * r * k));
+  ctx.strokeStyle = "#37474F"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(V.cx, V.cy);
+  if (p.held) ctx.lineTo(X, Y); else { const d = Math.hypot(p.rx, p.ry) || 1; ctx.lineTo(V.cx + p.rx / d * 0.3 * r * k, V.cy - p.ry / d * 0.3 * r * k); }
+  ctx.stroke();
+  if (!p.held){ ctx.save(); ctx.strokeStyle = COL.F; ctx.setLineDash([4, 4]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(V.X(p.rx), V.Y(p.ry)); ctx.lineTo(X, Y); ctx.stroke(); ctx.restore();
+    label(ctx, "✂ cut here", V.X(p.rx), V.Y(p.ry) + 16, COL.F, "center", 12); }
+  drawMarble(ctx, X, Y, Math.max(8, 0.07 * r * k));
+  const kv = 0.42 * r * k / v;
+  arrow(ctx, X, Y, X + p.vx * kv, Y - p.vy * kv, COL.v, 3.2); forceLabel(ctx, "v", X + p.vx * kv, Y - p.vy * kv, COL.v, 13, p.vx / v, -p.vy / v);
+  if (p.held){ const dx = V.cx - X, dy = V.cy - Y, d = Math.hypot(dx, dy) || 1, L = 0.55 * r * k; arrow(ctx, X, Y, X + dx / d * L, Y + dy / d * L, COL.P, 3.4);
+    let nx = dy / d, ny = -dx / d; if (ny > 0){ nx = -nx; ny = -ny; } forceLabel(ctx, "T = F_c", X + dx / d * L * 0.55, Y + dy / d * L * 0.55, COL.P, 13.5, nx, ny); }
+  label(ctx, top, 10, 14, COL.navy, "left", 12.5);
+  label(ctx, p.held ? "view from above · T (purple) is the only force: it is the centripetal force" : "view from above · no force: a straight line at constant speed", 10, h - 12, COL.muted, "left", 11.5);
+}
+
+/* ---------- ⛓️ conical pendulum: a swing ride seen from the front, slightly from above ---------- */
+// world: seat at x = r cos φ (right), z = r sin φ (towards the viewer); seen from slightly above, so z moves it down the screen
+function drawSeat(ctx, X, Y, s, hi, alpha = 1){
+  ctx.save(); ctx.globalAlpha = alpha; ctx.translate(X, Y);
+  ctx.fillStyle = hi ? "#E65100" : "#FB8C00"; ctx.strokeStyle = hi ? "#7F2A00" : "#A85A00"; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(-7 * s, -2 * s, 14 * s, 6 * s, 2 * s) : ctx.rect(-7 * s, -2 * s, 14 * s, 6 * s); ctx.fill(); ctx.stroke();
+  ctx.fillRect(-7 * s, -11 * s, 3 * s, 10 * s);
+  ctx.restore();
+}
+const CONE_TILT = 0.34;
+function coneProj(C, k, cx, py, phi){                       // screen position of a seat at angle φ (and its depth z)
+  const x = C.r * Math.cos(phi), z = C.r * Math.sin(phi), yc = py + C.L * Math.cos(C.th) * k;
+  return {X:cx + x * k, Y:yc + z * k * CONE_TILT, z, yc};
+}
+function angleArc(ctx, x, y, R, a0, a1, col, txt, fz = 13){   // arc between two screen angles with a label
+  if (Math.abs(a1 - a0) < 1e-3) return;
+  ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(x, y, R, Math.min(a0, a1), Math.max(a0, a1)); ctx.stroke(); ctx.restore();
+  const am = (a0 + a1) / 2; forceLabel(ctx, txt, x + (R + 4) * Math.cos(am), y + (R + 4) * Math.sin(am), col, fz, Math.cos(am), Math.sin(am));
+}
+function sceneCone(ctx, w, h){
+  const C = coneState(), L = set.pL, t = R.t, ph = C.w * t;
+  ctx.fillStyle = lgr(ctx, 0, 0, 0, h, ["#7E57C2", "#F8BBD0", "#FFE0B2"]); ctx.fillRect(0, 0, w, h);                 // evening sky at the fair
+  const k = Math.min((w - 40) / (2.3 * L), (h - 130) / (1.25 * L)), cx = w / 2, py = 70, gy = py + 1.1 * L * k + 30;
+  ctx.fillStyle = lgr(ctx, 0, gy - 10, 0, h, ["#7CB342", "#558B2F"]); ctx.fillRect(0, gy - 10, w, h - gy + 10);
+  const tr = rnd(8); for (let i = 0; i < 7; i++){ const x = tr() * w; if (Math.abs(x - cx) < (C.r + 0.5) * k) continue; drawTree(ctx, x, gy - 14, 6 + tr() * 6); }
+  // platform and the shadow of the seats' circle on the ground
+  const pr = Math.max(C.r * k + 24, 46);
+  ctx.fillStyle = "rgba(0,0,0,.18)"; ctx.beginPath(); ctx.ellipse(cx, gy, pr + 8, (pr + 8) * CONE_TILT, 0, 0, TWO_PI); ctx.fill();
+  ctx.fillStyle = lgr(ctx, cx - pr, 0, cx + pr, 0, ["#8D6E63", "#D7CCC8", "#8D6E63"]); ctx.beginPath(); ctx.ellipse(cx, gy - 4, pr, pr * CONE_TILT, 0, 0, TWO_PI); ctx.fill();
+  ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 1.5; ctx.stroke();
+  const seats = Array.from({length:C.hangs ? 1 : 6}, (_, i) => ({i, ...coneProj(C, k, cx, py, ph + i * TWO_PI / 6)}));
+  const yc = py + L * Math.cos(C.th) * k;
+  ctx.save(); ctx.strokeStyle = "rgba(38,50,56,.45)"; ctx.setLineDash([5, 5]); ctx.lineWidth = 1.5;
+  if (!C.hangs){ ctx.beginPath(); ctx.ellipse(cx, yc, C.r * k, C.r * k * CONE_TILT, 0, 0, TWO_PI); ctx.stroke(); }
+  ctx.restore();
+  const drawOne = S => { const hi = S.i === 0, depth = 1 + 0.18 * S.z / Math.max(C.r, 1e-9) * (C.hangs ? 0 : 1), back = S.z < 0;
+    ctx.strokeStyle = hi ? "#263238" : back ? "rgba(55,71,79,.45)" : "rgba(55,71,79,.85)"; ctx.lineWidth = (hi ? 2.2 : 1.5) * depth;
+    ctx.beginPath(); ctx.moveTo(cx, py); ctx.lineTo(S.X, S.Y - 3); ctx.stroke();
+    drawSeat(ctx, S.X, S.Y, Math.max(0.9, 0.1 * k / 6) * depth, hi, back && !hi ? 0.6 : 1); };
+  seats.filter(S => S.z < 0).forEach(drawOne);                                                    // behind the tower (far side)
+  ctx.fillStyle = lgr(ctx, cx - 9, 0, cx + 9, 0, ["#90A4AE", "#ECEFF1", "#607D8B"]); ctx.fillRect(cx - 8, py, 16, gy - 6 - py);   // tower
+  // canopy: a cone with a rim ellipse; stripes turn with the ride; far half first
+  const cw = Math.max(50, 0.55 * L * k), ap = py - 34, STR = ["#E53935", "#FFFFFF"];
+  for (const front of [false, true]) for (let i = 0; i < 16; i++){
+    const a0 = ph + i * TWO_PI / 16, a1 = a0 + TWO_PI / 16, sm = Math.sin((a0 + a1) / 2); if ((sm > 0) !== front) continue;
+    ctx.fillStyle = STR[i % 2]; ctx.globalAlpha = front ? 1 : 0.8; ctx.beginPath(); ctx.moveTo(cx, ap);
+    ctx.lineTo(cx + cw * Math.cos(a0), py + cw * Math.sin(a0) * CONE_TILT); ctx.lineTo(cx + cw * Math.cos(a1), py + cw * Math.sin(a1) * CONE_TILT); ctx.closePath(); ctx.fill(); ctx.globalAlpha = 1; }
+  ctx.strokeStyle = "#B71C1C"; ctx.lineWidth = 2; ctx.beginPath(); ctx.ellipse(cx, py, cw, cw * CONE_TILT, 0, 0, Math.PI); ctx.stroke();
+  ctx.fillStyle = "#FDD835"; ctx.beginPath(); ctx.arc(cx, ap - 2, 5, 0, TWO_PI); ctx.fill();
+  ctx.fillStyle = "#37474F"; ctx.beginPath(); ctx.arc(cx, py, 3.5, 0, TWO_PI); ctx.fill();
+  // the axis, the centre of the circle and the radius to the orange seat
+  const S0 = seats[0];
+  ctx.save(); ctx.strokeStyle = "rgba(38,50,56,.6)"; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.3;
+  ctx.beginPath(); ctx.moveTo(cx, py); ctx.lineTo(cx, yc + 14); ctx.stroke();
+  if (!C.hangs){ ctx.strokeStyle = COL.F; ctx.beginPath(); ctx.moveTo(cx, yc); ctx.lineTo(S0.X, S0.Y); ctx.stroke(); }
+  ctx.restore();
+  if (!C.hangs){ ctx.save(); ctx.fillStyle = COL.F; ctx.font = '700 16px "Segoe UI",Arial,sans-serif'; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("+", cx, yc); ctx.restore();
+    eqLine(ctx, "r", (cx + S0.X) / 2, (yc + S0.Y) / 2 - 9, COL.F, 13); }
+  seats.filter(S => S.z >= 0).forEach(drawOne);                                                   // near side, in front of the tower
+  ctx.strokeStyle = COL.accent; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.arc(S0.X, S0.Y, 14, 0, TWO_PI); ctx.stroke();
+  // the angle θ between the axis and the orange seat's chain (seen true size when the seat is at the side)
+  if (!C.hangs){ const ac = Math.atan2(S0.Y - py, S0.X - cx); angleArc(ctx, cx, py, 34, Math.PI / 2, ac, COL.N, `θ = ${f1(deg(C.th))}°`, 12.5); }
+  // forces on the orange seat, to scale
+  const kF = 0.30 * L * k / Math.max(C.FT, C.m * g), dx = cx - S0.X, dy = py - S0.Y, dl = Math.hypot(dx, dy) || 1;
+  arrow(ctx, S0.X, S0.Y, S0.X + dx / dl * C.FT * kF, S0.Y + dy / dl * C.FT * kF, COL.P, 3.4);
+  forceLabel(ctx, "F_T", S0.X + dx / dl * C.FT * kF * 0.6, S0.Y + dy / dl * C.FT * kF * 0.6, COL.P, 13.5, S0.X < cx ? -1 : 1, 0);
+  arrow(ctx, S0.X, S0.Y, S0.X, S0.Y + C.m * g * kF, COL.W, 3.4); forceLabel(ctx, "mg", S0.X, S0.Y + C.m * g * kF, COL.W, 13.5, 0, 1);
+  if (!C.hangs){ const ex = cx - S0.X, ey = yc - S0.Y, el = Math.hypot(ex, ey) || 1, Lc = C.Fc * kF;
+    arrow(ctx, S0.X, S0.Y, S0.X + ex / el * Lc, S0.Y + ey / el * Lc, COL.a, 2.6, true); forceLabel(ctx, "F_c", S0.X + ex / el * Lc, S0.Y + ey / el * Lc, COL.a, 13, ex / el, ey / el + 0.6); }
+  label(ctx, C.hangs ? `turns too slowly: the seats hang straight down (needs T < 2π√(L/g) = ${f2(C.Tmax)} s)` : `θ = ${f1(deg(C.th))}° · r = L sin θ = ${f2(C.r)} m · v = ${f2(C.v)} m s⁻¹`, 10, 14, C.hangs ? COL.F : COL.navy, "left", 13);
+  label(ctx, "orange ring = the seat in the FBD", 10, h - 12, COL.muted, "left", 11.5);
+}
+// ⛓️ FBD: the seat as it goes round (forces turn with it), the forces in the plane of the chain (never change), and a top view that turns
+function coneFBD(ctx, w, h){
+  const C = coneState(), m = C.m, s = Math.sin(C.th), c = Math.cos(C.th), phi = C.w * R.t, small = h < 430;
+/*NF*/ NF.body("the seat", m, C.hangs ? 0 : C.a, 0, {v:1, axes:["towards the centre", "↑"], law:C.hangs ? undefined : "2nd"});
+  NF.force("<i>mg</i>", 0, -m * g, COL.W, "the Earth", "grav"); NF.force("F<sub>T</sub>", C.FT * s, C.FT * c, COL.P, "the chain", "tension");/*/NF*/
+  const fz = small ? 11.5 : 12.5;
+  // 1 · the seat now, seen like the scene (perspective): the forces turn as it goes round
+  const h1 = small ? h - 4 : Math.round(h * 0.45), w1 = small ? w * 0.56 : w;
+  label(ctx, "Seat now (seen like the scene)", w1 / 2, 14, COL.navy, "center", 13);
+  // the seat alone, with its forces projected the way the scene is seen (they turn as it goes round)
+  const sx = w1 / 2, sy = 30 + (h1 - 30) * 0.44, ix = -Math.cos(phi), iz = -Math.sin(phi);          // inward horizontal direction (x right, z towards the viewer)
+  const kF = Math.min((h1 - sy - 30) / (m * g), (sy - 40) / (C.FT * c + C.FT * s * CONE_TILT), w1 * 0.40 / Math.max(C.FT * s, 1e-9));
+  const T = {x:ix * C.FT * s * kF, y:(iz * C.FT * s * CONE_TILT - C.FT * c) * kF}, Fc = {x:ix * C.Fc * kF, y:iz * C.Fc * CONE_TILT * kF}, lT = Math.hypot(T.x, T.y) || 1, lc = Math.hypot(Fc.x, Fc.y) || 1;
+  ctx.save(); ctx.strokeStyle = "rgba(38,50,56,.4)"; ctx.setLineDash([3, 4]); ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + T.x / lT * (lT + 22), sy + T.y / lT * (lT + 22)); ctx.stroke();                 // along the chain, to the pivot
+  if (!C.hangs){ ctx.strokeStyle = "rgba(198,40,40,.55)"; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + Fc.x / lc * (lc + 26), sy + Fc.y / lc * (lc + 26)); ctx.stroke(); }
+  ctx.restore();
+  ctx.fillStyle = "#37474F"; ctx.beginPath(); ctx.arc(sx + T.x / lT * (lT + 22), sy + T.y / lT * (lT + 22), 3, 0, TWO_PI); ctx.fill();
+  if (!C.hangs){ ctx.save(); ctx.fillStyle = COL.F; ctx.font = '700 15px "Segoe UI",Arial,sans-serif'; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText("+", sx + Fc.x / lc * (lc + 30), sy + Fc.y / lc * (lc + 30)); ctx.restore(); }
+  arrow(ctx, sx, sy, sx + T.x, sy + T.y, COL.P, 3.6);
+  arrow(ctx, sx, sy, sx, sy + m * g * kF, COL.W, 3.6);
+  if (!C.hangs && lc > 3) arrow(ctx, sx, sy, sx + Fc.x, sy + Fc.y, COL.a, 2.6, true);
+  drawSeat(ctx, sx, sy + 2, 1.3, true);
+  forceLabel(ctx, "F_T", sx + T.x * 0.6, sy + T.y * 0.6, COL.P, fz, T.x >= 0 ? -1 : 1, 0);
+  forceLabel(ctx, "mg", sx, sy + m * g * kF, COL.W, fz, 0, 1);
+  if (!C.hangs && lc > 3){ const side = Math.abs(Fc.x) > 0.5 * lc;
+    forceLabel(ctx, "F_c", sx + Fc.x * (side ? 1 : 0.5), sy + Fc.y * (side ? 1 : 0.5), COL.a, fz, side ? Fc.x / lc : (T.x >= 0 ? 1 : -1), side ? 0.35 : 0); }
+  if (!small) label(ctx, "dashed: to the pivot · to the centre +", sx, h1 - 10, COL.muted, "center", 11);
+  if (small){ // tablet: the top view on the right, one line of equations
+    topViewCone(ctx, C, phi, w1 + 4, 20, w - w1 - 8, h - 46, fz);
+    eqLine(ctx, C.hangs ? `too slow: hangs straight down (T < ${f2(C.Tmax)} s needed)` : "↕ F_T cos θ − mg = 0 · ↔ F_T sin θ = F_c = mω²r", w / 2, h - 12, C.hangs ? COL.F : COL.ink, 11.5, "center", w - 10);
+    return;
+  }
+  // 2 · in the plane of the chain: the true angle and the two parts of F_T (these never change, only their direction turns)
+  const y2 = h1, h2 = Math.round(h * 0.26);
+  ctx.strokeStyle = COL.grid; ctx.beginPath(); ctx.moveTo(10, y2); ctx.lineTo(w - 10, y2); ctx.stroke();
+  label(ctx, "In the plane of the chain — these never change", 12, y2 + 13, COL.navy, "left", 12.5);
+  const bx = w * 0.30, by = y2 + 34 + (h2 - 44) * 0.66, kq = (h2 - 60) * 0.85 / Math.max(C.FT * c, m * g, 1e-9);
+  ctx.save(); ctx.strokeStyle = "rgba(38,50,56,.4)"; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(bx - C.FT * s * kq, by - C.FT * c * kq); ctx.lineTo(bx - C.FT * s * kq, by); ctx.lineTo(bx, by); ctx.stroke(); ctx.restore();
+  if (!C.hangs){ arrow(ctx, bx, by, bx - C.FT * s * kq, by, COL.a, 2.2, true); arrow(ctx, bx, by, bx, by - C.FT * c * kq, COL.P, 1.8, true); }
+  arrow(ctx, bx, by, bx - C.FT * s * kq, by - C.FT * c * kq, COL.P, 3.2);
+  if (!C.hangs){ angleArc(ctx, bx, by, 26, -Math.PI / 2, -Math.PI / 2 - C.th, COL.N, "θ", 12);
+    forceLabel(ctx, "F_T sin θ = F_c", bx - C.FT * s * kq * 0.5, by, COL.a, 11.5, 0, 1); }
+  forceLabel(ctx, "F_T cos θ", bx, by - C.FT * c * kq * 0.75, COL.P, 11.5, 1, 0);
+  forceLabel(ctx, "F_T", bx - C.FT * s * kq, by - C.FT * c * kq + 6, COL.P, 12, -1, 0);
+  ctx.fillStyle = "#E65100"; ctx.beginPath(); ctx.arc(bx, by, 4.5, 0, TWO_PI); ctx.fill();
+  const tx = w * 0.56;
+  [[`↕ vertical: F_T cos θ − mg = 0 → balanced`, COL.ink], [`↔ horizontal: F_T sin θ = mω²r`, COL.ink], [`r = L sin θ ⇒ F_T = mω²L`, COL.muted], [`cos θ = g/(ω²L) ⇒ θ = ${f1(deg(C.th))}°`, COL.muted]]
+    .forEach(([q, col], i) => eqLine(ctx, q, tx, y2 + 36 + 19 * i, col, 12.5, "left", w - tx - 8));
+  // 3 · top view of the motion: turns with the seat
+  const y3 = y2 + h2;
+  ctx.strokeStyle = COL.grid; ctx.beginPath(); ctx.moveTo(10, y3); ctx.lineTo(w - 10, y3); ctx.stroke();
+  topViewCone(ctx, C, phi, 6, y3 + 4, w - 12, h - y3 - 8, 12);
+}
+function topViewCone(ctx, C, phi, x0, y0, bw, bh, fz){
+  label(ctx, "Top view of the motion", x0 + 6, y0 + 10, COL.navy, "left", 12.5);
+  const R0 = Math.max(10, Math.min((bh - 26) / 3.7, bw * 0.2)), cx = x0 + Math.min(bw * 0.30, R0 * 1.7 + 12), cy = y0 + 22 + (bh - 22) / 2;
+  ctx.save(); ctx.strokeStyle = "rgba(38,50,56,.45)"; ctx.setLineDash([4, 4]); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cx, cy, R0, 0, TWO_PI); ctx.stroke(); ctx.restore();
+  ctx.save(); ctx.fillStyle = COL.F; ctx.font = '700 14px "Segoe UI",Arial,sans-serif'; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("+", cx, cy); ctx.restore();
+  const X = cx + R0 * Math.cos(phi), Y = cy + R0 * Math.sin(phi), tx = -Math.sin(phi), ty = Math.cos(phi);   // screen: z (towards the viewer) is down
+  if (!C.hangs){ arrow(ctx, X, Y, X + tx * R0 * 0.62, Y + ty * R0 * 0.62, COL.v, 3); forceLabel(ctx, "v", X + tx * R0 * 0.62, Y + ty * R0 * 0.62, COL.v, fz, tx, ty);
+    arrow(ctx, X, Y, X + (cx - X) * 0.75, Y + (cy - Y) * 0.75, COL.a, 3, true); forceLabel(ctx, "F_c", X + (cx - X) * 0.75, Y + (cy - Y) * 0.75, COL.a, fz - 0.5, (cx - X) / R0, (cy - Y) / R0);
+  }
+  drawSeat(ctx, X, Y + 2, 1, true);
+  const tx0 = cx + R0 * 1.7 + 6, mw = x0 + bw - tx0 - 4;
+  const msg = C.hangs ? ["Too slow: no circle — it just hangs."] : ["v is along the tangent; F_c (and a) point to the centre. They turn with the seat.", "Only the direction changes, never the size."];
+  let yy = y0 + 30; msg.forEach((q, i) => wrap(ctx, q, mw, 11.5).forEach(L => { label(ctx, L, tx0, yy, i ? COL.muted : COL.ink, "left", 11.5); yy += 15; }));
+}
+
 /* ---------- ⚙️ gears, chain and belt (kinematics only) ---------- */
 const GLOOK = [{metal:["#FFFFFF", "#CFD8DC", "#78909C"], edge:"#455A64", mark:"#E53935"},
                {metal:["#FFF8E1", "#E0B04A", "#8D6E00"], edge:"#6D4C00", mark:"#1E88E5"},
@@ -1817,35 +2188,51 @@ function drawFBD(){
   const {ctx, w, h} = fitCanvas(document.getElementById("fbd"));
   ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
   if (set.sc === "gear"){ NF.none("Gears: kinematics only — no forces here"); gearLinks(ctx, w, h); return; }
-  const small = h < 430, top = small ? h : Math.round(h * 0.66), cx = w * 0.56, cy = top * (small ? 0.50 : 0.44);
+  if (set.sc === "loop"){ vertFBD(ctx, w, h); return; }
+  if (set.sc === "cone"){ coneFBD(ctx, w, h); return; }
+  const small = h < 430, top = small ? h : Math.round(h * 0.66), cx = w * 0.56, cy = top * (small ? 0.46 : 0.40);
   const D = fbdData();
-/*NF*/  { const sc = set.sc, m = sc === "chair" ? set.chM : sc === "sat" ? set.sM : sc === "car" ? carNow().W / g : set.kM[set.kSel];
-    const nm = sc === "chair" ? "the mass in the hand" : sc === "sat" ? "the satellite" : sc === "car" ? "the car" : `child ${KIDS[set.kSel]}`;
-    const BY = {W:["the Earth", "grav"], g:["the Earth", "grav"], hand:["the hand", "push"], N:[sc === "car" ? "the road" : "the carousel floor", "normal"],
+/*NF*/  { const sc = set.sc, m = sc === "chair" ? set.chM : sc === "sat" ? set.sM : sc === "car" ? carNow().W / g : sc === "cone" ? set.pM : sc === "hs" ? set.hM : set.kM[set.kSel];
+    const nm = sc === "chair" ? "the mass in the hand" : sc === "sat" ? "the satellite" : sc === "car" ? "the car" : sc === "cone" ? "the seat" : sc === "hs" ? "the marble" : `child ${KIDS[set.kSel]}`;
+    const BY = {W:["the Earth", "grav"], g:["the Earth", "grav"], mg:["the Earth", "grav"], T:[sc === "hs" ? "the string" : "the chain", "tension"], hand:["the hand", "push"], N:[sc === "car" ? "the road" : "the carousel floor", "normal"],
       f:["the road", "friction"], grip:["the handle", "pull"]};
     NF.body(nm, m, D.net / m, 0, {v:1, axes:["towards the centre", "↑"], law:Math.abs(D.net) > 1e-9 ? "2nd" : undefined});
     for (const q of D.forces){ const b = BY[q.sub || q.sym] || ["", "contact"]; NF.force(q.sym + (q.sub ? `<sub>${q.sub}</sub>` : ""), q.in, q.up, q.col, b[0], b[1]); } }/*/NF*/
   label(ctx, D.title, w / 2, 14, COL.navy, "center", 13);
   arrow(ctx, Math.min(w * 0.26, 120), 36, 14, 36, COL.muted, 1.5); label(ctx, "towards the centre", 16, 50, COL.muted, "left", 11.5);
-  ctx.save(); ctx.globalAlpha = .55; D.draw(ctx, cx, cy, top); ctx.restore();
+  if (!D.car){ ctx.save(); ctx.globalAlpha = .55; D.draw(ctx, cx, cy, top); ctx.restore(); }
+  if (D.car) carFBD(ctx, D, w, top, small); else {
   const Fm = Math.max(...D.forces.map(f => Math.hypot(f.in, f.up)), Math.abs(D.net), 1e-9);
-  const kk = Math.min(top * (small ? 0.20 : 0.28), w * 0.40) / Fm;
+  const kk = Math.min(top * (small ? 0.17 : 0.25), w * 0.40) / Fm;
+  if (D.path){ ctx.save(); ctx.strokeStyle = "rgba(38,50,56,.4)"; ctx.setLineDash([3, 5]); ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cx - 150, cy, 150, -0.55, 0.55); ctx.stroke(); ctx.restore(); }
   for (const f of D.forces){
     const x2 = cx - f.in * kk, y2 = cy - f.up * kk;
-    if (f.parts){ ctx.save(); ctx.globalAlpha = .45; arrow(ctx, cx, cy, cx - f.in * kk, cy, f.col, 1.6, true); arrow(ctx, cx, cy, cx, cy - f.up * kk, f.col, 1.6, true); ctx.restore(); }
+    if (f.parts ?? (Math.abs(f.in) > 1e-9 && Math.abs(f.up) > 1e-9)){ ctx.save(); ctx.globalAlpha = .45; arrow(ctx, cx, cy, cx - f.in * kk, cy, f.col, 1.6, true); arrow(ctx, cx, cy, cx, cy - f.up * kk, f.col, 1.6, true); ctx.restore(); }
     arrow(ctx, cx, cy, x2, y2, f.col, 4);
     const lx = x2 + (f.lx ?? 0), ly = y2 + (f.ly ?? (f.up > 0 ? -12 : 14));
-    subLabel(ctx, f.sym, f.sub, ` = ${fmtF(Math.hypot(f.in, f.up))}`, lx, ly, f.col, f.al ?? "center", 13.5);
+    subLabel(ctx, f.sym, f.sub, "", lx, ly, f.col, f.al ?? "center", 14);
   }
   ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, TWO_PI); ctx.fill();
+  // F_c drawn beside the only force that provides it (string breaks: F_c = T)
+  if (D.fcBeside && Math.abs(D.net) * kk > 3){ const L = D.net * kk; arrow(ctx, cx, cy + 16, cx - L, cy + 16, COL.a, 2.6, true); forceLabel(ctx, D.fcBeside, cx - L, cy + 16, COL.a, 13, -1, 0.6); }
+  // after the cut: the velocity along the tangent shows where it starts to move
+  if (D.vAfter){ const L = top * 0.24; arrow(ctx, cx, cy, cx, cy - L, COL.v, 3.6); forceLabel(ctx, "v", cx, cy - L, COL.v, 14, 0, -1);
+    ctx.save(); ctx.strokeStyle = COL.v; ctx.globalAlpha = .5; ctx.setLineDash([2, 4]); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx, cy - L - 24); ctx.lineTo(cx, 30); ctx.stroke(); ctx.restore();
+    let yy = cy - L * 0.62; wrap(ctx, D.vAfter, w - cx - 26, 12).forEach(q => { label(ctx, q, cx + 14, yy, COL.v, "left", 12); yy += 15; }); }
+  // vertical forces balance on a horizontal circle: tag the vertical pair "= 0"
+  { const ups = D.forces.filter(f => Math.abs(f.up) > 1e-9), sUp = ups.reduce((a, f) => a + f.up, 0), dn = ups.find(f => f.up < 0);
+    if (ups.length > 1 && dn && Math.abs(sUp) < 1e-6 * Math.max(...ups.map(f => Math.abs(f.up)))) eqLine(ctx, "ΣF↕ = 0", cx + 10, cy - dn.up * kk * 0.5, COL.muted, 11.5, "left"); }
   // resultant of the real forces, drawn to the same scale below the diagram
   const ry = small ? top - 16 : top - 46;
+  if (D.hv) D.hv.forEach((q, i) => eqLine(ctx, q, w / 2, ry - 47 + 16 * i, i ? COL.a : COL.ink, small ? 11.5 : 12.5, "center", w - 14));
   if (Math.abs(D.net) * kk > 3){
     const L = D.net * kk, x0 = Math.min(w - 16, w / 2 + L / 2);
     arrow(ctx, x0, ry, x0 - L, ry, COL.a, 3, true);
-    label(ctx, `resultant of the forces = ${fmtF(D.net)} ${D.netNote}`, w / 2, ry - 15, COL.a, "center", 12.5);
+    if (D.eq) eqLine(ctx, `resultant of the forces = ${fmtF(D.net)} ${D.netNote}`, w / 2, ry - 15, COL.a, 12.5, "center", w - 12);
+    else label(ctx, `resultant of the forces = ${fmtF(D.net)} ${D.netNote}`, w / 2, ry - 15, COL.a, "center", 12.5);
   } else label(ctx, "resultant = 0 → no centripetal force", w / 2, ry - 6, COL.a, "center", 12.5);
-  if (D.note && !small) label(ctx, D.note, w / 2, top - 14, COL.muted, "center", 11.5);
+  if (D.note && !small){ if (D.eq) eqLine(ctx, D.note, w / 2, top - 14, COL.muted, 11.5, "center", w - 12); else label(ctx, D.note, w / 2, top - 14, COL.muted, "center", 11.5); }
+  }
   // top view: v along the tangent, a towards the centre, at 90° to each other
   if (small) return;                                       // short FBD card (tablet): free-body diagram only
   ctx.strokeStyle = COL.grid; ctx.beginPath(); ctx.moveTo(10, top); ctx.lineTo(w - 10, top); ctx.stroke();
@@ -1865,6 +2252,123 @@ function drawFBD(){
   let yy = top + 34;
   msg.forEach((m, i) => wrap(ctx, m, maxW, 11.5).forEach(L => { label(ctx, L, tx, yy, i ? COL.muted : COL.ink, "left", 11.5); yy += 15; }));
 }
+// vertical circles: a live FBD where the object is now, and three snapshots (top · side · bottom) drawn to the same scale.
+// The dashed orange F_c is the inward part of the resultant (= mv²/r); it is drawn beside the real forces, never as an extra force.
+function vertFBD(ctx, w, h){
+  const P = vcParams(), K = vcKey(P), p = vcAt(R.t), small = h < 430, loop = P.loop, mg = P.m * g;
+  const sym = loop ? "F_N" : "T", col = loop ? COL.N : COL.P;
+/*NF*/ NF.body(loop ? "the cart and rider" : "the marble", P.m, p.ax, p.ay, {v:1, axes:["→", "↑"], law:"2nd"});
+  { const d = Math.hypot(p.x, p.y) || 1; NF.force("<i>mg</i>", 0, -mg, COL.W, "the Earth", "grav");
+    if (p.on && p.F > 1e-9) NF.force(loop ? "F<sub>N</sub>" : "T", -p.F * p.x / d, -p.F * p.y / d, col, loop ? "the track" : "the string", loop ? "normal" : "tension"); }/*/NF*/
+  const top = Math.round(h * (small ? 0.52 : 0.55)), fs = small ? 11.5 : 12.5;
+  // one clean free-body diagram (teacher, 11 Nov 2026): the object as a dot with its real forces only — no path circle, no radius.
+  // mg straight down; F_N along the inward direction; the dashed F_c beside F_N (offset sideways, never on top of it).
+  // Labels are placed where they touch no arrow, no other label and not the dot. A grey pointer shows "towards the centre".
+  // a small loop in the corner: the dot shows where on the loop the object is (x, y = position / r)
+  const miniLoop = (mx, my, mr, x, y, sm) => { ctx.save(); ctx.strokeStyle = "rgba(183,28,28,.75)"; ctx.lineWidth = sm ? 1.8 : 2.2; ctx.beginPath(); ctx.arc(mx, my, mr, 0, TWO_PI); ctx.stroke();
+    ctx.fillStyle = "#E65100"; ctx.strokeStyle = "#fff"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.arc(mx + mr * x, my - mr * y, sm ? 3.2 : 4, 0, TWO_PI); ctx.fill(); ctx.stroke(); ctx.restore(); };
+  const one = (bx, by, th, F, v, kk, opt = {}) => {
+    const c = Math.cos(th), s = Math.sin(th), ux = -c, uy = s;                 // screen unit vector towards the centre
+    const sm = !!opt.small, lw = sm ? 2.6 : 3.6, fz = sm ? 11.5 : 13, on = opt.on !== false, Fc = P.m * v * v / P.r, minL = opt.minL || 0;
+    const len = q => q > 1e-9 ? Math.max(q * kk, minL) : 0;
+    let nx = -uy, ny = ux; if (ny > 1e-9 || (Math.abs(ny) <= 1e-9 && nx < 0)){ nx = -nx; ny = -ny; }   // sideways, pointing up (or right)
+    const vert = Math.abs(c) < 0.35, off = sm ? 9 : 13, ends = Math.abs(c) < 0.05; // top/bottom: mg is parallel to F_N, so they get lanes
+    // the part of the track the object is on (a short arc, teacher 12 Nov 2026) and the cart on it, faded under the arrows
+    const segs = [];                                                             // sample points of everything drawn (for the labels)
+    if (loop && !opt.bare){
+      const cw = sm ? 22 : 32, ch = sm ? 10 : 14, dd = 0.55 * ch, Ra = opt.Ra || 300, ra = Ra + dd + 0.2 * ch, ccx = bx + ux * Ra, ccy = by + uy * Ra;
+      const a0 = Math.atan2(-uy, -ux), span = opt.full ? Math.PI : (opt.arcL || 60) / ra;    // full: the whole loop (the path of the cart, teacher 12 Nov 2026)
+      ctx.save(); ctx.strokeStyle = opt.full ? "rgba(183,28,28,.55)" : "rgba(183,28,28,.5)"; ctx.lineWidth = sm ? 3 : 4; ctx.lineCap = "round"; ctx.beginPath(); ctx.arc(ccx, ccy, ra, a0 - span, a0 + span); ctx.stroke();
+      if (opt.full){ ctx.fillStyle = "#90A4AE"; ctx.font = '600 13px "Segoe UI",Arial,sans-serif'; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("+", ccx, ccy); }
+      ctx.restore();
+      for (let q = -span; q <= span + 1e-9; q += 4 / ra) segs.push([ccx + ra * Math.cos(a0 + q), ccy + ra * Math.sin(a0 + q)]);
+      if (opt.full) segs.push([ccx, ccy]);
+      drawCart(ctx, bx - ux * dd, by - uy * dd, Math.atan2(-c, -s), cw, ch, opt.cartA ?? 0.5);
+    }
+    const A = [];                                                                // the arrows: start, end, colour, label
+    A.push({x1:bx - (vert ? off : 0), y1:by, dx:0, dy:1, L:len(P.m * g), col:COL.W, w:lw, lab:"mg"});
+    if (on && F > 1e-9) A.push({x1:bx, y1:by, dx:ux, dy:uy, L:len(F), col, w:lw, lab:sym});
+    if (on && Fc * kk > 3) A.push({x1:bx + nx * off, y1:by + ny * off, dx:ux, dy:uy, L:len(Fc), col:COL.a, w:sm ? 1.8 : 2.4, dash:true, lab:"F_c"});
+    // away from the top and bottom the resultant ΣF = F_N + mg does NOT point to the centre: F_c is only its part towards the centre
+    const Sx = on && F > 1e-9 ? F * ux : 0, Sy = (on && F > 1e-9 ? F * uy : 0) + P.m * g, SL = Math.hypot(Sx, Sy);
+    if (on && !ends && SL > 1e-9) A.push({x1:bx, y1:by, dx:Sx / SL, dy:Sy / SL, L:len(SL), col:COL.a, w:sm ? 2.2 : 3, lab:"ΣF"});
+    const NL = on && F > 1e-9 ? len(F) : 0, comps = opt.comps && NL && Math.abs(c) > 0.05 && Math.abs(s) > 0.05;   // slanted F_N: its horizontal and vertical parts
+    // the pointer "towards the centre" (grey, thin) sits in a corner of the diagram (opt.ptr = its middle)
+    const ptr = opt.ptr, pL = sm || opt.short ? 16 : 24, px = ptr ? ptr[0] - ux * pL / 2 : 0, py = ptr ? ptr[1] - uy * pL / 2 : 0;
+    for (const a of A) for (let q = 0; q <= a.L; q += 4) segs.push([a.x1 + a.dx * q, a.y1 + a.dy * q]);
+    if (comps) for (let q = 0; q <= NL; q += 4){ segs.push([bx + ux * q, by]); segs.push([bx, by + uy * q]); }
+    if (ptr) for (let q = 0; q <= pL; q += 4) segs.push([px + ux * q, py + uy * q]);
+    const boxes = [loop && !opt.bare ? [bx - (sm ? 12 : 16), by - (sm ? 12 : 16), bx + (sm ? 12 : 16), by + (sm ? 12 : 16)] : [bx - 8, by - 8, bx + 8, by + 8]];
+    if (opt.mini){ const [mx, my] = opt.mini, mr = opt.miniR || (sm ? 9 : 13); miniLoop(mx, my, mr, c, s, sm); boxes.push([mx - mr - 4, my - mr - 4, mx + mr + 4, my + mr + 4]); }
+    if (ptr) boxes.push([ptr[0] - pL / 2 - 2, ptr[1] - pL / 2 - 2, ptr[0] + pL / 2 + (sm || opt.short ? 52 : 118), ptr[1] + pL / 2 + 2]);
+    const hit = (b) => boxes.some(o => b[0] < o[2] && b[2] > o[0] && b[1] < o[3] && b[3] > o[1]) || segs.some(([x, y]) => x > b[0] - 3 && x < b[2] + 3 && y > b[1] - 3 && y < b[3] + 3);
+    const BB = opt.bounds || [-1e9, -1e9, 1e9, 1e9], inside = b => b[0] >= BB[0] && b[1] >= BB[1] && b[2] <= BB[2] && b[3] <= BB[3];
+    const place = (txt, cands, size) => {                                        // first candidate centre that touches nothing (then a ring round the tip)
+      const w = eqMeasure(ctx, txt, size) + 12, h = size + 8, all = cands.map(([cx, cy, sx, sy]) => [cx + sx * (w / 2 + 3), cy + sy * (h / 2 + 3)]);
+      const [tx, ty] = [cands[0][0], cands[0][1]];
+      for (const r of [0, 8, 18, 30, 44]) for (let k = 0; k < 16; k++){ const a = k * Math.PI / 8; all.push([tx + Math.cos(a) * (w / 2 + 4 + r), ty + Math.sin(a) * (h / 2 + 4 + r)]); }
+      for (const [X, Y] of all){ const b = [X - w / 2, Y - h / 2, X + w / 2, Y + h / 2]; if (inside(b) && !hit(b)){ boxes.push(b); return [X, Y]; } }
+      const [X, Y] = all[0]; boxes.push([X - w / 2, Y - h / 2, X + w / 2, Y + h / 2]); return [X, Y];
+    };
+    if (comps){ ctx.save(); ctx.globalAlpha = .5; ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.setLineDash([2, 3]); ctx.beginPath();
+      ctx.moveTo(bx + ux * NL, by + uy * NL); ctx.lineTo(bx + ux * NL, by); ctx.moveTo(bx + ux * NL, by + uy * NL); ctx.lineTo(bx, by + uy * NL); ctx.stroke(); ctx.restore();
+      ctx.save(); ctx.globalAlpha = .6; arrow(ctx, bx, by, bx + ux * NL, by, col, 1.6, true); arrow(ctx, bx, by, bx, by + uy * NL, col, 1.6, true); ctx.restore(); }
+    for (const a of A) arrow(ctx, a.x1, a.y1, a.x1 + a.dx * a.L, a.y1 + a.dy * a.L, a.col, a.w, !!a.dash);
+    ctx.save(); ctx.fillStyle = loop ? "#E65100" : "#1F3A5F"; ctx.beginPath(); ctx.arc(bx, by, sm ? 3.5 : 4.5, 0, TWO_PI); ctx.fill(); ctx.restore();
+    if (ptr) arrow(ctx, px, py, px + ux * pL, py + uy * pL, "#90A4AE", 1.6);
+    if (opt.noLabels) return A.filter(a => a.L > 0).map(a => [a.lab, a.col]);
+    for (const a of A){ const ex = a.x1 + a.dx * a.L, ey = a.y1 + a.dy * a.L, mx = a.x1 + a.dx * a.L * 0.55, my = a.y1 + a.dy * a.L * 0.55;
+      const sx = -a.dy, sy = a.dx;                                               // sideways to this arrow
+      const [X, Y] = place(a.lab, [[ex + a.dx * 3, ey + a.dy * 3, a.dx, a.dy], [mx, my, sx, sy], [mx, my, -sx, -sy], [ex, ey, sx, sy], [ex, ey, -sx, -sy],
+                                    [ex + a.dx * 3, ey + a.dy * 3, a.dx + sx, a.dy + sy], [ex + a.dx * 3, ey + a.dy * 3, a.dx - sx, a.dy - sy]], fz);
+      forceLabel(ctx, a.lab, X, Y, a.col, fz); }
+    if (ptr) label(ctx, sm || opt.short ? "to centre" : "towards the centre", ptr[0] + pL / 2 + 5, ptr[1], "#78909C", "left", sm || opt.short ? 10 : 11.5);   // text to the right of the pointer
+  };
+  // regions: the live diagram (the whole loop, teacher 12 Nov 2026) above the strip; on a short card (tablet) side by side. No number lines.
+  // sizes: the strip takes what its three loops need (width-limited), the live loop gets the rest
+  const Fmax = Math.max(K.Fb, mg), mgF = mg / Fmax, KS = 0.8, cmp = h < 330, stripH = Math.max(190, h * 0.48);
+  const top2 = Math.round(clamp(h - stripH, h * 0.40, h * 0.62)), LV = cmp ? {x:0, y:20, w:w * 0.40, h:h - 24} : {x:0, y:20, w, h:top2 - 24}, ST = cmp ? {x:w * 0.40, y:4, w:w * 0.60 - 6, h:h - 4} : {x:8, y:top2 + 2, w:w - 16, h:h - top2 - 2};
+  label(ctx, cmp ? "Now" : `${loop ? "Cart and rider" : "Marble"} now (side view)`, LV.x + LV.w / 2, 14, COL.navy, "center", 13);
+  // one scale for the whole loop (the biggest force is F_N at the bottom), so the arrows grow and shrink as the cart goes round
+  const cwL = 32, chL = 14, ddL = 0.75 * chL;
+  const Rl = Math.max(30, Math.min((LV.w - 120) / 2, (LV.h - 14 - 26) / (2 + KS * mgF))), kk = KS * (Rl - ddL) / Fmax;   // F_N and F_c point to the centre and stop before it
+  const lcx = LV.x + LV.w / 2, lcy = LV.y + 14 + Rl;                                  // centre of the loop on the screen
+  ctx.save(); ctx.beginPath(); ctx.rect(LV.x, LV.y, LV.w, LV.h); ctx.clip();
+  const fopt = {short:cmp, minL:10, bounds:[LV.x + 2, LV.y + 2, LV.x + LV.w - 2, LV.y + LV.h - 2], Ra:Rl - ddL, full:true, comps:true, noLabels:true};
+  // the force letters in a coloured legend beside the loop, like the three pictures below (teacher, 12 Nov 2026)
+  const legend = labs => { const fz = cmp ? 12.5 : 14, gx = Math.min(lcx + Rl + 14, LV.x + LV.w - (cmp ? 30 : 40));
+    labs.forEach(([t, c], k) => eqLine(ctx, t, gx, lcy - (labs.length - 1) * (fz + 4) / 2 + k * (fz + 4), c, fz, "left")); };
+  if (p.on) legend(one(lcx + Math.cos(p.th) * (Rl - ddL), lcy - Math.sin(p.th) * (Rl - ddL), p.th, p.F, p.v, kk, fopt));
+  else { const X = lcx + p.x / P.r * Rl, Y = lcy - p.y / P.r * Rl;                    // off the track: only mg acts (free fall), inside the loop
+    ctx.save(); ctx.strokeStyle = "rgba(183,28,28,.55)"; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(lcx, lcy, Rl, 0, TWO_PI); ctx.stroke(); ctx.restore();
+    if (loop) drawCart(ctx, X, Y + 6, Math.atan2(-p.vy, p.vx), cwL, chL, 0.5);
+    arrow(ctx, X, Y, X, Y + Math.max(mg * kk, 14), COL.W, 3.6); legend([["mg", COL.W]]);
+    ctx.fillStyle = loop ? "#E65100" : "#1F3A5F"; ctx.beginPath(); ctx.arc(X, Y, 4.5, 0, TWO_PI); ctx.fill();
+    eqLine(ctx, `${sym} = 0: only mg acts — it falls`, lcx, LV.y + LV.h - 10, COL.F, 12, "center", LV.w - 10); }
+  ctx.restore();
+  if (cmp){ ctx.strokeStyle = COL.grid; ctx.beginPath(); ctx.moveTo(ST.x, 26); ctx.lineTo(ST.x, h - 8); ctx.stroke(); }
+  else { ctx.strokeStyle = COL.grid; ctx.beginPath(); ctx.moveTo(10, top2); ctx.lineTo(w - 10, top2); ctx.stroke(); }
+  // strip: top · side · bottom, each a small loop with the cart there; one scale for all three (true sizes: F_N grows from top to bottom)
+  // strip: the loop above, "photographed" at the top, the side and the bottom (teacher, 12 Nov 2026): small loop + cart + arrows,
+  // the force letters in a coloured legend beside each loop. Same rule as above: F_N at the bottom = 0.8 × the distance to the centre.
+  label(ctx, "Top · side · bottom — the loop above at three positions", ST.x + 6, ST.y + 11, COL.navy, "left", cmp ? 11.5 : 12.5);
+  const cw = ST.w / 3, txtH = cmp ? 28 : 36, cy0 = ST.y + 20, cellH = ST.h - 20 - txtH, ddS = 0.75 * 10;
+  const Rs = Math.max(16, Math.min(cw * 0.34, (cellH - 22) / (2 + KS * mgF + 0.05))), ks = KS * (Rs - ddS) / Fmax;
+  const cells = [{nm:"top", th:Math.PI / 2, eq:`${sym} + mg = mv²/r`, hv:"↔ no horizontal force: ΣF = 0"}, {nm:"side", th:0, eq:`${sym} = mv²/r`, hv:"↕ only mg: not balanced"},
+                 {nm:"bottom", th:-Math.PI / 2, eq:`${sym} − mg = mv²/r`, hv:"↔ no horizontal force: ΣF = 0"}];
+  cells.forEach((C, i) => {
+    const x0 = ST.x + i * cw, xc = x0 + cw / 2, F = vcF(P, C.th), v = Math.sqrt(vcV2(P, C.th)), off = F < -1e-9;
+    const near = p.on && Math.abs(Math.atan2(Math.sin(p.th - C.th), Math.cos(p.th - C.th))) < rad(22);
+    if (near){ ctx.save(); ctx.strokeStyle = COL.accent; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x0 + 2, cy0 - 2, cw - 4, ST.y + ST.h - cy0 - 2, 8) : ctx.rect(x0 + 2, cy0 - 2, cw - 4, ST.y + ST.h - cy0 - 2); ctx.stroke(); ctx.restore(); }
+    const legW = cw < 150 ? 28 : 34, lcx2 = x0 + 4 + Rs + Math.max(0, (cw - 2 * Rs - legW - 16) / 2), lcy2 = cy0 + 6 + Rs;                // the loop, with room for the legend on its right
+    const labs = one(lcx2 + Math.cos(C.th) * (Rs - ddS), lcy2 - Math.sin(C.th) * (Rs - ddS), C.th, Math.max(F, 0), v, ks, {small:true, on:!off, minL:8, Ra:Rs - ddS, full:true, noLabels:true, cartA:0.35});
+    const lx0 = Math.min(lcx2 + Rs + 6, x0 + cw - legW);
+    labs.forEach(([t, c], k) => eqLine(ctx, t, lx0, lcy2 - (labs.length - 1) * 8 + k * 16, c, cmp ? 11.5 : 12.5, "left"));
+    const ty = cy0 + cellH + 8;
+    eqLine(ctx, C.nm + ": " + C.eq, xc, ty, COL.ink, cmp ? 10.5 : 11.5, "center", cw - 6);
+    eqLine(ctx, off ? `✘ ${sym} would be < 0: leaves` : cw < 150 ? C.hv.replace("no horizontal force: ", "").replace("only mg: not balanced", "only mg") : C.hv, xc, ty + 15, off ? COL.F : COL.muted, cmp ? 10 : 10.5, "center", cw - 6);
+  });
+}
 // gears: one row per wheel (size ∝ r, ω arrow, rpm) and the rule that links it to the one before
 function gearLinks(ctx, w, h){
   const G = gearState(), rmax = Math.max(...G.map(g => g.r)), n = G.length, rowH = Math.min(92, (h - 120) / n);
@@ -1883,6 +2387,116 @@ function gearLinks(ctx, w, h){
     `Here: ω(out)/ω(in) = ${set.gSet === "belt" ? "r(in)/r(out)" : "N(in)/N(out)"} = ${sig(gRatio(G), 3)}.`];
   let y2 = yy; msg.forEach((m, i) => wrap(ctx, m, w - 24, 11.5).forEach(L => { label(ctx, L, 12, y2, i ? COL.muted : COL.ink, "left", 11.5); y2 += 15; }));
 }
+// one line of an equation: "F_N", "μ_s" → italic letter with a subscript, θ in italics; shrinks the font until it fits maxW
+function eqLine(ctx, str, x, y, color, size, align = "center", maxW = Infinity){
+  const parts = []; str.split(/([A-ZΣμ]_[A-Za-z]+|θ)/).forEach(t => { if (!t) return;
+    if (t === "θ") parts.push([t, "i"]); else if (/^[A-ZΣμ]_/.test(t)) parts.push([t[0], "i"], [t.slice(2), "s"]); else parts.push([t, "n"]); });
+  const font = (st, sz) => (st === "i" ? "italic " : "") + `600 ${st === "s" ? Math.round(sz * .72) : sz}px "Segoe UI",Calibri,Arial,sans-serif`;
+  ctx.save(); let sz = size, ws, W;
+  for (;;){ ws = parts.map(([t, st]) => { ctx.font = font(st, sz); return ctx.measureText(t).width; }); W = ws.reduce((a, b) => a + b, 0);
+    if (W <= maxW || sz <= 9) break; sz -= 0.5; }
+  let x0 = align === "center" ? x - W / 2 : align === "right" ? x - W : x;
+  ctx.textBaseline = "middle"; ctx.textAlign = "left"; ctx.lineWidth = 4; ctx.strokeStyle = "rgba(255,255,255,.9)"; ctx.fillStyle = color;
+  parts.forEach(([t, st], i) => { ctx.font = font(st, sz); const yy = st === "s" ? y + sz * .3 : y;
+    ctx.strokeText(t, x0, yy); ctx.fillText(t, x0, yy); x0 += ws[i]; });
+  ctx.restore(); return W;
+}
+// width of an eqLine text (same parsing as eqLine)
+function eqMeasure(ctx, str, size){
+  let W = 0; ctx.save();
+  str.split(/([A-ZΣμ]_[A-Za-z]+|θ)/).forEach(t => { if (!t) return;
+    const seg = t === "θ" ? [[t, "i"]] : /^[A-ZΣμ]_/.test(t) ? [[t[0], "i"], [t.slice(2), "s"]] : [[t, "n"]];
+    for (const [q, st] of seg){ ctx.font = (st === "i" ? "italic " : "") + `600 ${st === "s" ? Math.round(size * .72) : size}px "Segoe UI",Calibri,Arial,sans-serif`; W += ctx.measureText(q).width; } });
+  ctx.restore(); return W;
+}
+// a force label: symbol (+ value) in a white pill with a border in the force's colour; (ux, uy) pushes it away from (x, y)
+function forceLabel(ctx, str, x, y, col, size = 13, ux = 0, uy = 0){
+  const w = eqMeasure(ctx, str, size) + 12, h = size + 8, d = Math.abs(ux) * w / 2 + Math.abs(uy) * h / 2 + 4, cx = x + ux * d, cy = y + uy * d;
+  ctx.save(); ctx.fillStyle = "rgba(255,255,255,.94)"; ctx.strokeStyle = col; ctx.lineWidth = 1.3; ctx.setLineDash([]);
+  ctx.beginPath(); ctx.roundRect ? ctx.roundRect(cx - w / 2, cy - h / 2, w, h, h / 2) : ctx.rect(cx - w / 2, cy - h / 2, w, h); ctx.fill(); ctx.stroke(); ctx.restore();
+  eqLine(ctx, str, cx, cy, col, size, "center");
+  return {cx, cy, w, h};
+}
+// car: real forces with their names, the angle θ, the components (optional) and the net force = centripetal force on the car.
+// Horizontal components go head-to-tail along the centre line, so together they end exactly where the net force ends.
+function carFBD(ctx, D, w, top, small){
+  const K = D.car, {N, Ff, W, net, th, c, s, comps, fOn} = K, fs = small ? 11.5 : 12.5;
+  const cx = Math.round(w * 0.62);
+  const sg = Ff >= 0 ? "+" : "−", mu = surfById(set.cSurf).mu, f2c = v => v.toFixed(2);
+  // text under the diagram (bottom up): the equation for F_c, and the friction rules with μs and μd
+  const end = K.skid ? " < mv²/r" : " = mv²/r";
+  const eq = th === 0 ? `F_c = F_f${end}` : fOn ? `F_c = F_N sin θ ${sg} F_f cos θ${end}` : `F_c = F_N sin θ${end}`;
+  const vEq = th === 0 ? "↕ vertical: F_N − mg = 0 → balanced" : fOn ? `↕ vertical: F_N cos θ ${Ff >= 0 ? "−" : "+"} F_f sin θ − mg = 0 → balanced` : "↕ vertical: F_N cos θ − mg = 0 → balanced";
+  const lines = [[vEq, COL.ink, 12.5], ["↔ horizontal: " + eq, COL.a, 13]];
+  if (fOn && small) lines.push([`static F_f ≤ μ_s F_N, μ_s = ${f2c(mu)} · dynamic F_f = μ_d F_N, μ_d = ${f2c(MU_D * mu)}  ${K.skid ? "✘ skids" : "✔ grips"}`, K.skid ? COL.F : COL.N, 12]);
+  else if (fOn) lines.push([`static: F_f ≤ μ_s F_N,  μ_s = ${f2c(mu)}` + (K.skid ? "" : "  ✔ grips"), K.skid ? COL.muted : COL.N, 12],
+                      [`dynamic (sliding): F_f = μ_d F_N,  μ_d = ${f2c(MU_D * mu)}` + (K.skid ? "  ✘ skids" : ""), K.skid ? COL.F : COL.muted, 12]);
+  let ly = top - 12; for (let i = lines.length - 1; i >= 0; i--){ eqLine(ctx, lines[i][0], w / 2, ly, lines[i][1], lines[i][2], "center", w - 16); ly -= 16; }
+  const yBot = ly - 4, mUp = small ? 40 : 44, mDn = small ? 8 : 16;
+  // rows of the left column (labels of the horizontal arrows), relative to cy
+  const banked = th > 0, fDownIn = fOn && Ff > 0, fRow = small ? (comps ? 20 : 12) : comps ? 26 : 14;
+  const rowNet = !banked ? (small ? 24 : 48) : fDownIn ? fRow + (small ? 15 : 18) : small ? 22 : 40;
+  // scale: everything must fit between the title and the text, and leave room for the left labels
+  const up = N * c + (comps ? Math.max(-Ff * s, 0) : 0), dn = W + (comps ? Math.max(Ff * s, 0) : 0);
+  const left = Math.max(Math.abs(net), N * s + (comps ? Math.max(Ff * c, 0) : 0), fOn && Ff > 0 ? Ff * c : 0, 1e-9);
+  const room = Math.max(40, cx - Math.min(150, w * 0.42));
+  // centre point: share the height between the up and the down arrows (the net-force row must fit below as well)
+  const H = yBot - mUp - mDn, kV = H / (up + Math.max(dn, 1e-9)), kk0 = Math.min(kV, room / left);
+  const cy = Math.round(Math.min(mUp + up * kk0, yBot - rowNet - (small ? 6 : 22)));
+  const kk = Math.min(kk0, (cy - mUp) / Math.max(up, 1e-9), (yBot - mDn - cy) / Math.max(dn, 1e-9));
+  const yR = cy + rowNet, xs = x => cx - x * kk, ys = y => cy - y * kk;
+  // the car, faded, tilted with the road
+  ctx.save(); ctx.globalAlpha = comps ? .32 : .45; D.draw(ctx, cx, cy, top); ctx.restore();
+  // θ between F_N and the vertical
+  if (banked){
+    const rA = 26; ctx.save(); ctx.strokeStyle = COL.grey; ctx.setLineDash([2, 3]); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - rA - 12); ctx.stroke();
+    ctx.setLineDash([]); ctx.strokeStyle = COL.N; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.arc(cx, cy, rA, -Math.PI / 2 - th, -Math.PI / 2); ctx.stroke(); ctx.restore();
+    const am = -Math.PI / 2 - th / 2; eqLine(ctx, "θ", cx + (rA + 8) * Math.cos(am), cy + (rA + 8) * Math.sin(am), COL.N, 13);
+  }
+  const xN = xs(N * s), yN = ys(N * c), xF = xs(Ff * c), yF = ys(-Ff * s), xL = Math.min(cx - left * kk, xN) - 8;   // xL: right edge of the left labels
+  const labs = [];   // drawn last, on top of every arrow
+  // components (thin, dashed) with dotted projection lines
+  if (comps){
+    ctx.save(); ctx.globalAlpha = .55; ctx.setLineDash([2, 3]); ctx.lineWidth = 1; ctx.strokeStyle = COL.N;
+    ctx.beginPath(); ctx.moveTo(xN, yN); ctx.lineTo(xN, cy); ctx.moveTo(xN, yN); ctx.lineTo(cx, yN); ctx.stroke(); ctx.restore();
+    arrow(ctx, cx, cy, xN, cy, COL.N, 2.2, true);
+    arrow(ctx, cx, cy, cx, yN, COL.N, 2.2, true);
+    labs.push(["F_N sin θ", xL, cy - 10, COL.N, "right"], ["F_N cos θ", cx + 8, (cy + yN) / 2 + 6, COL.N, "left"]);
+    if (fOn){
+      const hx = Ff * c * kk, vy = Ff * s * kk, yh = Ff > 0 ? cy : cy + 5;    // F_f cos θ continues from the tip of F_N sin θ
+      arrow(ctx, xN, yh, xN - hx, yh, COL.F, 2.2, true);
+      labs.push([`${sg} F_f cos θ`, xL, cy + 8, COL.F, "right"]);
+      if (Ff > 0){ const y0 = ys(-W); arrow(ctx, cx, y0, cx, y0 + vy, COL.F, 2.2, true);           // down: continues after W
+        labs.push(["F_f sin θ", cx + 8, Math.max(y0 + vy / 2, y0 + 12), COL.F, "left"]); }
+      else { arrow(ctx, cx, yN, cx, yN + vy, COL.F, 2.2, true);                                       // up: continues after F_N cos θ
+        labs.push(["F_f sin θ", cx - 8, yN + vy / 2 - 4, COL.F, "right"]); }
+    }
+  }
+  // real forces (thick, solid), each with its name
+  arrow(ctx, cx, cy, cx, ys(-W), COL.W, 4);
+  labs.push(["mg", cx + 8, ys(-W) - 6, COL.W, "left", 14], ["ΣF↕ = 0", cx + 8, cy + (ys(-W) - cy) * 0.42, COL.muted, "left", 11.5]);
+  arrow(ctx, cx, cy, xN, yN, COL.N, 4);
+  labs.push(["F_N", Math.max(xN + 8, cx + 8), yN - 4, COL.N, "left", 14]);
+  if (fOn){
+    arrow(ctx, cx, cy, xF, yF, COL.F, 4);
+    if (!banked) labs.push(["F_f", xL, cy - 10, COL.F, "right", 14]);
+    else if (Ff > 0) labs.push(["F_f", xL, cy + fRow, COL.F, "right", 14]);
+    else labs.push(["F_f", Math.max(xF, cx) + 10, cy + 14, COL.F, "left", 14]);
+  }
+  ctx.fillStyle = COL.ink; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, TWO_PI); ctx.fill();
+  // net force = centripetal force: dashed orange, starts on the car, points to the centre
+  const L = net * kk;
+  if (Math.abs(L) > 3){
+    ctx.save(); ctx.strokeStyle = COL.a; ctx.globalAlpha = .7; ctx.setLineDash([2, 3]); ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(cx - L, cy); ctx.lineTo(cx - L, yR); ctx.stroke(); ctx.restore();
+    arrow(ctx, cx, yR, cx - L, yR, COL.a, 3.5, true);
+    labs.push(["F_c", Math.min(cx - L, xL + 8) - 8, yR, COL.a, "right", 14]);
+  } else labs.push(["F_c = 0", cx - 8, yR, COL.a, "right", 14]);
+  for (const q of labs) if (q){ const [t, x, y, col, al, sz] = q;
+    if (["mg", "F_N", "F_f", "F_c"].includes(t)){ const wd = eqMeasure(ctx, t, 14) + 12; forceLabel(ctx, t, al === "right" ? x - wd / 2 : al === "left" ? x + wd / 2 : x, y, col, 14); }
+    else eqLine(ctx, t, x, y, col, sz ?? fs, al, al === "right" ? x - 4 : al === "left" ? w - x - 4 : w); }
+}
+let lastBank = 0;
 const speedTxt = v => set.sc === "sat" ? `${f2(v / 1000)} km s⁻¹` : `${f2(v)} m s⁻¹`;
 function fbdData(){
   const t = R.t;
@@ -1892,6 +2506,7 @@ function fbdData(){
       forces:[{sym:"W", sub:"", in:0, up:-m * g, col:COL.W, lx:12, ly:-4, al:"left"},
               {sym:"F", sub:"hand", in:F, up:m * g, col:COL.P, parts:true, al:"center"}],
       note:`hand force: its up part (mg) holds the mass up, its inward part (mω²r) turns it`,
+      hv:["↕ vertical: F_hand (up part) − W = 0 → balanced", `↔ horizontal: F_hand (in part) = mω²r = ${fmtF(F)}`],
       draw:(ctx, x, y) => { ctx.strokeStyle = "#C99A5B"; ctx.lineWidth = 7; ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(x - 70, y); ctx.lineTo(x - 14, y); ctx.stroke();
         ctx.fillStyle = "#37474F"; ctx.beginPath(); ctx.arc(x, y, 14, 0, TWO_PI); ctx.fill(); }};
   }
@@ -1900,6 +2515,7 @@ function fbdData(){
     return {title:"Satellite (gravity is the only force)", inward:true, net:F, netNote:"= GMm/r²",
       forces:[{sym:"F", sub:"g", in:F, up:0, col:COL.W, ly:-18}],
       note:"in free fall: mass cancels, a = GM/r² = g at that height",
+      hv:["↕ at 90° to the orbit: no force → ΣF = 0", `↔ in the orbit: F_g = GMm/r² = ${fmtF(F)}`],
       draw:(ctx, x, y, top) => { const gr = ctx.createRadialGradient(-40, y, 10, -40, y, 90); gr.addColorStop(0, "#64B5F6"); gr.addColorStop(1, "#1565C0");
         ctx.fillStyle = gr; ctx.beginPath(); ctx.arc(-40, y, 80, 0, TWO_PI); ctx.fill();
         ctx.fillStyle = "#fff"; ctx.font = '600 12px "Segoe UI",Arial,sans-serif'; ctx.fillText("Earth", 3, y + 44);
@@ -1907,15 +2523,18 @@ function fbdData(){
         ctx.fillStyle = "#B0BEC5"; ctx.strokeStyle = "#455A64"; ctx.fillRect(x - 9, y - 8, 18, 16); ctx.strokeRect(x - 9, y - 8, 18, 16); }};
   }
   if (set.sc === "car"){
+    if (lastBank === 0 && set.cBank > 0) $("compChk").checked = true;   // banking switched on: show the components
+    lastBank = set.cBank;
     const C = carNow(), th = rad(set.cBank), c = Math.cos(th), s = Math.sin(th), mu = surfById(set.cSurf).mu;
     const skid = R.skid && t > R.skid.ts;
     let N = C.N, Ff = C.Ff, net = C.Fc, note = `friction needed ${fmtF(Math.abs(C.Ff))} ≤ maximum μs × normal force = ${fmtF(C.Fmax)} ✔`;
     if (!C.ok){ Ff = Math.sign(C.Ff) * C.Fmax; net = N * s + Ff * c; note = `needs ${fmtF(Math.abs(C.Ff))} of friction, but the maximum is ${fmtF(C.Fmax)} ✘`; }
-    const forces = [{sym:"W", sub:"", in:0, up:-C.W, col:COL.W, lx:12, ly:-4, al:"left"},
-                    {sym:"F", sub:"N", in:N * s, up:N * c, col:COL.N, lx:12, al:"left"}];
-    if (Math.abs(Ff) > 1) forces.push({sym:"F", sub:"f", in:Ff * c, up:-Ff * s, col:COL.F, ly:-16, lx:-4, al:"right"});
+    const comps = th > 0 && $("compChk").checked, fOn = Math.abs(Ff) > 1;
+    const forces = [{sym:"W", sub:"", in:0, up:-C.W, col:COL.W},
+                    {sym:"F", sub:"N", in:N * s, up:N * c, col:COL.N}];
+    if (fOn) forces.push({sym:"F", sub:"f", in:Ff * c, up:-Ff * s, col:COL.F});
     return {title:"Car seen from behind (side view of the bend)", inward:!skid, net, netNote:skid ? "too small → skids" : "= mv²/r",
-      forces, note,
+      forces, note, car:{N, Ff, W:C.W, net, th, c, s, comps, fOn, skid},
       draw:(ctx, x, y, top) => { ctx.save(); ctx.translate(x, y); ctx.rotate(-th);
         ctx.strokeStyle = "#5D4037"; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-140, 34); ctx.lineTo(140, 34); ctx.stroke();
         ctx.fillStyle = "#C62828"; ctx.strokeStyle = "#7F0000"; ctx.lineWidth = 1.5; ctx.beginPath();
@@ -1923,11 +2542,30 @@ function fbdData(){
         ctx.fillStyle = "#B3E5FC"; ctx.fillRect(-26, -14, 52, 14);
         ctx.fillStyle = "#212121"; ctx.fillRect(-36, 22, 14, 12); ctx.fillRect(22, 22, 14, 12); ctx.restore(); }};
   }
+  if (set.sc === "hs"){
+    const p = hsAt(t), F = set.hM * set.hV * set.hV / set.hR;
+    return {title:"Marble seen from above (gravity ignored)", inward:p.held, net:p.held ? F : 0, netNote:"= T = mv²/r", path:true,
+      forces:p.held ? [{sym:"T", sub:"", in:F, up:0, col:COL.P, ly:-16}] : [], fcBeside:p.held ? "F_c = T" : "",
+      vAfter:p.held ? "" : "v: it starts to move this way — along the tangent, in a straight line",
+      hv:p.held ? ["↕ vertical: no force (gravity ignored) → ΣF = 0", `↔ horizontal: T = F_c = mv²/r = ${fmtF(F)}`] : ["↕ vertical: no force → ΣF = 0", "↔ horizontal: no force → ΣF = 0"],
+      note:p.held ? "the tension T is the centripetal force: it points to the centre" : "string cut: no force — it goes on in a straight line",
+      draw:(ctx, x, y) => { if (p.held){ ctx.strokeStyle = "#37474F"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 150, y); ctx.stroke(); }
+        ctx.fillStyle = rgr(ctx, x - 4, y - 4, 1, 11, ["#9FA8DA", "#3949AB", "#1A237E"]); ctx.beginPath(); ctx.arc(x, y, 10, 0, TWO_PI); ctx.fill(); }};
+  }
+  if (set.sc === "cone"){
+    const C = coneState(), m = C.m, s = Math.sin(C.th), c = Math.cos(C.th);
+    return {title:"Seat on the swing ride (side view)", eq:true, inward:!C.hangs, net:C.Fc, netNote:"= F_T sin θ = mω²r",
+      forces:[{sym:"mg", sub:"", in:0, up:-m * g, col:COL.W, lx:12, ly:-4, al:"left"},
+              {sym:"F", sub:"T", in:C.FT * s, up:C.FT * c, col:COL.P, parts:!C.hangs, lx:10, ly:-8, al:"left"}],
+      note:C.hangs ? `turns too slowly: hangs straight down (T must be < ${f2(C.Tmax)} s)` : "↕ F_T cos θ − mg = 0 (balanced) · ↔ F_T sin θ = mω²r",
+      draw:(ctx, x, y) => { ctx.strokeStyle = "#37474F"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 90 * s, y - 90 * c); ctx.stroke();
+        ctx.fillStyle = "#37474F"; ctx.beginPath(); ctx.arc(x - 90 * s, y - 90 * c, 3, 0, TWO_PI); ctx.fill(); drawSeat(ctx, x, y + 4, 1.6, true); }};
+  }
   const i = set.kSel, p = kidAt(i, t), m = set.kM[i], F = kidForce(m, set.kR[i], set.kT);
   const forces = [{sym:"W", sub:"", in:0, up:-m * g, col:COL.W, lx:12, ly:-4, al:"left"}, {sym:"F", sub:"N", in:0, up:m * g, col:COL.N, lx:12, ly:4, al:"left"}];
   if (p.held) forces.push({sym:"F", sub:"grip", in:F, up:0, col:COL.P, ly:-16, lx:-4, al:"right"});
   return {title:`Child ${KIDS[i]} (side view)`, inward:p.held, net:p.held ? F : 0, netNote:"= mω²r",
-    forces, note:p.held ? (F > set.kGrip ? "needs more than the strongest grip!" : `grip needed ${fmtF(F)} of ${fmtF(set.kGrip)} possible`) : "let go: no inward force",
+    forces, hv:["↕ vertical: F_N − W = 0 → balanced", p.held ? `↔ horizontal: F_grip = mω²r = ${fmtF(F)}` : "↔ horizontal: no force → ΣF = 0"], note:p.held ? (F > set.kGrip ? "needs more than the strongest grip!" : `grip needed ${fmtF(F)} of ${fmtF(set.kGrip)} possible`) : "let go: no inward force",
     draw:(ctx, x, y) => { ctx.fillStyle = "#BCAAA4"; ctx.fillRect(x - 110, y + 26, 220, 8);
       if (p.held){ ctx.strokeStyle = "#78909C"; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(x - 60, y + 26); ctx.lineTo(x - 60, y - 4); ctx.lineTo(x - 16, y - 4); ctx.stroke(); }
       ctx.fillStyle = KCOL[i]; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x - 12, y - 14, 24, 40, 6) : ctx.rect(x - 12, y - 14, 24, 40); ctx.fill();
@@ -2136,6 +2774,42 @@ function forceGraph(ctx, box){
     label(ctx, `green dashed: maximum friction = μs × normal force`, box.x + 8, box.y + 30, COL.N, "left", 12.5);
     return;
   }
+  if (set.sc === "loop"){
+    const P = vcParams(), K = vcKey(P), loop = P.loop, col = loop ? COL.N : COL.P, F = phi => vcF(P, rad(phi) - Math.PI / 2), p = vcAt(t);
+    const yMax = niceCeil(K.Fb * 1.08), yMin = K.Ft < 0 ? -niceCeil(-K.Ft * 1.2) : 0;
+    const {X, Y} = axesR(ctx, box, 0, 360, yMin, yMax, [["angle turned from the bottom ","n"],["φ","i"],[" / °","n"]], [...(loop ? [["F","i"],["N","s"]] : [["T","i"]]), [" / N","n"]]);
+    for (const [a, nm] of [[90, "side"], [180, "top"], [270, "side"]]){ ctx.save(); ctx.strokeStyle = COL.grey; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(X(a), box.y); ctx.lineTo(X(a), box.y + box.h); ctx.stroke(); ctx.restore();
+      label(ctx, nm, X(a), box.y + box.h - 10, COL.muted, "center", 11.5); }
+    if (!K.safe){ ctx.save(); ctx.fillStyle = "rgba(198,40,40,.08)"; ctx.fillRect(box.x, Y(0), box.w, box.y + box.h - Y(0)); ctx.restore();
+      label(ctx, "below 0: impossible — it leaves the circle", box.x + box.w - 8, Y(0) + 12, COL.F, "right", 12); }
+    curve(X, Y, F, 0, 360, col);
+    ctx.save(); ctx.strokeStyle = COL.W; ctx.setLineDash([8, 5]); ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(box.x, Y(P.m * g)); ctx.lineTo(box.x + box.w, Y(P.m * g)); ctx.stroke(); ctx.restore();
+    label(ctx, `mg = ${fmtF(P.m * g)}`, box.x + 8, Y(P.m * g) - 11, COL.W, "left", 12);
+    if (p.on){ const phi = ((deg(p.th) + 90) % 360 + 360) % 360; dot(X(phi), Y(p.F), COL.accent); }
+    eqLine(ctx, `${loop ? "F_N" : "T"}: largest at the bottom (${fmtF(K.Fb)}), smallest at the top (${K.safe ? fmtF(K.Ft) : "< 0 → leaves"})`, box.x + 8, box.y + 12, col, 12.5, "left", box.w - 12);
+    return;
+  }
+  if (set.sc === "hs"){
+    const m = set.hM, r = set.hR, vMax = niceCeil(Math.max(12, set.hV * 1.2)), Tv = v => m * v * v / r, yMax = niceCeil(Tv(vMax) * 1.05);
+    const {X, Y} = axesR(ctx, box, 0, vMax, 0, yMax, [["speed ","n"],["v","i"],[" / m s⁻¹","n"]], [["tension ","n"],["T","i"],[" / N","n"]]);
+    curve(X, Y, Tv, 0, vMax, COL.P); dot(X(set.hV), Y(Tv(set.hV)), COL.accent);
+    eqLine(ctx, "T = mv²/r: twice the speed needs 4 × the tension", box.x + 8, box.y + 12, COL.P, 12.5, "left", box.w - 12);
+    return;
+  }
+  if (set.sc === "cone"){
+    const C = coneState(), Tm = C.Tmax, xMax = niceCeil(Math.max(Tm * 1.4, set.pT * 1.1));
+    const thT = T => T >= Tm ? 0 : deg(Math.acos(g * T * T / (4 * Math.PI * Math.PI * set.pL)));
+    const {X, Y} = axesR(ctx, box, 0, xMax, 0, 90, [["period ","n"],["T","i"],[" / s","n"]], [["chain angle ","n"],["θ","i"],[" / °","n"]]);
+    ctx.save(); ctx.fillStyle = "rgba(198,40,40,.08)"; ctx.fillRect(X(Tm), box.y, box.x + box.w - X(Tm), box.h); ctx.restore();
+    label(ctx, "hangs straight down", X(Tm) + 6, box.y + box.h - 12, COL.F, "left", 12);
+    curve(X, Y, thT, 0.02, xMax, COL.P);
+    ctx.save(); ctx.strokeStyle = COL.ink; ctx.setLineDash([3, 4]); ctx.beginPath(); ctx.moveTo(X(Tm), box.y); ctx.lineTo(X(Tm), box.y + box.h); ctx.stroke(); ctx.restore();
+    label(ctx, `2π√(L/g) = ${f2(Tm)} s`, X(Tm) - 6, box.y + 52, COL.ink, "right", 12.5);
+    dot(X(set.pT), Y(deg(C.th)), COL.accent);
+    eqLine(ctx, "cos θ = gT²/(4π²L): turning faster (smaller T) → bigger angle", box.x + 8, box.y + 12, COL.P, 12.5, "left", box.w - 12);
+    eqLine(ctx, "θ never reaches 90°: F_T cos θ must hold up mg", box.x + 8, box.y + 30, COL.muted, 12, "left", box.w - 12);
+    return;
+  }
   const T = set.kT, w2 = (TWO_PI / T) ** 2, yMax = niceCeil(Math.max(set.kGrip, ...set.kM.map(m => m * w2 * KR)) * 1.1);
   const {X, Y} = axesR(ctx, box, 0, KR, 0, yMax, [["distance from the centre ","n"],["r","i"],[" / m","n"]], [["grip force ","n"],["F","i"],[" / N","n"]]);
   ctx.save(); ctx.fillStyle = "rgba(198,40,40,.08)"; ctx.fillRect(box.x, box.y, box.w, Y(set.kGrip) - box.y); ctx.restore();
@@ -2148,7 +2822,7 @@ function forceGraph(ctx, box){
 }
 
 /* ============================ 9 DATA ============================ */
-let trials = [], anaId = {chair:"aw", sat:"Tr", car:"Fv", kar:"Fr", gear:"wr"};
+let trials = [], anaId = {chair:"aw", sat:"Tr", car:"Fv", kar:"Fr", gear:"wr", loop:"dm", cone:"cT", hs:"Tv"};
 const noisy = x => document.getElementById("noiseChk").checked ? x * (1 + 0.02 * (2 * Math.random() - 1)) : x;
 function recordTrial(){
   const t = R.t; let d;
@@ -2159,6 +2833,11 @@ function recordTrial(){
   else if (set.sc === "gear"){ const G = gearState(), o = gOut(G), sh = G.filter((g, i) => g.link === "shaft" || (i && G[i + 1] && G[i + 1].link === "shaft"));
     d = {gs:GSETS.find(q => q.id === set.gSet).name, ratio:gRatio(G), win:Math.abs(G[0].w), wout:noisy(Math.abs(o.w)), rpmIn:G[0].rpm, rpmOut:o.rpm, vm:noisy(G[0].v),
          shaft:sh.map(g => [g.r, noisy(g.v)])}; }
+  else if (set.sc === "loop"){ const P = vcParams(), K = vcKey(P);
+    d = {m:P.m, r:P.r, vt:P.vt, vb:K.vb, Ft:K.safe ? noisy(K.Ft) : NaN, Fb:noisy(K.Fb)}; }
+  else if (set.sc === "hs"){ const m = set.hM, r = set.hR, v = set.hV; d = {m, r, v, w:v / r, T:noisy(m * v * v / r)}; }
+  else if (set.sc === "cone"){ const C = coneState(); if (C.hangs){ flash("It hangs straight down: choose a shorter period."); return; }
+    d = {m:C.m, L:C.L, T:C.T, th:deg(C.th), r:C.r, FT:noisy(C.FT), v:noisy(C.v), cos:noisy(Math.cos(C.th)), w:C.w}; }
   else { const i = set.kSel, m = set.kM[i], r = set.kR[i], T = set.kT, w = TWO_PI / T;
     d = {ch:KIDS[i], m, r, T, w, v:noisy(w * r), F:noisy(m * w * w * r)}; }
   trials.push({sc:set.sc, ...d}); save(); renderTrials();
@@ -2171,6 +2850,11 @@ const DCOLS = {
        ["<i>F</i><sub>f</sub> / N", t => sig(t.F, 4)], ["<i>v</i><sub>max</sub> / m s⁻¹", t => isFinite(t.vmax) ? f2(t.vmax) : "—"]],
   gear:[["set-up", t => t.gs], ["ratio in/out", t => sig(t.ratio, 3)], ["in / rpm", t => sig(t.rpmIn, 3)], ["out / rpm", t => sig(t.rpmOut, 3)],
         ["<i>ω</i><sub>out</sub> / rad s⁻¹", t => sig(t.wout, 3)], ["<i>v</i> link / cm s⁻¹", t => sig(t.vm * 100, 3)]],
+  loop:[["<i>m</i> / kg", t => sig(t.m, 3)], ["<i>r</i> / m", t => sig(t.r, 3)], ["<i>v</i><sub>top</sub> / m s⁻¹", t => f2(t.vt)],
+       ["<i>F</i><sub>N</sub> top / N", t => isFinite(t.Ft) ? sig(t.Ft, 4) : "leaves"], ["<i>F</i><sub>N</sub> bottom / N", t => sig(t.Fb, 4)], ["bottom − top / N", t => isFinite(t.Ft) ? sig(t.Fb - t.Ft, 4) : "—"]],
+  hs:[["<i>m</i> / kg", t => sig(t.m, 3)], ["<i>r</i> / m", t => sig(t.r, 3)], ["<i>v</i> / m s⁻¹", t => f2(t.v)], ["<i>ω</i> / rad s⁻¹", t => f2(t.w)], ["<i>T</i> / N", t => sig(t.T, 4)]],
+  cone:[["<i>m</i> / kg", t => sig(t.m, 3)], ["<i>L</i> / m", t => sig(t.L, 3)], ["period <i>T</i> / s", t => f2(t.T)], ["<i>θ</i> / °", t => f1(t.th)],
+        ["<i>r</i> / m", t => f2(t.r)], ["<i>F</i><sub>T</sub> / N", t => sig(t.FT, 4)], ["<i>v</i> / m s⁻¹", t => f2(t.v)]],
   kar:[["child", t => t.ch], ["<i>m</i> / kg", t => sig(t.m, 3)], ["<i>r</i> / m", t => f2(t.r)], ["<i>T</i> / s", t => f2(t.T)], ["<i>v</i> / m s⁻¹", t => f2(t.v)], ["<i>F</i> / N", t => f1(t.F)]],
 };
 function renderTrials(){
@@ -2199,6 +2883,18 @@ const ANA = {
           g:k => `gradient = ω of the driver = ${sig(k)} rad s⁻¹`, hint:"Same driver speed; change the teeth (or radii)."},
          {id:"vr", name:"v–r one shaft", pts:t => t.shaft, xs:[["r","i"]], xu:"m", ys:[["v","i"]], yu:"m s⁻¹",
           g:k => `gradient = ω of the shaft = ${sig(k)} rad s⁻¹`, hint:"Wheels on one shaft: train (C, D), bike (sprocket, wheel), belt (pulley, drum)."}],
+  loop:[{id:"dm", name:"bottom − top vs <i>m</i>", x:t => t.m, y:t => t.Fb - t.Ft, xs:[["m","i"]], xu:"kg", ys:[["F","i"],["N,b","s"],[" − ","n"],["F","i"],["N,t","s"]], yu:"N",
+          g:k => `gradient = 6g = ${sig(k)} N kg⁻¹ → g = ${sig(k / 6)} m s⁻²`, hint:"Change m (keep v_top ≥ √(gr)); any r and v_top."},
+         {id:"Fv", name:"<i>F</i><sub>N,top</sub> + <i>mg</i> vs <i>v</i>²", x:t => t.vt ** 2, y:t => t.Ft + t.m * g, xs:[["v","i"],["top","s"],["²","n"]], xu:"m² s⁻²", ys:[["F","i"],["N,top","s"],[" + ","n"],["mg","i"]], yu:"N",
+          g:k => `gradient = m/r = ${sig(k)} kg m⁻¹`, hint:"Same m and r; change v_top (at least √(gr))."}],
+  hs:[{id:"Tv", name:"<i>T</i> vs <i>v</i>²", x:t => t.v ** 2, y:t => t.T, xs:[["v","i"],["²","n"]], xu:"m² s⁻²", ys:[["T","i"]], yu:"N",
+        g:k => `gradient = m/r = ${sig(k)} kg m⁻¹`, hint:"Same m and r; change v."},
+       {id:"Tw", name:"<i>T</i> vs <i>ω</i>²", x:t => t.w ** 2, y:t => t.T, xs:[["ω","i"],["²","n"]], xu:"rad² s⁻²", ys:[["T","i"]], yu:"N",
+        g:k => `gradient = mr = ${sig(k)} kg m`, hint:"Same m and r; change v."}],
+  cone:[{id:"cT", name:"cos <i>θ</i> vs <i>T</i>²", x:t => t.T ** 2, y:t => t.cos, xs:[["T","i"],["²","n"]], xu:"s²", ys:[["cos ","n"],["θ","i"]], yu:"",
+          g:k => `gradient = g/(4π²L) = ${sig(k)} s⁻² → g = 4π²L × gradient`, hint:"Same L; change the period (shorter than 2π√(L/g))."},
+        {id:"Fw", name:"<i>F</i><sub>T</sub> vs <i>ω</i>²", x:t => t.w ** 2, y:t => t.FT, xs:[["ω","i"],["²","n"]], xu:"rad² s⁻²", ys:[["F","i"],["T","s"]], yu:"N",
+          g:k => `gradient = mL = ${sig(k)} kg m`, hint:"Same m and L; change the period."}],
   kar:[{id:"Fr", name:"F–r", x:t => t.r, y:t => t.F, xs:[["r","i"]], xu:"m", ys:[["F","i"]], yu:"N",
          g:k => `gradient = mω² = ${sig(k)} N m⁻¹`, hint:"Same mass and T; move the child."},
         {id:"Fw", name:"F–ω²", x:t => t.w * t.w, y:t => t.F, xs:[["ω","i"],["²","n"]], xu:"rad² s⁻²", ys:[["F","i"]], yu:"N",
@@ -2214,7 +2910,7 @@ function drawAna(){
   const sx = scaled(Math.max(...pts.map(p => p[0]), 0)), sy = scaled(Math.max(...pts.map(p => p[1]), 0));
   const xMax = niceCeil(Math.max(1e-12, ...pts.map(p => p[0] / sx.k)) * 1.1), yMax = niceCeil(Math.max(1e-12, ...pts.map(p => p[1] / sy.k)) * 1.15);
   const box = {x:64, y:44, w:w - 80, h:h - 94};
-  const {X, Y} = axesR(ctx, box, 0, pts.length ? xMax : 1, 0, pts.length ? yMax : 1, [...A.xs, [` / ${sx.txt}${A.xu}`, "n"]], [...A.ys, [` / ${sy.txt}${A.yu}`, "n"]]);
+  const {X, Y} = axesR(ctx, box, 0, pts.length ? xMax : 1, 0, pts.length ? yMax : 1, [...A.xs, [` / ${sx.txt}${A.xu}`, "n"]], A.yu ? [...A.ys, [` / ${sy.txt}${A.yu}`, "n"]] : A.ys);
   label(ctx, `Recorded trials · ${A.hint}`, box.x, 14, COL.muted, "left", 12.5);
   if (!pts.length){ label(ctx, "Press ● Record to add trials", box.x + box.w / 2, box.y + box.h / 2, COL.muted, "center", 15); return; }
   for (const p of pts){ ctx.fillStyle = COL.v; ctx.beginPath(); ctx.arc(X(p[0] / sx.k), Y(p[1] / sy.k), 5, 0, 7); ctx.fill(); }
@@ -2236,6 +2932,8 @@ const KAR0 = {sc:"kar", kSel:2, kM:[30, 30, 30], kR:[0.6, 1.2, 1.8], kT:4.0, kGr
 const SAT0 = {sc:"sat", sPre:"iss", sH:410, sM:4.2e5, sOwn:false};
 const TWO0 = {sc:"gear", gSet:"two", gN1:12, gN2:36, gRpm:60}, TRAIN0 = {sc:"gear", gSet:"train", gN1:12, gN2:24, gN3:36, gN4:12, gRpm:60};
 const BIKE0 = {sc:"gear", gSet:"bike", gNc:44, gNs:16, gCad:80}, BELT0 = {sc:"gear", gSet:"belt", gR1:2, gR2:10, gRd:3, gRpm:300};
+const HS0 = {sc:"hs", hM:0.20, hR:0.50, hV:6.28, hView:"top"};
+const LOOP0 = {sc:"loop", lM:60, lR:8.0, lV:12}, CONE0 = {sc:"cone", pM:2.0, pL:1.5, pT:2.29};
 const TASKS = [
  {id:"pre", title:"1 · Pre-lab: predict", time:"≈ 15 min", steps:[
   {type:"do", setup:{...CAR0},
@@ -2266,6 +2964,15 @@ const TASKS = [
   {type:"predict", setup:{...TWO0}, text:"Which quantity is the <b>same</b> for gears A and B?",
    opts:["angular speed ω", "period T", "rim speed v", "number of turns in 10 s"], correct:2,
    why:"v = ω<sub>A</sub>r<sub>A</sub> = ω<sub>B</sub>r<sub>B</sub> = 7.54 cm s⁻¹ here. ω, T and the number of turns are different (B makes 1 turn while A makes 3)."},
+  {type:"predict", setup:{...HS0}, text:"✂ A marble is whirled on a string in a horizontal circle (gravity ignored). The string breaks. Which way does the marble go?",
+   opts:["Towards the centre", "Straight outwards, along the string", "Straight on, along the tangent", "It keeps curving, more and more slowly"], correct:2,
+   why:"With the string cut there is no force, so no acceleration: the marble keeps the velocity it had — along the tangent, at constant speed (Newton's 1st law). Press ✂ Cut the string to test it (slide 4)."},
+  {type:"predict", setup:{...LOOP0}, text:"🎢 A 60 kg rider goes round a vertical loop (r = 8.0 m). Where does the seat push <b>hardest</b> on the rider?",
+   opts:["At the top", "At the side", "At the bottom", "The same everywhere"], correct:2,
+   why:"At the bottom F<sub>N</sub> − mg = mv²/r: F<sub>N</sub> holds the rider up <b>and</b> provides F<sub>c</sub>, and the speed is largest there (energy). Here 4.02 kN at the bottom, only 491 N at the top (F<sub>N</sub> + mg = mv²/r). Watch the green bar."},
+  {type:"predict", setup:{...CONE0}, text:"⛓️ The swing ride turns faster (a shorter period). What happens to the chains?",
+   opts:["They hang more steeply (smaller angle)", "They swing out to a bigger angle", "The angle stays the same; only the tension changes", "They can become horizontal"], correct:1,
+   why:"cos θ = gT²/(4π²L): a shorter period T gives a smaller cos θ, so a bigger θ. F<sub>T</sub> cos θ = mg must still hold up the weight, so the chains can never be horizontal, and F<sub>T</sub> = mω²L grows."},
  ]},
  {id:"lab", title:"2 · During the lab: compare", time:"≈ 20 min", steps:[
   {type:"do", setup:{...CHAIR0, chM:0.20, chR:0.50},
@@ -2292,6 +2999,13 @@ const TASKS = [
   {type:"num", setup:{...TRAIN0}, text:"D (12 teeth) is fixed on C's shaft. Calculate the rim speed of D in cm s⁻¹. (Pitch radius = N × 2 mm.)",
    answer:() => (20 * TWO_PI / 60) * 0.024 * 100, unit:"cm s⁻¹", hint:"D has the same ω as C (20 rpm = 2.09 rad s⁻¹); r<sub>D</sub> = 12 × 2 mm = 0.024 m; v = ωr."},
   {type:"do", setup:{...TRAIN0}, text:"Record trials with D = 12, 24 and 36 teeth (N<sub>D</sub> box). Data tab → <b>v–r one shaft</b>: the gradient is ω of C's shaft."},
+  {type:"num", setup:{...LOOP0}, text:"🎢 60 kg rider, loop radius 8.0 m, 12 m s⁻¹ at the top. Calculate the seat force F<sub>N</sub> at the top.",
+   answer:() => 60 * 144 / 8 - 60 * g, unit:"N", hint:"At the top F<sub>N</sub> and mg both point down, to the centre: F<sub>N</sub> + mg = mv²/r."},
+  {type:"num", setup:{...LOOP0}, text:"What is the slowest speed at the top for which the rider stays on the track?",
+   answer:() => Math.sqrt(g * 8), unit:"m s⁻¹", hint:"Slowest: F<sub>N</sub> = 0 at the top, so mg = mv²/r ⇒ v = √(gr). The mass cancels."},
+  {type:"do", setup:{...LOOP0, lV:7}, text:"Now v<sub>top</sub> = 7 m s⁻¹ (below √(gr)). Press ▶ Start and watch the green bar and the FBD. On your worksheet, describe where and how the cart leaves the track."},
+  {type:"num", setup:{...CONE0}, text:"⛓️ Swing ride: chain 1.5 m, one turn every 2.29 s. Calculate the angle θ of the chain from the vertical.",
+   answer:() => deg(coneState(2, 1.5, 2.29).th), unit:"°", hint:"ω = 2π/T. F<sub>T</sub> sin θ = mω²r with r = L sin θ gives F<sub>T</sub> = mω²L; then F<sub>T</sub> cos θ = mg ⇒ cos θ = g/(ω²L)."},
  ]},
  {id:"hw", title:"3 · Homework: analyse", time:"≈ 30 min", steps:[
   {type:"do", setup:{...CAR0},
@@ -2318,6 +3032,13 @@ const TASKS = [
    answer:() => 80 * TWO_PI / 60 * 34 / 28 * 0.34, unit:"m s⁻¹", hint:"Same steps with the ratio 34/28."},
   {type:"num", setup:{...BELT0}, text:"Motor at 300 rpm, motor pulley 2.0 cm, large pulley 10 cm, drum 3.0 cm on the large pulley's shaft. How fast does the load rise, in cm s⁻¹?",
    answer:() => 300 * TWO_PI / 60 * 2 / 10 * 3, unit:"cm s⁻¹", hint:"Belt: ω<sub>pulley</sub> = ω<sub>motor</sub> × 2/10. Drum on the same shaft: v = ω<sub>pulley</sub> × r<sub>drum</sub>."},
+  {type:"do", setup:{...LOOP0}, text:"🎢 Record trials with m = 30, 60, 90 and 120 kg (v<sub>top</sub> = 12 m s⁻¹, r = 8.0 m). Data tab → <b>bottom − top vs m</b>."},
+  {type:"num", text:"Enter the gradient of your line.", answer:() => 6 * g, unit:"N kg⁻¹",
+   hint:"F<sub>N,b</sub> − F<sub>N,t</sub> = (mv<sub>b</sub>²/r + mg) − (mv<sub>t</sub>²/r − mg) = m(v<sub>b</sub>² − v<sub>t</sub>²)/r + 2mg = 4mg + 2mg = 6mg."},
+  {type:"num", setup:{...CONE0}, text:"⛓️ Calculate the tension F<sub>T</sub> in the chain (2.0 kg seat, L = 1.5 m, period 2.29 s).",
+   answer:() => coneState(2, 1.5, 2.29).FT, unit:"N", hint:"F<sub>T</sub> = mω²L (from F<sub>T</sub> sin θ = mω²L sin θ)."},
+  {type:"num", setup:{...CONE0}, text:"Calculate the speed of the seat.", answer:() => coneState(2, 1.5, 2.29).v, unit:"m s⁻¹",
+   hint:"r = L sin θ, then v = ωr = 2πr/T."},
  ]},
 ];
 let taskState = {}, curSet = "pre";
@@ -2356,7 +3077,8 @@ function renderTasks(){
 }
 function applySetup(su){
   const c = JSON.parse(JSON.stringify(su));
-  Object.assign(set, c); setScenarioUI(); syncControls(); reset(); renderTrials();
+  Object.assign(set, c); if (c.sc === "car") set.carBank = (set.cBank || 0) > 0;
+  setScenarioUI(); syncControls(); reset(); renderTrials();
 }
 function taskClick(e){
   const t = e.target.closest("[data-setup],[data-lock],[data-check],[data-chknum],[data-hint],[data-set]"); if (!t) return;
@@ -2411,7 +3133,7 @@ const CTL = [
   {id:"cR", sc:"car", kind:"range", lab:"Radius of the bend <i>r</i>", unit:"m", min:10, max:150, tmin:1, tmax:2000, step:1},
   {id:"cV", sc:"car", kind:"range", lab:"Speed <i>v</i>", unit:"m s⁻¹", min:0, max:40, tmin:0, tmax:200, step:0.5},
   {id:"cSurf", sc:"car", kind:"select", lab:"Road surface", opts:SURF.map(s => [s.id, `${s.name} · μs ${s.mu.toFixed(2)}`])},
-  {id:"cBank", sc:"car", kind:"range", lab:'Banking <i>θ</i> <span class="badge">extension</span>', unit:"°", min:0, max:35, step:1},
+  {id:"cBank", sc:"car", kind:"range", lab:'Banking <i>θ</i> <span class="badge">extension</span>', unit:"°", min:0, max:35, step:1, show:() => set.carBank, def:() => 25},
   {id:"kSel", sc:"kar", kind:"seg", lab:"Child", opts:[[0, "A"], [1, "B"], [2, "C"]]},
   {id:"kM", sc:"kar", kind:"range", lab:() => `Mass of ${KIDS[set.kSel]} <i>m</i>`, unit:"kg", min:10, max:80, tmin:1, tmax:500, step:1},
   {id:"kR", sc:"kar", kind:"range", lab:() => `${KIDS[set.kSel]}: distance from centre <i>r</i>`, unit:"m", min:0.2, max:2.0, tmin:0.05, step:0.05},
@@ -2429,6 +3151,17 @@ const CTL = [
   {id:"gR1", sc:"gear", kind:"range", lab:"Motor pulley radius", unit:"cm", min:1, max:8, tmin:0.5, tmax:30, step:0.5, show:() => set.gSet === "belt", def:() => 2},
   {id:"gR2", sc:"gear", kind:"range", lab:"Large pulley radius", unit:"cm", min:4, max:20, tmin:1, tmax:50, step:0.5, show:() => set.gSet === "belt", def:() => 10},
   {id:"gRd", sc:"gear", kind:"range", lab:"Drum radius", unit:"cm", min:1, max:10, tmin:0.5, tmax:30, step:0.5, show:() => set.gSet === "belt", def:() => 3},
+  {id:"lM", sc:"loop", kind:"range", lab:"Mass of cart + rider <i>m</i>", unit:"kg", min:20, max:300, tmin:1, tmax:5000, step:5},
+  {id:"lR", sc:"loop", kind:"range", lab:"Radius of the loop <i>r</i>", unit:"m", min:3, max:20, tmin:0.5, tmax:100, step:0.5},
+  {id:"lV", sc:"loop", kind:"range", lab:"Speed at the top <i>v</i><sub>top</sub>", unit:"m s⁻¹", min:0, max:25, tmin:0, tmax:100, step:0.5},
+  {id:"hView", sc:"hs", kind:"seg", lab:"View", opts:[["top", "From above"], ["side", "From the side"]]},
+  {id:"hM", sc:"hs", kind:"range", lab:"Mass of the marble <i>m</i>", unit:"kg", min:0.02, max:1, tmin:0.005, tmax:20, step:0.01},
+  {id:"hR", sc:"hs", kind:"range", lab:"Length of the string <i>r</i>", unit:"m", min:0.2, max:1.5, tmin:0.05, tmax:10, step:0.05},
+  {id:"hV", sc:"hs", kind:"range", lab:"Speed <i>v</i>", unit:"m s⁻¹", min:0.5, max:12, tmin:0.05, tmax:60, step:0.02},
+  {id:"hCut", sc:"hs", kind:"btn", lab:"String", text:"✂ Cut the string"},
+  {id:"pM", sc:"cone", kind:"range", lab:"Mass of the seat <i>m</i>", unit:"kg", min:0.5, max:80, tmin:0.1, tmax:500, step:0.5},
+  {id:"pL", sc:"cone", kind:"range", lab:"Chain length <i>L</i>", unit:"m", min:0.5, max:5, tmin:0.1, tmax:20, step:0.1},
+  {id:"pT", sc:"cone", kind:"range", lab:"Period (one turn) <i>T</i>", unit:"s", min:1, max:6, tmin:0.2, tmax:60, step:0.01},
 ];
 const getV = id => id === "kM" ? set.kM[set.kSel] : id === "kR" ? set.kR[set.kSel] : set[id];
 function putV(id, v){ if (id === "kM") set.kM[set.kSel] = v; else if (id === "kR") set.kR[set.kSel] = v; else set[id] = v; }
@@ -2472,13 +3205,13 @@ function buildControls(){
       changed(c, typeof c.opts[0][0] === "number" ? +b.dataset.v : b.dataset.v); });
     else if (c.kind === "select") el.addEventListener("change", () => changed(c, el.value));
     else if (c.kind === "check") el.addEventListener("change", () => changed(c, el.checked));
-    else el.addEventListener("click", () => c.id === "chArms" ? toggleArms() : letGo());
+    else el.addEventListener("click", () => c.id === "chArms" ? toggleArms() : c.id === "hCut" ? cutString() : letGo());
   }
 }
 function changed(c, v){
   if (c.id === "kSel"){ set.kSel = v; syncControls(); return; }         // selecting a child does not restart the motion
   putV(c.id, v);
-  if (c.id === "chView"){ syncControls(); return; }                       // only the picture changes
+  if (c.id === "chView" || c.id === "hView"){ syncControls(); return; }                       // only the picture changes
   if (c.id === "gSet") Object.assign(set, GDEF[v]);
   if (c.id === "sPre"){ const p = PRESETS.find(q => q.id === v); if (p.h){ set.sH = p.h; set.sM = p.m; set.sOwn = false; } }
   if (c.id === "sH" || c.id === "sM"){ const p = PRESETS.find(q => q.id === set.sPre); if (p && p.h && Math.abs(p.h - set.sH) > 1e-6) set.sPre = "custom"; }
@@ -2502,17 +3235,25 @@ function syncControls(){
   }
 }
 function setScenarioUI(){
-  document.querySelectorAll("#scen button").forEach(b => b.setAttribute("aria-pressed", b.dataset.sc === set.sc));
+  const sid = sitNow(), grp = SITS.find(q => q.id === sid).g;
+  document.querySelectorAll("#scen button").forEach(b => b.setAttribute("aria-pressed", b.dataset.g === grp));
+  $("sitbar").innerHTML = `<span class="hint">${GROUPS.find(q => q.id === grp).name}:</span>` +
+    SITS.filter(q => q.g === grp).map(q => `<button data-sit="${q.id}" aria-pressed="${q.id === sid}">${q.lab}</button>`).join("");
+  const on = $("sitbar").querySelector('[aria-pressed="true"]'); if (on) $("sitbar").scrollLeft = Math.max(0, on.offsetLeft - 10);
   const gear = set.sc === "gear";
   document.querySelectorAll("#gsel button").forEach(b => { const gb = b.dataset.g === "th" || b.dataset.g === "gv"; b.hidden = gear ? !gb : gb; });
   if (gear && gq !== "th" && gq !== "gv") gq = "th"; if (!gear && (gq === "th" || gq === "gv")) gq = "x";
   document.querySelectorAll("#gsel button").forEach(b => b.setAttribute("aria-pressed", b.dataset.g === gq));
   $("fbdTitle").textContent = gear ? "How the speeds are linked" : "Free-body diagram";
+  $("compSw").hidden = set.sc !== "car";
   $("graphHint").innerHTML = {
     chair:"Graphs follow the mass in the right hand. <i>x</i>–<i>t</i> is a sine curve: the shadow of circular motion. Force: what the arm must pull with at each radius.",
     sat:"Graphs follow the satellite (time in minutes, hours or days). Force: the gravitational field strength <i>g</i> = <i>GM</i>/<i>r</i>² — the satellite's acceleration.",
     car:"Graphs follow the car. Force: the friction needed (red) against the most friction the road can give (green). Where they cross is <i>v</i><sub>max</sub>.",
     kar:"Graphs follow the selected child. Force: grip needed against distance from the centre for each child; the dashed line is the strongest grip.",
+    loop:"Graphs follow the cart (side view: <i>x</i> is the horizontal position). Force: <i>F</i><sub>N</sub> all the way round, against the angle turned from the bottom; the dashed line is <i>mg</i>.",
+    hs:"Graphs follow the ball (top view; ✂ cut the string to see it fly off along the tangent). Force: the tension needed against the speed: <i>T</i> = <i>mv</i>²/<i>r</i>, so doubling <i>v</i> needs 4 × the tension.",
+    cone:"Graphs follow the orange seat (top view of its circle). Force: the chain angle against the period — turning faster gives a bigger angle.",
     gear:"<i>θ</i>–<i>t</i>: one straight line per wheel, gradient = <i>ω</i> (negative = clockwise; dashed = on the same shaft as the wheel before). Tangent: on the output wheel. Rim speeds: equal across a mesh, chain or belt."}[set.sc];
 }
 function updateButtons(){
@@ -2564,9 +3305,30 @@ function updateReadouts(){
     html = `<table>${row("acceleration <i>a</i> = <i>v</i>²/<i>r</i>", `${f2(C.a)} m s⁻²`, "force needed <i>mv</i>²/<i>r</i>", fmtF(C.Fc), COL.a, COL.a)}
       ${row("friction needed <i>F</i><sub>f</sub>", fmtF(Math.abs(C.Ff)), "max friction <i>μ</i><sub>s</sub><i>F</i><sub>N</sub>", fmtF(C.Fmax), COL.F, COL.N)}
       ${row("<i>μ</i><sub>s</sub> needed", f2(C.muNeed), "<i>v</i><sub>max</sub>", isFinite(C.vmax) ? `${f2(C.vmax)} m s⁻¹` : "no limit")}
-      ${set.cBank ? row("normal force <i>F</i><sub>N</sub>", fmtF(C.N), "no-friction speed √(<i>gr</i> tan<i>θ</i>)", `${f2(C.v0)} m s⁻¹`, COL.N) : ""}
+      ${row("normal force <i>F</i><sub>N</sub>", fmtF(C.N), "no-friction speed √(<i>gr</i> tan<i>θ</i>)", `${f2(C.v0)} m s⁻¹`, COL.N)}
       <tr><td colspan="5" class="ev">${pill(C.ok, "✔ grips: static friction is enough", C.Ff > 0 ? "✘ too fast: skids outwards" : "✘ too slow for this bank: slides down")}
         ${skid ? " · now sliding: friction μ<sub>d</sub>F<sub>N</sub> only slows it" : ""}</td></tr></table>`;
+  } else if (set.sc === "loop"){
+    const P = vcParams(), K = vcKey(P), p = vcAt(t), loop = P.loop, S = loop ? "<i>F</i><sub>N</sub>" : "<i>T</i>", col = loop ? COL.N : COL.P;
+    html = `<table>${row("<i>v</i> at the top", `${f2(P.vt)} m s⁻¹`, "<i>v</i> at the bottom", `${f2(K.vb)} m s⁻¹`, COL.v, COL.v)}
+      ${row(`${S} at the top`, K.safe ? fmtF(K.Ft) : "&lt; 0 ✘", `${S} at the bottom`, fmtF(K.Fb), col, col)}
+      ${row("slowest safe <i>v</i><sub>top</sub> = √(<i>gr</i>)", `${f2(K.vmin)} m s⁻¹`, "weight <i>mg</i>", fmtF(P.m * g), "", COL.W)}
+      ${row(`${S} now`, p.on ? fmtF(p.F) : "0", loop ? "felt weight, bottom" : "<i>v</i> now", loop ? `${f2(K.Fb / (P.m * g))} × <i>mg</i>` : `${f2(p.v)} m s⁻¹`, col)}
+      <tr><td colspan="5" class="ev">${pill(K.safe, loop ? "✔ stays on the track: F<sub>N</sub> ≥ 0 at the top" : "✔ the string stays tight all the way round",
+        loop ? "✘ too slow: F<sub>N</sub> reaches 0 before the top — the cart leaves the track" : "✘ too slow: the string goes slack before the top")}</td></tr></table>`;
+  } else if (set.sc === "hs"){
+    const m = set.hM, r = set.hR, v = set.hV, w = v / r, F = m * v * v / r, p = hsAt(t);
+    html = `<table>${row("speed <i>v</i>", `${f2(v)} m s⁻¹`, "<i>ω</i> = <i>v</i>/<i>r</i>", `${f2(w)} rad s⁻¹`, COL.v)}
+      ${row("time for one turn 2π<i>r</i>/<i>v</i>", `${f3(TWO_PI * r / v)} s`, "frequency <i>f</i>", `${f2(w / TWO_PI)} Hz`)}
+      ${row("tension <i>T</i> = <i>mv</i>²/<i>r</i>", fmtF(F), "<i>a</i> = <i>v</i>²/<i>r</i>", `${f2(v * v / r)} m s⁻²`, COL.P, COL.a)}
+      <tr><td colspan="5" class="ev">${pill(p.held, "✔ the tension provides the centripetal force", "✂ string cut: no force, so it moves on in a straight line along the tangent (Newton's 1st law)")}</td></tr></table>`;
+  } else if (set.sc === "cone"){
+    const C = coneState();
+    html = `<table>${row("chain angle <i>θ</i>", `${f1(deg(C.th))}°`, "radius <i>r</i> = <i>L</i> sin <i>θ</i>", `${f2(C.r)} m`)}
+      ${row("<i>ω</i> = 2π/<i>T</i>", `${f2(C.w)} rad s⁻¹`, "speed <i>v</i> = <i>ωr</i>", `${f2(C.v)} m s⁻¹`, "", COL.v)}
+      ${row("tension <i>F</i><sub>T</sub>", fmtF(C.FT), "weight <i>mg</i>", fmtF(C.m * g), COL.P, COL.W)}
+      ${row("<i>F</i><sub>c</sub> = <i>F</i><sub>T</sub> sin <i>θ</i>", fmtF(C.Fc), "<i>a</i> = <i>ω</i>²<i>r</i>", `${f2(C.hangs ? 0 : C.a)} m s⁻²`, COL.a, COL.a)}
+      <tr><td colspan="5" class="ev">${pill(!C.hangs, "✔ <i>F</i><sub>T</sub> cos <i>θ</i> = <i>mg</i>: no vertical motion", `✘ too slow: hangs straight down (needs <i>T</i> &lt; 2π√(<i>L</i>/<i>g</i>) = ${f2(C.Tmax)} s)`)}</td></tr></table>`;
   } else if (set.sc === "gear"){
     const G = gearState();
     html = `<table><tr><th></th><th>${set.gSet === "belt" ? "<i>r</i>" : set.gSet === "bike" ? "teeth / <i>r</i>" : "teeth"}</th><th>rpm</th><th><i>ω</i> / rad s⁻¹</th><th><i>T</i> / s</th><th><i>v</i> = <i>ωr</i></th></tr>` +
@@ -2586,9 +3348,17 @@ function updateReadouts(){
   if (html !== lastRO){ $("readouts").innerHTML = html; lastRO = html; }
 }
 
-$("scen").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return;
-  set.sc = b.dataset.sc; setScenarioUI(); syncControls(); reset(); renderTrials(); });
+const lastSit = {};
+function chooseSit(id){
+  const S = SITS.find(q => q.id === id); Object.assign(set, S.st);
+  if (id === "carbank" && !(set.cBank > 0)) set.cBank = 25;                 // slide 19: banked road at 25°
+  lastSit[S.g] = id; setScenarioUI(); syncControls(); reset(); renderTrials();
+}
+$("scen").addEventListener("click", e => { const b = e.target.closest("button[data-g]"); if (!b) return;
+  chooseSit(lastSit[b.dataset.g] || SITS.find(q => q.g === b.dataset.g).id); });
+$("sitbar").addEventListener("click", e => { const b = e.target.closest("button[data-sit]"); if (b) chooseSit(b.dataset.sit); });
 $("startBtn").addEventListener("click", start);
+$("sceneCut").addEventListener("click", () => { if (R.cut !== null && R.cut <= R.t){ reset(); start(); } else cutString(); drawScene(); });
 $("pauseBtn").addEventListener("click", () => { R.paused = !R.paused; updateButtons(); });
 $("resetBtn").addEventListener("click", () => { reset(); });
 $("recBtn").addEventListener("click", recordTrial);
