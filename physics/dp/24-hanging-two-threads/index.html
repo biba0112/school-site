@@ -18,6 +18,7 @@
     1 STYLE · 2 MARKUP · 3 CONFIG (examples, threads) · 4 PHYSICS (equilibrium, snap → swing → fall) · 5 RUN · 6 SCENE ·
     7 FBD (forces on the mass + vector triangle + components table) · 8 GRAPHS (T–θ, components, T–t) · 9 DATA (T–1/sin θ,
     horizontal / vertical) · 10 TASKS · 11 UI
+  + STEP BY STEP TABS (14 Nov 2026: ① Step by step animation opens first, ② Simulation; #sim opens ②)
 -->
 <style>
 /* ============================ 1 STYLE ============================ */
@@ -343,6 +344,47 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
 .scen{flex-wrap:nowrap} header .btn{white-space:nowrap}
 @media (max-width:1500px){ .scen button{font-size:.85rem;padding:3px 9px} }
 @media (max-width:900px){ .scen{flex-wrap:wrap} }
+/* ==== STEPTABS CSS START (14 Nov 2026: ① Step by step · ② Simulation, as in Sim 03) ==== */
+.bigtabs{display:flex;gap:10px;padding:10px 16px 0;flex-wrap:wrap}
+.bigtab{font:inherit;font-size:20px;font-weight:700;border:2px solid var(--navy);border-radius:14px;background:#fff;color:var(--navy);
+  padding:8px 18px;min-height:56px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 3px 0 #C5D0DC}
+.bigtab .n{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;font-size:17px}
+.bigtab:hover{background:#FFF3E0}
+.bigtab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 0 #BF360C}
+.bigtab[aria-selected="true"] .n{background:#fff;color:var(--accent)}
+@media (min-width:1500px){.bigtab{font-size:23px;min-height:62px}}
+@media (max-width:600px){.bigtab{font-size:17px;padding:6px 12px}.bigtab .long{display:none}}
+main.offstage{position:absolute!important;left:-400vw!important;top:0!important;width:100vw!important;height:100vh!important;visibility:hidden!important;pointer-events:none!important}   /* ② kept laid out (canvases keep their size) while ① is shown */
+#steps{display:none;flex:1;min-height:0;padding:12px 16px}
+#steps.on{display:flex}
+#steps .sbox{background:#fff;border:1px solid var(--line,#DDE6F0);border-radius:14px;width:100%;display:flex;flex-direction:column;overflow:hidden}
+#steps .shead{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);display:flex;align-items:center;gap:12px;padding:8px 14px}
+#steps .shead h3{margin:0;font-size:1.1rem;font-weight:600;flex:1}
+#steps .sbody{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(280px,1fr);gap:14px;padding:14px;overflow:auto;min-height:0}
+#steps .sstage{aspect-ratio:16/9;border:1px solid var(--line,#DDE6F0);border-radius:10px;overflow:hidden;align-self:start;position:relative}
+#steps .sstage #stepCv{position:absolute;inset:0;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;display:block;border:none!important;margin:0!important}
+#steps .sexp{font-size:.98rem;line-height:1.45;overflow:auto}
+#steps .snum{color:var(--muted,#606A72);font-size:.85rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+#steps .sexp h4{margin:.15em 0 .45em;color:var(--navy);font-size:1.2rem}
+#steps .sexp p{margin:.4em 0}
+#steps .eqline{background:#F7F9FC;border-left:4px solid var(--navy);padding:6px 10px;margin:.5em 0;border-radius:4px;font-weight:600}
+#steps .think{background:#FFF3E0;border-left:4px solid var(--accent);padding:6px 10px;margin:.6em 0;border-radius:4px}
+#steps .oops{background:#FFEBEE;border-left:4px solid #C62828;padding:6px 10px;margin:.6em 0;border-radius:4px}
+#steps .tryit{background:#E3F2FD;border-left:4px solid #1565C0;padding:6px 10px;margin:.6em 0;border-radius:4px}
+#steps .sbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--line,#DDE6F0);background:#F7F9FC}
+#steps .dots{display:flex;gap:6px;flex:1;justify-content:center;flex-wrap:wrap}
+#steps .dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--navy);background:#fff;color:var(--navy);font:600 .85rem/1 inherit;cursor:pointer;padding:0}
+#steps .dot.done{background:#E3F2FD}
+#steps .dot.on{background:var(--navy);color:#fff}
+#steps .switch{display:inline-flex;align-items:center;gap:6px}
+body.steps-on > nav{display:none!important}   /* a simulation's own scenario bar is not needed on ① */
+#steps .sstage{justify-self:center;width:100%}
+.startover{position:absolute;inset:0;display:grid;place-items:center;background:rgba(31,58,95,.35);border:none;cursor:pointer;font:inherit}
+.startover span{background:var(--accent);color:#fff;font-size:26px;font-weight:700;border-radius:16px;padding:16px 30px;box-shadow:0 6px 0 #BF360C}
+.startover[hidden]{display:none}
+.gosim{font:inherit;font-size:22px;font-weight:700;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:12px 22px;margin-top:10px;cursor:pointer;box-shadow:0 4px 0 #BF360C;width:100%}
+@media (max-width:900px){#steps .sbody{grid-template-columns:1fr}#steps .dots{order:-1;flex-basis:100%}#steps .dot{width:26px;height:26px}#steps .sbar .btn{min-height:40px;padding:4px 10px}#steps{padding:8px}}
+/* ==== STEPTABS CSS END ==== */
 </style>
 </head>
 <body>
@@ -366,7 +408,30 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   <div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
 </header>
 
-<main>
+<!-- ==== STEPTABS MARKUP START (14 Nov 2026) ==== -->
+<div class="bigtabs" role="tablist" aria-label="Step by step or simulation">
+  <button class="bigtab" role="tab" id="tabSteps" aria-selected="true" aria-controls="steps"><span class="n">1</span><span>▶ Step by step<span class="long">: the physics</span></span></button>
+  <button class="bigtab" role="tab" id="tabSim" aria-selected="false" aria-controls="simMain"><span class="n">2</span>🔬 Simulation</button>
+</div>
+<div id="steps" role="tabpanel" aria-labelledby="tabSteps">
+  <div class="sbox">
+    <div class="shead"><h3 id="stepsTitle">Step by step: a mass hanging on two threads</h3></div>
+    <div class="sbody">
+      <div class="sstage"><canvas id="stepCv" width="1280" height="720" aria-label="Animation: a mass hanging on two threads"></canvas>
+        <button class="startover" id="stepStart" aria-label="Start the animation"><span>▶ Start the animation</span></button></div>
+      <div class="sexp" id="stepExp" aria-live="polite"></div>
+    </div>
+    <div class="sbar">
+      <button class="btn" id="stepPrev">◀ Back</button>
+      <button class="btn primary" id="stepPlay">▶ Play</button>
+      <button class="btn" id="stepNext">Next ▶</button>
+      <div class="dots" id="stepDots"></div>
+      <label class="switch" title="Carry on into the next step without stopping"><input type="checkbox" id="stepAuto"> Play all</label>
+    </div>
+  </div>
+</div>
+<!-- ==== STEPTABS MARKUP END ==== -->
+<main id="simMain" class="offstage" role="tabpanel" aria-labelledby="tabSim">
   <section class="left">
     <div class="card scenecard">
       <div class="cardhead">
@@ -434,7 +499,8 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   <div class="box">
     <h3 id="helpTitle">How to use this simulation</h3>
     <ol>
-      <li>Choose an <b>example</b> at the top: 🧪 lab (a string between two clamp stands) · 🐦 bird on a wire · 🚶 tightrope walker ·
+      <li data-steptabs>Start with <b>① Step by step</b> (the first big tab): an animation explains the physics one step at a time. Then explore in <b>② Simulation</b>.</li>
+<li>Choose an <b>example</b> at the top: 🧪 lab (a string between two clamp stands) · 🐦 bird on a wire · 🚶 tightrope walker ·
         🏮 lantern · 🚦 traffic light · 🪧 sign · 🧺 washing line. The <b>Example</b> list below has more set-ups for each one.</li>
       <li>Set the mass <i>m</i> and the angles θ<sub>L</sub> and θ<sub>R</sub> of the threads <b>below the horizontal</b> with <b>▼ ▲</b>
         (hold to go faster; ↑ ↓ keys or the mouse wheel in the box, Shift = ×10) or type a value; <b>↺</b> puts it back. Tick
@@ -1840,6 +1906,337 @@ function frame(now){
 requestAnimationFrame(frame);
 /* NEWTON HOOK */ NEWTON.hook();
 </script>
+<script>/* ==== STEPTABS JS START (shared kit + this simulation's scene + stepper) ==== */
+/* ==== STEPKIT START (14 Nov 2026: shared animation kit for the ① Step by step tab; built from Sim 03's InclineAnim) ==== */
+function StepKit(cv, S){
+"use strict";
+const ctx = cv.getContext("2d");
+const FONT = '"Segoe UI",Calibri,Carlito,"Helvetica Neue",Arial,sans-serif';
+const C = { W:"#2A5D8A", Wc:"#5B9BD5", Wt:"#2F6DB0", N:"#2E7D32", F:"#C62828", P:"#6A1B9A", T:"#6A1B9A", D:"#AD1457", V:"#1565C0", A:"#E65100",
+            ink:"#263238", muted:"#606A72", navy:"#1F3A5F", line:"#DDE6F0", soft:"#F7F9FC",
+            wood:"#FFCC80", woodEdge:"#8D5A1E", bench:"#8D6E63", benchTop:"#E8DCC4", metal:"#546E7A", water:"#BBDEFB" };
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const ease = x => { x = clamp(x); return x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; };
+const prog = (t, a, b) => ease((t - a) / (b - a));
+const fade = (t, a, b, c = 1e9, d = 1e9) => Math.min(clamp((t - a) / (b - a)), 1 - clamp((t - c) / (d - c)));
+const lin = (t, a, b) => clamp((t - a) / (b - a));
+const rad = d => d * Math.PI / 180;
+const f1 = x => x.toFixed(1), f2 = x => x.toFixed(2), f0 = x => x.toFixed(0);
+const sf3 = x => { const a = Math.abs(x); return a >= 100 ? x.toFixed(0) : a >= 10 ? x.toFixed(1) : a >= 1 ? x.toFixed(2) : x.toFixed(3); };
+
+function rich(str, x, y, size, color, align = "left", weight = "") {
+  const parts = []; const re = /(_\{[^}]*\}|\^\{[^}]*\})/g; let last = 0, mm;
+  str = String(str);
+  while ((mm = re.exec(str))) { if (mm.index > last) parts.push([str.slice(last, mm.index), 0]);
+    parts.push([mm[0].slice(2, -1), mm[0][0] === "_" ? 1 : -1]); last = re.lastIndex; }
+  if (last < str.length) parts.push([str.slice(last), 0]);
+  const meas = parts.map(([s, k]) => { ctx.font = `${weight} ${k ? size * .68 : size}px ${FONT}`; return ctx.measureText(s).width; });
+  const tot = meas.reduce((a, b) => a + b, 0);
+  let cx = align === "center" ? x - tot / 2 : align === "right" ? x - tot : x;
+  ctx.fillStyle = color; ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
+  parts.forEach(([s, k], i) => { ctx.font = `${weight} ${k ? size * .68 : size}px ${FONT}`;
+    ctx.fillText(s, cx, y + (k === 1 ? size * .28 : k === -1 ? -size * .42 : 0)); cx += meas[i]; });
+  return tot;
+}
+const textW = (str, size, weight = "600") => rich(str, -9999, -9999, size, "#0000", "left", weight);
+function roundRect(x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function arrow(x, y, dx, dy, color, alpha = 1, w = 5, dash = null) {
+  const L = Math.hypot(dx, dy); if (L < 2 || alpha <= 0) return;
+  const ux = dx / L, uy = dy / L, hl = Math.min(20, L * .45), hw = hl * .55;
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = w; ctx.lineCap = "round";
+  if (dash) ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + dx - ux * hl * .8, y + dy - uy * hl * .8); ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x + dx, y + dy);
+  ctx.lineTo(x + dx - ux * hl - uy * hw, y + dy - uy * hl + ux * hw);
+  ctx.lineTo(x + dx - ux * hl + uy * hw, y + dy - uy * hl - ux * hw); ctx.closePath(); ctx.fill(); ctx.restore();
+}
+function label(str, x, y, color, alpha = 1, size = 22) {
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha;
+  const w = textW(str, size);
+  ctx.fillStyle = "rgba(255,255,255,.88)"; roundRect(x - w / 2 - 5, y - size * .9, w + 10, size * 1.3, 6); ctx.fill();
+  rich(str, x, y, size, color, "center", "600"); ctx.restore();
+}
+function text(str, x, y, size = 20, color = C.ink, align = "left", weight = "", alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; rich(str, x, y, size, color, align, weight); ctx.restore();
+}
+function line(x1, y1, x2, y2, color = C.ink, w = 2, dash = null, alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.strokeStyle = color; ctx.lineWidth = w; ctx.lineCap = "round";
+  if (dash) ctx.setLineDash(dash); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.restore();
+}
+function poly(pts, stroke, w = 2, fill = null, alpha = 1, dash = null) {
+  if (alpha <= 0 || pts.length < 2) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = w; ctx.lineJoin = "round"; if (dash) ctx.setLineDash(dash); ctx.stroke(); } ctx.restore();
+}
+function circle(x, y, r, fill, stroke = null, w = 2, alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = w; ctx.stroke(); } ctx.restore();
+}
+function box(cx, cy, w, h, fill = C.wood, edge = C.woodEdge, rot = 0, alpha = 1, txt = null) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.translate(cx, cy); ctx.rotate(rot);
+  ctx.fillStyle = fill; ctx.strokeStyle = edge; ctx.lineWidth = 3; roundRect(-w / 2, -h / 2, w, h, 6); ctx.fill(); ctx.stroke();
+  if (txt) rich(txt, 0, 7, 20, C.ink, "center", "700"); ctx.restore();
+}
+function dot(x, y, r = 5, col = C.ink) { circle(x, y, r, col); }
+// an angle arc at (x, y) from angle a0 to a1 (radians, screen), with a label
+function angle(x, y, r, a0, a1, str, color = C.A, alpha = 1, size = 24) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.strokeStyle = color; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(x, y, r, Math.min(a0, a1), Math.max(a0, a1)); ctx.stroke();
+  const am = (a0 + a1) / 2; if (str) rich(str, x + (r + 22) * Math.cos(am), y + (r + 22) * Math.sin(am) + 8, size, color, "center", "700"); ctx.restore();
+}
+function bench(y, x0 = 0, x1 = 770) { ctx.fillStyle = C.bench; ctx.fillRect(x0, y, x1 - x0, 26); ctx.fillStyle = C.benchTop; ctx.fillRect(x0, y, x1 - x0, 6); }
+function spring(x1, y1, x2, y2, coils = 10, width = 18, color = C.metal, alpha = 1) {
+  const L = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / L, uy = (y2 - y1) / L, nx = -uy, ny = ux, pts = [[x1, y1]];
+  const lead = Math.min(14, L * .1);
+  pts.push([x1 + ux * lead, y1 + uy * lead]);
+  for (let i = 0; i <= coils * 2; i++) { const s = lead + (L - 2 * lead) * i / (coils * 2), o = i === 0 || i === coils * 2 ? 0 : (i % 2 ? width : -width) / 2;
+    pts.push([x1 + ux * s + nx * o, y1 + uy * s + ny * o]); }
+  pts.push([x2, y2]); poly(pts, color, 3, null, alpha);
+}
+// a small graph: g = {x, y, w, h, xmax, ymin, ymax, xlab, ylab, ticks}; series drawn with plot(g, f, xTo, col)
+function axes(g, alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha;
+  ctx.fillStyle = "#fff"; ctx.fillRect(g.x, g.y, g.w, g.h); ctx.strokeStyle = "#B0BEC5"; ctx.lineWidth = 1; ctx.strokeRect(g.x, g.y, g.w, g.h);
+  const ymin = g.ymin || 0, zy = g.y + g.h - (0 - ymin) / (g.ymax - ymin) * g.h;
+  ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(g.x, g.y); ctx.lineTo(g.x, g.y + g.h); ctx.moveTo(g.x, zy); ctx.lineTo(g.x + g.w, zy); ctx.stroke();
+  rich(g.xlab || "", g.x + g.w, zy + 22, 17, C.muted, "right", "600");
+  rich(g.ylab || "", g.x + 6, g.y + 18, 17, C.muted, "left", "600");
+  ctx.restore();
+}
+function gpt(g, xv, yv) { const ymin = g.ymin || 0; return [g.x + xv / g.xmax * g.w, g.y + g.h - (yv - ymin) / (g.ymax - ymin) * g.h]; }
+function plot(g, f, xTo, col, w = 3, alpha = 1, x0 = 0, dash = null) {
+  if (xTo <= x0) return; const pts = []; const n = 80;
+  for (let i = 0; i <= n; i++) { const xv = x0 + (xTo - x0) * i / n; pts.push(gpt(g, xv, f(xv))); } poly(pts, col, w, null, alpha, dash);
+}
+// bars: list of [value, max, colour, label] drawn as vertical bars
+function bars(x, y, h, list, bw = 70, gap = 26, alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha;
+  list.forEach(([v, max, col, lab, val], i) => { const bx = x + i * (bw + gap), bh = h * clamp(v / max);
+    ctx.fillStyle = "#ECEFF1"; ctx.fillRect(bx, y - h, bw, h); ctx.fillStyle = col; ctx.fillRect(bx, y - bh, bw, bh);
+    rich(lab, bx + bw / 2, y + 26, 19, C.ink, "center", "600"); if (val) rich(val, bx + bw / 2, y - bh - 8, 17, col, "center", "600"); });
+  ctx.restore();
+}
+
+/* ---------- frame: title strip, scene, panel of numbers, caption bar, summary ---------- */
+const PANEL = Object.assign({ X: 790, Y: 78, W: 466, H: 516 }, S.panel || {});
+function draw(t) {
+  t = clamp(t, 0, S.T_END);
+  ctx.setTransform(cv.width / 1280, 0, 0, cv.height / 720, 0, 0);
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, 1280, 720);
+  ctx.fillStyle = C.soft; ctx.fillRect(0, 0, 1280, 56); ctx.fillStyle = C.line; ctx.fillRect(0, 56, 1280, 1);
+  rich(S.title, 24, 37, 26, C.navy, "left", "700");
+  const chNow = S.CH.filter(c => c.t <= t + 1e-6).pop();
+  rich(chNow.name, 1256, 36, 20, C.muted, "right", "600");
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 57, S.panel === false ? 1280 : 780, 565); ctx.clip();
+  S.scene(t, K); ctx.restore();
+  if (S.panel !== false) drawPanel(t);
+  drawCaption(t);
+  if (S.summary && t >= S.summary.t) drawSummary(t);
+}
+function drawPanel(t) {
+  const { X, Y, W, H } = PANEL;
+  ctx.fillStyle = C.soft; roundRect(X, Y, W, H, 14); ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 1.5; ctx.stroke();
+  rich(S.panelTitle || "The numbers", X + 20, Y + 34, 21, C.navy, "left", "700");
+  let y = Y + 72;
+  (S.rows ? S.rows(t, K) : []).forEach(r => { if (!r) return; const [t0, s, col, sz = 21] = r; const a = fade(t, t0, t0 + 1);
+    if (a > 0) { ctx.save(); ctx.globalAlpha = a; rich(s, X + 20, y, sz, col || C.ink, "left", sz > 19 ? "600" : ""); ctx.restore(); }
+    y += sz > 19 ? 38 : 32; });
+  if (S.panelExtra) S.panelExtra(t, K, { X, Y, W, H, yNext: y });
+}
+function drawCaption(t) {
+  const c = S.CAP.find(([a, b]) => t >= a && t < b) || S.CAP[S.CAP.length - 1];
+  const a = Math.min(clamp((t - c[0]) / .4), 1 - clamp((t - (c[1] - .3)) / .3));
+  ctx.fillStyle = C.navy; ctx.fillRect(0, 622, 1280, 98); ctx.fillStyle = C.A; ctx.fillRect(0, 622, 1280, 4);
+  ctx.save(); ctx.globalAlpha = Math.max(a, t >= S.T_END - .5 ? 1 : 0);
+  rich(c[2], 640, 663, 25, "#fff", "center", "600"); rich(c[3] || "", 640, 700, 23, "#E3F2FD", "center", "");
+  ctx.restore();
+}
+function drawSummary(t) {
+  const sm = S.summary, a = fade(t, sm.t, sm.t + 1.2);
+  ctx.save(); ctx.globalAlpha = a;
+  ctx.fillStyle = "rgba(242,245,249,.94)"; ctx.fillRect(0, 57, 1280, 565);
+  const X = 70, Y = 82, w = 1140, h = 520;
+  ctx.fillStyle = "#fff"; roundRect(X, Y, w, h, 16); ctx.fill(); ctx.strokeStyle = C.navy; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = C.navy; roundRect(X, Y, w, 54, 16); ctx.fill(); ctx.fillRect(X, Y + 30, w, 24);
+  rich(sm.title, X + 28, Y + 37, 26, "#fff", "left", "700");
+  const gap = Math.min(66, 440 / sm.items.length);
+  sm.items.forEach(([s, col], i) => { const ai = fade(t, sm.t + 1 + i * 1.2, sm.t + 2 + i * 1.2); ctx.save(); ctx.globalAlpha = a * ai;
+    const y = Y + 112 + i * gap;
+    ctx.fillStyle = col || C.ink; ctx.beginPath(); ctx.arc(X + 46, y - 8, 17, 0, 7); ctx.fill();
+    rich(String(i + 1), X + 46, y, 20, "#fff", "center", "700");
+    rich(s, X + 80, y, sm.size || 24, C.ink, "left", ""); ctx.restore(); });
+  ctx.restore();
+}
+const K = { ctx, C, FONT, clamp, ease, prog, fade, lin, rad, f0, f1, f2, sf3, rich, textW, roundRect, arrow, label, text, line, poly, circle, box, dot, angle, bench, spring, axes, gpt, plot, bars };
+return { draw, T_END: S.T_END, CH: S.CH, CAP: S.CAP, K };
+}
+/* ==== STEPKIT END ==== */
+
+/* ==== SCENE 24 Hanging on two threads ==== */
+const STEPSPEC = (function(){
+  const g = 9.81, m = .500, W = m * g, rad = d => d * Math.PI / 180;
+  const T20 = W / (2 * Math.sin(rad(20)));                                   // 7.17 N
+  const TL = W * Math.cos(rad(50)) / Math.sin(rad(70)), TR = W * Math.cos(rad(20)) / Math.sin(rad(70));   // 20° and 50°: 3.36 N, 4.91 N
+  const mb = .030, Tb = mb * g / (2 * Math.sin(rad(3)));                     // bird: 2.81 N
+  const T_END = 66;
+  const CH = [{t:0, name:"1 The set-up"}, {t:5, name:"2 Forces at the knot"}, {t:12, name:"3 Resolve the tensions"}, {t:20, name:"4 Solve for T"},
+              {t:27, name:"5 Flatter threads"}, {t:35, name:"6 Unequal angles"}, {t:45, name:"7 A bird on a wire"}, {t:55, name:"Summary"}];
+  const CAP = [
+    [0, 5, "A 500 g mass hangs from the middle of a thread tied to two stands.", "Each half of the thread makes 20° with the horizontal."],
+    [5, 12, "At the knot three forces act: the weight W down and the two tensions along the threads.", "The mass is at rest, so the three forces must balance: ΣF = 0."],
+    [12, 20, "Resolve each tension: horizontal part T cos θ, vertical part T sin θ.", "The horizontal parts cancel; the two vertical parts hold up the weight."],
+    [20, 27, "Vertical:  2T sin θ = mg  ⇒  T = mg / (2 sin θ) = 4.91 / (2 × 0.342) = 7.17 N.", "Each tension is bigger than the whole weight!"],
+    [27, 35, "Make the threads flatter: sin θ gets smaller, so T gets bigger.", "At 30°: T = mg. At 10°: T = 2.9 mg. Straight (0°) is impossible."],
+    [35, 45, "Unequal angles (20° and 50°): two unknowns, two equations.", "T_{L} cos 20° = T_{R} cos 50°  and  T_{L} sin 20° + T_{R} sin 50° = mg."],
+    [45, 55, "A 30 g bird on a wire that dips only 3°:", "T = mg / (2 sin 3°) = 2.81 N: almost 10 times its weight."],
+    [55, 66, "Summary: resolve horizontally and vertically; ΣF = 0 in each direction.", "Pause here and copy the key equations."]];
+  const K0 = { x: 390, y: 280 };
+  const angNow = t => t < 27 ? 20 : t < 35 ? 20 + (t < 31 ? 10 * K_e((t - 27) / 2) : 10 - 20 * K_e((t - 31) / 2)) : 20;
+  const K_e = x => { x = Math.max(0, Math.min(1, x)); return x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; };
+  function scene(t, K){
+    const { C, fade, prog, arrow, label, text, line, box, circle, ctx, angle, rich } = K;
+    const bird = t >= 45 && t < 55;
+    const aL = bird ? 3 : t >= 35 && t < 45 ? 20 : angNow(t), aR = bird ? 3 : t >= 35 && t < 45 ? 50 : angNow(t);
+    const SL = 120, SR = 660, ky = K0.y;
+    // the knot sits where both threads meet; stands at fixed x, knot height from the angles
+    const hL = (K0.x - SL) * Math.tan(rad(aL)), hR = (SR - K0.x) * Math.tan(rad(aR));
+    const yL = ky - hL, yR = ky - hR;
+    ctx.fillStyle = "#546E7A"; ctx.fillRect(SL - 8, Math.min(yL, 130) - 10, 10, 560); ctx.fillRect(SR - 2, Math.min(yR, 130) - 10, 10, 560);
+    if (bird) { line(SL, yL, SR, yR, "#455A64", 3); line(SL, yL, K0.x, ky, "#455A64", 3); line(K0.x, ky, SR, yR, "#455A64", 3);
+      text("🐦", K0.x - 24, ky - 4, 46); } else {
+      line(SL, yL, K0.x, ky, "#8D6E63", 3); line(K0.x, ky, SR, yR, "#8D6E63", 3);
+      line(K0.x, ky, K0.x, ky + 50, "#455A64", 2); box(K0.x, ky + 80, 60, 60, "#B0BEC5", "#546E7A", 0, 1, "500 g"); }
+    circle(K0.x, ky, 6, C.ink);
+    angle(SL, yL, 70, 0, rad(aL), aL + "°", C.ink, fade(t, 1, 2), 19);
+    angle(SR, yR, 70, Math.PI - rad(aR), Math.PI, aR + "°", C.ink, fade(t, 1, 2), 19);
+    const mm = bird ? mb : m, w = mm * g;
+    let tl, tr; if (bird) { tl = tr = Tb; } else if (t >= 35 && t < 45) { tl = TL; tr = TR; } else { tl = tr = w / (2 * Math.sin(rad(aL))); }
+    const k = bird ? 40 : 22, ga = prog(t, 5.5, 8);
+    arrow(K0.x, ky, 0, w * (bird ? 200 : k) * ga, C.W, 1, 6); label(bird ? "W = 0.29 N" : "W = mg", K0.x + 60, ky + w * (bird ? 200 : k) * ga - 4, C.W, fade(t, 7, 8));
+    const L = { x: -Math.cos(rad(aL)), y: -Math.sin(rad(aL)) }, R = { x: Math.cos(rad(aR)), y: -Math.sin(rad(aR)) };
+    const tk = Math.min(k, 230 / Math.max(tl, tr));
+    arrow(K0.x, ky, L.x * tl * tk * ga, L.y * tl * tk * ga, C.T, 1, 6); label("T_{L}", K0.x + L.x * tl * tk - 10, K0.y + L.y * tl * tk - 16, C.T, fade(t, 8, 9));
+    arrow(K0.x, ky, R.x * tr * tk * ga, R.y * tr * tk * ga, C.T, 1, 6); label("T_{R}", K0.x + R.x * tr * tk + 10, K0.y + R.y * tr * tk - 16, C.T, fade(t, 8, 9));
+    if (t >= 12 && t < 27) { const a = fade(t, 12.5, 13.5);
+      arrow(K0.x, ky, L.x * tl * tk, 0, C.T, a * .6, 4, [6, 5]); arrow(K0.x, ky, 0, L.y * tl * tk, C.T, a * .6, 4, [6, 5]);
+      arrow(K0.x, ky, R.x * tr * tk, 0, C.T, a * .6, 4, [6, 5]);
+      label("T cos θ", K0.x + L.x * tl * tk / 2, ky + 30, C.T, a, 18); label("T cos θ", K0.x + R.x * tr * tk / 2, ky + 30, C.T, a, 18);
+      label("2T sin θ", K0.x + 70, ky + L.y * tl * tk + 10, C.T, a, 18); }
+    if (t >= 27 && t < 35) { ctx.fillStyle = "rgba(255,255,255,.92)"; K.roundRect(470, 420, 280, 110, 12); ctx.fill();
+      rich("θ = " + Math.round(aL) + "°", 610, 458, 24, C.ink, "center", "700"); rich("T = " + (w / (2 * Math.sin(rad(aL)))).toFixed(1) + " N = " + (1 / (2 * Math.sin(rad(aL)))).toFixed(1) + " mg", 610, 498, 22, C.T, "center", "700"); }
+  }
+  const P = { m:"#606A72", W:"#2A5D8A", T:"#6A1B9A", A:"#E65100", i:"#263238" };
+  const rows = t => t < 45 ? [
+    [0, "m = 0.500 kg,  θ = 20° each side", P.m, 18],
+    [5, "W = mg = 4.91 N", P.W],
+    [12, "horizontal:  T_{L} cos θ = T_{R} cos θ", P.T],
+    [14, "vertical:  2T sin θ = mg", P.T],
+    [20, "T = 4.91 / (2 sin 20°) = " + T20.toFixed(2) + " N", P.T],
+    [27, "30°: T = mg = 4.91 N;  10°: T = 14.1 N", P.A, 19],
+    [35, "20° & 50°:  T_{L} = " + TL.toFixed(2) + " N,  T_{R} = " + TR.toFixed(2) + " N", P.T, 19]] : [
+    [45, "bird: m = 0.030 kg,  θ = 3°", P.m, 18],
+    [46, "W = 0.294 N", P.W],
+    [47, "T = 0.294 / (2 sin 3°) = " + Tb.toFixed(2) + " N", P.T]];
+  return { stepTitle: "a mass hanging on two threads", title: "Hanging on two threads", T_END, CH, CAP, scene, rows,
+    summary: { t: 55, title: "Two threads: what to remember", items: [
+      ["At rest: the forces at the knot balance, ΣF = 0.", P.i],
+      ["Resolve each tension:  T cos θ horizontally,  T sin θ vertically (θ from the horizontal).", P.T],
+      ["Horizontal: the horizontal parts are equal and opposite.", P.T],
+      ["Vertical: the vertical parts add up to mg;  equal angles:  T = mg / (2 sin θ).", P.W],
+      ["Flatter threads → bigger tension; a perfectly straight thread is impossible.", P.A],
+      ["Unequal angles: solve two equations for the two unknowns.", P.i]] } };
+})();
+const STEPTEXT = [
+  { h: "The set-up", body: `<p>A 500 g mass hangs from the middle of a thread between two stands. Each half of the thread makes 20° with the horizontal.</p>
+    <div class="think">🤔 <b>Think:</b> is the tension in each half bigger or smaller than the weight, 4.91 N?</div>` },
+  { h: "Forces at the knot", body: `<p>Three forces act at the knot: the weight (down) and the two tensions (along the threads, away from the knot). The mass is at rest, so ΣF = 0.</p>` },
+  { h: "Resolve the tensions", body: `<p>Resolve each tension horizontally and vertically (θ measured from the horizontal):</p>
+    <div class="eqline">horizontal: T<sub>L</sub> cos θ = T<sub>R</sub> cos θ &nbsp;⇒&nbsp; T<sub>L</sub> = T<sub>R</sub> = T<br>vertical: 2T sin θ = mg</div>` },
+  { h: "Solve for T", body: `<div class="eqline">T = mg/(2 sin θ) = 4.91/(2 × 0.342) = 7.17 N</div>
+    <p>Each tension is <b>bigger than the whole weight</b>, because only its small vertical part helps to hold the mass up.</p>
+    <div class="oops">⚠ <b>Common mistake:</b> using cos θ for the vertical part. Check which angle you were given: here θ is from the horizontal.</div>` },
+  { h: "Flatter threads", body: `<p>As the threads get flatter, sin θ gets smaller and T gets bigger: 30° gives T = mg; 10° gives T = 2.9 mg = 14.1 N. A perfectly straight thread would need an infinite tension.</p>` },
+  { h: "Unequal angles", body: `<p>With 20° and 50° there are two unknown tensions and two equations:</p>
+    <div class="eqline">T<sub>L</sub> cos 20° = T<sub>R</sub> cos 50°<br>T<sub>L</sub> sin 20° + T<sub>R</sub> sin 50° = 4.91 N</div>
+    <p>Solving: T<sub>L</sub> = 3.36 N, T<sub>R</sub> = 4.91 N. The steeper thread carries more of the weight.</p>` },
+  { h: "A bird on a wire", body: `<p>A 30 g bird sits on a wire that dips only 3° each side:</p><div class="eqline">T = 0.294/(2 sin 3°) = 2.81 N ≈ 10 × its weight</div>
+    <div class="tryit">🔬 <b>Try it:</b> in ② Simulation, make the angle smaller until the cotton thread breaks; plot T against 1/sin θ.</div>` },
+  { h: "Summary", body: `<ol><li>At rest: ΣF = 0 at the knot.</li><li>Resolve: T cos θ horizontally, T sin θ vertically.</li>
+    <li>Equal angles: T = mg/(2 sin θ).</li><li>Flatter → larger T.</li></ol>` }];
+
+/* ==== STEPPER START: ① Step by step / ② Simulation tabs; each step plays its part of the animation, then waits for Next ▶ ==== */
+(function(){
+  const $s = id => document.getElementById(id);
+  const A = StepKit($s("stepCv"), STEPSPEC), STEPS = STEPTEXT;
+  const seg = i => [A.CH[i].t, i + 1 < A.CH.length ? A.CH[i + 1].t : A.T_END];
+  let step = 0, t = 0, playing = false, last = 0, seen = new Set(), started = false;
+  const dots = $s("stepDots");
+  STEPS.forEach((s, i) => { const b = document.createElement("button"); b.className = "dot"; b.textContent = i + 1;
+    b.title = s.h; b.setAttribute("aria-label", "Step " + (i + 1) + ": " + s.h); b.onclick = () => { hideStart(); go(i); }; dots.appendChild(b); });
+  function show(){
+    const s = STEPS[step], lastStep = step === STEPS.length - 1;
+    $s("stepExp").innerHTML = `<div class="snum">Step ${step + 1} of ${STEPS.length}</div><h4>${s.h}</h4>${s.body}` +
+      (lastStep ? `<button class="gosim" onclick="showTab('sim')">Now try it yourself → ② Simulation</button>` : "");
+    [...dots.children].forEach((d, i) => { d.classList.toggle("on", i === step); d.classList.toggle("done", seen.has(i) && i !== step); });
+    $s("stepPrev").disabled = step === 0; $s("stepNext").disabled = lastStep;
+    btn();
+  }
+  function btn(){ const [, e] = seg(step); $s("stepPlay").textContent = playing ? "⏸ Pause" : (t >= e - .4 ? "⟲ Replay step" : "▶ Play"); }
+  function go(i){ step = Math.max(0, Math.min(STEPS.length - 1, i)); seen.add(step); t = seg(step)[0] + .01; show(); A.draw(t); play(); }
+  function play(){ if (playing) return; playing = true; last = performance.now(); requestAnimationFrame(tick); btn(); }
+  function stop(){ playing = false; btn(); }
+  function tick(now){
+    if (!playing) return;
+    t += (now - last) / 1000; last = now;
+    const [, e] = seg(step);
+    if (t >= ($s("stepAuto").checked ? e : e - .4)) {
+      if ($s("stepAuto").checked && step < STEPS.length - 1) { step++; seen.add(step); show(); }
+      else { t = step === STEPS.length - 1 ? A.T_END : e - .4; A.draw(t); stop(); return; }
+    }
+    A.draw(t); requestAnimationFrame(tick);
+  }
+  function hideStart(){ started = true; $s("stepStart").hidden = true; }
+  $s("stepPlay").onclick = () => { hideStart(); if (playing) stop(); else { const [s0, e] = seg(step); if (t >= e - .4) t = s0 + .01; play(); } };
+  $s("stepPrev").onclick = () => { hideStart(); go(step - 1); };
+  $s("stepNext").onclick = () => { hideStart(); go(step + 1); };
+  $s("stepStart").onclick = () => { hideStart(); seen = new Set(); go(0); };
+  function showTab(which){
+    const sim = which === "sim";
+    $s("steps").classList.toggle("on", !sim); $s("simMain").classList.toggle("offstage", !sim);
+    $s("tabSteps").setAttribute("aria-selected", String(!sim)); $s("tabSim").setAttribute("aria-selected", String(sim));
+    document.body.classList.toggle("steps-on", !sim);
+    if (sim) { stop(); window.dispatchEvent(new Event("resize")); }
+    else { fitStage(); if (!started) { step = 0; t = seg(0)[0] + .01; show(); A.draw(t); } }
+    window.scrollTo(0, 0);
+  }
+  // on laptops and boards the animation and its buttons fit on one screen (16:9 stage sized to the height left)
+  function fitStage(){
+    const st = document.querySelector("#steps .sstage"); if (!st || !$s("steps").classList.contains("on")) return;
+    if (innerWidth < 900) { st.style.width = ""; return; }
+    st.style.width = "";
+    const top = st.getBoundingClientRect().top + scrollY, bar = document.querySelector("#steps .sbar").offsetHeight;
+    const avail = innerHeight - top - bar - 26, full = st.getBoundingClientRect().width;
+    st.style.width = Math.max(420, Math.min(full, avail * 16 / 9)) + "px";
+  }
+  addEventListener("resize", fitStage);
+  window.showTab = showTab;
+  $s("tabSteps").onclick = () => showTab("steps");
+  $s("tabSim").onclick = () => showTab("sim");
+  [$s("tabSteps"), $s("tabSim")].forEach(b => b.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") { e.preventDefault(); const o = b.id === "tabSteps" ? $s("tabSim") : $s("tabSteps"); o.focus(); o.click(); } }));
+  document.addEventListener("keydown", e => { if (!$s("steps").classList.contains("on") || (e.target.closest && e.target.closest(".bigtab, input, select, textarea"))) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); if (!started) $s("stepStart").click(); else go(step + 1); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); hideStart(); go(step - 1); } });
+  window.stepsOpen = i => { showTab("steps"); hideStart(); go(i || 0); };   // also used by the headless tests
+  window.stepAnim = A;
+  const want = () => showTab(/(^|#)sim\b/.test(location.hash) ? "sim" : "steps");
+  want(); window.addEventListener("hashchange", want);
+})();
+/* ==== STEPPER END ==== */
+
+/* ==== STEPTABS JS END ==== */</script>
 <script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
 </html>

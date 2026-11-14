@@ -22,6 +22,7 @@
     9 DATA      recorded trials and analysis graphs with best-fit lines
    10 TASKS     data-driven task list (predict / numeric / do)
    11 UI        controls, events, storage, main loop
+  + STEP BY STEP TABS (14 Nov 2026: ① Step by step animation opens first, ② Simulation; #sim opens ②)
 -->
 <style>
 /* ============================ 1 STYLE ============================ */
@@ -327,6 +328,47 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   #help .box{max-height:85dvh;padding:14px 16px}
 }
 /* ==== PHONE CSS END ==== */
+/* ==== STEPTABS CSS START (14 Nov 2026: ① Step by step · ② Simulation, as in Sim 03) ==== */
+.bigtabs{display:flex;gap:10px;padding:10px 16px 0;flex-wrap:wrap}
+.bigtab{font:inherit;font-size:20px;font-weight:700;border:2px solid var(--navy);border-radius:14px;background:#fff;color:var(--navy);
+  padding:8px 18px;min-height:56px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 3px 0 #C5D0DC}
+.bigtab .n{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;font-size:17px}
+.bigtab:hover{background:#FFF3E0}
+.bigtab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 0 #BF360C}
+.bigtab[aria-selected="true"] .n{background:#fff;color:var(--accent)}
+@media (min-width:1500px){.bigtab{font-size:23px;min-height:62px}}
+@media (max-width:600px){.bigtab{font-size:17px;padding:6px 12px}.bigtab .long{display:none}}
+main.offstage{position:absolute!important;left:-400vw!important;top:0!important;width:100vw!important;height:100vh!important;visibility:hidden!important;pointer-events:none!important}   /* ② kept laid out (canvases keep their size) while ① is shown */
+#steps{display:none;flex:1;min-height:0;padding:12px 16px}
+#steps.on{display:flex}
+#steps .sbox{background:#fff;border:1px solid var(--line,#DDE6F0);border-radius:14px;width:100%;display:flex;flex-direction:column;overflow:hidden}
+#steps .shead{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);display:flex;align-items:center;gap:12px;padding:8px 14px}
+#steps .shead h3{margin:0;font-size:1.1rem;font-weight:600;flex:1}
+#steps .sbody{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(280px,1fr);gap:14px;padding:14px;overflow:auto;min-height:0}
+#steps .sstage{aspect-ratio:16/9;border:1px solid var(--line,#DDE6F0);border-radius:10px;overflow:hidden;align-self:start;position:relative}
+#steps .sstage #stepCv{position:absolute;inset:0;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;display:block;border:none!important;margin:0!important}
+#steps .sexp{font-size:.98rem;line-height:1.45;overflow:auto}
+#steps .snum{color:var(--muted,#606A72);font-size:.85rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+#steps .sexp h4{margin:.15em 0 .45em;color:var(--navy);font-size:1.2rem}
+#steps .sexp p{margin:.4em 0}
+#steps .eqline{background:#F7F9FC;border-left:4px solid var(--navy);padding:6px 10px;margin:.5em 0;border-radius:4px;font-weight:600}
+#steps .think{background:#FFF3E0;border-left:4px solid var(--accent);padding:6px 10px;margin:.6em 0;border-radius:4px}
+#steps .oops{background:#FFEBEE;border-left:4px solid #C62828;padding:6px 10px;margin:.6em 0;border-radius:4px}
+#steps .tryit{background:#E3F2FD;border-left:4px solid #1565C0;padding:6px 10px;margin:.6em 0;border-radius:4px}
+#steps .sbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--line,#DDE6F0);background:#F7F9FC}
+#steps .dots{display:flex;gap:6px;flex:1;justify-content:center;flex-wrap:wrap}
+#steps .dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--navy);background:#fff;color:var(--navy);font:600 .85rem/1 inherit;cursor:pointer;padding:0}
+#steps .dot.done{background:#E3F2FD}
+#steps .dot.on{background:var(--navy);color:#fff}
+#steps .switch{display:inline-flex;align-items:center;gap:6px}
+body.steps-on > nav{display:none!important}   /* a simulation's own scenario bar is not needed on ① */
+#steps .sstage{justify-self:center;width:100%}
+.startover{position:absolute;inset:0;display:grid;place-items:center;background:rgba(31,58,95,.35);border:none;cursor:pointer;font:inherit}
+.startover span{background:var(--accent);color:#fff;font-size:26px;font-weight:700;border-radius:16px;padding:16px 30px;box-shadow:0 6px 0 #BF360C}
+.startover[hidden]{display:none}
+.gosim{font:inherit;font-size:22px;font-weight:700;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:12px 22px;margin-top:10px;cursor:pointer;box-shadow:0 4px 0 #BF360C;width:100%}
+@media (max-width:900px){#steps .sbody{grid-template-columns:1fr}#steps .dots{order:-1;flex-basis:100%}#steps .dot{width:26px;height:26px}#steps .sbar .btn{min-height:40px;padding:4px 10px}#steps{padding:8px}}
+/* ==== STEPTABS CSS END ==== */
 </style>
 </head>
 <body>
@@ -346,7 +388,30 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   <div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
 </header>
 
-<main>
+<!-- ==== STEPTABS MARKUP START (14 Nov 2026) ==== -->
+<div class="bigtabs" role="tablist" aria-label="Step by step or simulation">
+  <button class="bigtab" role="tab" id="tabSteps" aria-selected="true" aria-controls="steps"><span class="n">1</span><span>▶ Step by step<span class="long">: the physics</span></span></button>
+  <button class="bigtab" role="tab" id="tabSim" aria-selected="false" aria-controls="simMain"><span class="n">2</span>🔬 Simulation</button>
+</div>
+<div id="steps" role="tabpanel" aria-labelledby="tabSteps">
+  <div class="sbox">
+    <div class="shead"><h3 id="stepsTitle">Step by step: power</h3></div>
+    <div class="sbody">
+      <div class="sstage"><canvas id="stepCv" width="1280" height="720" aria-label="Animation: power"></canvas>
+        <button class="startover" id="stepStart" aria-label="Start the animation"><span>▶ Start the animation</span></button></div>
+      <div class="sexp" id="stepExp" aria-live="polite"></div>
+    </div>
+    <div class="sbar">
+      <button class="btn" id="stepPrev">◀ Back</button>
+      <button class="btn primary" id="stepPlay">▶ Play</button>
+      <button class="btn" id="stepNext">Next ▶</button>
+      <div class="dots" id="stepDots"></div>
+      <label class="switch" title="Carry on into the next step without stopping"><input type="checkbox" id="stepAuto"> Play all</label>
+    </div>
+  </div>
+</div>
+<!-- ==== STEPTABS MARKUP END ==== -->
+<main id="simMain" class="offstage" role="tabpanel" aria-labelledby="tabSim">
   <section class="left">
     <div class="card scenecard">
       <div class="cardhead">
@@ -414,7 +479,8 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   <div class="box">
     <h3 id="helpTitle">How to use this simulation</h3>
     <ol>
-      <li>Choose an <b>example</b> at the top: 🏃 who is the most powerful on the stairs? · 🚗 a car driving up a hill · 🛗 a lift motor.</li>
+      <li data-steptabs>Start with <b>① Step by step</b> (the first big tab): an animation explains the physics one step at a time. Then explore in <b>② Simulation</b>.</li>
+<li>Choose an <b>example</b> at the top: 🏃 who is the most powerful on the stairs? · 🚗 a car driving up a hill · 🛗 a lift motor.</li>
       <li>Pick a <b>preset</b> (class demo, slide examples, cards, exit questions) or set the values yourself. Set a value with <b>▼ ▲</b> or type it in the box.</li>
       <li>Set each value with <b>▼</b> and <b>▲</b> (hold to go faster; the <b>↑ ↓</b> keys or the mouse wheel in the box also work, Shift = ×10), or <b>type a value</b> in the box. <b>↺</b> puts it back to its start value. Outside the classroom range the box turns <b>amber ⚠</b>: fine to explore, but the lab can't do this.</li>
       <li>Move the pointer over any <b>graph</b> (or tap it): a dashed line shows the values where it cuts each curve, or the values of the nearest data point.</li>
@@ -1779,6 +1845,336 @@ function frame(now){
 requestAnimationFrame(frame);
 /* NEWTON HOOK */ NEWTON.hook();
 </script>
+<script>/* ==== STEPTABS JS START (shared kit + this simulation's scene + stepper) ==== */
+/* ==== STEPKIT START (14 Nov 2026: shared animation kit for the ① Step by step tab; built from Sim 03's InclineAnim) ==== */
+function StepKit(cv, S){
+"use strict";
+const ctx = cv.getContext("2d");
+const FONT = '"Segoe UI",Calibri,Carlito,"Helvetica Neue",Arial,sans-serif';
+const C = { W:"#2A5D8A", Wc:"#5B9BD5", Wt:"#2F6DB0", N:"#2E7D32", F:"#C62828", P:"#6A1B9A", T:"#6A1B9A", D:"#AD1457", V:"#1565C0", A:"#E65100",
+            ink:"#263238", muted:"#606A72", navy:"#1F3A5F", line:"#DDE6F0", soft:"#F7F9FC",
+            wood:"#FFCC80", woodEdge:"#8D5A1E", bench:"#8D6E63", benchTop:"#E8DCC4", metal:"#546E7A", water:"#BBDEFB" };
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const ease = x => { x = clamp(x); return x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; };
+const prog = (t, a, b) => ease((t - a) / (b - a));
+const fade = (t, a, b, c = 1e9, d = 1e9) => Math.min(clamp((t - a) / (b - a)), 1 - clamp((t - c) / (d - c)));
+const lin = (t, a, b) => clamp((t - a) / (b - a));
+const rad = d => d * Math.PI / 180;
+const f1 = x => x.toFixed(1), f2 = x => x.toFixed(2), f0 = x => x.toFixed(0);
+const sf3 = x => { const a = Math.abs(x); return a >= 100 ? x.toFixed(0) : a >= 10 ? x.toFixed(1) : a >= 1 ? x.toFixed(2) : x.toFixed(3); };
+
+function rich(str, x, y, size, color, align = "left", weight = "") {
+  const parts = []; const re = /(_\{[^}]*\}|\^\{[^}]*\})/g; let last = 0, mm;
+  str = String(str);
+  while ((mm = re.exec(str))) { if (mm.index > last) parts.push([str.slice(last, mm.index), 0]);
+    parts.push([mm[0].slice(2, -1), mm[0][0] === "_" ? 1 : -1]); last = re.lastIndex; }
+  if (last < str.length) parts.push([str.slice(last), 0]);
+  const meas = parts.map(([s, k]) => { ctx.font = `${weight} ${k ? size * .68 : size}px ${FONT}`; return ctx.measureText(s).width; });
+  const tot = meas.reduce((a, b) => a + b, 0);
+  let cx = align === "center" ? x - tot / 2 : align === "right" ? x - tot : x;
+  ctx.fillStyle = color; ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
+  parts.forEach(([s, k], i) => { ctx.font = `${weight} ${k ? size * .68 : size}px ${FONT}`;
+    ctx.fillText(s, cx, y + (k === 1 ? size * .28 : k === -1 ? -size * .42 : 0)); cx += meas[i]; });
+  return tot;
+}
+const textW = (str, size, weight = "600") => rich(str, -9999, -9999, size, "#0000", "left", weight);
+function roundRect(x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function arrow(x, y, dx, dy, color, alpha = 1, w = 5, dash = null) {
+  const L = Math.hypot(dx, dy); if (L < 2 || alpha <= 0) return;
+  const ux = dx / L, uy = dy / L, hl = Math.min(20, L * .45), hw = hl * .55;
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = w; ctx.lineCap = "round";
+  if (dash) ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + dx - ux * hl * .8, y + dy - uy * hl * .8); ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x + dx, y + dy);
+  ctx.lineTo(x + dx - ux * hl - uy * hw, y + dy - uy * hl + ux * hw);
+  ctx.lineTo(x + dx - ux * hl + uy * hw, y + dy - uy * hl - ux * hw); ctx.closePath(); ctx.fill(); ctx.restore();
+}
+function label(str, x, y, color, alpha = 1, size = 22) {
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha;
+  const w = textW(str, size);
+  ctx.fillStyle = "rgba(255,255,255,.88)"; roundRect(x - w / 2 - 5, y - size * .9, w + 10, size * 1.3, 6); ctx.fill();
+  rich(str, x, y, size, color, "center", "600"); ctx.restore();
+}
+function text(str, x, y, size = 20, color = C.ink, align = "left", weight = "", alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; rich(str, x, y, size, color, align, weight); ctx.restore();
+}
+function line(x1, y1, x2, y2, color = C.ink, w = 2, dash = null, alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.strokeStyle = color; ctx.lineWidth = w; ctx.lineCap = "round";
+  if (dash) ctx.setLineDash(dash); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.restore();
+}
+function poly(pts, stroke, w = 2, fill = null, alpha = 1, dash = null) {
+  if (alpha <= 0 || pts.length < 2) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = w; ctx.lineJoin = "round"; if (dash) ctx.setLineDash(dash); ctx.stroke(); } ctx.restore();
+}
+function circle(x, y, r, fill, stroke = null, w = 2, alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = w; ctx.stroke(); } ctx.restore();
+}
+function box(cx, cy, w, h, fill = C.wood, edge = C.woodEdge, rot = 0, alpha = 1, txt = null) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.translate(cx, cy); ctx.rotate(rot);
+  ctx.fillStyle = fill; ctx.strokeStyle = edge; ctx.lineWidth = 3; roundRect(-w / 2, -h / 2, w, h, 6); ctx.fill(); ctx.stroke();
+  if (txt) rich(txt, 0, 7, 20, C.ink, "center", "700"); ctx.restore();
+}
+function dot(x, y, r = 5, col = C.ink) { circle(x, y, r, col); }
+// an angle arc at (x, y) from angle a0 to a1 (radians, screen), with a label
+function angle(x, y, r, a0, a1, str, color = C.A, alpha = 1, size = 24) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.strokeStyle = color; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(x, y, r, Math.min(a0, a1), Math.max(a0, a1)); ctx.stroke();
+  const am = (a0 + a1) / 2; if (str) rich(str, x + (r + 22) * Math.cos(am), y + (r + 22) * Math.sin(am) + 8, size, color, "center", "700"); ctx.restore();
+}
+function bench(y, x0 = 0, x1 = 770) { ctx.fillStyle = C.bench; ctx.fillRect(x0, y, x1 - x0, 26); ctx.fillStyle = C.benchTop; ctx.fillRect(x0, y, x1 - x0, 6); }
+function spring(x1, y1, x2, y2, coils = 10, width = 18, color = C.metal, alpha = 1) {
+  const L = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / L, uy = (y2 - y1) / L, nx = -uy, ny = ux, pts = [[x1, y1]];
+  const lead = Math.min(14, L * .1);
+  pts.push([x1 + ux * lead, y1 + uy * lead]);
+  for (let i = 0; i <= coils * 2; i++) { const s = lead + (L - 2 * lead) * i / (coils * 2), o = i === 0 || i === coils * 2 ? 0 : (i % 2 ? width : -width) / 2;
+    pts.push([x1 + ux * s + nx * o, y1 + uy * s + ny * o]); }
+  pts.push([x2, y2]); poly(pts, color, 3, null, alpha);
+}
+// a small graph: g = {x, y, w, h, xmax, ymin, ymax, xlab, ylab, ticks}; series drawn with plot(g, f, xTo, col)
+function axes(g, alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha;
+  ctx.fillStyle = "#fff"; ctx.fillRect(g.x, g.y, g.w, g.h); ctx.strokeStyle = "#B0BEC5"; ctx.lineWidth = 1; ctx.strokeRect(g.x, g.y, g.w, g.h);
+  const ymin = g.ymin || 0, zy = g.y + g.h - (0 - ymin) / (g.ymax - ymin) * g.h;
+  ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(g.x, g.y); ctx.lineTo(g.x, g.y + g.h); ctx.moveTo(g.x, zy); ctx.lineTo(g.x + g.w, zy); ctx.stroke();
+  rich(g.xlab || "", g.x + g.w, zy + 22, 17, C.muted, "right", "600");
+  rich(g.ylab || "", g.x + 6, g.y + 18, 17, C.muted, "left", "600");
+  ctx.restore();
+}
+function gpt(g, xv, yv) { const ymin = g.ymin || 0; return [g.x + xv / g.xmax * g.w, g.y + g.h - (yv - ymin) / (g.ymax - ymin) * g.h]; }
+function plot(g, f, xTo, col, w = 3, alpha = 1, x0 = 0, dash = null) {
+  if (xTo <= x0) return; const pts = []; const n = 80;
+  for (let i = 0; i <= n; i++) { const xv = x0 + (xTo - x0) * i / n; pts.push(gpt(g, xv, f(xv))); } poly(pts, col, w, null, alpha, dash);
+}
+// bars: list of [value, max, colour, label] drawn as vertical bars
+function bars(x, y, h, list, bw = 70, gap = 26, alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha;
+  list.forEach(([v, max, col, lab, val], i) => { const bx = x + i * (bw + gap), bh = h * clamp(v / max);
+    ctx.fillStyle = "#ECEFF1"; ctx.fillRect(bx, y - h, bw, h); ctx.fillStyle = col; ctx.fillRect(bx, y - bh, bw, bh);
+    rich(lab, bx + bw / 2, y + 26, 19, C.ink, "center", "600"); if (val) rich(val, bx + bw / 2, y - bh - 8, 17, col, "center", "600"); });
+  ctx.restore();
+}
+
+/* ---------- frame: title strip, scene, panel of numbers, caption bar, summary ---------- */
+const PANEL = Object.assign({ X: 790, Y: 78, W: 466, H: 516 }, S.panel || {});
+function draw(t) {
+  t = clamp(t, 0, S.T_END);
+  ctx.setTransform(cv.width / 1280, 0, 0, cv.height / 720, 0, 0);
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, 1280, 720);
+  ctx.fillStyle = C.soft; ctx.fillRect(0, 0, 1280, 56); ctx.fillStyle = C.line; ctx.fillRect(0, 56, 1280, 1);
+  rich(S.title, 24, 37, 26, C.navy, "left", "700");
+  const chNow = S.CH.filter(c => c.t <= t + 1e-6).pop();
+  rich(chNow.name, 1256, 36, 20, C.muted, "right", "600");
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 57, S.panel === false ? 1280 : 780, 565); ctx.clip();
+  S.scene(t, K); ctx.restore();
+  if (S.panel !== false) drawPanel(t);
+  drawCaption(t);
+  if (S.summary && t >= S.summary.t) drawSummary(t);
+}
+function drawPanel(t) {
+  const { X, Y, W, H } = PANEL;
+  ctx.fillStyle = C.soft; roundRect(X, Y, W, H, 14); ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 1.5; ctx.stroke();
+  rich(S.panelTitle || "The numbers", X + 20, Y + 34, 21, C.navy, "left", "700");
+  let y = Y + 72;
+  (S.rows ? S.rows(t, K) : []).forEach(r => { if (!r) return; const [t0, s, col, sz = 21] = r; const a = fade(t, t0, t0 + 1);
+    if (a > 0) { ctx.save(); ctx.globalAlpha = a; rich(s, X + 20, y, sz, col || C.ink, "left", sz > 19 ? "600" : ""); ctx.restore(); }
+    y += sz > 19 ? 38 : 32; });
+  if (S.panelExtra) S.panelExtra(t, K, { X, Y, W, H, yNext: y });
+}
+function drawCaption(t) {
+  const c = S.CAP.find(([a, b]) => t >= a && t < b) || S.CAP[S.CAP.length - 1];
+  const a = Math.min(clamp((t - c[0]) / .4), 1 - clamp((t - (c[1] - .3)) / .3));
+  ctx.fillStyle = C.navy; ctx.fillRect(0, 622, 1280, 98); ctx.fillStyle = C.A; ctx.fillRect(0, 622, 1280, 4);
+  ctx.save(); ctx.globalAlpha = Math.max(a, t >= S.T_END - .5 ? 1 : 0);
+  rich(c[2], 640, 663, 25, "#fff", "center", "600"); rich(c[3] || "", 640, 700, 23, "#E3F2FD", "center", "");
+  ctx.restore();
+}
+function drawSummary(t) {
+  const sm = S.summary, a = fade(t, sm.t, sm.t + 1.2);
+  ctx.save(); ctx.globalAlpha = a;
+  ctx.fillStyle = "rgba(242,245,249,.94)"; ctx.fillRect(0, 57, 1280, 565);
+  const X = 70, Y = 82, w = 1140, h = 520;
+  ctx.fillStyle = "#fff"; roundRect(X, Y, w, h, 16); ctx.fill(); ctx.strokeStyle = C.navy; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = C.navy; roundRect(X, Y, w, 54, 16); ctx.fill(); ctx.fillRect(X, Y + 30, w, 24);
+  rich(sm.title, X + 28, Y + 37, 26, "#fff", "left", "700");
+  const gap = Math.min(66, 440 / sm.items.length);
+  sm.items.forEach(([s, col], i) => { const ai = fade(t, sm.t + 1 + i * 1.2, sm.t + 2 + i * 1.2); ctx.save(); ctx.globalAlpha = a * ai;
+    const y = Y + 112 + i * gap;
+    ctx.fillStyle = col || C.ink; ctx.beginPath(); ctx.arc(X + 46, y - 8, 17, 0, 7); ctx.fill();
+    rich(String(i + 1), X + 46, y, 20, "#fff", "center", "700");
+    rich(s, X + 80, y, sm.size || 24, C.ink, "left", ""); ctx.restore(); });
+  ctx.restore();
+}
+const K = { ctx, C, FONT, clamp, ease, prog, fade, lin, rad, f0, f1, f2, sf3, rich, textW, roundRect, arrow, label, text, line, poly, circle, box, dot, angle, bench, spring, axes, gpt, plot, bars };
+return { draw, T_END: S.T_END, CH: S.CH, CAP: S.CAP, K };
+}
+/* ==== STEPKIT END ==== */
+
+/* ==== SCENE 21 Power: P = ΔW/Δt = Fv ==== */
+const STEPSPEC = (function(){
+  const g = 9.81, ms = 60, n = 16, hs = .17, H = n * hs, ts = 8, eta = .25;
+  const W = ms * g * H, P = W / ts, Pin = P / eta, P4 = W / 4;                       // 2.72 m, 1601 J, 200 W, 800 W, 400 W
+  const mc = 1200, th = 5 * Math.PI / 180, Fr = 500, v = 20, Pmax = 60e3;
+  const Fflat = Fr, Pflat = Fflat * v, Fhill = Fr + mc * g * Math.sin(th), Phill = Fhill * v, vTop = Pmax / Fhill;   // 10 kW; 1526 N, 30.5 kW, 39 m/s
+  const T_END = 64;
+  const CH = [{t:0, name:"1 The stair race"}, {t:6, name:"2 Work done"}, {t:13, name:"3 Power = work / time"}, {t:20, name:"4 Run instead of walk"},
+              {t:27, name:"5 Muscle efficiency"}, {t:34, name:"6 P = Fv"}, {t:43, name:"7 Up a hill"}, {t:53, name:"Summary"}];
+  const CAP = [
+    [0, 6, "A 60 kg student walks up 16 stairs, each 0.17 m high, in 8.0 s.", "How much power does she develop?"],
+    [6, 13, "Height gained: h = 16 × 0.17 = 2.72 m.", "Work done against gravity = gain in E_{p}: W = mgh = 60 × 9.81 × 2.72 = 1601 J."],
+    [13, 20, "Power is the rate of doing work: P = W/t = 1601 / 8.0 = 200 W.", "1 W = 1 J s^{−1}: 200 J of work every second."],
+    [20, 27, "Running up in 4.0 s: the SAME work, 1601 J, in half the time.", "P = 1601 / 4.0 = 400 W: twice the power."],
+    [27, 34, "Muscles are only about 25 % efficient: to give 200 W of useful power", "the body uses 200 / 0.25 = 800 W; the other 600 W heats her up."],
+    [34, 43, "A car at a constant 20 m s^{−1} on a flat road: resistive forces 500 N.", "Constant speed ⇒ driving force = 500 N, and P = Fv = 500 × 20 = 10 kW."],
+    [43, 53, "Up a 5° hill: driving force = 500 + mg sin 5° = 500 + 1026 = 1526 N;", "P = Fv = 1526 × 20 = 30.5 kW. With 60 kW the top speed is 60 000 / 1526 = 39 m s^{−1}."],
+    [53, 64, "Summary: P = W/t = Fv, in watts.", "Pause here and copy the key equations."]];
+  function stairs(K, t) {
+    const { C, fade, prog, text, line, ctx, arrow, label } = K;
+    const x0 = 50, y0 = 540, sw = 24, sh = 22;   // one step: 0.17 m high
+    ctx.fillStyle = "#BCAAA4"; ctx.beginPath(); ctx.moveTo(x0, y0);
+    for (let i = 0; i < n; i++) { ctx.lineTo(x0 + i * sw, y0 - (i + 1) * sh); ctx.lineTo(x0 + (i + 1) * sw, y0 - (i + 1) * sh); }
+    ctx.lineTo(x0 + n * sw, y0); ctx.fill();
+    const run = t >= 20 && t < 27, dur = run ? 4 : 8, t0 = run ? 20.5 : .5, p = t < 6 ? prog(t, .5, 5.5) : run ? prog(t, 21, 25) : 1;
+    const i = Math.min(n, p * n), px = x0 + i * sw - 10, py = y0 - Math.ceil(i) * sh;
+    // a stick figure
+    ctx.save(); ctx.strokeStyle = "#263238"; ctx.lineWidth = 4; ctx.lineCap = "round"; const sway = Math.sin(p * n * Math.PI) * 8;
+    ctx.beginPath(); ctx.arc(px, py - 70, 10, 0, 7); ctx.moveTo(px, py - 60); ctx.lineTo(px, py - 28); ctx.moveTo(px, py - 28); ctx.lineTo(px - 8 + sway, py);
+    ctx.moveTo(px, py - 28); ctx.lineTo(px + 8 - sway, py - 6); ctx.moveTo(px, py - 52); ctx.lineTo(px - 12 - sway, py - 34); ctx.moveTo(px, py - 52); ctx.lineTo(px + 12 + sway, py - 36); ctx.stroke(); ctx.restore();
+    text("⏱ " + (p * dur).toFixed(1) + " s", 620, 120, 24, C.navy, "center", "700");
+    if (t >= 6) { line(x0 + n * sw + 20, y0, x0 + n * sw + 20, y0 - n * sh, C.N, 3); text("h = 2.72 m", x0 + n * sw + 30, y0 - n * sh / 2, 19, C.N, "left", "700"); }
+  }
+  function car(K, t, hill) {
+    const { C, fade, prog, text, line, ctx, arrow, label } = K;
+    const ang = hill ? 5 * Math.PI / 180 * 3 : 0;   // drawn 3× steeper so it can be seen
+    ctx.save(); ctx.translate(390, 400); ctx.rotate(-ang);
+    ctx.fillStyle = "#90A4AE"; ctx.fillRect(-500, 30, 1000, 14);
+    const off = (t * 60) % 80; for (let i = -6; i < 7; i++) { ctx.fillStyle = "#ECEFF1"; ctx.fillRect(i * 80 - off, 35, 40, 4); }
+    ctx.fillStyle = "#1E88E5"; K.roundRect(-70, -26, 140, 40, 10); ctx.fill(); ctx.fillStyle = "#1565C0"; K.roundRect(-40, -52, 80, 30, 8); ctx.fill();
+    K.circle(-42, 18, 13, "#263238"); K.circle(42, 18, 13, "#263238");
+    const k = .1; arrow(70, -6, (hill ? Fhill : Fr) * k, 0, C.P, 1, 6); label((hill ? "1526 N" : "500 N") + " driving", 70 + (hill ? Fhill : Fr) * k / 2, -26, C.P, 1, 16);
+    arrow(-70, -6, -Fr * k, 0, C.F, 1, 6); label("500 N resistive", -70 - 25, -26, C.F, 1, 16);
+    if (hill) { arrow(0, 0, -mc * g * Math.sin(th) * k, 0, C.W, 1, 6); label("mg sin 5° = 1026 N", -60, 74, C.W, 1, 15); }
+    ctx.restore();
+    text("v = 20 m s^{−1} (constant)", 390, 140, 22, C.V, "center", "700");
+    text("P = Fv = " + (hill ? "1526" : "500") + " × 20 = " + (hill ? "30.5 kW" : "10 kW"), 390, 560, 22, C.P, "center", "700", fade(t, hill ? 45 : 36, hill ? 46 : 37));
+  }
+  function scene(t, K){
+    const { C, fade, bars, text } = K;
+    if (t < 34) { stairs(K, t);
+      if (t >= 27) { bars(590, 520, 220, [[Pin, Pin, "#FB8C00", "input", "800 W"], [P, Pin, C.N, "useful", "200 W"], [Pin - P, Pin, C.F, "heat", "600 W"]], 48, 12, fade(t, 27.5, 28.5)); }
+      return; }
+    car(K, t, t >= 43);
+  }
+  const Pc = { m:"#606A72", N:"#2E7D32", P:"#6A1B9A", F:"#C62828", V:"#1565C0", W:"#2A5D8A", i:"#263238" };
+  const rows = t => [
+    [0, "m = 60 kg,  16 steps × 0.17 m,  t = 8.0 s", Pc.m, 18],
+    [6, "h = 16 × 0.17 = " + H.toFixed(2) + " m", Pc.N],
+    [7, "W = mgh = 60 × 9.81 × 2.72 = " + W.toFixed(0) + " J", Pc.N],
+    [13, "P = W/t = 1601 / 8.0 = " + P.toFixed(0) + " W", Pc.P],
+    [20, "running, 4.0 s:  P = " + P4.toFixed(0) + " W", Pc.P],
+    [27, "input = 200 / 0.25 = " + Pin.toFixed(0) + " W", Pc.F],
+    [34, "car: F = 500 N,  P = Fv = " + (Pflat / 1000).toFixed(0) + " kW", Pc.P],
+    [43, "hill: F = 500 + 1200 × 9.81 × sin 5° = " + Fhill.toFixed(0) + " N", Pc.P, 18],
+    [44, "P = 1526 × 20 = " + (Phill / 1000).toFixed(1) + " kW", Pc.P],
+    [45, "60 kW:  v_{max} = 60 000 / 1526 = " + vTop.toFixed(0) + " m s^{−1}", Pc.V, 19]];
+  return { stepTitle: "power", title: "Power", T_END, CH, CAP, scene, rows,
+    summary: { t: 53, title: "Power: what to remember", items: [
+      ["Power = rate of doing work (or of transferring energy):  P = W/t.", Pc.P],
+      ["Unit: watt, 1 W = 1 J s^{−1}.", Pc.i],
+      ["Lifting:  P = mgh/t.  Same work in less time = more power.", Pc.N],
+      ["At constant velocity:  P = Fv  (F = driving force = resistive forces).", Pc.P],
+      ["Up a hill the driving force must also balance mg sin θ.", Pc.W],
+      ["Efficiency: useful power out = efficiency × power in.", Pc.F]] } };
+})();
+const STEPTEXT = [
+  { h: "The stair race", body: `<p>A 60 kg student walks up 16 stairs, each 0.17 m high, in 8.0 s.</p><div class="think">🤔 <b>Think:</b> if she runs up, does she do more work, or the same work faster?</div>` },
+  { h: "Work done", body: `<div class="eqline">h = 16 × 0.17 = 2.72 m<br>W = mgh = 60 × 9.81 × 2.72 = 1601 J</div><p>Only the vertical height counts, not the length of the stairs.</p>` },
+  { h: "Power = work / time", body: `<div class="eqline">P = W/t = 1601/8.0 = 200 W</div><p>One watt is one joule per second.</p>` },
+  { h: "Run instead of walk", body: `<p>Running up in 4.0 s does the <b>same work</b> (1601 J) in half the time:</p><div class="eqline">P = 1601/4.0 = 400 W</div>
+    <div class="oops">⚠ <b>Common mistake:</b> "running does more work". The work depends on mgh only; the power depends on the time.</div>` },
+  { h: "Muscle efficiency", body: `<p>Muscles are about 25 % efficient:</p><div class="eqline">input power = 200/0.25 = 800 W &nbsp;·&nbsp; wasted (thermal) = 600 W</div>` },
+  { h: "P = Fv", body: `<p>If a force F moves something at a constant speed v, then P = W/t = Fs/t = Fv. A car at a constant 20 m s⁻¹ with 500 N of resistive forces:</p>
+    <div class="eqline">driving force = 500 N (constant v ⇒ ΣF = 0)<br>P = Fv = 500 × 20 = 10 kW</div>` },
+  { h: "Up a hill", body: `<p>Up a 5° hill the engine must also balance the component of the weight down the slope:</p>
+    <div class="eqline">F = 500 + 1200 × 9.81 × sin 5° = 1526 N<br>P = 1526 × 20 = 30.5 kW &nbsp;·&nbsp; with 60 kW: v<sub>max</sub> = 60 000/1526 = 39 m s⁻¹</div>
+    <p>(This assumes the resistive force stays 500 N; really it grows with speed, so the top speed is lower.)</p>
+    <div class="tryit">🔬 <b>Try it:</b> in ② Simulation, time yourself on the stairs and compare your power with the class.</div>` },
+  { h: "Summary", body: `<ol><li>P = W/t, in W = J s⁻¹.</li><li>Lifting: P = mgh/t.</li><li>Constant velocity: P = Fv.</li><li>Useful power = efficiency × input power.</li></ol>` }];
+
+/* ==== STEPPER START: ① Step by step / ② Simulation tabs; each step plays its part of the animation, then waits for Next ▶ ==== */
+(function(){
+  const $s = id => document.getElementById(id);
+  const A = StepKit($s("stepCv"), STEPSPEC), STEPS = STEPTEXT;
+  const seg = i => [A.CH[i].t, i + 1 < A.CH.length ? A.CH[i + 1].t : A.T_END];
+  let step = 0, t = 0, playing = false, last = 0, seen = new Set(), started = false;
+  const dots = $s("stepDots");
+  STEPS.forEach((s, i) => { const b = document.createElement("button"); b.className = "dot"; b.textContent = i + 1;
+    b.title = s.h; b.setAttribute("aria-label", "Step " + (i + 1) + ": " + s.h); b.onclick = () => { hideStart(); go(i); }; dots.appendChild(b); });
+  function show(){
+    const s = STEPS[step], lastStep = step === STEPS.length - 1;
+    $s("stepExp").innerHTML = `<div class="snum">Step ${step + 1} of ${STEPS.length}</div><h4>${s.h}</h4>${s.body}` +
+      (lastStep ? `<button class="gosim" onclick="showTab('sim')">Now try it yourself → ② Simulation</button>` : "");
+    [...dots.children].forEach((d, i) => { d.classList.toggle("on", i === step); d.classList.toggle("done", seen.has(i) && i !== step); });
+    $s("stepPrev").disabled = step === 0; $s("stepNext").disabled = lastStep;
+    btn();
+  }
+  function btn(){ const [, e] = seg(step); $s("stepPlay").textContent = playing ? "⏸ Pause" : (t >= e - .4 ? "⟲ Replay step" : "▶ Play"); }
+  function go(i){ step = Math.max(0, Math.min(STEPS.length - 1, i)); seen.add(step); t = seg(step)[0] + .01; show(); A.draw(t); play(); }
+  function play(){ if (playing) return; playing = true; last = performance.now(); requestAnimationFrame(tick); btn(); }
+  function stop(){ playing = false; btn(); }
+  function tick(now){
+    if (!playing) return;
+    t += (now - last) / 1000; last = now;
+    const [, e] = seg(step);
+    if (t >= ($s("stepAuto").checked ? e : e - .4)) {
+      if ($s("stepAuto").checked && step < STEPS.length - 1) { step++; seen.add(step); show(); }
+      else { t = step === STEPS.length - 1 ? A.T_END : e - .4; A.draw(t); stop(); return; }
+    }
+    A.draw(t); requestAnimationFrame(tick);
+  }
+  function hideStart(){ started = true; $s("stepStart").hidden = true; }
+  $s("stepPlay").onclick = () => { hideStart(); if (playing) stop(); else { const [s0, e] = seg(step); if (t >= e - .4) t = s0 + .01; play(); } };
+  $s("stepPrev").onclick = () => { hideStart(); go(step - 1); };
+  $s("stepNext").onclick = () => { hideStart(); go(step + 1); };
+  $s("stepStart").onclick = () => { hideStart(); seen = new Set(); go(0); };
+  function showTab(which){
+    const sim = which === "sim";
+    $s("steps").classList.toggle("on", !sim); $s("simMain").classList.toggle("offstage", !sim);
+    $s("tabSteps").setAttribute("aria-selected", String(!sim)); $s("tabSim").setAttribute("aria-selected", String(sim));
+    document.body.classList.toggle("steps-on", !sim);
+    if (sim) { stop(); window.dispatchEvent(new Event("resize")); }
+    else { fitStage(); if (!started) { step = 0; t = seg(0)[0] + .01; show(); A.draw(t); } }
+    window.scrollTo(0, 0);
+  }
+  // on laptops and boards the animation and its buttons fit on one screen (16:9 stage sized to the height left)
+  function fitStage(){
+    const st = document.querySelector("#steps .sstage"); if (!st || !$s("steps").classList.contains("on")) return;
+    if (innerWidth < 900) { st.style.width = ""; return; }
+    st.style.width = "";
+    const top = st.getBoundingClientRect().top + scrollY, bar = document.querySelector("#steps .sbar").offsetHeight;
+    const avail = innerHeight - top - bar - 26, full = st.getBoundingClientRect().width;
+    st.style.width = Math.max(420, Math.min(full, avail * 16 / 9)) + "px";
+  }
+  addEventListener("resize", fitStage);
+  window.showTab = showTab;
+  $s("tabSteps").onclick = () => showTab("steps");
+  $s("tabSim").onclick = () => showTab("sim");
+  [$s("tabSteps"), $s("tabSim")].forEach(b => b.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") { e.preventDefault(); const o = b.id === "tabSteps" ? $s("tabSim") : $s("tabSteps"); o.focus(); o.click(); } }));
+  document.addEventListener("keydown", e => { if (!$s("steps").classList.contains("on") || (e.target.closest && e.target.closest(".bigtab, input, select, textarea"))) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); if (!started) $s("stepStart").click(); else go(step + 1); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); hideStart(); go(step - 1); } });
+  window.stepsOpen = i => { showTab("steps"); hideStart(); go(i || 0); };   // also used by the headless tests
+  window.stepAnim = A;
+  const want = () => showTab(/(^|#)sim\b/.test(location.hash) ? "sim" : "steps");
+  want(); window.addEventListener("hashchange", want);
+})();
+/* ==== STEPPER END ==== */
+
+/* ==== STEPTABS JS END ==== */</script>
 <script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
 </html>

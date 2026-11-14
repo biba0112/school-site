@@ -12,8 +12,10 @@
 
   File sections:
     1 STYLE · 2 MARKUP · 3 CONFIG · 4 PHYSICS · 5 RUN · 6 SCENE · 7 FBD · 8 GRAPHS · 9 DATA · 10 TASKS · 11 UI
-  + STEP BY STEP (14 Nov 2026): header button opens an animated 9-step walk-through of the forces (InclineAnim core,
-    shared with Topic A/A2 …/01 Types of forces/Animations/Animation - Forces on an inclined plane.html)
+  + STEP BY STEP (14 Nov 2026): an animated 9-step walk-through of the forces (InclineAnim core,
+    shared with Topic A/A2 …/01 Types of forces/Animations/Animation - Forces on an inclined plane.html).
+    Two big tabs under the header (14 Nov 2026, teacher): ① Step by step (opens first, ▶ Start over step 1) · ② Simulation.
+    #sim in the address opens ② directly.
 -->
 <style>
 /* ============================ 1 STYLE ============================ */
@@ -44,6 +46,7 @@ header .grow{flex:1}
 header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
 
 /* layout: scene + state | FBD (always visible) | tabs; fills the screen height */
+main[hidden]{display:none!important}
 main{flex:1;min-height:500px;display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,1.3fr);
   grid-template-rows:minmax(0,1fr) auto;gap:12px;padding:12px 16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
@@ -262,9 +265,24 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
 }
 /* ==== PHONE CSS END ==== */
 /* ==== STEP BY STEP CSS START (14 Nov 2026: animated walk-through of the forces, ▶ Step by step in the header) ==== */
-#steps{position:fixed;inset:0;background:rgba(31,58,95,.6);display:none;align-items:center;justify-content:center;z-index:20;padding:12px}
+/* two big tabs: ① Step by step · ② Simulation (14 Nov 2026) */
+.bigtabs{display:flex;gap:10px;padding:10px 16px 0;flex-wrap:wrap}
+.bigtab{font:inherit;font-size:20px;font-weight:700;border:2px solid var(--navy);border-radius:14px;background:#fff;color:var(--navy);
+  padding:8px 18px;min-height:56px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 3px 0 #C5D0DC}
+.bigtab .n{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;font-size:17px}
+.bigtab:hover{background:var(--soft)}
+.bigtab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 0 #BF360C}
+.bigtab[aria-selected="true"] .n{background:#fff;color:var(--accent)}
+@media (min-width:1500px){.bigtab{font-size:23px;min-height:62px}}
+@media (max-width:600px){.bigtab{font-size:17px;padding:6px 12px}.bigtab .long{display:none}}
+#steps{display:none;flex:1;min-height:0;padding:12px 16px}
 #steps.on{display:flex}
-#steps .sbox{background:#fff;border-radius:14px;width:100%;max-width:1500px;max-height:96dvh;display:flex;flex-direction:column;overflow:hidden}
+#steps .sbox{background:#fff;border:1px solid var(--line);border-radius:14px;width:100%;display:flex;flex-direction:column;overflow:hidden}
+#steps .sstage{position:relative}
+.startover{position:absolute;inset:0;display:grid;place-items:center;background:rgba(31,58,95,.35);border:none;cursor:pointer;font:inherit}
+.startover span{background:var(--accent);color:#fff;font-size:26px;font-weight:700;border-radius:16px;padding:16px 30px;box-shadow:0 6px 0 #BF360C}
+.startover[hidden]{display:none}
+.gosim{font:inherit;font-size:22px;font-weight:700;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:12px 22px;margin-top:10px;cursor:pointer;box-shadow:0 4px 0 #BF360C;width:100%}
 #steps .shead{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);display:flex;align-items:center;gap:12px;padding:8px 14px}
 #steps .shead h3{margin:0;font-size:1.1rem;font-weight:600;flex:1}
 #steps .shead .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
@@ -284,7 +302,7 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
 #steps .dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--navy);background:#fff;color:var(--navy);font:600 .85rem/1 inherit;cursor:pointer;padding:0}
 #steps .dot.done{background:#E3F2FD}
 #steps .dot.on{background:var(--navy);color:#fff}
-@media (max-width:900px){#steps .sbody{grid-template-columns:1fr}#steps .dots{order:-1;flex-basis:100%}#steps .dot{width:26px;height:26px}#steps .sbar .btn{min-height:40px;padding:4px 10px}#steps{padding:0}#steps .sbox{max-height:100dvh;height:100dvh;border-radius:0}}
+@media (max-width:900px){#steps .sbody{grid-template-columns:1fr}#steps .dots{order:-1;flex-basis:100%}#steps .dot{width:26px;height:26px}#steps .sbar .btn{min-height:40px;padding:4px 10px}#steps{padding:8px}}
 /* ==== STEP BY STEP CSS END ==== */
 </style>
 </head>
@@ -296,12 +314,35 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
     <div class="sub"><a class="home" href="https://school.taneski.com/physics/dp/#A2" title="Back to all A.2 simulations">← All simulations</a> · IBDP Physics SL · A.2 Types of forces · g = 9.81 N kg⁻¹</div>
   </div>
   <div class="grow"></div>
-  <button class="btn" id="stepsBtn" title="Animated walk-through of the forces, one step at a time">▶ Step by step</button>
   <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
   <div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
 </header>
 
-<main>
+<div class="bigtabs" role="tablist" aria-label="Step by step or simulation">
+  <button class="bigtab" role="tab" id="tabSteps" aria-selected="true" aria-controls="steps"><span class="n">1</span><span>▶ Step by step<span class="long">: the forces</span></span></button>
+  <button class="bigtab" role="tab" id="tabSim" aria-selected="false" aria-controls="simMain"><span class="n">2</span>🔬 Simulation</button>
+</div>
+<!-- ==== STEP BY STEP MARKUP START ==== -->
+<div id="steps" role="tabpanel" aria-labelledby="tabSteps">
+  <div class="sbox">
+    <div class="shead"><h3 id="stepsTitle">Step by step: the forces on a block on the incline</h3>
+      </div>
+    <div class="sbody">
+      <div class="sstage"><canvas id="stepCv" width="1280" height="720" aria-label="Animation of the forces on a block on the tilted board"></canvas>
+        <button class="startover" id="stepStart" aria-label="Start the animation"><span>▶ Start the animation</span></button></div>
+      <div class="sexp" id="stepExp" aria-live="polite"></div>
+    </div>
+    <div class="sbar">
+      <button class="btn" id="stepPrev">◀ Back</button>
+      <button class="btn primary" id="stepPlay">⏸ Pause</button>
+      <button class="btn" id="stepNext">Next ▶</button>
+      <div class="dots" id="stepDots"></div>
+      <label class="switch" title="Carry on into the next step without stopping"><input type="checkbox" id="stepAuto"> Play all</label>
+    </div>
+  </div>
+</div>
+<!-- ==== STEP BY STEP MARKUP END ==== -->
+<main id="simMain" role="tabpanel" aria-labelledby="tabSim" hidden>
   <section class="left">
     <div class="card scenecard">
       <div class="cardhead">
@@ -377,7 +418,7 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   <div class="box">
     <h3 id="helpTitle">How to use this simulation</h3>
     <ol>
-      <li>New to this? Press <b>▶ Step by step</b> (top right) first: an animation builds up the forces on the block one step at a time (weight, its components, normal force, friction, slipping) with an explanation of each step. <b>Next ▶</b> moves on; <b>Play all</b> runs it without stopping.</li>
+      <li>Start with <b>① Step by step</b> (the first big tab), then explore in <b>② Simulation</b>. The animation builds up the forces on the block one step at a time (weight, its components, normal force, friction, slipping) with an explanation of each step. <b>Next ▶</b> moves on; <b>Play all</b> runs it without stopping.</li>
       <li>Choose the <b>surfaces</b> and the <b>mass</b> of the block.</li>
       <li>Set each value with <b>▼</b> and <b>▲</b> (hold to go faster; the <b>↑ ↓</b> keys or the mouse wheel in the box also work, Shift = ×10), or <b>type a value</b> in the box. <b>↺</b> puts it back to its start value. Outside the classroom range the box turns <b>amber ⚠</b>: fine to explore, but the lab can't do this.</li>
       <li>Move the pointer over any <b>graph</b> (or tap it): a dashed line shows the values where it cuts each curve, or the values of the nearest data point.</li>
@@ -403,25 +444,7 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   </div>
 </div>
 
-<!-- ==== STEP BY STEP MARKUP START ==== -->
-<div id="steps" role="dialog" aria-modal="true" aria-labelledby="stepsTitle">
-  <div class="sbox">
-    <div class="shead"><h3 id="stepsTitle">Step by step: the forces on a block on the incline</h3>
-      <button class="btn" id="stepsClose" aria-label="Close">✕ Close</button></div>
-    <div class="sbody">
-      <div class="sstage"><canvas id="stepCv" width="1280" height="720" aria-label="Animation of the forces on a block on the tilted board"></canvas></div>
-      <div class="sexp" id="stepExp" aria-live="polite"></div>
-    </div>
-    <div class="sbar">
-      <button class="btn" id="stepPrev">◀ Back</button>
-      <button class="btn primary" id="stepPlay">⏸ Pause</button>
-      <button class="btn" id="stepNext">Next ▶</button>
-      <div class="dots" id="stepDots"></div>
-      <label class="switch" title="Carry on into the next step without stopping"><input type="checkbox" id="stepAuto"> Play all</label>
-    </div>
-  </div>
-</div>
-<!-- ==== STEP BY STEP MARKUP END ==== -->
+
 
 <script>
 "use strict";
@@ -1758,7 +1781,7 @@ return { draw, T_END, CH, CAP };
       <p>The block slips when the friction needed reaches the maximum:</p>
       <div class="eqline">mg sin θ = μ<sub>s</sub> mg cos θ &nbsp;⇒&nbsp; tan θ = μ<sub>s</sub><br>θ = tan⁻¹ 0.70 = 35.0°</div>
       <p><b>m cancels:</b> a heavier block slips at the same angle.</p>
-      <div class="tryit">🔬 <b>Try it:</b> close this window, choose a surface and press ▲ Tilt. Compare θ<sub>slip</sub> with tan⁻¹ μ<sub>s</sub>.</div>`},
+      <div class="tryit">🔬 <b>Try it:</b> later, in <b>② Simulation</b>, choose a surface and press ▲ Tilt. Compare θ<sub>slip</sub> with tan⁻¹ μ<sub>s</sub>.</div>`},
     {h:"Sliding: Newton's 2nd law", body:`
       <p>Once it moves, <b>kinetic friction</b> acts up the slope. It is smaller than the static maximum (11.3 N):</p>
       <div class="eqline">f = μ<sub>d</sub>F<sub>N</sub> = 0.50 × 16.1 = 8.04 N</div>
@@ -1775,7 +1798,8 @@ return { draw, T_END, CH, CAP };
         <li>It slips when tan θ = μ<sub>s</sub>.</li>
         <li>Sliding down: a = g(sin θ − μ<sub>d</sub> cos θ). Without friction a = g sin θ.</li>
       </ol>
-      <div class="tryit">🔬 <b>Now use the simulation:</b> ▶ Release at several angles, ● Record each run, then plot a/cos θ against tan θ in <b>Data &amp; analysis</b>.</div>`}
+      <div class="tryit">🔬 <b>Now use the simulation:</b> ▶ Release at several angles, ● Record each run, then plot a/cos θ against tan θ in <b>Data &amp; analysis</b>.</div>
+      <button class="gosim" onclick="showTab('sim')">Now try it yourself → ② Simulation</button>`}
   ];
   const seg = i => [A.CH[i].t, i + 1 < A.CH.length ? A.CH[i + 1].t : A.T_END];
   let step = 0, t = 0, playing = false, last = 0, seen = new Set();
@@ -1806,15 +1830,31 @@ return { draw, T_END, CH, CAP };
   $s("stepPlay").onclick = () => { if (playing) stop(); else { const [s0, e] = seg(step); if (t >= e - .4) t = s0 + .01; play(); } };
   $s("stepPrev").onclick = () => go(step - 1);
   $s("stepNext").onclick = () => go(step + 1);
-  const close = () => { stop(); $s("steps").classList.remove("on"); };
-  $s("stepsClose").onclick = close;
-  $s("steps").addEventListener("click", e => { if (e.target.id === "steps") close(); });
-  document.addEventListener("keydown", e => { if (!$s("steps").classList.contains("on")) return;
-    if (e.key === "Escape") close();
-    if (e.key === "ArrowRight") { e.preventDefault(); go(step + 1); }
+  // ① Step by step / ② Simulation tabs (14 Nov 2026): the page opens on ①; #sim opens ②
+  let started = false;
+  function showTab(which){
+    const sim = which === "sim";
+    $s("steps").classList.toggle("on", !sim); $s("simMain").hidden = !sim;
+    $s("tabSteps").setAttribute("aria-selected", String(!sim)); $s("tabSim").setAttribute("aria-selected", String(sim));
+    if (sim) { stop(); window.dispatchEvent(new Event("resize")); }
+    else if (!started) { step = 0; t = seg(0)[0] + .01; show(); A.draw(t); }
+    window.scrollTo(0, 0);
+  }
+  window.showTab = showTab;
+  $s("tabSteps").onclick = () => showTab("steps");
+  $s("tabSim").onclick = () => showTab("sim");
+  [$s("tabSteps"), $s("tabSim")].forEach(b => b.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") { e.preventDefault(); const o = b.id === "tabSteps" ? $s("tabSim") : $s("tabSteps"); o.focus(); o.click(); } }));
+  $s("stepStart").onclick = () => { started = true; $s("stepStart").hidden = true; seen = new Set(); go(0); };
+  document.addEventListener("keydown", e => { if (!$s("steps").classList.contains("on") || e.target.closest(".bigtab")) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); if (!started) $s("stepStart").click(); else go(step + 1); }
     if (e.key === "ArrowLeft") { e.preventDefault(); go(step - 1); } });
-  $s("stepsBtn").onclick = () => { $s("steps").classList.add("on"); seen = new Set(); go(0); };
-  window.stepsOpen = i => { $s("steps").classList.add("on"); go(i || 0); };   // also used by the headless test
+  const hideStart = () => { started = true; $s("stepStart").hidden = true; };
+  ["stepNext", "stepPrev", "stepPlay"].forEach(id => $s(id).addEventListener("click", hideStart, true));
+  dots.addEventListener("click", hideStart, true);
+  window.stepsOpen = i => { showTab("steps"); hideStart(); go(i || 0); };   // also used by the headless test
+  showTab(/(^|#)sim\b/.test(location.hash) ? "sim" : "steps");
+  window.addEventListener("hashchange", () => showTab(/(^|#)sim\b/.test(location.hash) ? "sim" : "steps"));
 })();
 /* ==== STEP BY STEP END ==== */
 </script>

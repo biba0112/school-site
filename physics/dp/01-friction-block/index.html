@@ -21,6 +21,7 @@
     9 DATA      recorded trials table
    10 TASKS     data-driven task list (predict / numeric / do)
    11 UI        controls, events, storage, main loop
+  + STEP BY STEP TABS (14 Nov 2026: ① Step by step animation opens first, ② Simulation; #sim opens ②)
 -->
 <style>
 /* ============================ 1 STYLE ============================ */
@@ -268,6 +269,47 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   #help .box{max-height:85dvh;padding:14px 16px}
 }
 /* ==== PHONE CSS END ==== */
+/* ==== STEPTABS CSS START (14 Nov 2026: ① Step by step · ② Simulation, as in Sim 03) ==== */
+.bigtabs{display:flex;gap:10px;padding:10px 16px 0;flex-wrap:wrap}
+.bigtab{font:inherit;font-size:20px;font-weight:700;border:2px solid var(--navy);border-radius:14px;background:#fff;color:var(--navy);
+  padding:8px 18px;min-height:56px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 3px 0 #C5D0DC}
+.bigtab .n{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;font-size:17px}
+.bigtab:hover{background:#FFF3E0}
+.bigtab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 0 #BF360C}
+.bigtab[aria-selected="true"] .n{background:#fff;color:var(--accent)}
+@media (min-width:1500px){.bigtab{font-size:23px;min-height:62px}}
+@media (max-width:600px){.bigtab{font-size:17px;padding:6px 12px}.bigtab .long{display:none}}
+main.offstage{position:absolute!important;left:-400vw!important;top:0!important;width:100vw!important;height:100vh!important;visibility:hidden!important;pointer-events:none!important}   /* ② kept laid out (canvases keep their size) while ① is shown */
+#steps{display:none;flex:1;min-height:0;padding:12px 16px}
+#steps.on{display:flex}
+#steps .sbox{background:#fff;border:1px solid var(--line,#DDE6F0);border-radius:14px;width:100%;display:flex;flex-direction:column;overflow:hidden}
+#steps .shead{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);display:flex;align-items:center;gap:12px;padding:8px 14px}
+#steps .shead h3{margin:0;font-size:1.1rem;font-weight:600;flex:1}
+#steps .sbody{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(280px,1fr);gap:14px;padding:14px;overflow:auto;min-height:0}
+#steps .sstage{aspect-ratio:16/9;border:1px solid var(--line,#DDE6F0);border-radius:10px;overflow:hidden;align-self:start;position:relative}
+#steps .sstage #stepCv{position:absolute;inset:0;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;display:block;border:none!important;margin:0!important}
+#steps .sexp{font-size:.98rem;line-height:1.45;overflow:auto}
+#steps .snum{color:var(--muted,#606A72);font-size:.85rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+#steps .sexp h4{margin:.15em 0 .45em;color:var(--navy);font-size:1.2rem}
+#steps .sexp p{margin:.4em 0}
+#steps .eqline{background:#F7F9FC;border-left:4px solid var(--navy);padding:6px 10px;margin:.5em 0;border-radius:4px;font-weight:600}
+#steps .think{background:#FFF3E0;border-left:4px solid var(--accent);padding:6px 10px;margin:.6em 0;border-radius:4px}
+#steps .oops{background:#FFEBEE;border-left:4px solid #C62828;padding:6px 10px;margin:.6em 0;border-radius:4px}
+#steps .tryit{background:#E3F2FD;border-left:4px solid #1565C0;padding:6px 10px;margin:.6em 0;border-radius:4px}
+#steps .sbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--line,#DDE6F0);background:#F7F9FC}
+#steps .dots{display:flex;gap:6px;flex:1;justify-content:center;flex-wrap:wrap}
+#steps .dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--navy);background:#fff;color:var(--navy);font:600 .85rem/1 inherit;cursor:pointer;padding:0}
+#steps .dot.done{background:#E3F2FD}
+#steps .dot.on{background:var(--navy);color:#fff}
+#steps .switch{display:inline-flex;align-items:center;gap:6px}
+body.steps-on > nav{display:none!important}   /* a simulation's own scenario bar is not needed on ① */
+#steps .sstage{justify-self:center;width:100%}
+.startover{position:absolute;inset:0;display:grid;place-items:center;background:rgba(31,58,95,.35);border:none;cursor:pointer;font:inherit}
+.startover span{background:var(--accent);color:#fff;font-size:26px;font-weight:700;border-radius:16px;padding:16px 30px;box-shadow:0 6px 0 #BF360C}
+.startover[hidden]{display:none}
+.gosim{font:inherit;font-size:22px;font-weight:700;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:12px 22px;margin-top:10px;cursor:pointer;box-shadow:0 4px 0 #BF360C;width:100%}
+@media (max-width:900px){#steps .sbody{grid-template-columns:1fr}#steps .dots{order:-1;flex-basis:100%}#steps .dot{width:26px;height:26px}#steps .sbar .btn{min-height:40px;padding:4px 10px}#steps{padding:8px}}
+/* ==== STEPTABS CSS END ==== */
 </style>
 </head>
 <body>
@@ -282,7 +324,30 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   <div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
 </header>
 
-<main>
+<!-- ==== STEPTABS MARKUP START (14 Nov 2026) ==== -->
+<div class="bigtabs" role="tablist" aria-label="Step by step or simulation">
+  <button class="bigtab" role="tab" id="tabSteps" aria-selected="true" aria-controls="steps"><span class="n">1</span><span>▶ Step by step<span class="long">: the physics</span></span></button>
+  <button class="bigtab" role="tab" id="tabSim" aria-selected="false" aria-controls="simMain"><span class="n">2</span>🔬 Simulation</button>
+</div>
+<div id="steps" role="tabpanel" aria-labelledby="tabSteps">
+  <div class="sbox">
+    <div class="shead"><h3 id="stepsTitle">Step by step: static and kinetic friction on a block</h3></div>
+    <div class="sbody">
+      <div class="sstage"><canvas id="stepCv" width="1280" height="720" aria-label="Animation: static and kinetic friction on a block"></canvas>
+        <button class="startover" id="stepStart" aria-label="Start the animation"><span>▶ Start the animation</span></button></div>
+      <div class="sexp" id="stepExp" aria-live="polite"></div>
+    </div>
+    <div class="sbar">
+      <button class="btn" id="stepPrev">◀ Back</button>
+      <button class="btn primary" id="stepPlay">▶ Play</button>
+      <button class="btn" id="stepNext">Next ▶</button>
+      <div class="dots" id="stepDots"></div>
+      <label class="switch" title="Carry on into the next step without stopping"><input type="checkbox" id="stepAuto"> Play all</label>
+    </div>
+  </div>
+</div>
+<!-- ==== STEPTABS MARKUP END ==== -->
+<main id="simMain" class="offstage" role="tabpanel" aria-labelledby="tabSim">
   <section class="left">
     <div class="card scenecard">
       <div class="cardhead">
@@ -393,7 +458,8 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   <div class="box">
     <h3 id="helpTitle">How to use this simulation</h3>
     <ol>
-      <li>Choose the <b>surfaces</b>, the number of <b>slotted masses</b>, the <b>pull angle</b> and the <b>pull rate</b>.</li>
+      <li data-steptabs>Start with <b>① Step by step</b> (the first big tab): an animation explains the physics one step at a time. Then explore in <b>② Simulation</b>.</li>
+<li>Choose the <b>surfaces</b>, the number of <b>slotted masses</b>, the <b>pull angle</b> and the <b>pull rate</b>.</li>
       <li>Set each value with <b>▼</b> and <b>▲</b> (hold to go faster; the <b>↑ ↓</b> keys or the mouse wheel in the box also work, Shift = ×10), or <b>type a value</b> in the box. <b>↺</b> puts it back to its start value. Outside the classroom range the box turns <b>amber ⚠</b>: fine to explore, but the lab can't do this.</li>
       <li>Move the pointer over any <b>graph</b> (or tap it): a dashed line shows the values where it cuts each curve, or the values of the nearest data point.</li>
       <li>Press <b>▶ Start pull</b>. The pull grows steadily, like pulling a newton meter slowly.
@@ -1413,6 +1479,352 @@ numBoxes([{id:"ang", unit:"°", get:() => set.angle, type:[0, 80]}, {id:"rate", 
 requestAnimationFrame(frame);
 /* NEWTON HOOK */ NEWTON.hook();
 </script>
+<script>/* ==== STEPTABS JS START (shared kit + this simulation's scene + stepper) ==== */
+/* ==== STEPKIT START (14 Nov 2026: shared animation kit for the ① Step by step tab; built from Sim 03's InclineAnim) ==== */
+function StepKit(cv, S){
+"use strict";
+const ctx = cv.getContext("2d");
+const FONT = '"Segoe UI",Calibri,Carlito,"Helvetica Neue",Arial,sans-serif';
+const C = { W:"#2A5D8A", Wc:"#5B9BD5", Wt:"#2F6DB0", N:"#2E7D32", F:"#C62828", P:"#6A1B9A", T:"#6A1B9A", D:"#AD1457", V:"#1565C0", A:"#E65100",
+            ink:"#263238", muted:"#606A72", navy:"#1F3A5F", line:"#DDE6F0", soft:"#F7F9FC",
+            wood:"#FFCC80", woodEdge:"#8D5A1E", bench:"#8D6E63", benchTop:"#E8DCC4", metal:"#546E7A", water:"#BBDEFB" };
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const ease = x => { x = clamp(x); return x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; };
+const prog = (t, a, b) => ease((t - a) / (b - a));
+const fade = (t, a, b, c = 1e9, d = 1e9) => Math.min(clamp((t - a) / (b - a)), 1 - clamp((t - c) / (d - c)));
+const lin = (t, a, b) => clamp((t - a) / (b - a));
+const rad = d => d * Math.PI / 180;
+const f1 = x => x.toFixed(1), f2 = x => x.toFixed(2), f0 = x => x.toFixed(0);
+const sf3 = x => { const a = Math.abs(x); return a >= 100 ? x.toFixed(0) : a >= 10 ? x.toFixed(1) : a >= 1 ? x.toFixed(2) : x.toFixed(3); };
+
+function rich(str, x, y, size, color, align = "left", weight = "") {
+  const parts = []; const re = /(_\{[^}]*\}|\^\{[^}]*\})/g; let last = 0, mm;
+  str = String(str);
+  while ((mm = re.exec(str))) { if (mm.index > last) parts.push([str.slice(last, mm.index), 0]);
+    parts.push([mm[0].slice(2, -1), mm[0][0] === "_" ? 1 : -1]); last = re.lastIndex; }
+  if (last < str.length) parts.push([str.slice(last), 0]);
+  const meas = parts.map(([s, k]) => { ctx.font = `${weight} ${k ? size * .68 : size}px ${FONT}`; return ctx.measureText(s).width; });
+  const tot = meas.reduce((a, b) => a + b, 0);
+  let cx = align === "center" ? x - tot / 2 : align === "right" ? x - tot : x;
+  ctx.fillStyle = color; ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
+  parts.forEach(([s, k], i) => { ctx.font = `${weight} ${k ? size * .68 : size}px ${FONT}`;
+    ctx.fillText(s, cx, y + (k === 1 ? size * .28 : k === -1 ? -size * .42 : 0)); cx += meas[i]; });
+  return tot;
+}
+const textW = (str, size, weight = "600") => rich(str, -9999, -9999, size, "#0000", "left", weight);
+function roundRect(x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function arrow(x, y, dx, dy, color, alpha = 1, w = 5, dash = null) {
+  const L = Math.hypot(dx, dy); if (L < 2 || alpha <= 0) return;
+  const ux = dx / L, uy = dy / L, hl = Math.min(20, L * .45), hw = hl * .55;
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = w; ctx.lineCap = "round";
+  if (dash) ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + dx - ux * hl * .8, y + dy - uy * hl * .8); ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x + dx, y + dy);
+  ctx.lineTo(x + dx - ux * hl - uy * hw, y + dy - uy * hl + ux * hw);
+  ctx.lineTo(x + dx - ux * hl + uy * hw, y + dy - uy * hl - ux * hw); ctx.closePath(); ctx.fill(); ctx.restore();
+}
+function label(str, x, y, color, alpha = 1, size = 22) {
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha;
+  const w = textW(str, size);
+  ctx.fillStyle = "rgba(255,255,255,.88)"; roundRect(x - w / 2 - 5, y - size * .9, w + 10, size * 1.3, 6); ctx.fill();
+  rich(str, x, y, size, color, "center", "600"); ctx.restore();
+}
+function text(str, x, y, size = 20, color = C.ink, align = "left", weight = "", alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; rich(str, x, y, size, color, align, weight); ctx.restore();
+}
+function line(x1, y1, x2, y2, color = C.ink, w = 2, dash = null, alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.strokeStyle = color; ctx.lineWidth = w; ctx.lineCap = "round";
+  if (dash) ctx.setLineDash(dash); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.restore();
+}
+function poly(pts, stroke, w = 2, fill = null, alpha = 1, dash = null) {
+  if (alpha <= 0 || pts.length < 2) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = w; ctx.lineJoin = "round"; if (dash) ctx.setLineDash(dash); ctx.stroke(); } ctx.restore();
+}
+function circle(x, y, r, fill, stroke = null, w = 2, alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = w; ctx.stroke(); } ctx.restore();
+}
+function box(cx, cy, w, h, fill = C.wood, edge = C.woodEdge, rot = 0, alpha = 1, txt = null) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.translate(cx, cy); ctx.rotate(rot);
+  ctx.fillStyle = fill; ctx.strokeStyle = edge; ctx.lineWidth = 3; roundRect(-w / 2, -h / 2, w, h, 6); ctx.fill(); ctx.stroke();
+  if (txt) rich(txt, 0, 7, 20, C.ink, "center", "700"); ctx.restore();
+}
+function dot(x, y, r = 5, col = C.ink) { circle(x, y, r, col); }
+// an angle arc at (x, y) from angle a0 to a1 (radians, screen), with a label
+function angle(x, y, r, a0, a1, str, color = C.A, alpha = 1, size = 24) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.strokeStyle = color; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(x, y, r, Math.min(a0, a1), Math.max(a0, a1)); ctx.stroke();
+  const am = (a0 + a1) / 2; if (str) rich(str, x + (r + 22) * Math.cos(am), y + (r + 22) * Math.sin(am) + 8, size, color, "center", "700"); ctx.restore();
+}
+function bench(y, x0 = 0, x1 = 770) { ctx.fillStyle = C.bench; ctx.fillRect(x0, y, x1 - x0, 26); ctx.fillStyle = C.benchTop; ctx.fillRect(x0, y, x1 - x0, 6); }
+function spring(x1, y1, x2, y2, coils = 10, width = 18, color = C.metal, alpha = 1) {
+  const L = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / L, uy = (y2 - y1) / L, nx = -uy, ny = ux, pts = [[x1, y1]];
+  const lead = Math.min(14, L * .1);
+  pts.push([x1 + ux * lead, y1 + uy * lead]);
+  for (let i = 0; i <= coils * 2; i++) { const s = lead + (L - 2 * lead) * i / (coils * 2), o = i === 0 || i === coils * 2 ? 0 : (i % 2 ? width : -width) / 2;
+    pts.push([x1 + ux * s + nx * o, y1 + uy * s + ny * o]); }
+  pts.push([x2, y2]); poly(pts, color, 3, null, alpha);
+}
+// a small graph: g = {x, y, w, h, xmax, ymin, ymax, xlab, ylab, ticks}; series drawn with plot(g, f, xTo, col)
+function axes(g, alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha;
+  ctx.fillStyle = "#fff"; ctx.fillRect(g.x, g.y, g.w, g.h); ctx.strokeStyle = "#B0BEC5"; ctx.lineWidth = 1; ctx.strokeRect(g.x, g.y, g.w, g.h);
+  const ymin = g.ymin || 0, zy = g.y + g.h - (0 - ymin) / (g.ymax - ymin) * g.h;
+  ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(g.x, g.y); ctx.lineTo(g.x, g.y + g.h); ctx.moveTo(g.x, zy); ctx.lineTo(g.x + g.w, zy); ctx.stroke();
+  rich(g.xlab || "", g.x + g.w, zy + 22, 17, C.muted, "right", "600");
+  rich(g.ylab || "", g.x + 6, g.y + 18, 17, C.muted, "left", "600");
+  ctx.restore();
+}
+function gpt(g, xv, yv) { const ymin = g.ymin || 0; return [g.x + xv / g.xmax * g.w, g.y + g.h - (yv - ymin) / (g.ymax - ymin) * g.h]; }
+function plot(g, f, xTo, col, w = 3, alpha = 1, x0 = 0, dash = null) {
+  if (xTo <= x0) return; const pts = []; const n = 80;
+  for (let i = 0; i <= n; i++) { const xv = x0 + (xTo - x0) * i / n; pts.push(gpt(g, xv, f(xv))); } poly(pts, col, w, null, alpha, dash);
+}
+// bars: list of [value, max, colour, label] drawn as vertical bars
+function bars(x, y, h, list, bw = 70, gap = 26, alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha;
+  list.forEach(([v, max, col, lab, val], i) => { const bx = x + i * (bw + gap), bh = h * clamp(v / max);
+    ctx.fillStyle = "#ECEFF1"; ctx.fillRect(bx, y - h, bw, h); ctx.fillStyle = col; ctx.fillRect(bx, y - bh, bw, bh);
+    rich(lab, bx + bw / 2, y + 26, 19, C.ink, "center", "600"); if (val) rich(val, bx + bw / 2, y - bh - 8, 17, col, "center", "600"); });
+  ctx.restore();
+}
+
+/* ---------- frame: title strip, scene, panel of numbers, caption bar, summary ---------- */
+const PANEL = Object.assign({ X: 790, Y: 78, W: 466, H: 516 }, S.panel || {});
+function draw(t) {
+  t = clamp(t, 0, S.T_END);
+  ctx.setTransform(cv.width / 1280, 0, 0, cv.height / 720, 0, 0);
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, 1280, 720);
+  ctx.fillStyle = C.soft; ctx.fillRect(0, 0, 1280, 56); ctx.fillStyle = C.line; ctx.fillRect(0, 56, 1280, 1);
+  rich(S.title, 24, 37, 26, C.navy, "left", "700");
+  const chNow = S.CH.filter(c => c.t <= t + 1e-6).pop();
+  rich(chNow.name, 1256, 36, 20, C.muted, "right", "600");
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 57, S.panel === false ? 1280 : 780, 565); ctx.clip();
+  S.scene(t, K); ctx.restore();
+  if (S.panel !== false) drawPanel(t);
+  drawCaption(t);
+  if (S.summary && t >= S.summary.t) drawSummary(t);
+}
+function drawPanel(t) {
+  const { X, Y, W, H } = PANEL;
+  ctx.fillStyle = C.soft; roundRect(X, Y, W, H, 14); ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 1.5; ctx.stroke();
+  rich(S.panelTitle || "The numbers", X + 20, Y + 34, 21, C.navy, "left", "700");
+  let y = Y + 72;
+  (S.rows ? S.rows(t, K) : []).forEach(r => { if (!r) return; const [t0, s, col, sz = 21] = r; const a = fade(t, t0, t0 + 1);
+    if (a > 0) { ctx.save(); ctx.globalAlpha = a; rich(s, X + 20, y, sz, col || C.ink, "left", sz > 19 ? "600" : ""); ctx.restore(); }
+    y += sz > 19 ? 38 : 32; });
+  if (S.panelExtra) S.panelExtra(t, K, { X, Y, W, H, yNext: y });
+}
+function drawCaption(t) {
+  const c = S.CAP.find(([a, b]) => t >= a && t < b) || S.CAP[S.CAP.length - 1];
+  const a = Math.min(clamp((t - c[0]) / .4), 1 - clamp((t - (c[1] - .3)) / .3));
+  ctx.fillStyle = C.navy; ctx.fillRect(0, 622, 1280, 98); ctx.fillStyle = C.A; ctx.fillRect(0, 622, 1280, 4);
+  ctx.save(); ctx.globalAlpha = Math.max(a, t >= S.T_END - .5 ? 1 : 0);
+  rich(c[2], 640, 663, 25, "#fff", "center", "600"); rich(c[3] || "", 640, 700, 23, "#E3F2FD", "center", "");
+  ctx.restore();
+}
+function drawSummary(t) {
+  const sm = S.summary, a = fade(t, sm.t, sm.t + 1.2);
+  ctx.save(); ctx.globalAlpha = a;
+  ctx.fillStyle = "rgba(242,245,249,.94)"; ctx.fillRect(0, 57, 1280, 565);
+  const X = 70, Y = 82, w = 1140, h = 520;
+  ctx.fillStyle = "#fff"; roundRect(X, Y, w, h, 16); ctx.fill(); ctx.strokeStyle = C.navy; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = C.navy; roundRect(X, Y, w, 54, 16); ctx.fill(); ctx.fillRect(X, Y + 30, w, 24);
+  rich(sm.title, X + 28, Y + 37, 26, "#fff", "left", "700");
+  const gap = Math.min(66, 440 / sm.items.length);
+  sm.items.forEach(([s, col], i) => { const ai = fade(t, sm.t + 1 + i * 1.2, sm.t + 2 + i * 1.2); ctx.save(); ctx.globalAlpha = a * ai;
+    const y = Y + 112 + i * gap;
+    ctx.fillStyle = col || C.ink; ctx.beginPath(); ctx.arc(X + 46, y - 8, 17, 0, 7); ctx.fill();
+    rich(String(i + 1), X + 46, y, 20, "#fff", "center", "700");
+    rich(s, X + 80, y, sm.size || 24, C.ink, "left", ""); ctx.restore(); });
+  ctx.restore();
+}
+const K = { ctx, C, FONT, clamp, ease, prog, fade, lin, rad, f0, f1, f2, sf3, rich, textW, roundRect, arrow, label, text, line, poly, circle, box, dot, angle, bench, spring, axes, gpt, plot, bars };
+return { draw, T_END: S.T_END, CH: S.CH, CAP: S.CAP, K };
+}
+/* ==== STEPKIT END ==== */
+
+/* ==== SCENE 01 Friction block: static → limiting → kinetic friction ==== */
+const STEPSPEC = (function(){
+  const g = 9.81, m = 0.650, MS = 0.41, MD = 0.30;           // wooden block + 2 slotted masses, wood on bench (as in the simulation)
+  const W = m * g, N = W, FMAX = MS * N, FK = MD * N;          // 6.38, 6.38, 2.62, 1.91 N
+  const m2 = 1.050, N2 = m2 * g;                               // with 2 more slotted masses
+  const T_SLIP = 26, T_END = 60;
+  // the pull read by the force sensor, as a function of the animation time
+  const pull = t => t < 11 ? 0 : t < T_SLIP ? FMAX * (t - 11) / (T_SLIP - 11) : FK + (FMAX - FK) * Math.exp(-(t - T_SLIP) / 0.35);
+  const CH = [{t:0, name:"1 The set-up"}, {t:5, name:"2 Weight and normal force"}, {t:11, name:"3 A small pull"}, {t:17, name:"4 Pull harder"},
+              {t:24, name:"5 The limit: it slips"}, {t:31, name:"6 Sliding: kinetic friction"}, {t:40, name:"7 A heavier block"}, {t:49, name:"Summary"}];
+  const CAP = [
+    [0, 5, "A wooden block rests on the bench. A force sensor pulls it with a horizontal string.", "How big is the friction force, and when does the block start to move?"],
+    [5, 11, "Weight W = mg pulls down; the bench pushes up with the normal force F_{N}.", "Nothing moves vertically, so F_{N} = W."],
+    [11, 17, "A small pull: the block does not move. Static friction pushes back,", "exactly as hard as the pull. ΣF = 0."],
+    [17, 24, "Pull harder: static friction grows with the pull, the block still stays at rest.", "Static friction is only as big as it needs to be."],
+    [24, 31, "At the limit, f = μ_{s} F_{N}. Any more pull and the block SLIPS.", "The reading drops: sliding needs less force than starting."],
+    [31, 40, "Sliding at a steady speed: kinetic friction f = μ_{d} F_{N} is constant,", "and smaller than the maximum static friction (μ_{d} < μ_{s})."],
+    [40, 49, "Add slotted masses: F_{N} grows, and the friction grows in proportion.", "μ = f / F_{N} stays the same: it depends only on the two surfaces."],
+    [49, 60, "Summary: static friction up to μ_{s}F_{N}, then kinetic friction μ_{d}F_{N}.", "Pause here and copy the key ideas."]];
+  const BY = 300, BW = 150, BH = 86;                           // bench top, block size
+  function scene(t, K){
+    const { C, prog, fade, arrow, label, text, line, box, bench, axes, plot, gpt, circle, rich } = K;
+    bench(BY, 0, 780);
+    const slide = t > T_SLIP ? Math.min(t, 40) - T_SLIP : 0;   // the block slides at constant speed
+    const bx = 250 + slide * 9, cy = BY - BH / 2;
+    const heavy = prog(t, 41, 43);
+    box(bx, cy, BW, BH, C.wood, C.woodEdge);
+    if (heavy > 0) { box(bx - 30, BY - BH - 16 * heavy, 46, 30 * heavy, "#B0BEC5", "#546E7A"); box(bx + 30, BY - BH - 16 * heavy, 46, 30 * heavy, "#B0BEC5", "#546E7A"); }
+    // string + force sensor
+    const sx = bx + BW / 2, sy = cy, senX = sx + 170 + (t > T_SLIP ? 0 : 0);
+    line(sx, sy, senX, sy, "#455A64", 3);
+    K.ctx.fillStyle = "#37474F"; K.roundRect(senX, sy - 22, 70, 44, 8); K.ctx.fill();
+    const P = pull(t); rich(K.f2(P) + " N", senX + 35, sy + 6, 16, "#69F0AE", "center", "700");
+    text("force sensor", senX + 35, sy - 32, 15, C.muted, "center", "600");
+    // forces (10 px per newton for W and N, 30 px per newton for the horizontal forces)
+    const kv = 9, kh = 34, Wl = (heavy > 0 ? W + (N2 - W) * heavy : W);
+    const aW = prog(t, 5.5, 7.5), aN = prog(t, 7.5, 9.5);
+    arrow(bx, cy, 0, Wl * kv * aW, C.W, 1, 6); label("W = mg", bx + 70, cy + Wl * kv * aW - 6, C.W, fade(t, 7, 8));
+    arrow(bx, cy, 0, -Wl * kv * aN, C.N, 1, 6); label("F_{N}", bx + 46, cy - Wl * kv * aN + 10, C.N, fade(t, 9, 10));
+    const fNow = t < T_SLIP ? P : FK, aF = fade(t, 11.5, 12.5);
+    arrow(sx, sy, P * kh, 0, C.P, aF, 6); label("pull", sx + P * kh + 34, sy - 14, C.P, aF);
+    arrow(bx - BW / 2 + 10, BY - 6, -fNow * kh, 0, C.F, aF, 6);
+    label(t < T_SLIP ? "static friction" : "f = μ_{d}F_{N}", bx - BW / 2 - fNow * kh / 2, BY - 22, C.F, fade(t, 12, 13));
+    if (t > T_SLIP && t < 40) arrow(bx - 30, cy - BH / 2 - 26, 90, 0, C.A, .9, 4);
+    const slip = fade(t, T_SLIP - .2, T_SLIP + .1, T_SLIP + 1.6, T_SLIP + 2.2);
+    if (slip > 0) { K.ctx.save(); K.ctx.globalAlpha = slip; K.ctx.fillStyle = C.F; K.roundRect(bx - 70, cy - 150, 140, 52, 12); K.ctx.fill();
+      rich("SLIP!", bx, cy - 112, 32, "#fff", "center", "800"); K.ctx.restore(); }
+    // force–time graph from the sensor
+    const ga = fade(t, 11, 12);
+    if (ga > 0) {
+      const gr = { x: 70, y: 360, w: 660, h: 230, xmax: 29, ymax: 3.2, xlab: "t / s", ylab: "pull F / N" };
+      axes(gr, ga);
+      for (let v = 1; v <= 3; v++) { const p = gpt(gr, 0, v); text(v, p[0] - 10, p[1] + 6, 15, C.muted, "right", "", ga); line(gr.x, p[1], gr.x + gr.w, p[1], "#ECEFF1", 1, null, ga); }
+      const tt = Math.min(t, 40) - 11;
+      plot(gr, x => pull(x + 11), tt, C.P, 3.5, ga);
+      const lim = fade(t, 24, 25.5), kin = fade(t, 31, 32.5);
+      const pl = gpt(gr, 0, FMAX), pk = gpt(gr, 0, FK);
+      line(gr.x, pl[1], gr.x + gr.w, pl[1], C.A, 2, [8, 6], lim); text("μ_{s}F_{N} = " + K.f2(FMAX) + " N", gr.x + gr.w - 8, pl[1] - 8, 17, C.A, "right", "600", lim);
+      line(gr.x, pk[1], gr.x + gr.w, pk[1], C.V, 2, [8, 6], kin); text("μ_{d}F_{N} = " + K.f2(FK) + " N", gr.x + gr.w - 8, pk[1] + 22, 17, C.V, "right", "600", kin);
+      if (t > 11) circle(...gpt(gr, Math.min(tt, 29), pull(Math.min(t, 40))), 6, C.P, null, 2, ga);
+    }
+  }
+  const rows = t => [
+    [0, "m = 0.650 kg,  g = 9.81 N kg^{−1},  μ_{s} = 0.41,  μ_{d} = 0.30", K0.muted, 18],
+    [5, "W = mg = 0.650 × 9.81 = " + W.toFixed(2) + " N", K0.W],
+    [8, "F_{N} = W = " + N.toFixed(2) + " N", K0.N],
+    [11, t < T_SLIP ? "static friction f = pull = " + pull(t).toFixed(2) + " N" : "f = μ_{d}F_{N} = 0.30 × " + N.toFixed(2) + " = " + FK.toFixed(2) + " N", K0.F],
+    [24, "max: μ_{s}F_{N} = 0.41 × " + N.toFixed(2) + " = " + FMAX.toFixed(2) + " N", K0.A],
+    [31, "steady speed: ΣF = 0, pull = f = " + FK.toFixed(2) + " N", K0.V],
+    [40, "m = 1.050 kg: F_{N} = " + N2.toFixed(2) + " N", K0.N],
+    [42, "μ_{s}F_{N} = " + (MS * N2).toFixed(2) + " N,  μ_{d}F_{N} = " + (MD * N2).toFixed(2) + " N", K0.F],
+    [44, "μ = f / F_{N} is unchanged", K0.ink]];
+  const K0 = { muted:"#606A72", W:"#2A5D8A", N:"#2E7D32", F:"#C62828", A:"#E65100", V:"#1565C0", ink:"#263238" };
+  return { stepTitle: "static and kinetic friction on a block", title: "Friction on a block", T_END, CH, CAP, scene, rows,
+    summary: { t: 49, title: "Friction: what to remember", items: [
+      ["Friction acts along the surface, opposite to the (attempted) motion.", K0.F],
+      ["At rest: static friction = the pull. It grows with the pull …", K0.F],
+      ["… up to a maximum:  f_{max} = μ_{s} F_{N}.  Then the block slips.", K0.A],
+      ["Sliding: kinetic friction  f = μ_{d} F_{N},  constant, and μ_{d} < μ_{s}.", K0.V],
+      ["Friction is proportional to F_{N}; μ depends only on the two surfaces.", K0.N],
+      ["On a flat surface with a horizontal pull: F_{N} = mg.", K0.W]] } };
+})();
+const STEPTEXT = [
+  { h: "The set-up", body: `<p>A 0.650 kg wooden block (with two slotted masses) rests on the bench. A <b>force sensor</b> pulls it with a horizontal string and records the force every 0.02 s.</p>
+    <div class="think">🤔 <b>Think:</b> before anything happens, predict: will the reading rise smoothly, jump, or drop when the block starts to move?</div>` },
+  { h: "Weight and normal force", body: `<p>The Earth pulls the block down; the bench pushes it up. Nothing moves vertically, so the forces balance:</p>
+    <div class="eqline">W = mg = 0.650 × 9.81 = 6.38 N &nbsp;⇒&nbsp; F<sub>N</sub> = 6.38 N</div>
+    <div class="oops">⚠ <b>Common mistake:</b> F<sub>N</sub> = mg is only true here because the surface is flat and the pull is horizontal.</div>` },
+  { h: "A small pull: static friction", body: `<p>The sensor pulls gently. The block <b>does not move</b>, so ΣF = 0: static friction acts backwards, <b>exactly as big as the pull</b>.</p>
+    <div class="eqline">f = F<sub>pull</sub> &nbsp;(at rest)</div>
+    <div class="think">🤔 <b>Think:</b> if you pull with 1.0 N and it does not move, how big is the friction?</div>` },
+  { h: "Pull harder", body: `<p>The pull grows steadily, and static friction grows with it: the graph is a straight line. Static friction only becomes as big as it needs to be.</p>
+    <div class="oops">⚠ <b>Common mistake:</b> writing f = μ<sub>s</sub>F<sub>N</sub> while the block is at rest. μ<sub>s</sub>F<sub>N</sub> is only the <i>maximum</i>.</div>` },
+  { h: "The limit: it slips", body: `<p>Static friction cannot be bigger than</p>
+    <div class="eqline">f<sub>max</sub> = μ<sub>s</sub>F<sub>N</sub> = 0.41 × 6.38 = 2.61 N</div>
+    <p>When the pull reaches 2.61 N, the block slips. The reading then <b>drops</b>: the peak on the graph is the limiting friction.</p>` },
+  { h: "Sliding: kinetic friction", body: `<p>While it slides, <b>kinetic (dynamic) friction</b> acts. It is constant and smaller than the maximum static friction:</p>
+    <div class="eqline">f = μ<sub>d</sub>F<sub>N</sub> = 0.30 × 6.38 = 1.91 N</div>
+    <p>At a steady speed ΣF = 0, so the sensor reads 1.91 N: the flat part of the graph.</p>
+    <div class="think">🤔 <b>Think:</b> what would the reading be if the block were speeding up?</div>` },
+  { h: "A heavier block", body: `<p>Add two more slotted masses: m = 1.050 kg, F<sub>N</sub> = 10.3 N. Both kinds of friction grow in proportion:</p>
+    <div class="eqline">μ<sub>s</sub>F<sub>N</sub> = 4.22 N, &nbsp; μ<sub>d</sub>F<sub>N</sub> = 3.09 N</div>
+    <p>The ratio <b>μ = f / F<sub>N</sub></b> stays the same: it depends on the two surfaces, not on the mass or the contact area.</p>
+    <div class="tryit">🔬 <b>Try it:</b> in ② Simulation, record the peak and the sliding force for 0–5 slotted masses and plot f against F<sub>N</sub>: the gradients are μ<sub>s</sub> and μ<sub>d</sub>.</div>` },
+  { h: "Summary", body: `<ol><li>Static friction = the pull, up to μ<sub>s</sub>F<sub>N</sub>.</li><li>Then the block slips; the force drops.</li>
+    <li>Kinetic friction μ<sub>d</sub>F<sub>N</sub> is constant and smaller (μ<sub>d</sub> &lt; μ<sub>s</sub>).</li><li>f ∝ F<sub>N</sub>; μ depends only on the surfaces.</li></ol>` }];
+
+/* ==== STEPPER START: ① Step by step / ② Simulation tabs; each step plays its part of the animation, then waits for Next ▶ ==== */
+(function(){
+  const $s = id => document.getElementById(id);
+  const A = StepKit($s("stepCv"), STEPSPEC), STEPS = STEPTEXT;
+  const seg = i => [A.CH[i].t, i + 1 < A.CH.length ? A.CH[i + 1].t : A.T_END];
+  let step = 0, t = 0, playing = false, last = 0, seen = new Set(), started = false;
+  const dots = $s("stepDots");
+  STEPS.forEach((s, i) => { const b = document.createElement("button"); b.className = "dot"; b.textContent = i + 1;
+    b.title = s.h; b.setAttribute("aria-label", "Step " + (i + 1) + ": " + s.h); b.onclick = () => { hideStart(); go(i); }; dots.appendChild(b); });
+  function show(){
+    const s = STEPS[step], lastStep = step === STEPS.length - 1;
+    $s("stepExp").innerHTML = `<div class="snum">Step ${step + 1} of ${STEPS.length}</div><h4>${s.h}</h4>${s.body}` +
+      (lastStep ? `<button class="gosim" onclick="showTab('sim')">Now try it yourself → ② Simulation</button>` : "");
+    [...dots.children].forEach((d, i) => { d.classList.toggle("on", i === step); d.classList.toggle("done", seen.has(i) && i !== step); });
+    $s("stepPrev").disabled = step === 0; $s("stepNext").disabled = lastStep;
+    btn();
+  }
+  function btn(){ const [, e] = seg(step); $s("stepPlay").textContent = playing ? "⏸ Pause" : (t >= e - .4 ? "⟲ Replay step" : "▶ Play"); }
+  function go(i){ step = Math.max(0, Math.min(STEPS.length - 1, i)); seen.add(step); t = seg(step)[0] + .01; show(); A.draw(t); play(); }
+  function play(){ if (playing) return; playing = true; last = performance.now(); requestAnimationFrame(tick); btn(); }
+  function stop(){ playing = false; btn(); }
+  function tick(now){
+    if (!playing) return;
+    t += (now - last) / 1000; last = now;
+    const [, e] = seg(step);
+    if (t >= ($s("stepAuto").checked ? e : e - .4)) {
+      if ($s("stepAuto").checked && step < STEPS.length - 1) { step++; seen.add(step); show(); }
+      else { t = step === STEPS.length - 1 ? A.T_END : e - .4; A.draw(t); stop(); return; }
+    }
+    A.draw(t); requestAnimationFrame(tick);
+  }
+  function hideStart(){ started = true; $s("stepStart").hidden = true; }
+  $s("stepPlay").onclick = () => { hideStart(); if (playing) stop(); else { const [s0, e] = seg(step); if (t >= e - .4) t = s0 + .01; play(); } };
+  $s("stepPrev").onclick = () => { hideStart(); go(step - 1); };
+  $s("stepNext").onclick = () => { hideStart(); go(step + 1); };
+  $s("stepStart").onclick = () => { hideStart(); seen = new Set(); go(0); };
+  function showTab(which){
+    const sim = which === "sim";
+    $s("steps").classList.toggle("on", !sim); $s("simMain").classList.toggle("offstage", !sim);
+    $s("tabSteps").setAttribute("aria-selected", String(!sim)); $s("tabSim").setAttribute("aria-selected", String(sim));
+    document.body.classList.toggle("steps-on", !sim);
+    if (sim) { stop(); window.dispatchEvent(new Event("resize")); }
+    else { fitStage(); if (!started) { step = 0; t = seg(0)[0] + .01; show(); A.draw(t); } }
+    window.scrollTo(0, 0);
+  }
+  // on laptops and boards the animation and its buttons fit on one screen (16:9 stage sized to the height left)
+  function fitStage(){
+    const st = document.querySelector("#steps .sstage"); if (!st || !$s("steps").classList.contains("on")) return;
+    if (innerWidth < 900) { st.style.width = ""; return; }
+    st.style.width = "";
+    const top = st.getBoundingClientRect().top + scrollY, bar = document.querySelector("#steps .sbar").offsetHeight;
+    const avail = innerHeight - top - bar - 26, full = st.getBoundingClientRect().width;
+    st.style.width = Math.max(420, Math.min(full, avail * 16 / 9)) + "px";
+  }
+  addEventListener("resize", fitStage);
+  window.showTab = showTab;
+  $s("tabSteps").onclick = () => showTab("steps");
+  $s("tabSim").onclick = () => showTab("sim");
+  [$s("tabSteps"), $s("tabSim")].forEach(b => b.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") { e.preventDefault(); const o = b.id === "tabSteps" ? $s("tabSim") : $s("tabSteps"); o.focus(); o.click(); } }));
+  document.addEventListener("keydown", e => { if (!$s("steps").classList.contains("on") || (e.target.closest && e.target.closest(".bigtab, input, select, textarea"))) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); if (!started) $s("stepStart").click(); else go(step + 1); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); hideStart(); go(step - 1); } });
+  window.stepsOpen = i => { showTab("steps"); hideStart(); go(i || 0); };   // also used by the headless tests
+  window.stepAnim = A;
+  const want = () => showTab(/(^|#)sim\b/.test(location.hash) ? "sim" : "steps");
+  want(); window.addEventListener("hashchange", want);
+})();
+/* ==== STEPPER END ==== */
+
+/* ==== STEPTABS JS END ==== */</script>
 <script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
 </html>

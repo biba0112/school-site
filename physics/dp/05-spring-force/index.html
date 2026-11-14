@@ -13,6 +13,7 @@
 
   File sections:
     1 STYLE · 2 MARKUP · 3 CONFIG · 4 PHYSICS · 5 RUN · 6 SCENE · 7 FBD · 8 GRAPHS · 9 DATA · 10 TASKS · 11 UI
+  + STEP BY STEP TABS (14 Nov 2026: ① Step by step animation opens first, ② Simulation; #sim opens ②)
 -->
 <style>
 /* ============================ 1 STYLE ============================ */
@@ -265,6 +266,47 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   #help .box{max-height:85dvh;padding:14px 16px}
 }
 /* ==== PHONE CSS END ==== */
+/* ==== STEPTABS CSS START (14 Nov 2026: ① Step by step · ② Simulation, as in Sim 03) ==== */
+.bigtabs{display:flex;gap:10px;padding:10px 16px 0;flex-wrap:wrap}
+.bigtab{font:inherit;font-size:20px;font-weight:700;border:2px solid var(--navy);border-radius:14px;background:#fff;color:var(--navy);
+  padding:8px 18px;min-height:56px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 3px 0 #C5D0DC}
+.bigtab .n{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;font-size:17px}
+.bigtab:hover{background:#FFF3E0}
+.bigtab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 0 #BF360C}
+.bigtab[aria-selected="true"] .n{background:#fff;color:var(--accent)}
+@media (min-width:1500px){.bigtab{font-size:23px;min-height:62px}}
+@media (max-width:600px){.bigtab{font-size:17px;padding:6px 12px}.bigtab .long{display:none}}
+main.offstage{position:absolute!important;left:-400vw!important;top:0!important;width:100vw!important;height:100vh!important;visibility:hidden!important;pointer-events:none!important}   /* ② kept laid out (canvases keep their size) while ① is shown */
+#steps{display:none;flex:1;min-height:0;padding:12px 16px}
+#steps.on{display:flex}
+#steps .sbox{background:#fff;border:1px solid var(--line,#DDE6F0);border-radius:14px;width:100%;display:flex;flex-direction:column;overflow:hidden}
+#steps .shead{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);display:flex;align-items:center;gap:12px;padding:8px 14px}
+#steps .shead h3{margin:0;font-size:1.1rem;font-weight:600;flex:1}
+#steps .sbody{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(280px,1fr);gap:14px;padding:14px;overflow:auto;min-height:0}
+#steps .sstage{aspect-ratio:16/9;border:1px solid var(--line,#DDE6F0);border-radius:10px;overflow:hidden;align-self:start;position:relative}
+#steps .sstage #stepCv{position:absolute;inset:0;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;display:block;border:none!important;margin:0!important}
+#steps .sexp{font-size:.98rem;line-height:1.45;overflow:auto}
+#steps .snum{color:var(--muted,#606A72);font-size:.85rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+#steps .sexp h4{margin:.15em 0 .45em;color:var(--navy);font-size:1.2rem}
+#steps .sexp p{margin:.4em 0}
+#steps .eqline{background:#F7F9FC;border-left:4px solid var(--navy);padding:6px 10px;margin:.5em 0;border-radius:4px;font-weight:600}
+#steps .think{background:#FFF3E0;border-left:4px solid var(--accent);padding:6px 10px;margin:.6em 0;border-radius:4px}
+#steps .oops{background:#FFEBEE;border-left:4px solid #C62828;padding:6px 10px;margin:.6em 0;border-radius:4px}
+#steps .tryit{background:#E3F2FD;border-left:4px solid #1565C0;padding:6px 10px;margin:.6em 0;border-radius:4px}
+#steps .sbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--line,#DDE6F0);background:#F7F9FC}
+#steps .dots{display:flex;gap:6px;flex:1;justify-content:center;flex-wrap:wrap}
+#steps .dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--navy);background:#fff;color:var(--navy);font:600 .85rem/1 inherit;cursor:pointer;padding:0}
+#steps .dot.done{background:#E3F2FD}
+#steps .dot.on{background:var(--navy);color:#fff}
+#steps .switch{display:inline-flex;align-items:center;gap:6px}
+body.steps-on > nav{display:none!important}   /* a simulation's own scenario bar is not needed on ① */
+#steps .sstage{justify-self:center;width:100%}
+.startover{position:absolute;inset:0;display:grid;place-items:center;background:rgba(31,58,95,.35);border:none;cursor:pointer;font:inherit}
+.startover span{background:var(--accent);color:#fff;font-size:26px;font-weight:700;border-radius:16px;padding:16px 30px;box-shadow:0 6px 0 #BF360C}
+.startover[hidden]{display:none}
+.gosim{font:inherit;font-size:22px;font-weight:700;background:var(--accent);color:#fff;border:none;border-radius:14px;padding:12px 22px;margin-top:10px;cursor:pointer;box-shadow:0 4px 0 #BF360C;width:100%}
+@media (max-width:900px){#steps .sbody{grid-template-columns:1fr}#steps .dots{order:-1;flex-basis:100%}#steps .dot{width:26px;height:26px}#steps .sbar .btn{min-height:40px;padding:4px 10px}#steps{padding:8px}}
+/* ==== STEPTABS CSS END ==== */
 </style>
 </head>
 <body>
@@ -279,7 +321,30 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   <div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
 </header>
 
-<main>
+<!-- ==== STEPTABS MARKUP START (14 Nov 2026) ==== -->
+<div class="bigtabs" role="tablist" aria-label="Step by step or simulation">
+  <button class="bigtab" role="tab" id="tabSteps" aria-selected="true" aria-controls="steps"><span class="n">1</span><span>▶ Step by step<span class="long">: the physics</span></span></button>
+  <button class="bigtab" role="tab" id="tabSim" aria-selected="false" aria-controls="simMain"><span class="n">2</span>🔬 Simulation</button>
+</div>
+<div id="steps" role="tabpanel" aria-labelledby="tabSteps">
+  <div class="sbox">
+    <div class="shead"><h3 id="stepsTitle">Step by step: Hooke's law and the spring constant</h3></div>
+    <div class="sbody">
+      <div class="sstage"><canvas id="stepCv" width="1280" height="720" aria-label="Animation: Hooke's law and the spring constant"></canvas>
+        <button class="startover" id="stepStart" aria-label="Start the animation"><span>▶ Start the animation</span></button></div>
+      <div class="sexp" id="stepExp" aria-live="polite"></div>
+    </div>
+    <div class="sbar">
+      <button class="btn" id="stepPrev">◀ Back</button>
+      <button class="btn primary" id="stepPlay">▶ Play</button>
+      <button class="btn" id="stepNext">Next ▶</button>
+      <div class="dots" id="stepDots"></div>
+      <label class="switch" title="Carry on into the next step without stopping"><input type="checkbox" id="stepAuto"> Play all</label>
+    </div>
+  </div>
+</div>
+<!-- ==== STEPTABS MARKUP END ==== -->
+<main id="simMain" class="offstage" role="tabpanel" aria-labelledby="tabSim">
   <section class="left">
     <div class="card scenecard">
       <div class="cardhead">
@@ -375,7 +440,8 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   <div class="box">
     <h3 id="helpTitle">How to use this simulation</h3>
     <ol>
-      <li><b>Hang masses</b>: add 50 g slotted masses with <b>▲</b> and <b>▼</b> (or type any load, up to 100 kg). Read the pointer on the ruler; the
+      <li data-steptabs>Start with <b>① Step by step</b> (the first big tab): an animation explains the physics one step at a time. Then explore in <b>② Simulation</b>.</li>
+<li><b>Hang masses</b>: add 50 g slotted masses with <b>▲</b> and <b>▼</b> (or type any load, up to 100 kg). Read the pointer on the ruler; the
         extension x is the pointer reading minus the unloaded reading. Press <b>● Record</b> for each load.</li>
       <li>Set each value with <b>▼</b> and <b>▲</b> (hold to go faster; the <b>↑ ↓</b> keys or the mouse wheel in the box also work, Shift = ×10), or <b>type a value</b> in the box. <b>↺</b> puts it back to its start value. Outside the classroom range the box turns <b>amber ⚠</b>: fine to explore, but the lab can't do this.</li>
       <li>Move the pointer over any <b>graph</b> (or tap it): a dashed line shows the values where it cuts each curve, or the values of the nearest data point.</li>
@@ -1783,6 +1849,355 @@ numBoxes([{id:"disp", unit:"cm", get:() => set.d},
 requestAnimationFrame(frame);
 /* NEWTON HOOK */ NEWTON.hook();
 </script>
+<script>/* ==== STEPTABS JS START (shared kit + this simulation's scene + stepper) ==== */
+/* ==== STEPKIT START (14 Nov 2026: shared animation kit for the ① Step by step tab; built from Sim 03's InclineAnim) ==== */
+function StepKit(cv, S){
+"use strict";
+const ctx = cv.getContext("2d");
+const FONT = '"Segoe UI",Calibri,Carlito,"Helvetica Neue",Arial,sans-serif';
+const C = { W:"#2A5D8A", Wc:"#5B9BD5", Wt:"#2F6DB0", N:"#2E7D32", F:"#C62828", P:"#6A1B9A", T:"#6A1B9A", D:"#AD1457", V:"#1565C0", A:"#E65100",
+            ink:"#263238", muted:"#606A72", navy:"#1F3A5F", line:"#DDE6F0", soft:"#F7F9FC",
+            wood:"#FFCC80", woodEdge:"#8D5A1E", bench:"#8D6E63", benchTop:"#E8DCC4", metal:"#546E7A", water:"#BBDEFB" };
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const ease = x => { x = clamp(x); return x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; };
+const prog = (t, a, b) => ease((t - a) / (b - a));
+const fade = (t, a, b, c = 1e9, d = 1e9) => Math.min(clamp((t - a) / (b - a)), 1 - clamp((t - c) / (d - c)));
+const lin = (t, a, b) => clamp((t - a) / (b - a));
+const rad = d => d * Math.PI / 180;
+const f1 = x => x.toFixed(1), f2 = x => x.toFixed(2), f0 = x => x.toFixed(0);
+const sf3 = x => { const a = Math.abs(x); return a >= 100 ? x.toFixed(0) : a >= 10 ? x.toFixed(1) : a >= 1 ? x.toFixed(2) : x.toFixed(3); };
+
+function rich(str, x, y, size, color, align = "left", weight = "") {
+  const parts = []; const re = /(_\{[^}]*\}|\^\{[^}]*\})/g; let last = 0, mm;
+  str = String(str);
+  while ((mm = re.exec(str))) { if (mm.index > last) parts.push([str.slice(last, mm.index), 0]);
+    parts.push([mm[0].slice(2, -1), mm[0][0] === "_" ? 1 : -1]); last = re.lastIndex; }
+  if (last < str.length) parts.push([str.slice(last), 0]);
+  const meas = parts.map(([s, k]) => { ctx.font = `${weight} ${k ? size * .68 : size}px ${FONT}`; return ctx.measureText(s).width; });
+  const tot = meas.reduce((a, b) => a + b, 0);
+  let cx = align === "center" ? x - tot / 2 : align === "right" ? x - tot : x;
+  ctx.fillStyle = color; ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
+  parts.forEach(([s, k], i) => { ctx.font = `${weight} ${k ? size * .68 : size}px ${FONT}`;
+    ctx.fillText(s, cx, y + (k === 1 ? size * .28 : k === -1 ? -size * .42 : 0)); cx += meas[i]; });
+  return tot;
+}
+const textW = (str, size, weight = "600") => rich(str, -9999, -9999, size, "#0000", "left", weight);
+function roundRect(x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+function arrow(x, y, dx, dy, color, alpha = 1, w = 5, dash = null) {
+  const L = Math.hypot(dx, dy); if (L < 2 || alpha <= 0) return;
+  const ux = dx / L, uy = dy / L, hl = Math.min(20, L * .45), hw = hl * .55;
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = w; ctx.lineCap = "round";
+  if (dash) ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + dx - ux * hl * .8, y + dy - uy * hl * .8); ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x + dx, y + dy);
+  ctx.lineTo(x + dx - ux * hl - uy * hw, y + dy - uy * hl + ux * hw);
+  ctx.lineTo(x + dx - ux * hl + uy * hw, y + dy - uy * hl - ux * hw); ctx.closePath(); ctx.fill(); ctx.restore();
+}
+function label(str, x, y, color, alpha = 1, size = 22) {
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha;
+  const w = textW(str, size);
+  ctx.fillStyle = "rgba(255,255,255,.88)"; roundRect(x - w / 2 - 5, y - size * .9, w + 10, size * 1.3, 6); ctx.fill();
+  rich(str, x, y, size, color, "center", "600"); ctx.restore();
+}
+function text(str, x, y, size = 20, color = C.ink, align = "left", weight = "", alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; rich(str, x, y, size, color, align, weight); ctx.restore();
+}
+function line(x1, y1, x2, y2, color = C.ink, w = 2, dash = null, alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.strokeStyle = color; ctx.lineWidth = w; ctx.lineCap = "round";
+  if (dash) ctx.setLineDash(dash); ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.restore();
+}
+function poly(pts, stroke, w = 2, fill = null, alpha = 1, dash = null) {
+  if (alpha <= 0 || pts.length < 2) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = w; ctx.lineJoin = "round"; if (dash) ctx.setLineDash(dash); ctx.stroke(); } ctx.restore();
+}
+function circle(x, y, r, fill, stroke = null, w = 2, alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2);
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); } if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = w; ctx.stroke(); } ctx.restore();
+}
+function box(cx, cy, w, h, fill = C.wood, edge = C.woodEdge, rot = 0, alpha = 1, txt = null) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.translate(cx, cy); ctx.rotate(rot);
+  ctx.fillStyle = fill; ctx.strokeStyle = edge; ctx.lineWidth = 3; roundRect(-w / 2, -h / 2, w, h, 6); ctx.fill(); ctx.stroke();
+  if (txt) rich(txt, 0, 7, 20, C.ink, "center", "700"); ctx.restore();
+}
+function dot(x, y, r = 5, col = C.ink) { circle(x, y, r, col); }
+// an angle arc at (x, y) from angle a0 to a1 (radians, screen), with a label
+function angle(x, y, r, a0, a1, str, color = C.A, alpha = 1, size = 24) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha; ctx.strokeStyle = color; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.arc(x, y, r, Math.min(a0, a1), Math.max(a0, a1)); ctx.stroke();
+  const am = (a0 + a1) / 2; if (str) rich(str, x + (r + 22) * Math.cos(am), y + (r + 22) * Math.sin(am) + 8, size, color, "center", "700"); ctx.restore();
+}
+function bench(y, x0 = 0, x1 = 770) { ctx.fillStyle = C.bench; ctx.fillRect(x0, y, x1 - x0, 26); ctx.fillStyle = C.benchTop; ctx.fillRect(x0, y, x1 - x0, 6); }
+function spring(x1, y1, x2, y2, coils = 10, width = 18, color = C.metal, alpha = 1) {
+  const L = Math.hypot(x2 - x1, y2 - y1), ux = (x2 - x1) / L, uy = (y2 - y1) / L, nx = -uy, ny = ux, pts = [[x1, y1]];
+  const lead = Math.min(14, L * .1);
+  pts.push([x1 + ux * lead, y1 + uy * lead]);
+  for (let i = 0; i <= coils * 2; i++) { const s = lead + (L - 2 * lead) * i / (coils * 2), o = i === 0 || i === coils * 2 ? 0 : (i % 2 ? width : -width) / 2;
+    pts.push([x1 + ux * s + nx * o, y1 + uy * s + ny * o]); }
+  pts.push([x2, y2]); poly(pts, color, 3, null, alpha);
+}
+// a small graph: g = {x, y, w, h, xmax, ymin, ymax, xlab, ylab, ticks}; series drawn with plot(g, f, xTo, col)
+function axes(g, alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha;
+  ctx.fillStyle = "#fff"; ctx.fillRect(g.x, g.y, g.w, g.h); ctx.strokeStyle = "#B0BEC5"; ctx.lineWidth = 1; ctx.strokeRect(g.x, g.y, g.w, g.h);
+  const ymin = g.ymin || 0, zy = g.y + g.h - (0 - ymin) / (g.ymax - ymin) * g.h;
+  ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(g.x, g.y); ctx.lineTo(g.x, g.y + g.h); ctx.moveTo(g.x, zy); ctx.lineTo(g.x + g.w, zy); ctx.stroke();
+  rich(g.xlab || "", g.x + g.w, zy + 22, 17, C.muted, "right", "600");
+  rich(g.ylab || "", g.x + 6, g.y + 18, 17, C.muted, "left", "600");
+  ctx.restore();
+}
+function gpt(g, xv, yv) { const ymin = g.ymin || 0; return [g.x + xv / g.xmax * g.w, g.y + g.h - (yv - ymin) / (g.ymax - ymin) * g.h]; }
+function plot(g, f, xTo, col, w = 3, alpha = 1, x0 = 0, dash = null) {
+  if (xTo <= x0) return; const pts = []; const n = 80;
+  for (let i = 0; i <= n; i++) { const xv = x0 + (xTo - x0) * i / n; pts.push(gpt(g, xv, f(xv))); } poly(pts, col, w, null, alpha, dash);
+}
+// bars: list of [value, max, colour, label] drawn as vertical bars
+function bars(x, y, h, list, bw = 70, gap = 26, alpha = 1) {
+  if (alpha <= 0) return; ctx.save(); ctx.globalAlpha *= alpha;
+  list.forEach(([v, max, col, lab, val], i) => { const bx = x + i * (bw + gap), bh = h * clamp(v / max);
+    ctx.fillStyle = "#ECEFF1"; ctx.fillRect(bx, y - h, bw, h); ctx.fillStyle = col; ctx.fillRect(bx, y - bh, bw, bh);
+    rich(lab, bx + bw / 2, y + 26, 19, C.ink, "center", "600"); if (val) rich(val, bx + bw / 2, y - bh - 8, 17, col, "center", "600"); });
+  ctx.restore();
+}
+
+/* ---------- frame: title strip, scene, panel of numbers, caption bar, summary ---------- */
+const PANEL = Object.assign({ X: 790, Y: 78, W: 466, H: 516 }, S.panel || {});
+function draw(t) {
+  t = clamp(t, 0, S.T_END);
+  ctx.setTransform(cv.width / 1280, 0, 0, cv.height / 720, 0, 0);
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, 1280, 720);
+  ctx.fillStyle = C.soft; ctx.fillRect(0, 0, 1280, 56); ctx.fillStyle = C.line; ctx.fillRect(0, 56, 1280, 1);
+  rich(S.title, 24, 37, 26, C.navy, "left", "700");
+  const chNow = S.CH.filter(c => c.t <= t + 1e-6).pop();
+  rich(chNow.name, 1256, 36, 20, C.muted, "right", "600");
+  ctx.save(); ctx.beginPath(); ctx.rect(0, 57, S.panel === false ? 1280 : 780, 565); ctx.clip();
+  S.scene(t, K); ctx.restore();
+  if (S.panel !== false) drawPanel(t);
+  drawCaption(t);
+  if (S.summary && t >= S.summary.t) drawSummary(t);
+}
+function drawPanel(t) {
+  const { X, Y, W, H } = PANEL;
+  ctx.fillStyle = C.soft; roundRect(X, Y, W, H, 14); ctx.fill(); ctx.strokeStyle = C.line; ctx.lineWidth = 1.5; ctx.stroke();
+  rich(S.panelTitle || "The numbers", X + 20, Y + 34, 21, C.navy, "left", "700");
+  let y = Y + 72;
+  (S.rows ? S.rows(t, K) : []).forEach(r => { if (!r) return; const [t0, s, col, sz = 21] = r; const a = fade(t, t0, t0 + 1);
+    if (a > 0) { ctx.save(); ctx.globalAlpha = a; rich(s, X + 20, y, sz, col || C.ink, "left", sz > 19 ? "600" : ""); ctx.restore(); }
+    y += sz > 19 ? 38 : 32; });
+  if (S.panelExtra) S.panelExtra(t, K, { X, Y, W, H, yNext: y });
+}
+function drawCaption(t) {
+  const c = S.CAP.find(([a, b]) => t >= a && t < b) || S.CAP[S.CAP.length - 1];
+  const a = Math.min(clamp((t - c[0]) / .4), 1 - clamp((t - (c[1] - .3)) / .3));
+  ctx.fillStyle = C.navy; ctx.fillRect(0, 622, 1280, 98); ctx.fillStyle = C.A; ctx.fillRect(0, 622, 1280, 4);
+  ctx.save(); ctx.globalAlpha = Math.max(a, t >= S.T_END - .5 ? 1 : 0);
+  rich(c[2], 640, 663, 25, "#fff", "center", "600"); rich(c[3] || "", 640, 700, 23, "#E3F2FD", "center", "");
+  ctx.restore();
+}
+function drawSummary(t) {
+  const sm = S.summary, a = fade(t, sm.t, sm.t + 1.2);
+  ctx.save(); ctx.globalAlpha = a;
+  ctx.fillStyle = "rgba(242,245,249,.94)"; ctx.fillRect(0, 57, 1280, 565);
+  const X = 70, Y = 82, w = 1140, h = 520;
+  ctx.fillStyle = "#fff"; roundRect(X, Y, w, h, 16); ctx.fill(); ctx.strokeStyle = C.navy; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = C.navy; roundRect(X, Y, w, 54, 16); ctx.fill(); ctx.fillRect(X, Y + 30, w, 24);
+  rich(sm.title, X + 28, Y + 37, 26, "#fff", "left", "700");
+  const gap = Math.min(66, 440 / sm.items.length);
+  sm.items.forEach(([s, col], i) => { const ai = fade(t, sm.t + 1 + i * 1.2, sm.t + 2 + i * 1.2); ctx.save(); ctx.globalAlpha = a * ai;
+    const y = Y + 112 + i * gap;
+    ctx.fillStyle = col || C.ink; ctx.beginPath(); ctx.arc(X + 46, y - 8, 17, 0, 7); ctx.fill();
+    rich(String(i + 1), X + 46, y, 20, "#fff", "center", "700");
+    rich(s, X + 80, y, sm.size || 24, C.ink, "left", ""); ctx.restore(); });
+  ctx.restore();
+}
+const K = { ctx, C, FONT, clamp, ease, prog, fade, lin, rad, f0, f1, f2, sf3, rich, textW, roundRect, arrow, label, text, line, poly, circle, box, dot, angle, bench, spring, axes, gpt, plot, bars };
+return { draw, T_END: S.T_END, CH: S.CH, CAP: S.CAP, K };
+}
+/* ==== STEPKIT END ==== */
+
+/* ==== SCENE 05 Spring force: Hooke's law ==== */
+const STEPSPEC = (function(){
+  const g = 9.81, k = 25.0, FLIM = 6.0, SOFT = .5, KEEP = .3, T_END = 62;
+  // load (kg) on the hanger as a function of time; extension in m (Hooke up to FLIM, softer above)
+  const load = t => t < 5 ? 0 : t < 12 ? .1 : t < 33 ? Math.min(.5, .1 + .1 * Math.floor((t - 12) / 2 + 1)) : t < 39 ? (t < 35 ? .6 : .7) : t < 41 ? 0 : .5;
+  const ext = F => F <= FLIM ? F / k : FLIM / k + (F - FLIM) / (k * SOFT);
+  const xmax = ext(.7 * g), perm = KEEP * (xmax - FLIM / k);
+  const xNow = t => { const m = load(t), F = m * g; if (t >= 39 && t < 41) return perm; if (t >= 41) return 0; return ext(F); };
+  const CH = [{t:0, name:"1 The set-up"}, {t:5, name:"2 Hang 100 g"}, {t:12, name:"3 Add more masses"}, {t:21, name:"4 The spring constant k"},
+              {t:27, name:"5 Forces on the mass"}, {t:33, name:"6 The elastic limit"}, {t:41, name:"7 Stretch or squash"}, {t:50, name:"Summary"}];
+  const CAP = [
+    [0, 5, "A steel spring hangs from a clamp stand, with a ruler beside it.", "How does the extension depend on the force?"],
+    [5, 12, "Hang a 100 g mass: the spring stretches until it pulls up with F = mg = 0.981 N.", "Extension x = new length − original length = 3.9 cm."],
+    [12, 21, "Add 100 g at a time: each one stretches it by the same 3.9 cm.", "F against x is a straight line through the origin: F ∝ x."],
+    [21, 27, "The gradient of F against x is the spring constant k = F / x = 25 N m^{−1}.", "A stiffer spring has a larger k (steeper line)."],
+    [27, 33, "The mass hangs at rest: the spring force kx balances the weight mg.", "kx = mg  ⇒  x = mg / k"],
+    [33, 41, "Past the elastic limit (here 6.0 N) the line bends and the spring is damaged:", "unloaded, it does not return to its original length (permanent extension)."],
+    [41, 50, "A spring pulls back when stretched and pushes back when squashed:", "F = −kx. The force always points back towards the natural length."],
+    [50, 62, "Summary: Hooke's law F = kx (up to the elastic limit).", "Pause here and copy the key ideas."]];
+  const X0 = 170, Y0 = 92, L0 = 150, PX = 8;      // clamp point, natural length (px), px per cm
+  const pts = [];
+  function scene(t, K){
+    const { C, prog, fade, arrow, label, text, line, box, spring, axes, gpt, plot, circle, rich, ctx } = K;
+    if (t < 41) {
+      // clamp stand + ruler
+      ctx.fillStyle = "#546E7A"; ctx.fillRect(60, 70, 10, 520); ctx.fillRect(40, 580, 160, 12); ctx.fillRect(60, 80, X0 - 50, 10);
+      ctx.fillStyle = "#FFF8E1"; ctx.fillRect(X0 + 40, Y0, 34, 460); ctx.strokeStyle = "#BCAAA4"; ctx.strokeRect(X0 + 40, Y0, 34, 460);
+      for (let cm = 0; cm <= 55; cm++) { const y = Y0 + cm * PX; line(X0 + 40, y, X0 + 40 + (cm % 5 ? 8 : 16), y, "#6D4C41", 1); if (cm % 10 === 0) text(cm, X0 + 70, y + 5, 12, "#6D4C41", "right"); }
+      const x = xNow(t), yEnd = Y0 + L0 + x * 100 * PX;
+      spring(X0, Y0, X0, yEnd, 12, 22);
+      line(X0 + 14, Y0 + L0, X0 + 40, Y0 + L0, C.muted, 1.5, [4, 4], fade(t, 4, 5));
+      text("original length", X0 + 80, Y0 + L0 + 5, 14, C.muted, "left", "", fade(t, 4, 5));
+      const m = load(t);
+      if (m > 0 || t >= 39) { line(X0, yEnd, X0, yEnd + 16, "#455A64", 3); const n = Math.round(m / .1);
+        for (let i = 0; i < n; i++) box(X0, yEnd + 26 + i * 16, 48, 14, "#B0BEC5", "#546E7A");
+        const F = m * g, by = yEnd + 26 + n * 16 / 2;
+        if (t >= 27 && t < 33 && n) { const kk = 22; arrow(X0 - 50, by, 0, F * kk, C.W, 1, 5); label("mg", X0 - 90, by + F * kk - 4, C.W);
+          arrow(X0 - 50, by - 10, 0, -F * kk, C.N, 1, 5); label("kx", X0 - 90, by - F * kk + 4, C.N); }
+        if (x > 0.001) { line(X0 + 30, Y0 + L0, X0 + 30, yEnd, C.A, 3); text("x = " + (x * 100).toFixed(1) + " cm", X0 + 82, (Y0 + L0 + yEnd) / 2 + 6, 18, C.A, "left", "700"); } }
+      if (t >= 39 && t < 41) { ctx.fillStyle = C.F; K.roundRect(250, 560, 270, 48, 10); ctx.fill(); rich("permanent extension!", 385, 592, 22, "#fff", "center", "700"); }
+      // F–x graph
+      const ga = fade(t, 12, 13);
+      if (ga > 0) {
+        const gr = { x: 440, y: 110, w: 320, h: 420, xmax: 32, ymax: 7.5, xlab: "x / cm", ylab: "F / N" };
+        axes(gr, ga);
+        for (let v = 2; v <= 6; v += 2) { const p = gpt(gr, 0, v); text(v, p[0] - 6, p[1] + 5, 14, C.muted, "right", "", ga); }
+        for (let v = 10; v <= 30; v += 10) { const p = gpt(gr, v, 0); text(v, p[0], p[1] + 18, 14, C.muted, "center", "", ga); }
+        const loads = [.1, .2, .3, .4, .5]; loads.forEach((mm, i) => { if (t >= 12 + 2 * i || (i === 0 && t >= 12)) circle(...gpt(gr, ext(mm * g) * 100, mm * g), 6, C.V, null, 2, ga); });
+        if (t >= 33) [.6, .7].forEach((mm, i) => { if (t >= 33 + 2 * i) circle(...gpt(gr, ext(mm * g) * 100, mm * g), 6, C.F, null, 2, ga); });
+        plot(gr, xx => k * xx / 100, 24 * prog(t, 20, 23), C.V, 3, ga);
+        if (t >= 21 && t < 33) { const p1 = gpt(gr, 8, 2), p2 = gpt(gr, 20, 2), p3 = gpt(gr, 20, 5);
+          line(p1[0], p1[1], p2[0], p2[1], C.A, 2, [6, 4]); line(p2[0], p2[1], p3[0], p3[1], C.A, 2, [6, 4]);
+          text("k = ΔF/Δx = 3.0 N / 0.12 m = 25 N m^{−1}", gr.x + gr.w - 6, gr.y + 40, 18, C.A, "right", "700"); }
+        if (t >= 33) { const pl = gpt(gr, 0, FLIM); line(gr.x, pl[1], gr.x + gr.w, pl[1], C.F, 2, [8, 6]); text("elastic limit", gr.x + 8, pl[1] - 8, 16, C.F, "left", "600"); }
+      }
+    } else {
+      // stretch and squash: horizontal spring on the bench
+      const ph = t - 41, x = ph < 4 ? 70 * K.ease(ph / 2) : -70 * K.ease((ph - 4) / 2), wall = 120, nat = 260;
+      K.bench(400); ctx.fillStyle = "#90A4AE"; ctx.fillRect(wall - 30, 250, 30, 150);
+      spring(wall, 350, wall + nat + x, 350, 12, 26);
+      box(wall + nat + x + 45, 350, 90, 90, C.wood, C.woodEdge);
+      line(wall + nat, 230, wall + nat, 410, C.muted, 1.5, [4, 4]); text("natural length", wall + nat, 222, 15, C.muted, "center");
+      const F = -x * 1.6; arrow(wall + nat + x + 45, 300, F, 0, C.N, Math.abs(x) > 5 ? 1 : 0, 6);
+      label(x > 0 ? "stretched: pulls back" : "squashed: pushes back", wall + nat + x + 45 + F / 2, 280, C.N, Math.abs(x) > 5 ? 1 : 0);
+      text("F = −kx", 560, 520, 34, C.N, "center", "700");
+    }
+  }
+  const P = { m:"#606A72", W:"#2A5D8A", N:"#2E7D32", V:"#1565C0", A:"#E65100", F:"#C62828", i:"#263238" };
+  const rows = t => [
+    [0, "spring: k = 25 N m^{−1} (to be found!)", P.m, 18],
+    [5, "100 g:  F = 0.100 × 9.81 = 0.981 N", P.W],
+    [7, "x = F / k = 0.981 / 25 = 0.039 m = 3.9 cm", P.A],
+    [12, "200 g: 7.8 cm · 300 g: 11.8 cm · 500 g: 19.6 cm", P.A, 18],
+    [21, "k = gradient = 25 N m^{−1}", P.V],
+    [27, "at rest:  kx = mg", P.N],
+    [33, "limit: 6.0 N  (x = 24 cm)", P.F],
+    [35, "700 g: 6.87 N → 31 cm (not ∝ any more)", P.F, 18],
+    [39, "unloaded: still " + (perm * 100).toFixed(1) + " cm longer", P.F, 18],
+    [41, "restoring force  F = −kx", P.N]];
+  return { stepTitle: "Hooke's law and the spring constant", title: "Spring force: Hooke's law", T_END, CH, CAP, scene, rows,
+    summary: { t: 50, title: "Springs: what to remember", items: [
+      ["Extension x = stretched length − original length (not the total length!).", P.A],
+      ["Hooke's law:  F = kx,  F ∝ x  up to the elastic limit.", P.V],
+      ["k = gradient of F against x, in N m^{−1}; a stiffer spring has a bigger k.", P.V],
+      ["A hanging mass at rest:  kx = mg.", P.N],
+      ["Past the elastic limit: not proportional, and a permanent extension remains.", P.F],
+      ["The spring force always points back to the natural length:  F = −kx.", P.N]] } };
+})();
+const STEPTEXT = [
+  { h: "The set-up", body: `<p>A steel spring hangs from a clamp stand. We hang slotted masses on it and read the length on a ruler.</p>
+    <div class="think">🤔 <b>Think:</b> if 100 g stretches it by 4 cm, how far will 300 g stretch it?</div>` },
+  { h: "Hang 100 g", body: `<p>The spring stretches until it pulls up as hard as the weight pulls down:</p>
+    <div class="eqline">F = mg = 0.100 × 9.81 = 0.981 N &nbsp;→&nbsp; x = 3.9 cm</div>
+    <div class="oops">⚠ <b>Common mistake:</b> plotting the total length instead of the <b>extension</b> x (new length − original length).</div>` },
+  { h: "Add more masses", body: `<p>Every extra 100 g stretches the spring by another 3.9 cm. Doubling the force doubles the extension:</p>
+    <div class="eqline">F ∝ x &nbsp;(a straight line through the origin)</div>` },
+  { h: "The spring constant k", body: `<p>Hooke's law: <b>F = kx</b>. The spring constant is the gradient of the F–x graph:</p>
+    <div class="eqline">k = ΔF/Δx = 3.0 N ÷ 0.12 m = 25 N m⁻¹</div>
+    <p>k is the force needed per metre of extension. Remember to convert cm to m.</p>` },
+  { h: "Forces on the mass", body: `<p>The hanging mass is at rest, so the spring force balances the weight:</p>
+    <div class="eqline">kx = mg &nbsp;⇒&nbsp; x = mg/k = (0.500 × 9.81)/25 = 0.196 m</div>
+    <div class="think">🤔 <b>Think:</b> on the Moon (g = 1.6 N kg⁻¹), would the same mass stretch the spring more or less?</div>` },
+  { h: "The elastic limit", body: `<p>Above the <b>elastic limit</b> (here 6.0 N) the graph is no longer a straight line, and the spring is permanently deformed: after unloading it stays longer.</p>
+    <div class="oops">⚠ <b>Common mistake:</b> using F = kx beyond the limit of proportionality.</div>
+    <div class="tryit">🔬 <b>Try it:</b> in ② Simulation, load the spring 50 g at a time, record x, and find k from the gradient.</div>` },
+  { h: "Stretch or squash", body: `<p>The spring force always points back towards the natural length: it <b>pulls</b> when stretched and <b>pushes</b> when compressed.</p>
+    <div class="eqline">F = −kx &nbsp;(the minus sign: opposite to the displacement)</div>` },
+  { h: "Summary", body: `<ol><li>Extension x, not length.</li><li>F = kx up to the elastic limit; k = gradient (N m⁻¹).</li>
+    <li>Hanging mass at rest: kx = mg.</li><li>Beyond the limit: not proportional, permanent extension.</li></ol>` }];
+
+/* ==== STEPPER START: ① Step by step / ② Simulation tabs; each step plays its part of the animation, then waits for Next ▶ ==== */
+(function(){
+  const $s = id => document.getElementById(id);
+  const A = StepKit($s("stepCv"), STEPSPEC), STEPS = STEPTEXT;
+  const seg = i => [A.CH[i].t, i + 1 < A.CH.length ? A.CH[i + 1].t : A.T_END];
+  let step = 0, t = 0, playing = false, last = 0, seen = new Set(), started = false;
+  const dots = $s("stepDots");
+  STEPS.forEach((s, i) => { const b = document.createElement("button"); b.className = "dot"; b.textContent = i + 1;
+    b.title = s.h; b.setAttribute("aria-label", "Step " + (i + 1) + ": " + s.h); b.onclick = () => { hideStart(); go(i); }; dots.appendChild(b); });
+  function show(){
+    const s = STEPS[step], lastStep = step === STEPS.length - 1;
+    $s("stepExp").innerHTML = `<div class="snum">Step ${step + 1} of ${STEPS.length}</div><h4>${s.h}</h4>${s.body}` +
+      (lastStep ? `<button class="gosim" onclick="showTab('sim')">Now try it yourself → ② Simulation</button>` : "");
+    [...dots.children].forEach((d, i) => { d.classList.toggle("on", i === step); d.classList.toggle("done", seen.has(i) && i !== step); });
+    $s("stepPrev").disabled = step === 0; $s("stepNext").disabled = lastStep;
+    btn();
+  }
+  function btn(){ const [, e] = seg(step); $s("stepPlay").textContent = playing ? "⏸ Pause" : (t >= e - .4 ? "⟲ Replay step" : "▶ Play"); }
+  function go(i){ step = Math.max(0, Math.min(STEPS.length - 1, i)); seen.add(step); t = seg(step)[0] + .01; show(); A.draw(t); play(); }
+  function play(){ if (playing) return; playing = true; last = performance.now(); requestAnimationFrame(tick); btn(); }
+  function stop(){ playing = false; btn(); }
+  function tick(now){
+    if (!playing) return;
+    t += (now - last) / 1000; last = now;
+    const [, e] = seg(step);
+    if (t >= ($s("stepAuto").checked ? e : e - .4)) {
+      if ($s("stepAuto").checked && step < STEPS.length - 1) { step++; seen.add(step); show(); }
+      else { t = step === STEPS.length - 1 ? A.T_END : e - .4; A.draw(t); stop(); return; }
+    }
+    A.draw(t); requestAnimationFrame(tick);
+  }
+  function hideStart(){ started = true; $s("stepStart").hidden = true; }
+  $s("stepPlay").onclick = () => { hideStart(); if (playing) stop(); else { const [s0, e] = seg(step); if (t >= e - .4) t = s0 + .01; play(); } };
+  $s("stepPrev").onclick = () => { hideStart(); go(step - 1); };
+  $s("stepNext").onclick = () => { hideStart(); go(step + 1); };
+  $s("stepStart").onclick = () => { hideStart(); seen = new Set(); go(0); };
+  function showTab(which){
+    const sim = which === "sim";
+    $s("steps").classList.toggle("on", !sim); $s("simMain").classList.toggle("offstage", !sim);
+    $s("tabSteps").setAttribute("aria-selected", String(!sim)); $s("tabSim").setAttribute("aria-selected", String(sim));
+    document.body.classList.toggle("steps-on", !sim);
+    if (sim) { stop(); window.dispatchEvent(new Event("resize")); }
+    else { fitStage(); if (!started) { step = 0; t = seg(0)[0] + .01; show(); A.draw(t); } }
+    window.scrollTo(0, 0);
+  }
+  // on laptops and boards the animation and its buttons fit on one screen (16:9 stage sized to the height left)
+  function fitStage(){
+    const st = document.querySelector("#steps .sstage"); if (!st || !$s("steps").classList.contains("on")) return;
+    if (innerWidth < 900) { st.style.width = ""; return; }
+    st.style.width = "";
+    const top = st.getBoundingClientRect().top + scrollY, bar = document.querySelector("#steps .sbar").offsetHeight;
+    const avail = innerHeight - top - bar - 26, full = st.getBoundingClientRect().width;
+    st.style.width = Math.max(420, Math.min(full, avail * 16 / 9)) + "px";
+  }
+  addEventListener("resize", fitStage);
+  window.showTab = showTab;
+  $s("tabSteps").onclick = () => showTab("steps");
+  $s("tabSim").onclick = () => showTab("sim");
+  [$s("tabSteps"), $s("tabSim")].forEach(b => b.addEventListener("keydown", e => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") { e.preventDefault(); const o = b.id === "tabSteps" ? $s("tabSim") : $s("tabSteps"); o.focus(); o.click(); } }));
+  document.addEventListener("keydown", e => { if (!$s("steps").classList.contains("on") || (e.target.closest && e.target.closest(".bigtab, input, select, textarea"))) return;
+    if (e.key === "ArrowRight") { e.preventDefault(); if (!started) $s("stepStart").click(); else go(step + 1); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); hideStart(); go(step - 1); } });
+  window.stepsOpen = i => { showTab("steps"); hideStart(); go(i || 0); };   // also used by the headless tests
+  window.stepAnim = A;
+  const want = () => showTab(/(^|#)sim\b/.test(location.hash) ? "sim" : "steps");
+  want(); window.addEventListener("hashchange", want);
+})();
+/* ==== STEPPER END ==== */
+
+/* ==== STEPTABS JS END ==== */</script>
 <script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
 </html>
