@@ -12,6 +12,8 @@
 
   File sections:
     1 STYLE · 2 MARKUP · 3 CONFIG · 4 PHYSICS · 5 RUN · 6 SCENE · 7 FBD · 8 GRAPHS · 9 DATA · 10 TASKS · 11 UI
+  + STEP BY STEP (14 Nov 2026): header button opens an animated 9-step walk-through of the forces (InclineAnim core,
+    shared with Topic A/A2 …/01 Types of forces/Animations/Animation - Forces on an inclined plane.html)
 -->
 <style>
 /* ============================ 1 STYLE ============================ */
@@ -259,6 +261,31 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   #help .box{max-height:85dvh;padding:14px 16px}
 }
 /* ==== PHONE CSS END ==== */
+/* ==== STEP BY STEP CSS START (14 Nov 2026: animated walk-through of the forces, ▶ Step by step in the header) ==== */
+#steps{position:fixed;inset:0;background:rgba(31,58,95,.6);display:none;align-items:center;justify-content:center;z-index:20;padding:12px}
+#steps.on{display:flex}
+#steps .sbox{background:#fff;border-radius:14px;width:100%;max-width:1500px;max-height:96dvh;display:flex;flex-direction:column;overflow:hidden}
+#steps .shead{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);display:flex;align-items:center;gap:12px;padding:8px 14px}
+#steps .shead h3{margin:0;font-size:1.1rem;font-weight:600;flex:1}
+#steps .shead .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
+#steps .sbody{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(280px,1fr);gap:14px;padding:14px;overflow:auto;min-height:0}
+#steps .sstage{aspect-ratio:16/9;border:1px solid var(--line);border-radius:10px;overflow:hidden;align-self:start}
+#stepCv{width:100%;height:100%;display:block}
+#steps .sexp{font-size:.98rem;line-height:1.45;overflow:auto}
+#steps .snum{color:var(--muted);font-size:.85rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+#steps .sexp h4{margin:.15em 0 .45em;color:var(--navy);font-size:1.2rem}
+#steps .sexp p{margin:.4em 0}
+#steps .eqline{background:#F7F9FC;border-left:4px solid var(--navy);padding:6px 10px;margin:.5em 0;border-radius:4px;font-weight:600}
+#steps .think{background:var(--soft);border-left:4px solid var(--accent);padding:6px 10px;margin:.6em 0;border-radius:4px}
+#steps .oops{background:#FFEBEE;border-left:4px solid #C62828;padding:6px 10px;margin:.6em 0;border-radius:4px}
+#steps .tryit{background:var(--soft-blue);border-left:4px solid #1565C0;padding:6px 10px;margin:.6em 0;border-radius:4px}
+#steps .sbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;border-top:1px solid var(--line);background:#F7F9FC}
+#steps .dots{display:flex;gap:6px;flex:1;justify-content:center;flex-wrap:wrap}
+#steps .dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--navy);background:#fff;color:var(--navy);font:600 .85rem/1 inherit;cursor:pointer;padding:0}
+#steps .dot.done{background:#E3F2FD}
+#steps .dot.on{background:var(--navy);color:#fff}
+@media (max-width:900px){#steps .sbody{grid-template-columns:1fr}#steps .dots{order:-1;flex-basis:100%}#steps .dot{width:26px;height:26px}#steps .sbar .btn{min-height:40px;padding:4px 10px}#steps{padding:0}#steps .sbox{max-height:100dvh;height:100dvh;border-radius:0}}
+/* ==== STEP BY STEP CSS END ==== */
 </style>
 </head>
 <body>
@@ -269,6 +296,7 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
     <div class="sub"><a class="home" href="https://school.taneski.com/physics/dp/#A2" title="Back to all A.2 simulations">← All simulations</a> · IBDP Physics SL · A.2 Types of forces · g = 9.81 N kg⁻¹</div>
   </div>
   <div class="grow"></div>
+  <button class="btn" id="stepsBtn" title="Animated walk-through of the forces, one step at a time">▶ Step by step</button>
   <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
   <div class="credit">Biljana Taneska · Physics teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
 </header>
@@ -349,6 +377,7 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
   <div class="box">
     <h3 id="helpTitle">How to use this simulation</h3>
     <ol>
+      <li>New to this? Press <b>▶ Step by step</b> (top right) first: an animation builds up the forces on the block one step at a time (weight, its components, normal force, friction, slipping) with an explanation of each step. <b>Next ▶</b> moves on; <b>Play all</b> runs it without stopping.</li>
       <li>Choose the <b>surfaces</b> and the <b>mass</b> of the block.</li>
       <li>Set each value with <b>▼</b> and <b>▲</b> (hold to go faster; the <b>↑ ↓</b> keys or the mouse wheel in the box also work, Shift = ×10), or <b>type a value</b> in the box. <b>↺</b> puts it back to its start value. Outside the classroom range the box turns <b>amber ⚠</b>: fine to explore, but the lab can't do this.</li>
       <li>Move the pointer over any <b>graph</b> (or tap it): a dashed line shows the values where it cuts each curve, or the values of the nearest data point.</li>
@@ -373,6 +402,26 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
 <p style="text-align:right"><button class="btn primary" id="helpClose">Close</button></p>
   </div>
 </div>
+
+<!-- ==== STEP BY STEP MARKUP START ==== -->
+<div id="steps" role="dialog" aria-modal="true" aria-labelledby="stepsTitle">
+  <div class="sbox">
+    <div class="shead"><h3 id="stepsTitle">Step by step: the forces on a block on the incline</h3>
+      <button class="btn" id="stepsClose" aria-label="Close">✕ Close</button></div>
+    <div class="sbody">
+      <div class="sstage"><canvas id="stepCv" width="1280" height="720" aria-label="Animation of the forces on a block on the tilted board"></canvas></div>
+      <div class="sexp" id="stepExp" aria-live="polite"></div>
+    </div>
+    <div class="sbar">
+      <button class="btn" id="stepPrev">◀ Back</button>
+      <button class="btn primary" id="stepPlay">⏸ Pause</button>
+      <button class="btn" id="stepNext">Next ▶</button>
+      <div class="dots" id="stepDots"></div>
+      <label class="switch" title="Carry on into the next step without stopping"><input type="checkbox" id="stepAuto"> Play all</label>
+    </div>
+  </div>
+</div>
+<!-- ==== STEP BY STEP MARKUP END ==== -->
 
 <script>
 "use strict";
@@ -1345,6 +1394,429 @@ function numBoxes(list){
 numBoxes([{id:"mass", unit:"kg", get:() => set.m, type:[0.01, 100]}, {id:"ang", unit:"°", get:() => set.th, type:[0, 89], off:() => R.phase === "tilt" || R.phase === "slide"}, {id:"rate", unit:"° s⁻¹", get:() => set.rate, type:[0.1, 30]}]);
 requestAnimationFrame(frame);
 /* NEWTON HOOK */ NEWTON.hook();
+</script>
+<script>
+/* ==== INCLINE ANIMATION CORE START (shared with "Animation - Forces on an inclined plane"; edit both together) ==== */
+function InclineAnim(cv){
+"use strict";
+/* ---------------- physics (one place for every number) ---------------- */
+const g = 9.81, m = 2.0, MU_S = 0.70, MU_D = 0.50;
+const TH0 = 30, THC = Math.atan(MU_S) * 180 / Math.PI;   // 34.99°
+const rad = d => d * Math.PI / 180;
+const f1 = x => x.toFixed(1), f2 = x => x.toFixed(2), p3 = x => (x >= 10 ? x.toFixed(1) : x.toFixed(2));
+const W = m * g;                                          // 19.62 N
+const aSlide = g * (Math.sin(rad(THC)) - MU_D * Math.cos(rad(THC)));   // 1.61 m s^-2
+
+/* ---------------- timeline ---------------- */
+const T_END = 78;
+const CH = [
+  {t:0,  name:"1 The block"},
+  {t:5,  name:"2 Weight"},
+  {t:12, name:"3 Tilt the axes"},
+  {t:19, name:"4 Components"},
+  {t:30, name:"5 Normal force"},
+  {t:36, name:"6 Static friction"},
+  {t:43, name:"7 Steeper"},
+  {t:53, name:"8 Slipping"},
+  {t:66, name:"Summary"}
+];
+const CAP = [
+  [0,  5,  "Imagine a block resting on a slope (an inclined plane).", "Which forces act on it, and why does it not slide?"],
+  [5,  12, "Gravity pulls the block straight DOWN, towards the centre of the Earth,", "not into the slope. Weight W = mg acts at the centre of mass."],
+  [12, 19, "The trick: turn the axes! One axis ALONG the slope (∥),", "one PERPENDICULAR to it (⊥). The block can only move along the slope."],
+  [19, 25, "Split the weight into two components:", "mg sin θ down the slope and mg cos θ into the slope."],
+  [25, 30, "The angle between W and the ⊥ axis is the same θ as the slope", "(both are 90° minus the angle between W and the slope). W is now replaced by its two parts."],
+  [30, 36, "The slope pushes back, perpendicular to its surface: the normal force.", "Nothing moves into the slope, so F_{N} = mg cos θ."],
+  [36, 43, "mg sin θ tries to pull the block down the slope. Static friction acts UP the slope", "and balances it: f = mg sin θ. ΣF = 0, so the block stays at rest."],
+  [43, 51, "Make the slope steeper: mg sin θ grows, while mg cos θ (and F_{N}) gets smaller.", "Friction must grow to hold the block, but it cannot be bigger than μ_{s} F_{N}."],
+  [51, 53, "Slip! At tan θ = μ_{s} the friction needed reaches its maximum.", "θ = tan⁻¹ 0.70 ≈ 35°"],
+  [53, 59, "Now the block slides. Kinetic friction μ_{d} F_{N} is smaller than the maximum static friction,", "so there is a resultant force down the slope."],
+  [59, 66, "Newton's second law along the slope: ma = mg sin θ − μ_{d} mg cos θ", "a = g(sin θ − μ_{d} cos θ) = 1.61 m s^{−2}: the mass cancels!"],
+  [66, 78, "Summary: resolve along and perpendicular to the slope.", "Pause here and copy the key equations."]
+];
+
+/* ---------------- helpers ---------------- */
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const ease = x => { x = clamp(x); return x < .5 ? 2 * x * x : 1 - Math.pow(-2 * x + 2, 2) / 2; };
+const prog = (t, a, b) => ease((t - a) / (b - a));          // 0 → 1 between a and b
+const fade = (t, a, b, c = 1e9, d = 1e9) => Math.min(clamp((t - a) / (b - a)), 1 - clamp((t - c) / (d - c)));
+const fmt = s => Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0");
+
+const C = { W:"#2A5D8A", Wc:"#5B9BD5", N:"#2E7D32", F:"#C62828", A:"#E65100", ink:"#263238", muted:"#606A72",
+            ramp:"#FFE0B2", rampEdge:"#C68A3A", block:"#FFCC80", blockEdge:"#8D5A1E", navy:"#1F3A5F" };
+const FONT = '"Segoe UI",Calibri,Carlito,"Helvetica Neue",Arial,sans-serif';
+
+const ctx = cv.getContext("2d");
+
+/* rich text: "F_{N} = mg cos θ", "m s^{−2}" (sub/superscripts) */
+function rich(str, x, y, size, color, align = "left", weight = "") {
+  const parts = []; let re = /(_\{[^}]*\}|\^\{[^}]*\})/g, last = 0, mm;
+  while ((mm = re.exec(str))) { if (mm.index > last) parts.push([str.slice(last, mm.index), 0]);
+    parts.push([mm[0].slice(2, -1), mm[0][0] === "_" ? 1 : -1]); last = re.lastIndex; }
+  if (last < str.length) parts.push([str.slice(last), 0]);
+  const meas = parts.map(([s, k]) => { ctx.font = `${weight} ${k ? size * .68 : size}px ${FONT}`; return ctx.measureText(s).width; });
+  const tot = meas.reduce((a, b) => a + b, 0);
+  let cx = align === "center" ? x - tot / 2 : align === "right" ? x - tot : x;
+  ctx.fillStyle = color; ctx.textBaseline = "alphabetic"; ctx.textAlign = "left";
+  parts.forEach(([s, k], i) => { ctx.font = `${weight} ${k ? size * .68 : size}px ${FONT}`;
+    ctx.fillText(s, cx, y + (k === 1 ? size * .28 : k === -1 ? -size * .42 : 0)); cx += meas[i]; });
+  return tot;
+}
+function arrow(x, y, dx, dy, color, alpha = 1, w = 5, dash = null) {
+  const L = Math.hypot(dx, dy); if (L < 2 || alpha <= 0) return;
+  const ux = dx / L, uy = dy / L, hl = Math.min(20, L * .45), hw = hl * .55;
+  ctx.save(); ctx.globalAlpha *= alpha; ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = w; ctx.lineCap = "round";
+  if (dash) ctx.setLineDash(dash);
+  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + dx - ux * hl * .8, y + dy - uy * hl * .8); ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.moveTo(x + dx, y + dy);
+  ctx.lineTo(x + dx - ux * hl - uy * hw, y + dy - uy * hl + ux * hw);
+  ctx.lineTo(x + dx - ux * hl + uy * hw, y + dy - uy * hl - ux * hw); ctx.closePath(); ctx.fill(); ctx.restore();
+}
+function label(str, x, y, color, alpha = 1, size = 22) {
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha *= alpha;
+  ctx.font = `600 ${size}px ${FONT}`;
+  // white halo so labels stay readable over the ramp
+  const w = rich(str, -9999, -9999, size, "#0000", "left", "600");
+  ctx.fillStyle = "rgba(255,255,255,.85)"; roundRect(x - w / 2 - 5, y - size * .9, w + 10, size * 1.3, 6); ctx.fill();
+  rich(str, x, y, size, color, "center", "600"); ctx.restore();
+}
+function roundRect(x, y, w, h, r) { ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+
+/* ---------------- state as a function of time ---------------- */
+function state(t) {
+  let th = TH0 + (THC - TH0) * prog(t, 43, 51);
+  const slipping = t >= 53;
+  // slide: s from S0 down to S_END (px along the slope), constant acceleration, starts 53.5 s
+  // repeated slides from S0 to S_END (3.0 s each, display scale only), restarting every 3.8 s until 65 s
+  const S0 = 470, S_END = 300, TS = 3.0, PER = 3.8;
+  let s = S0, vis = 1, moving = false;
+  if (t >= 53.5) {
+    const k = Math.floor((t - 53.5) / PER), tc = Math.min((t - 53.5) - k * PER, 65 - 53.5 - k * PER);
+    const aPx = 2 * (S0 - S_END) / (TS * TS);
+    s = Math.max(S_END, S0 - .5 * aPx * tc * tc); moving = tc < TS && t < 65;
+    vis = Math.min(k > 0 ? clamp(tc / .25) : 1, t < 65 ? 1 - clamp((tc - (PER - .3)) / .3) : 1);
+  }
+  return { th, slipping, s, vis, moving, atBottom: false };
+}
+
+/* ---------------- drawing ---------------- */
+const P0 = { x: 30, y: 596 }, LR = 720, BS = 96, KPX = 10;    // board hinge, board length, block size, px per newton
+
+function draw(t) {
+  t = clamp(t, 0, T_END);
+  const st = state(t), th = rad(st.th);
+  const sn = Math.sin(th), cs = Math.cos(th);
+  const u = { x: cs, y: -sn }, n = { x: -sn, y: -cs };       // up the slope, outward normal (screen coords)
+
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, 1280, 720);
+
+  // ---- title strip
+  ctx.fillStyle = "#F7F9FC"; ctx.fillRect(0, 0, 1280, 56);
+  ctx.fillStyle = C.line || "#DDE6F0"; ctx.fillRect(0, 56, 1280, 1);
+  rich("Forces on an inclined plane", 24, 37, 26, C.navy, "left", "700");
+  const chNow = CH.filter(c => c.t <= t + 1e-6).pop();
+  rich(chNow.name, 1256, 36, 20, C.muted, "right", "600");
+
+  // ---- lab bench + tilted board (as in the Friction on an incline simulation) + clamp stand
+  ctx.fillStyle = "#8D6E63"; ctx.fillRect(0, P0.y, 1280, 26); ctx.fillStyle = "#E8DCC4"; ctx.fillRect(0, P0.y, 1280, 6);
+  const top = { x: P0.x + LR * cs, y: P0.y - LR * sn };
+  const rodTop = Math.min(top.y - 34, P0.y - 80);
+  ctx.fillStyle = "#546E7A"; ctx.fillRect(top.x + 18, rodTop, 8, P0.y - rodTop);          // stand rod
+  ctx.fillRect(top.x - 14, P0.y - 8, 70, 8);                                                  // stand base
+  ctx.strokeStyle = "#546E7A"; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(top.x + 22, top.y + 8); ctx.lineTo(top.x - 4, top.y + 8); ctx.stroke();
+  ctx.fillStyle = "#37474F"; ctx.fillRect(top.x + 14, top.y + 1, 16, 14);                     // clamp boss
+  ctx.save(); ctx.translate(P0.x, P0.y); ctx.rotate(-th);
+  ctx.fillStyle = "#C8A27A"; ctx.strokeStyle = "#8D6E63"; ctx.lineWidth = 2; ctx.fillRect(0, 0, LR, 16); ctx.strokeRect(0, 0, LR, 16);
+  ctx.fillStyle = "#E8DCC4"; ctx.fillRect(0, 0, LR, 4);
+  ctx.strokeStyle = "rgba(141,110,99,.45)"; ctx.lineWidth = 1;
+  for (let k = 1; k < 6; k++) { ctx.beginPath(); ctx.moveTo(k * LR / 6, 6); ctx.lineTo(k * LR / 6 + 40, 13); ctx.stroke(); }   // wood grain
+  ctx.restore();
+  ctx.fillStyle = "#455A64"; ctx.beginPath(); ctx.arc(P0.x, P0.y, 6, 0, 7); ctx.fill();      // hinge
+  // slope angle θ at the pivot
+  const aTh = fade(t, 0, 1.5);
+  ctx.save(); ctx.globalAlpha = aTh; ctx.strokeStyle = C.ink; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.arc(P0.x, P0.y, 90, -th, 0); ctx.stroke();
+  rich("θ = " + Math.round(st.th) + "°", P0.x + 100, P0.y - 14, 22, C.ink, "left", "700"); ctx.restore();
+
+  // ---- block (block + forces fade between repeated slides)
+  ctx.save(); ctx.globalAlpha = st.vis;
+  const cp = { x: P0.x + st.s * cs, y: P0.y - st.s * sn };   // contact point (middle of the bottom face)
+  const cm = { x: cp.x + n.x * BS / 2, y: cp.y + n.y * BS / 2 };
+  ctx.save(); ctx.translate(cm.x, cm.y); ctx.rotate(-th);
+  ctx.fillStyle = C.block; ctx.strokeStyle = C.blockEdge; ctx.lineWidth = 3;
+  roundRect(-BS / 2, -BS / 2, BS, BS, 6); ctx.fill(); ctx.stroke();
+  ctx.restore();
+  // centre-of-mass dot
+  ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(cm.x, cm.y, 5, 0, 7); ctx.fill();
+
+  // motion streaks while sliding
+  if (st.moving) { ctx.save(); ctx.globalAlpha = .35; ctx.strokeStyle = C.muted; ctx.lineWidth = 3;
+    for (let k = 0; k < 3; k++) { const o = (k - 1) * 22; const b = { x: cm.x + n.x * o + u.x * (BS / 2 + 10), y: cm.y + n.y * o + u.y * (BS / 2 + 10) };
+      ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x + u.x * 40, b.y + u.y * 40); ctx.stroke(); } ctx.restore(); }
+
+  // ---- tilted axes (dashed, through the centre of mass)
+  const axA = fade(t, 12, 13.5, 64, 66), rot = prog(t, 13.5, 17);     // rotate from x/y to ∥/⊥
+  if (axA > 0) {
+    const ang = -th * rot;                                   // screen rotation of the axes
+    ctx.save(); ctx.globalAlpha = axA * .9; ctx.translate(cm.x, cm.y); ctx.rotate(ang);
+    ctx.strokeStyle = "#78909C"; ctx.lineWidth = 2; ctx.setLineDash([8, 7]);
+    ctx.beginPath(); ctx.moveTo(-230, 0); ctx.lineTo(230, 0); ctx.moveTo(0, -200); ctx.lineTo(0, 245); ctx.stroke(); ctx.setLineDash([]);
+    ctx.restore();
+    const lp = (dist, a) => ({ x: cm.x + dist * Math.cos(a), y: cm.y + dist * Math.sin(a) });
+    const p1 = lp(250, ang + Math.PI), p2 = lp(265, ang + Math.PI / 2);
+    ctx.save(); ctx.globalAlpha = axA;
+    label(rot > .5 ? "∥ slope" : "x", p1.x, p1.y + 8, "#546E7A", 1, 19);
+    label(rot > .5 ? "⊥ slope" : "y", p2.x, p2.y + 8, "#546E7A", 1, 19);
+    ctx.restore();
+  }
+
+  // ---- forces (all from the centre of mass except friction, which acts along the contact face)
+  const growW = prog(t, 6, 8.5);
+  const dimW = 1 - .7 * prog(t, 27, 29);                     // W fades once replaced by its components
+  const wLen = W * KPX * growW;
+  arrow(cm.x, cm.y, 0, wLen, C.W, dimW, 6, t > 27 ? [10, 8] : null);
+  label("W = mg", cm.x + 62, cm.y + wLen - 10, C.W, fade(t, 7.5, 8.5) * (dimW > .5 ? 1 : .6));
+
+  // components
+  const gPar = prog(t, 20, 22.5), gPerp = prog(t, 22, 24.5);
+  const Wpar = W * sn, Wperp = W * cs;
+  const vPar = { x: -u.x * Wpar * KPX * gPar, y: -u.y * Wpar * KPX * gPar };     // down the slope
+  const vPerp = { x: -n.x * Wperp * KPX * gPerp, y: -n.y * Wperp * KPX * gPerp };  // into the slope
+  const compA = fade(t, 19.5, 20.5);
+  // construction rectangle
+  const rectA = fade(t, 24, 25.5, 30, 31.5) * .8;
+  if (rectA > 0) { ctx.save(); ctx.globalAlpha = rectA; ctx.strokeStyle = C.Wc; ctx.lineWidth = 2; ctx.setLineDash([6, 6]);
+    const tip = { x: cm.x, y: cm.y + W * KPX };
+    ctx.beginPath(); ctx.moveTo(cm.x + vPar.x, cm.y + vPar.y); ctx.lineTo(tip.x, tip.y); ctx.lineTo(cm.x + vPerp.x, cm.y + vPerp.y); ctx.stroke(); ctx.restore(); }
+  arrow(cm.x, cm.y, vPar.x, vPar.y, C.Wc, compA, 5);
+  arrow(cm.x, cm.y, vPerp.x, vPerp.y, C.Wc, compA, 5);
+  const parTip = { x: cm.x + vPar.x, y: cm.y + vPar.y }, perpTip = { x: cm.x + vPerp.x, y: cm.y + vPerp.y };
+  label("mg sin θ", parTip.x - 30 + n.x * 30, parTip.y + n.y * 30 - 4, "#2F6DB0", fade(t, 21.5, 22.5) * compA);
+  label("mg cos θ", perpTip.x + 72, perpTip.y + 2, "#2F6DB0", fade(t, 24, 25) * compA);
+
+  // angle θ between W and the ⊥ axis
+  const angA = fade(t, 25, 26.5, 30, 31.5);
+  if (angA > 0) { ctx.save(); ctx.globalAlpha = angA; ctx.strokeStyle = C.A; ctx.lineWidth = 3;
+    const a0 = Math.PI / 2, a1 = Math.atan2(-n.y, -n.x);   // straight down, into the slope
+    ctx.beginPath(); ctx.arc(cm.x, cm.y, 62, Math.min(a0, a1), Math.max(a0, a1)); ctx.stroke();
+    const am = (a0 + a1) / 2; rich("θ", cm.x + 82 * Math.cos(am) - 6, cm.y + 82 * Math.sin(am) + 8, 26, C.A, "left", "700");
+    // and highlight the slope angle too
+    ctx.beginPath(); ctx.arc(P0.x, P0.y, 90, -th, 0); ctx.stroke(); ctx.restore(); }
+
+  // normal force
+  const gN = prog(t, 31, 33.5), FN = W * cs;
+  arrow(cm.x, cm.y, n.x * FN * KPX * gN, n.y * FN * KPX * gN, C.N, 1, 6);
+  const nTip = { x: cm.x + n.x * FN * KPX * gN, y: cm.y + n.y * FN * KPX * gN };
+  label("F_{N}", nTip.x - 26, nTip.y - 8, C.N, fade(t, 33, 34));
+
+  // friction: static (balances mg sin θ) then kinetic (μd F_N)
+  const fStatic = W * sn, fKin = MU_D * FN;
+  const fNow = st.slipping ? fStatic + (fKin - fStatic) * prog(t, 53, 54) : fStatic;
+  const gF = prog(t, 37, 39.5), fLen = fNow * KPX * gF;
+  const fBase = { x: cp.x - u.x * 6 + n.x * 4, y: cp.y - u.y * 6 + n.y * 4 };
+  arrow(fBase.x, fBase.y, u.x * fLen, u.y * fLen, C.F, 1, 6);
+  label(st.slipping ? "f = μ_{d} F_{N}" : "f (static)", fBase.x + u.x * (fLen + 70) - n.x * 30, fBase.y + u.y * (fLen + 70) - n.y * 30, C.F, fade(t, 39, 40));
+
+  // acceleration while sliding
+  const accA = fade(t, 54, 55.5);
+  if (accA > 0 && !st.atBottom) {
+    const ab = { x: cm.x + n.x * (BS / 2 + 40) - u.x * 40, y: cm.y + n.y * (BS / 2 + 40) - u.y * 40 };   // beside the F_N line
+    arrow(ab.x, ab.y, -u.x * 110, -u.y * 110, C.A, accA, 7);
+    label("a = " + f2(aSlide) + " m s^{−2}", ab.x - u.x * 75 + n.x * 48, ab.y - u.y * 75 + n.y * 48, C.A, accA);
+  }
+
+  ctx.restore();   // end of block + forces
+
+  // SLIP flash
+  const slipA = fade(t, 51, 51.3, 52.6, 53.2);
+  if (slipA > 0) { ctx.save(); ctx.globalAlpha = slipA; ctx.fillStyle = C.F; roundRect(cm.x - 70, cm.y - 150, 140, 52, 12); ctx.fill();
+    rich("SLIP!", cm.x, cm.y - 112, 32, "#fff", "center", "800"); ctx.restore(); }
+
+  drawPanel(t, st, sn, cs);
+  drawCaption(t);
+  if (t >= 66) drawSummary(t);
+}
+
+/* ---------- right-hand panel: the numbers build up with the animation ---------- */
+function drawPanel(t, st, sn, cs) {
+  const X = 790, Y = 78, PW = 466, PH = 516;
+  ctx.fillStyle = "#F7F9FC"; roundRect(X, Y, PW, PH, 14); ctx.fill(); ctx.strokeStyle = "#DDE6F0"; ctx.lineWidth = 1.5; ctx.stroke();
+  rich("The numbers", X + 20, Y + 34, 21, C.navy, "left", "700");
+  const FN = W * cs, rows = [];
+  rows.push([0,  "m = 2.0 kg,   g = 9.81 N kg^{−1},   μ_{s} = 0.70,   μ_{d} = 0.50", C.muted, 18]);
+  rows.push([0,  "θ = " + f1(st.th) + "°", C.ink, 22]);
+  rows.push([6,  "W = mg = 2.0 × 9.81 = " + f1(W) + " N", C.W, 22]);
+  rows.push([20, "mg sin θ = " + p3(W * sn) + " N   (down the slope)", "#2F6DB0", 22]);
+  rows.push([22, "mg cos θ = " + p3(W * cs) + " N   (into the slope)", "#2F6DB0", 22]);
+  rows.push([31, "⊥:  F_{N} = mg cos θ = " + p3(FN) + " N", C.N, 22]);
+  if (!st.slipping) {
+    rows.push([37, "∥:  f = mg sin θ = " + p3(W * sn) + " N", C.F, 22]);
+    rows.push([40, "ΣF = 0  →  at rest", C.ink, 22]);
+  } else {
+    rows.push([53, "∥:  f = μ_{d} F_{N} = 0.50 × " + p3(FN) + " = " + p3(MU_D * FN) + " N", C.F, 22]);
+    rows.push([57, "ΣF = mg sin θ − f = " + p3(W * sn - MU_D * FN) + " N", C.ink, 22]);
+    rows.push([59, "a = ΣF / m = " + f2(aSlide) + " m s^{−2}  down the slope", C.A, 22]);
+  }
+  let y = Y + 74;
+  rows.forEach(([t0, s, col, sz]) => { const a = fade(t, t0, t0 + 1); if (a > 0) { ctx.save(); ctx.globalAlpha = a;
+      rich(s, X + 20, y, sz, col, "left", sz > 20 ? "600" : ""); ctx.restore(); } y += sz > 20 ? 40 : 34; });
+
+  // friction meter (steeper chapter): friction needed vs the maximum μs F_N
+  const mA = fade(t, 43, 44, 56, 57);
+  if (mA > 0) {
+    ctx.save(); ctx.globalAlpha = mA;
+    const my = Y + PH - 118, mx = X + 20, mw = PW - 40;
+    rich("Friction needed  vs  maximum static friction", mx, my, 18, C.ink, "left", "600");
+    const fmax = MU_S * FN, need = W * sn, scale = mw / 14;
+    ctx.fillStyle = "#ECEFF1"; roundRect(mx, my + 14, mw, 26, 6); ctx.fill();
+    ctx.fillStyle = need >= fmax - 0.02 ? C.F : "#EF9A9A"; roundRect(mx, my + 14, Math.min(mw, need * scale), 26, 6); ctx.fill();
+    ctx.strokeStyle = C.ink; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(mx + fmax * scale, my + 8); ctx.lineTo(mx + fmax * scale, my + 46); ctx.stroke();
+    rich("needed = mg sin θ = " + p3(need) + " N", mx, my + 70, 18, C.F, "left", "600");
+    rich("max = μ_{s} F_{N} = " + p3(fmax) + " N", mx + mw, my + 94, 18, C.ink, "right", "600");
+    ctx.restore();
+  }
+}
+
+function drawCaption(t) {
+  const c = CAP.find(([a, b]) => t >= a && t < b) || CAP[CAP.length - 1];
+  const a = Math.min(clamp((t - c[0]) / .4), 1 - clamp((t - (c[1] - .3)) / .3)) || (t >= T_END - .01 ? 1 : 0);
+  ctx.fillStyle = C.navy; ctx.fillRect(0, 622, 1280, 98);
+  ctx.fillStyle = C.A; ctx.fillRect(0, 622, 1280, 4);
+  ctx.save(); ctx.globalAlpha = Math.max(a, t >= T_END - .5 ? 1 : 0);
+  rich(c[2], 640, 663, 25, "#fff", "center", "600");
+  rich(c[3], 640, 700, 23, "#E3F2FD", "center", "");
+  ctx.restore();
+}
+
+function drawSummary(t) {
+  const a = fade(t, 66, 67.2);
+  ctx.save(); ctx.globalAlpha = a;
+  ctx.fillStyle = "rgba(242,245,249,.94)"; ctx.fillRect(0, 57, 1280, 565);
+  const X = 70, Y = 82, w = 1140, h = 520;
+  ctx.fillStyle = "#fff"; roundRect(X, Y, w, h, 16); ctx.fill(); ctx.strokeStyle = C.navy; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = C.navy; roundRect(X, Y, w, 54, 16); ctx.fill(); ctx.fillRect(X, Y + 30, w, 24);
+  rich("Block on a slope: what to remember", X + 28, Y + 37, 26, "#fff", "left", "700");
+  const L = [
+    ["1", "Weight W = mg always acts vertically DOWN, never \"into the slope\".", C.W],
+    ["2", "Resolve W:  mg sin θ along the slope,  mg cos θ perpendicular to it.", "#2F6DB0"],
+    ["3", "No motion perpendicular to the slope:  F_{N} = mg cos θ  (no other forces ⊥ to the slope).", C.N],
+    ["4", "At rest: static friction  f = mg sin θ,  up the slope.  It can be at most  μ_{s} F_{N}.", C.F],
+    ["5", "It starts to slip when  tan θ = μ_{s}  (mass does not matter).", C.ink],
+    ["6", "Sliding down:  a = g (sin θ − μ_{d} cos θ).    No friction:  a = g sin θ.", C.A]
+  ];
+  L.forEach(([k, s, col], i) => { const ai = fade(t, 67 + i * 1.3, 68 + i * 1.3); ctx.save(); ctx.globalAlpha = a * ai;
+    const y = Y + 112 + i * 66;
+    ctx.fillStyle = col; ctx.beginPath(); ctx.arc(X + 46, y - 8, 17, 0, 7); ctx.fill();
+    rich(k, X + 46, y, 20, "#fff", "center", "700");
+    rich(s, X + 80, y, 24, C.ink, "left", ""); ctx.restore(); });
+  ctx.restore();
+}
+
+return { draw, T_END, CH, CAP };
+}
+/* ==== INCLINE ANIMATION CORE END ==== */
+/* ==== STEP BY STEP START: each step plays its part of the animation, then waits for Next ▶ ==== */
+(function(){
+  const $s = id => document.getElementById(id);
+  const A = InclineAnim($s("stepCv"));
+  const STEPS = [
+    {h:"A block at rest on the board", body:`
+      <p>A 2.0 kg wooden block rests on the board, tilted to θ = 30° with the clamp stand: the same set-up as the simulation.</p>
+      <p>It does not move, so by <b>Newton's 1st law</b> the resultant force on it is zero. Whatever forces act, they must cancel.</p>
+      <div class="think">🤔 <b>Think:</b> name the forces on the block. Which object exerts each one?</div>`},
+    {h:"Weight: always vertically down", body:`
+      <p>The Earth pulls the block <b>vertically downwards</b>. The weight acts at the centre of mass:</p>
+      <div class="eqline">W = mg = 2.0 × 9.81 = 19.6 N</div>
+      <div class="oops">⚠ <b>Common mistake:</b> drawing W perpendicular to the slope. The weight is vertical whatever the angle of the board.</div>
+      <div class="think">🤔 <b>Think:</b> what are the size and direction of W if the board is tilted to 60°?</div>`},
+    {h:"Turn the axes", body:`
+      <p>The block can only move <b>along the board</b>. So choose one axis along the slope (∥) and one perpendicular to it (⊥).</p>
+      <p>Then the normal force and friction each lie along one axis, and any acceleration is along ∥. Only <b>one</b> force, the weight, has to be resolved.</p>
+      <div class="think">🤔 <b>Think:</b> with these axes, which force is not along either axis?</div>`},
+    {h:"Resolve the weight", body:`
+      <p>Replace W by two components at right angles:</p>
+      <div class="eqline">along the slope: mg sin θ = 19.6 × sin 30° = 9.81 N (down the slope)<br>
+        perpendicular: mg cos θ = 19.6 × cos 30° = 17.0 N (into the board)</div>
+      <p><b>Why θ?</b> The angle between W and the ⊥ axis equals the slope angle: both are 90° minus the angle between W and the board.</p>
+      <p><b>Check the extremes:</b> θ = 0 (flat bench): sin 0 = 0, cos 0 = 1, and all of W presses on the surface. θ = 90°: all of W acts along the board.</p>
+      <div class="oops">⚠ <b>Common mistake:</b> drawing W <i>and</i> its components as separate forces on the free-body diagram, which counts the weight twice.</div>`},
+    {h:"Normal force", body:`
+      <p>The board pushes on the block <b>perpendicular to its surface</b>. Nothing moves perpendicular to the board, so ΣF<sub>⊥</sub> = 0:</p>
+      <div class="eqline">F<sub>N</sub> = mg cos θ = 17.0 N</div>
+      <p>F<sub>N</sub> is <b>less than</b> the weight (19.6 N): the normal force is not always mg.</p>
+      <div class="think">🤔 <b>Think:</b> what happens to F<sub>N</sub> as the board gets steeper? Why?</div>`},
+    {h:"Static friction holds it", body:`
+      <p>mg sin θ pulls the block down the slope. <b>Static friction</b> acts up the slope and is exactly as large as needed:</p>
+      <div class="eqline">f = mg sin θ = 9.81 N &nbsp;&nbsp;(at most μ<sub>s</sub>F<sub>N</sub> = 0.70 × 17.0 = 11.9 N)</div>
+      <p>9.81 N &lt; 11.9 N, so friction can hold it: ΣF = 0 and the block stays at rest.</p>
+      <div class="oops">⚠ <b>Common mistake:</b> writing f = μ<sub>s</sub>F<sub>N</sub> for a block at rest. μ<sub>s</sub>F<sub>N</sub> is only the <i>maximum</i>; here f = 9.81 N, not 11.9 N.</div>`},
+    {h:"Steeper and steeper: when does it slip?", body:`
+      <p>Raise the board (like <b>▲ Tilt</b>). mg sin θ grows, while F<sub>N</sub> = mg cos θ shrinks, so the maximum friction μ<sub>s</sub>mg cos θ gets smaller.</p>
+      <p>The block slips when the friction needed reaches the maximum:</p>
+      <div class="eqline">mg sin θ = μ<sub>s</sub> mg cos θ &nbsp;⇒&nbsp; tan θ = μ<sub>s</sub><br>θ = tan⁻¹ 0.70 = 35.0°</div>
+      <p><b>m cancels:</b> a heavier block slips at the same angle.</p>
+      <div class="tryit">🔬 <b>Try it:</b> close this window, choose a surface and press ▲ Tilt. Compare θ<sub>slip</sub> with tan⁻¹ μ<sub>s</sub>.</div>`},
+    {h:"Sliding: Newton's 2nd law", body:`
+      <p>Once it moves, <b>kinetic friction</b> acts up the slope. It is smaller than the static maximum (11.3 N):</p>
+      <div class="eqline">f = μ<sub>d</sub>F<sub>N</sub> = 0.50 × 16.1 = 8.04 N</div>
+      <p>Along the slope ΣF = ma:</p>
+      <div class="eqline">ma = mg sin θ − μ<sub>d</sub> mg cos θ<br>a = g(sin θ − μ<sub>d</sub> cos θ) = 9.81 × (0.574 − 0.50 × 0.819) = 1.61 m s⁻²</div>
+      <p>The mass cancels again. Check: ΣF = 3.21 N, so a = 3.21 ÷ 2.0 = 1.61 m s⁻² ✔</p>
+      <div class="think">🤔 <b>Think:</b> why does the block keep speeding up instead of sliding at a steady speed?</div>`},
+    {h:"Summary", body:`
+      <ol>
+        <li>W = mg is always vertically down.</li>
+        <li>Resolve W: mg sin θ along the slope, mg cos θ perpendicular to it.</li>
+        <li>F<sub>N</sub> = mg cos θ (when no other force acts perpendicular to the slope).</li>
+        <li>At rest: f = mg sin θ, up the slope, up to μ<sub>s</sub>F<sub>N</sub>.</li>
+        <li>It slips when tan θ = μ<sub>s</sub>.</li>
+        <li>Sliding down: a = g(sin θ − μ<sub>d</sub> cos θ). Without friction a = g sin θ.</li>
+      </ol>
+      <div class="tryit">🔬 <b>Now use the simulation:</b> ▶ Release at several angles, ● Record each run, then plot a/cos θ against tan θ in <b>Data &amp; analysis</b>.</div>`}
+  ];
+  const seg = i => [A.CH[i].t, i + 1 < A.CH.length ? A.CH[i + 1].t : A.T_END];
+  let step = 0, t = 0, playing = false, last = 0, seen = new Set();
+  const dots = $s("stepDots");
+  STEPS.forEach((s, i) => { const b = document.createElement("button"); b.className = "dot"; b.textContent = i + 1;
+    b.title = s.h; b.setAttribute("aria-label", "Step " + (i + 1) + ": " + s.h); b.onclick = () => go(i); dots.appendChild(b); });
+  function show(){
+    const s = STEPS[step];
+    $s("stepExp").innerHTML = `<div class="snum">Step ${step + 1} of ${STEPS.length}</div><h4>${s.h}</h4>${s.body}`;
+    [...dots.children].forEach((d, i) => { d.classList.toggle("on", i === step); d.classList.toggle("done", seen.has(i) && i !== step); });
+    $s("stepPrev").disabled = step === 0; $s("stepNext").disabled = step === STEPS.length - 1;
+    btn();
+  }
+  function btn(){ const [, e] = seg(step); $s("stepPlay").textContent = playing ? "⏸ Pause" : (t >= e - .4 ? "⟲ Replay step" : "▶ Play"); }
+  function go(i){ step = Math.max(0, Math.min(STEPS.length - 1, i)); seen.add(step); t = seg(step)[0] + .01; show(); A.draw(t); play(); }
+  function play(){ if (playing) return; playing = true; last = performance.now(); requestAnimationFrame(tick); btn(); }
+  function stop(){ playing = false; btn(); }
+  function tick(now){
+    if (!playing) return;
+    t += (now - last) / 1000; last = now;
+    const [, e] = seg(step);
+    if (t >= ($s("stepAuto").checked ? e : e - .4)) {
+      if ($s("stepAuto").checked && step < STEPS.length - 1) { step++; seen.add(step); show(); }
+      else { t = step === STEPS.length - 1 ? A.T_END : e - .4; A.draw(t); stop(); return; }   // stop before the caption fades
+    }
+    A.draw(t); requestAnimationFrame(tick);
+  }
+  $s("stepPlay").onclick = () => { if (playing) stop(); else { const [s0, e] = seg(step); if (t >= e - .4) t = s0 + .01; play(); } };
+  $s("stepPrev").onclick = () => go(step - 1);
+  $s("stepNext").onclick = () => go(step + 1);
+  const close = () => { stop(); $s("steps").classList.remove("on"); };
+  $s("stepsClose").onclick = close;
+  $s("steps").addEventListener("click", e => { if (e.target.id === "steps") close(); });
+  document.addEventListener("keydown", e => { if (!$s("steps").classList.contains("on")) return;
+    if (e.key === "Escape") close();
+    if (e.key === "ArrowRight") { e.preventDefault(); go(step + 1); }
+    if (e.key === "ArrowLeft") { e.preventDefault(); go(step - 1); } });
+  $s("stepsBtn").onclick = () => { $s("steps").classList.add("on"); seen = new Set(); go(0); };
+  window.stepsOpen = i => { $s("steps").classList.add("on"); go(i || 0); };   // also used by the headless test
+})();
+/* ==== STEP BY STEP END ==== */
 </script>
 <script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 </body>
