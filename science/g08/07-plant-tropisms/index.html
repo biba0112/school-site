@@ -1,0 +1,2469 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Plant Tropisms Simulation</title>
+<!--
+  IB MYP 3 Sciences · Grade 8 · Biology Unit 1 Interactions with the Environment
+  Plant hormones and tropisms: what a tropism is (photo-, gravi-, hydro-, thigmo-, chemotropism; positive/negative),
+  phototropism with auxin (shoot positive, root negative), gravitropism (clinostat, space), Darwin's tip experiment,
+  the workbook Practical Activity 10 "Tackling Tropisms" (pp. 38-42) as a virtual lab, and uses of auxin.
+  Goes with Lesson 18 (unit slides 183-199). Photosynthesis (Lesson 17) is Simulation 04.
+  Self-contained: no internet, no external libraries or fonts. Open in any modern browser.
+  The guide is Marie, as in the other Grade 7-8 simulations. No read aloud (teacher, 27 Oct 2026).
+
+  Science kept correct (teacher notes, not shown to students):
+    · Auxin is made in the tip and MOVES to the shaded side (lower side under gravity). Slide 192 says "sunlight breaks
+      down auxin": that older idea is not used.
+    · Shoots: more auxin -> cells elongate more -> bends towards light / upwards.
+  Simplifications:
+    · Roots: "more auxin slows growth on the shaded / lower side" is the IGCSE-level model. Root phototropism is weak and
+      partly controlled by other signals; gravity sensing in the root cap is not shown.
+    · Practical 10: Activity 2 uses light from one side (the workbook's suggested change). The control dish lies flat
+      (seen from above). Extension results (shoots turn down to light from below, roots still grow down) are typical
+      results; real seedlings vary.
+    · Growth is shown as a time-lapse; bending angles and cell lengths are illustrative.
+
+  File sections: 1 STYLE · 2 MARKUP (9 tabs) · 3 CONFIG · 4 ENGINE · 5 DRAWING · 6-12 TABS 1-7 · 13 UI
+-->
+<style>
+/* ============================ 1 STYLE ============================ */
+:root{
+  --navy:#1F3A5F; --accent:#E65100; --ink:#263238; --muted:#606A72;
+  --bg:#F2F5F9; --card:#FFFFFF; --line:#DDE6F0; --sunk:#EEF2F7; --soft-blue:#E3F2FD;
+  --star:#F9A825; --ok:#2E7D32; --bad:#C62828; --focus:#1565C0;
+  --sen:#1E88E5; --rel:#8E24AA; --mot:#E53935; --nt:#43A047; --cns:#F9A825;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;font-size:18px}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:1rem/1.45 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;min-height:100dvh}
+h2,h3{margin:0}
+p{margin:0}
+button{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,[role="button"]:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+/* header (as in every simulation) */
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);
+  display:flex;align-items:center;gap:12px;padding:8px 16px;flex-wrap:wrap;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header h1{font-size:1.25rem;margin:0;font-weight:600}
+header .sub{font-size:.85rem;opacity:.85}
+.sub a.home{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55);white-space:nowrap}
+header .grow{flex:1}
+.hbtns{display:flex;gap:6px;flex-wrap:wrap}
+.credit{text-align:right;font-size:.74rem;line-height:1.3;opacity:.92;white-space:nowrap}
+.credit a{color:#fff;text-decoration:underline}
+.btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;
+  min-height:44px;padding:6px 14px;cursor:pointer;touch-action:manipulation}
+.btn:hover{border-color:var(--navy)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.small{min-height:36px;padding:4px 10px;font-size:.9rem}
+header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5);white-space:nowrap}
+header .btn[aria-pressed="true"]{background:rgba(255,255,255,.18)}
+.tbanner{background:#FFF8E1;border-bottom:2px solid #F9A825;padding:6px 16px;font-size:17px;font-weight:600}
+
+/* key bar */
+.keybar{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;padding:6px 16px;background:#fff;border-bottom:1px solid var(--line)}
+.keybar .k{display:flex;align-items:center;gap:6px}
+.keybar .k i{display:inline-block;width:22px;height:6px;border-radius:3px}
+.keybar .k i.dot{width:12px;height:12px;border-radius:50%}
+.keybar .tools{margin-left:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.keybar .sum{font-weight:700;color:var(--navy);white-space:nowrap}
+
+/* tabs + panels */
+main{flex:1;display:flex;flex-direction:column;gap:10px;padding:10px 16px 16px;min-height:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+/* main tabs: big coloured buttons (teacher, 27 Oct 2026) */
+.tabs{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0 4px}
+.tab{font:inherit;font-size:19px;font-weight:700;border:2px solid var(--navy);border-radius:14px;background:#fff;color:var(--navy);
+  padding:8px 9px;min-height:54px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;
+  box-shadow:0 3px 0 #C5D0DC;transition:background .15s,transform .1s}
+.tab:hover{background:#FFF3E0}
+.tab:active{transform:translateY(2px)}
+.tab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 0 #BF360C}
+.tab .ic{font-size:23px;line-height:1}
+.tab .tstar{font-size:15px;color:var(--star);margin-left:2px}
+.tab[aria-selected="true"] .tstar{color:#FFE082}
+@media (max-width:1499px){ .tab .tstar{display:none} }   /* 7 tabs: per-tab stars only on big screens; the total ★ stays top right */
+@media (min-width:1500px){ .tabs{gap:10px} .tab{font-size:24px;padding:8px 14px} .tab .ic{font-size:28px} .tab .tstar{font-size:17px} }
+.panel{display:flex;flex-direction:column;gap:10px;min-height:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0;display:flex;flex-direction:column}
+.card > h2{padding:6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line);color:var(--navy);font-weight:600}
+.cb{padding:10px 12px;display:grid;gap:10px;align-content:start;min-height:0}
+.label{font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.hint{color:var(--muted)}
+.grid2{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:860px){ .grid2{grid-template-columns:minmax(230px,280px) minmax(0,1fr)} }
+.split{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:980px){ .split{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)} }
+.subsw{display:flex;gap:8px;flex-wrap:wrap}
+.subsw .chip{min-height:46px;padding:6px 16px;font-weight:600}
+.chip{font:inherit;border:1px solid var(--line);background:#fff;border-radius:99px;padding:4px 11px;
+  min-height:38px;cursor:pointer;display:inline-flex;gap:6px;align-items:center;line-height:1.2}
+.chip[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.chip .st{color:var(--star);font-size:15px}
+.chip[aria-pressed="true"] .st{color:#FFE082}
+
+/* Marie, the guide */
+.spexbar{display:flex;align-items:center;gap:10px;min-height:76px}
+.spex{width:72px;height:72px;flex:none}
+.bubble{position:relative;background:#fff;border:2px solid var(--navy);border-radius:14px;padding:8px 12px;line-height:1.4;flex:1;min-width:0}
+.bubble::before{content:"";position:absolute;left:-11px;top:24px;border:10px solid transparent;border-right-color:var(--navy);border-left:0}
+.bubble::after{content:"";position:absolute;left:-7px;top:26px;border:8px solid transparent;border-right-color:#fff;border-left:0}
+.bubble.tip{background:#FFF8E1} .bubble.tip::after{border-right-color:#FFF8E1}
+.bubble.good{background:#E8F5E9} .bubble.good::after{border-right-color:#E8F5E9}
+.bubble.ans{background:var(--soft-blue)} .bubble.ans::after{border-right-color:var(--soft-blue)}
+.spex .lens{fill:#FFE0C2;fill-opacity:.45}
+.spex .m{display:none} .spex[data-mood="talk"] .m-talk,.spex[data-mood="happy"] .m-happy,.spex[data-mood="think"] .m-think,
+.spex[data-mood="wow"] .m-wow,.spex[data-mood="hmm"] .m-hmm{display:inline}
+.spex[data-mood="hmm"] .brow{transform:translateY(-2px)}
+
+/* lists to choose from */
+.obj{font:inherit;display:flex;align-items:center;gap:8px;text-align:left;border:1px solid var(--line);background:#fff;
+  border-radius:10px;padding:6px 10px;min-height:54px;cursor:pointer;line-height:1.2;width:100%}
+.obj .em{font-size:1.6rem;width:34px;text-align:center;flex:none}
+.obj .st{margin-left:auto;color:var(--star);font-size:15px;white-space:nowrap}
+.obj[aria-pressed="true"]{border:2px solid var(--accent);background:#FFF3E0}
+.cardlist{display:grid;gap:6px}
+@media (max-width:859px){ .cardlist{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))} }
+
+/* answers */
+.cats{display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.cat{font:inherit;border:1px solid #B0BEC5;background:#fff;border-radius:10px;padding:8px 12px;min-height:52px;cursor:pointer;font-weight:600;line-height:1.25;text-align:left}
+.cat.right{background:#E8F5E9;border:2px solid var(--ok)}
+.cat.wrong{background:#FFEBEE;border-color:var(--bad)}
+.cat:disabled{cursor:default}
+.cats.one{grid-template-columns:minmax(0,1fr)}
+.feedback{min-height:2.4em;border-radius:10px;padding:8px 12px;background:var(--sunk)}
+.feedback:empty{display:none}
+.feedback.tip{background:#FFF8E1;border-left:4px solid #F9A825}
+.feedback.ans{background:var(--soft-blue);border-left:4px solid var(--focus)}
+.feedback.good{background:#E8F5E9;border-left:4px solid var(--ok)}
+.feedback.info{background:var(--sunk);border-left:4px solid #90A4AE}
+.feedback.stop{background:#FFEBEE;border-left:4px solid var(--bad)}
+.didyou{background:#F3E5F5;border-left:4px solid #8E24AA;border-radius:8px;padding:6px 10px}
+.stars{color:var(--star);font-size:1.2rem;letter-spacing:2px}
+.stars .off{color:var(--line)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+/* step player: 👣 Step by step | ▶ Play all */
+.player{display:grid;gap:6px}
+.modesw{justify-content:center}
+.modesw .chip{min-height:38px}
+.stepn{text-align:center;color:var(--muted);font-weight:600;font-size:15px}
+.stepn:empty{display:none}
+.read{background:var(--soft-blue);border-left:5px solid var(--navy);border-radius:10px;padding:8px 12px}
+.qlabel{font-weight:700;color:var(--navy)}
+
+/* drag or tap */
+.tile{font:inherit;border:1px solid #B0BEC5;background:#fff;border-radius:10px;padding:8px 12px;min-height:48px;text-align:left;
+  font-weight:600;line-height:1.25;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;box-shadow:0 2px 0 var(--line)}
+.tile .em{margin-right:6px}
+.tile.sel{border-color:var(--focus);box-shadow:0 0 0 3px #BBDEFB}
+.tile.lifting{opacity:.3}
+.tile.locked{cursor:default;box-shadow:none;border:2px solid var(--ok);background:#E8F5E9;touch-action:auto}
+.tile.shown{border:2px solid var(--focus);background:var(--soft-blue)}
+.tile.bounce{animation:shake .4s}
+.drag-ghost{position:fixed;z-index:80;pointer-events:none;transform:translate(-50%,-60%) rotate(-3deg);box-shadow:0 10px 24px rgba(0,0,0,.25);max-width:280px}
+.bank{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px;border-radius:12px;background:var(--sunk);min-height:66px}
+.bank:empty::after{content:"✔ All placed";color:var(--muted);align-self:center}
+.slot{border:2px dashed #90A4AE;border-radius:12px;background:#fff;min-height:64px;padding:6px;display:grid;gap:4px;align-content:start;cursor:pointer}
+.slot.hot{border:2px solid var(--focus);background:var(--soft-blue)}
+.slot.shake{animation:shake .4s;border-color:var(--bad)}
+.slot.full{border-style:solid;border-color:var(--ok);cursor:default}
+.slot .sname{font-size:15px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
+/* tab 2: neurones */
+.nSvg{width:100%;max-width:760px;display:block;margin:0 auto}
+.labwrap{position:relative;width:100%;max-width:820px;margin:0 auto}
+.labwrap svg{width:100%;display:block}
+.labwrap .slot{position:absolute;transform:translate(-50%,-50%);width:19%;min-height:44px;padding:3px;align-content:center;text-align:center;font-size:17px}
+.labwrap .slot .tile{width:100%;padding:4px 6px;min-height:36px;text-align:center;font-size:16px}
+.labwrap .slot.full{background:#E8F5E9}
+.labwrap .slot.info{cursor:pointer}
+.labwrap .slot.info:hover{box-shadow:0 0 0 3px #BBDEFB}
+.part-on{filter:drop-shadow(0 0 6px #FFB300)}
+.race{display:grid;gap:4px}
+.stop{font-size:15px}
+
+/* quizzes */
+.qhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.qhead h2{color:var(--navy)}
+.qbody{display:grid;gap:12px;max-width:1000px;width:100%;margin:0 auto}
+.qtext{font-weight:600;text-align:center}
+.qpic{display:grid;justify-items:center;gap:6px}
+.qpic .em{font-size:3.4rem;line-height:1.1}
+.qbody .cats{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:.78rem;font-weight:600;color:var(--muted);background:#fff}
+.dot.now{border-color:var(--navy);color:var(--navy)}
+.dot.done{background:var(--star);border-color:var(--star);color:#3E2A00}
+.dot.zero{background:#CFD8DC;border-color:#CFD8DC;color:#37474F}
+.review{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.review li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;padding:7px 12px;border:1px solid var(--line);border-radius:10px}
+.score{font-size:2.6rem;font-weight:700;line-height:1;color:var(--navy)}
+
+/* guide cards */
+.slide{display:grid;gap:10px}
+.slide h3{color:var(--navy)}
+.slide ul{margin:0;padding-left:1.2em;display:grid;gap:4px}
+.slide .pic{display:grid;justify-items:center}
+.slide .pic svg{width:100%;max-width:560px}
+.slidenav{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
+.slidenav .pg{color:var(--muted)}
+.kw{display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.kw div{border-radius:10px;padding:6px 10px;background:var(--sunk)}
+.kw b{display:block;color:var(--navy)}
+.kw svg{display:block;width:100%;max-width:420px;height:auto;margin:4px auto 0}
+.flow{display:flex;flex-wrap:wrap;gap:4px;align-items:center;justify-content:center;font-weight:600}
+.flow span{border-radius:8px;padding:4px 8px;background:var(--sunk)}
+.flow .s{background:#E3F2FD;color:#0D47A1} .flow .r{background:#F3E5F5;color:#6A1B9A} .flow .m{background:#FFEBEE;color:#B71C1C}
+
+/* overlays */
+.overlay{position:fixed;inset:0;background:rgba(31,58,95,.55);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+.overlay.on{display:flex}
+.overlay .box{background:#fff;border-radius:14px;max-width:780px;width:100%;max-height:92vh;overflow:auto;padding:16px 20px;display:grid;gap:10px}
+.overlay h3{margin:.1em 0 .2em;color:var(--navy)}
+.overlay li{margin:.2em 0}
+#present .box{max-width:1200px;width:96vw;height:94vh;max-height:none;font-size:1.3rem;align-content:start}
+#present .slide h3{font-size:2rem}
+#present .spex{width:110px;height:110px}
+#present .bubble{font-size:1.3rem}
+
+/* certificate */
+.certwrap{display:grid;gap:12px;justify-items:center}
+.sheet{width:100%;max-width:1000px;aspect-ratio:297/210;border:10px double var(--navy);border-radius:16px;background:#fff;
+  padding:3% 4%;display:grid;grid-template-rows:auto auto auto 1fr auto;gap:1.2%;text-align:center;position:relative;container-type:inline-size;overflow:hidden}
+.sheet .t1{font-size:max(15px,1.9cqw);letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.sheet .t2{font-size:max(26px,4.6cqw);font-weight:800;color:var(--navy);line-height:1.1}
+.sheet .who{font-size:max(24px,4.2cqw);font-weight:700;color:var(--accent);border-bottom:2px solid var(--line);padding:0 4%;justify-self:center;min-width:50%}
+.sheet .for{font-size:max(14px,1.8cqw)}
+.sheet .badges{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1.2cqw;align-content:center}
+.sheet .foot{display:flex;justify-content:space-between;align-items:end;font-size:max(12px,1.5cqw);color:var(--muted);gap:10px}
+.sheet .foot .sig{border-top:1px solid #90A4AE;padding-top:2px;min-width:30%}
+.sheet .marie{position:absolute;right:3%;top:4%;width:12%}
+.sheet .seal{position:absolute;left:3%;top:4%;width:11%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#FFE082,#F9A825);
+  display:grid;place-items:center;font-size:max(14px,2.4cqw);font-weight:800;color:#5D4037;box-shadow:0 0 0 4px #FFF8E1,0 0 0 6px #F9A825}
+.badge{display:grid;justify-items:center;gap:1px;padding:.6cqw .3cqw;border-radius:12px;border:2px dashed #CFD8DC;text-align:center;font-size:max(11px,1.35cqw);color:#90A4AE;line-height:1.15}
+.badge .em{font-size:max(22px,3.6cqw);filter:grayscale(1);opacity:.4;line-height:1.1}
+.badge.on{border:2px solid var(--star);background:#FFFDE7;color:var(--ink)}
+.badge.on .em{filter:none;opacity:1}
+.badge .how{font-size:max(10px,1.1cqw);color:var(--muted)}
+.word{font:inherit;font-size:20px;min-height:44px;padding:4px 8px;border:1px solid #B0BEC5;border-radius:8px}
+#printArea{display:none}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:12px;
+  z-index:90;box-shadow:0 8px 20px rgba(0,0,0,.25);font-weight:600;display:none}
+.toast.on{display:block;animation:pop .35s}
+@keyframes pop{from{transform:translate(-50%,20px);opacity:0}}
+footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
+
+/* big text, as in the Grade 7 simulations: 20 px for everything students read or press, labels at least 15 px */
+.card > h2{font-size:19px}
+.keybar{font-size:16px}
+main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
+.read,.feedback,.didyou,.bubble,.steps li,.slide{font-size:20px}
+.label{font-size:15px} .hint{font-size:16px}
+.qtext{font-size:22px} .qhead h2{font-size:20px}
+
+@media (max-width:1099px){ header .sub{font-size:.75rem} }
+@media (max-width:759px){
+  header h1{font-size:1.05rem}
+  .credit{order:3;flex-basis:100%;text-align:left;font-size:.7rem}
+  .credit br{display:none} .credit a{margin-left:6px}
+  .keybar{font-size:14px;gap:2px 10px}
+  .keybar .tools{margin-left:0}
+  .spex{width:56px;height:56px}
+  .bubble{font-size:17px}
+  main .btn,.cat,.obj,.chip,.tile{font-size:18px}
+  .read,.feedback,.didyou,.steps li{font-size:18px}
+  .hbtns .btn{min-height:38px;padding:4px 9px;font-size:.88rem}
+  .labwrap .slot{font-size:13px;width:23%;min-height:36px}
+  .labwrap .slot .tile{font-size:13px;padding:2px 3px;min-height:30px}
+  .labwrap .slot .sname{font-size:11px}
+  .pad{font-size:22px;min-height:180px}
+}
+@media (max-width:599px){ .tab{padding:6px 10px;font-size:20px;min-height:50px} .tab .ic{font-size:22px} .tab .full{display:none} }
+@media print{
+  @page{size:A4 landscape;margin:10mm}
+  body > *:not(#printArea){display:none!important}
+  #printArea{display:block}
+  #printArea .sheet{max-width:none;width:100%;aspect-ratio:auto;height:180mm;border-width:8px}
+  #printArea .badge{font-size:11pt} #printArea .badge .em{font-size:28pt} #printArea .badge .how{font-size:8pt}
+}
+@media (prefers-reduced-motion:reduce){ .beating,.tile.bounce,.slot.shake{animation:none} }
+
+/* every view: two columns on one screen (picture left; text, buttons, question right) */
+.fit{display:grid;gap:12px;grid-template-columns:minmax(0,1fr);align-items:start}
+.fl,.fr{display:grid;gap:8px;align-content:start;min-width:0}
+.fl{justify-items:center}
+.fitcard > .fit{padding:10px 12px}
+.cats.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.fit .cat{min-height:46px;padding:6px 10px}
+.pic{width:100%;max-width:760px;display:block;margin:0 auto;touch-action:manipulation}
+@media (min-width:900px){
+  .fit{grid-template-columns:max-content minmax(320px,1fr)}
+  .fr{max-height:var(--avail,none);overflow:auto}
+  .fitsvg{max-width:none}
+  .fit .controls,.fit .modesw{justify-content:flex-start}
+  .fit .stepn{text-align:left}
+  .fit.asking .hideq{display:none!important}
+  body.fitmode footer{display:none}
+  .fit .read{font-size:19px;padding:6px 10px}
+  .qbody{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);align-items:center;gap:10px 18px}
+  .qbody .cats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .qpic .em{font-size:2.4rem}
+  .review li{padding:4px 10px}
+}
+.mini{display:flex;flex-wrap:wrap;gap:6px}
+.mini .chip{min-height:40px;font-size:18px;padding:4px 12px}
+.slider{display:grid;gap:2px}
+.slider label{font-weight:700;color:var(--navy);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.slider input[type=range]{width:100%;height:34px;accent-color:var(--accent)}
+.slider .ends{display:flex;justify-content:space-between;font-size:15px;color:var(--muted)}
+.big{font-size:22px;font-weight:700;color:var(--navy)}
+.tag{display:inline-block;font-size:15px;font-weight:700;border-radius:99px;padding:1px 10px;color:#fff;background:var(--navy)}
+.tag.ok{background:var(--ok)} .tag.bad{background:var(--bad)} .tag.warn{background:#EF6C00}
+table.rec{border-collapse:collapse;width:100%;font-size:18px}
+table.rec th,table.rec td{border:1px solid var(--line);padding:3px 8px;text-align:left}
+table.rec th{background:#F7F9FC;color:var(--navy)}
+table.rec td.ok{background:#E8F5E9;font-weight:700}
+.part-on{filter:drop-shadow(0 0 6px #FFB300)}
+.lit{filter:drop-shadow(0 0 5px #FFD600)}
+svg text{font-family:"Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif}
+.hs{cursor:pointer}
+.hs circle{fill:#fff;fill-opacity:.85;stroke:#455A64;stroke-width:2.5}
+.ask .hs:not([data-dis]):hover circle{stroke:var(--focus);stroke-width:4}
+.hs.right circle{fill:var(--ok);fill-opacity:1;stroke:var(--ok)}
+.hs.wrong circle{fill:var(--bad);fill-opacity:.6;stroke:var(--bad)}
+.hs[data-dis]{cursor:default}
+.labwrap .slot{width:18%;min-height:40px;font-size:15px;padding:2px}
+.labwrap .slot .tile{font-size:15px;padding:2px 4px;min-height:34px}
+.labwrap .slot.info{cursor:pointer}
+.labbank{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:8px;border-radius:12px;background:var(--sunk)}
+.labbank:empty::after{content:"✔ All placed";color:var(--muted)}
+.labbank .tile{font-size:17px;padding:4px 10px;min-height:38px}
+.jobcard{border-radius:12px;padding:10px 14px;background:#FFF8E1;border:2px solid #F9A825;font-size:20px;font-weight:600}
+.steps li{font-size:18px}
+@media (min-width:900px){ .steps li{padding:3px 10px} }
+/* 8 tabs in one row on a 1366 px laptop */
+.tab{font-size:17px;padding:6px 8px;gap:4px;min-height:50px}
+.tab .ic{font-size:20px}
+@media (min-width:1500px){ .tab{font-size:22px;padding:8px 12px} .tab .ic{font-size:26px} }
+@media (max-width:599px){ .tab{padding:6px 9px;font-size:19px;min-height:48px} }
+.bigread{font-size:24px!important;line-height:1.35}
+@media (max-width:759px){ .bigread{font-size:20px!important} }
+
+/* ===== Endocrine system (30 Oct 2026) ===== */
+:root{ --ins:#1E88E5; --glu:#FB8C00; --adr:#E53935; --gluc:#FDD835; --hot:#D84315; --cold:#1565C0 }
+.tabs{gap:5px}
+.tab{font-size:16px;padding:6px 6px;gap:3px}
+@media (min-width:1500px){ .tabs{gap:8px} .tab{font-size:22px;padding:8px 12px} }
+.steps{margin:0;padding-left:1.4em;display:grid;gap:2px}
+.steps li{border-radius:8px;color:var(--muted)}
+.steps li.on{background:#FFF3E0;color:var(--ink);font-weight:600;box-shadow:inset 4px 0 0 var(--accent)}
+.steps li.done{color:var(--ink)}
+.steps li.done::marker{color:var(--ok)}
+.keybar .k b{font-weight:700}
+.hx{display:inline-block;width:13px;height:13px;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+/* bins for sorting (3 or 6 columns) */
+.bins{display:grid;gap:8px;width:100%}
+.bins.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.bins.c6{grid-template-columns:repeat(3,minmax(0,1fr))}
+.bins .slot{min-height:64px;align-content:start}
+.bins .slot .tile{width:100%;font-size:16px;padding:3px 6px;min-height:0}
+.bins .slot .sname{font-size:15px;display:flex;gap:6px;align-items:center}
+.bins .slot.multi.full{border-style:dashed;border-color:#90A4AE}
+.bins .slot.multi.hot{border-style:solid;border-color:var(--focus)}
+.bins .slot.done{border-style:solid;border-color:var(--ok);background:#F1F8E9}
+.sbank{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:8px;border-radius:12px;background:var(--sunk);min-height:56px}
+.sbank:empty::after{content:"✔ All placed";color:var(--muted);align-self:center}
+.sbank .tile{font-size:17px;padding:4px 10px;min-height:38px}
+@media (max-width:699px){ .bins.c3,.bins.c6{grid-template-columns:repeat(2,minmax(0,1fr))} }
+/* flow diagrams with slots */
+.flowgrid{display:grid;gap:6px;width:100%}
+.flowrow{display:grid;grid-template-columns:auto repeat(5,minmax(0,1fr));gap:4px;align-items:stretch}
+.flowrow .rh{writing-mode:vertical-rl;transform:rotate(180deg);font-weight:800;text-align:center;border-radius:8px;padding:4px 2px;color:#fff;font-size:15px}
+.flowrow .slot{min-height:58px;position:relative;align-content:center;padding:3px}
+.flowrow .slot:not(:last-child)::after{content:"→";position:absolute;right:-12px;top:50%;transform:translateY(-50%);font-weight:900;color:var(--navy);z-index:2}
+.flowrow .slot .tile{width:100%;font-size:15px;padding:3px 5px;min-height:0}
+.flowrow .slot .sname{font-size:13px}
+@media (max-width:699px){ .flowrow{grid-template-columns:minmax(0,1fr)} .flowrow .rh{writing-mode:horizontal-tb;transform:none} .flowrow .slot:not(:last-child)::after{content:"↓";right:auto;left:50%;top:auto;bottom:-14px} }
+.tc3{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;width:100%;align-items:start}
+.tc3 .col{display:grid;gap:6px;border-radius:12px;padding:8px}
+.tc3 .col h3{font-size:19px;text-align:center}
+.tc3 .col.hot{background:#FBE9E7} .tc3 .col.hot h3{color:var(--hot)}
+.tc3 .col.cold{background:#E3F2FD} .tc3 .col.cold h3{color:var(--cold)}
+.tc3 .mid{align-self:center;text-align:center;font-weight:800;color:var(--ok);font-size:20px;border:3px solid var(--ok);border-radius:50%;width:110px;height:110px;display:grid;place-items:center;background:#fff;line-height:1.15}
+.tc3 .slot{min-height:40px;align-content:center;padding:3px}
+.tc3 .row{display:grid;gap:5px;grid-template-columns:repeat(var(--n),minmax(0,1fr))}
+.tc3 .col{gap:4px!important;padding:6px!important}
+.tc3 .slot .tile{width:100%;font-size:16px;padding:3px 6px;min-height:0}
+.tc3 .sub{font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+@media (max-width:699px){ .tc3{grid-template-columns:minmax(0,1fr)} .tc3 .mid{justify-self:center} }
+/* chips that toggle (scenario responses) */
+.pickset{display:grid;gap:6px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.pick{font:inherit;font-size:17px;font-weight:600;border:2px solid var(--line);background:#fff;border-radius:10px;padding:4px 10px;min-height:40px;cursor:pointer;text-align:left;line-height:1.2}
+.pick[aria-pressed="true"]{border-color:var(--navy);background:#E8EAF6}
+.pick.right{border-color:var(--ok);background:#E8F5E9}
+.pick.wrong{border-color:var(--bad);background:#FFEBEE}
+.pick:disabled{cursor:default}
+/* info cards */
+.icard{border-radius:12px;padding:8px 12px;background:#fff;border:2px solid var(--line);display:grid;gap:4px;font-size:19px}
+.icard h3{font-size:20px;color:var(--navy)}
+.meters{display:grid;gap:6px}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px}
+.btn.ins{background:var(--ins);border-color:var(--ins);color:#fff;font-weight:700}
+.btn.glu{background:var(--glu);border-color:var(--glu);color:#fff;font-weight:700}
+.bigbtn{min-height:60px;font-size:22px!important;padding:8px 18px}
+.btn.hit{animation:hit .35s ease-out}
+@keyframes hit{40%{transform:scale(1.09);filter:brightness(1.35)}}
+.gstat{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:19px;font-weight:600}
+.gstat b{color:var(--navy)}
+.dsteps{display:flex;flex-wrap:wrap;gap:6px}
+.dsteps span{padding:4px 11px;border-radius:99px;background:var(--sunk);color:#606A72;font-size:16px;font-weight:700}
+.dsteps .on{background:var(--navy);color:#fff}
+.dsteps .ok{background:#C8E6C9;color:#1B5E20}
+.cats.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:699px){ .cats.three{grid-template-columns:minmax(0,1fr)} }
+.typecards{display:grid;gap:8px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.typecards div{border-radius:10px;padding:6px 10px;background:var(--sunk);font-size:17px}
+.typecards .tt{display:block;color:var(--navy);font-weight:700}
+@media (max-width:699px){ .typecards,.pickset{grid-template-columns:minmax(0,1fr)} }
+.sheet .badges{grid-template-columns:repeat(5,minmax(0,1fr))}
+.pulse{animation:pulse 0.6s infinite alternate}
+@keyframes pulse{from{transform:scale(1)}to{transform:scale(1.08)}}
+.shiver{animation:shiv .12s infinite alternate}
+@keyframes shiv{from{transform:translateX(-1.5px)}to{transform:translateX(1.5px)}}
+@media (prefers-reduced-motion:reduce){ .pulse,.shiver,.btn.hit{animation:none} }
+.beat,.pulse{transform-box:fill-box;transform-origin:center}
+
+#lpWrap .slot{width:31%;min-height:52px} #lpWrap .slot .tile{font-size:14px;padding:2px 4px}
+/* bigger letters (teacher, 31 Oct 2026): one place for the sizes. Laptop · board 1500 px+ · phone */
+:root{--t:23px;--t2:21px;--t3:19px;--small:18px;--tabf:18px}
+@media (min-width:1500px){ :root{--t:26px;--t2:24px;--t3:21px;--small:19px;--tabf:24px} }
+@media (max-width:759px){ :root{--t:20px;--t2:18px;--t3:16px;--small:15px;--tabf:19px} }
+header{padding-top:3px;padding-bottom:3px}
+header h1{font-size:24px;line-height:1.15}
+header .sub{font-size:16px}
+.credit{font-size:14px}
+.hbtns .btn{min-height:38px;padding:3px 10px;font-size:18px}
+.keybar{font-size:var(--t3);padding:2px 16px}
+.spexbar{min-height:58px}
+.spex{width:56px;height:56px}
+.bubble{font-size:var(--t);padding:4px 12px;line-height:1.3}
+.bubble::before{top:16px}
+.bubble::after{top:18px}
+.tab{font-size:var(--tabf);padding:4px 6px;min-height:44px}
+.tab .ic{font-size:calc(var(--tabf) + 3px)}
+.subsw{gap:6px}
+.subsw .chip{min-height:42px;padding:3px 12px;font-size:var(--t2)}
+main .btn,.overlay .btn,.cat,.obj,.chip,.tile,.pick,.word{font-size:var(--t)}
+.mini .chip{font-size:var(--t2);min-height:42px}
+.read,.feedback,.didyou,.slide{font-size:var(--t);line-height:1.32}
+.fit .read{font-size:var(--t);padding:5px 10px}
+.steps li{font-size:var(--t2);line-height:1.28}
+.label,.hint,.slider .ends,.tag,.stop{font-size:var(--t3)}
+.qtext{font-size:calc(var(--t) + 2px)} .qhead h2{font-size:var(--t)}
+.card > h2{font-size:var(--t)}
+.big{font-size:calc(var(--t) + 2px)}
+.bigread{font-size:calc(var(--t) + 3px)!important}
+.gstat{font-size:var(--t)}
+.jobcard{font-size:var(--t)}
+.icard{font-size:var(--t2)}
+table.rec{font-size:var(--t2)}
+.typecards div{font-size:var(--t3)}
+.dsteps span{font-size:var(--t3)}
+.labwrap .slot{font-size:var(--small)}
+.labwrap .slot .tile,.labbank .tile,.sbank .tile{font-size:var(--small)}
+.bins .slot .tile,.tc3 .slot .tile,.flowrow .slot .tile{font-size:var(--small)}
+.slot .sname,.bins .slot .sname,.flowrow .slot .sname,.tc3 .sub{font-size:16px}
+.flowrow .rh{font-size:var(--small)}
+.tc3 .col h3{font-size:var(--t2)}
+.tc3 .mid{font-size:var(--t2)}
+.sheet .t1{font-size:max(17px,2.2cqw)} .sheet .t2{font-size:max(30px,5.2cqw)} .sheet .who{font-size:max(27px,4.8cqw)}
+.sheet .for{font-size:max(16px,2cqw)} .sheet .foot{font-size:max(14px,1.7cqw)}
+.badge{font-size:max(13px,1.55cqw)} .badge .how{font-size:max(12px,1.25cqw)}
+#present .box,#present .bubble{font-size:1.45rem}
+#present .slide h3{font-size:2.2rem}
+#wyPick .chip{font-size:var(--t3);padding:3px 8px}
+.fit:has(.feedback:not(:empty)) .steps,.fit:has(.feedback:not(:empty)) .fr > .typecards{display:none}
+@media (min-width:900px) and (max-height:820px){ .fit .cats .cat.wrong,.fit .cats .cat[disabled]:not(.right),.fit:has(#scNext:not([hidden])) #scRead{display:none} }
+footer{font-size:16px}
+
+/* ===== Plant tropisms (5 Nov 2026) ===== */
+:root{ --aux:#FB8C00 }
+/* 9 tabs in one row on a 1366 px laptop */
+.tabs{gap:4px}
+.tab{font-size:16px;padding:4px 6px;gap:3px}
+.tab .ic{font-size:19px}
+@media (min-width:1500px){ .tabs{gap:8px} .tab{font-size:21px;padding:6px 10px} .tab .ic{font-size:24px} }
+@media (max-width:599px){ .tab{font-size:18px} }
+.bins.c5{grid-template-columns:repeat(5,minmax(0,1fr))}
+@media (max-width:899px){ .bins.c5{grid-template-columns:repeat(2,minmax(0,1fr))} }
+#wsBins .slot{min-height:120px}
+#wsBins .slot .sname b{color:var(--navy)}
+.cat.pickd{border:2px solid var(--navy);background:#E8EAF6}
+.predgrid{display:grid;gap:6px}
+.predrow{display:flex;gap:8px;align-items:center;font-size:var(--t2)}
+.predrow b{width:1.4em;color:var(--navy)}
+.predrow .chip{min-height:40px;font-size:var(--t3)}
+.cloze{font-size:calc(var(--t) + 2px);line-height:2.6;background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 14px}
+.cloze .slot.gap{display:inline-grid;min-width:120px;min-height:44px;vertical-align:middle;padding:2px;margin:0 4px}
+.cloze .slot.gap .tile{min-height:0;padding:2px 10px;text-align:center}
+.xbin{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px;line-height:1.3}
+.xbin .sname{flex-basis:100%}
+.sheet .badges{grid-template-columns:repeat(7,minmax(0,1fr))}
+</style>
+</head>
+<body>
+<!-- ============================ 2 MARKUP ============================ -->
+<header>
+  <div>
+    <h1>Plant hormones &amp; tropisms</h1>
+    <div class="sub"><a class="home" href="https://school.taneski.com/science/g08/#biology" title="Back to Grade 8 science">← All Grade 8 science</a> · IB MYP 3 · Unit 1 Interactions with the Environment · with Marie</div>
+  </div>
+  <div class="grow"></div>
+  <div class="hbtns">
+    <button class="btn" id="guideBtn">📖 Marie's guide</button>
+    <button class="btn" id="soundBtn" aria-pressed="false" aria-label="Sound on or off">🔇 Sound</button>
+    <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
+  </div>
+  <div class="credit">Biljana Taneska · Science teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
+</header>
+
+<div class="keybar" aria-label="Key">
+  <span class="k"><i class="dot" style="background:var(--aux)"></i><b>Auxin</b></span>
+  <span class="k"><i style="background:#FFD600;box-shadow:0 0 0 1px #F9A825"></i>Light</span>
+  <span class="k"><b style="color:#5E35B1">↓</b>Gravity</span>
+  <span class="k"><i style="background:#558B2F"></i>Shoot</span>
+  <span class="k"><i style="background:#E8DCCB;box-shadow:0 0 0 1px #A1887F"></i>Root</span>
+  <div class="tools"><span class="sum" id="starSum">★ 0</span></div>
+</div>
+
+<main>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-what" aria-selected="true" aria-controls="what"><span class="ic">🌱</span>1<span class="full"> · Tropisms</span><span class="tstar" data-ts="what"></span></button>
+    <button class="tab" role="tab" id="tab-photo" aria-selected="false" aria-controls="photo"><span class="ic">☀️</span>2<span class="full"> · Phototropism</span><span class="tstar" data-ts="photo"></span></button>
+    <button class="tab" role="tab" id="tab-grav" aria-selected="false" aria-controls="grav"><span class="ic">⬇️</span>3<span class="full"> · Gravitropism</span><span class="tstar" data-ts="grav"></span></button>
+    <button class="tab" role="tab" id="tab-more" aria-selected="false" aria-controls="more"><span class="ic">💧</span>4<span class="full"> · More tropisms</span><span class="tstar" data-ts="more"></span></button>
+    <button class="tab" role="tab" id="tab-tip" aria-selected="false" aria-controls="tip"><span class="ic">🔬</span>5<span class="full"> · Darwin</span><span class="tstar" data-ts="tip"></span></button>
+    <button class="tab" role="tab" id="tab-prac" aria-selected="false" aria-controls="prac"><span class="ic">🧫</span>6<span class="full"> · Practical 10</span><span class="tstar" data-ts="prac"></span></button>
+    <button class="tab" role="tab" id="tab-use" aria-selected="false" aria-controls="use"><span class="ic">🧪</span>7<span class="full"> · Auxin in use</span><span class="tstar" data-ts="use"></span></button>
+    <button class="tab" role="tab" id="tab-test" aria-selected="false" aria-controls="test"><span class="ic">🏆</span>8<span class="full"> · Test yourself</span><span class="tstar" data-ts="test"></span></button>
+    <button class="tab" role="tab" id="tab-cert" aria-selected="false" aria-controls="cert"><span class="ic">🏅</span>9<span class="full"> · Certificate</span></button>
+  </div>
+
+  <!-- 1 TROPISMS -->
+  <section class="panel" id="what" role="tabpanel" aria-labelledby="tab-what">
+    <div class="spexbar" data-spex="what"></div>
+    <div class="subsw" data-subs="what">
+      <button class="chip" data-sub="wIntro" aria-pressed="true">▶ What is a tropism?</button>
+      <button class="chip" data-sub="wSort" aria-pressed="false">🃏 Sort the tropisms</button>
+      <button class="chip" data-sub="wPN" aria-pressed="false">➕➖ Positive or negative?</button>
+      <button class="chip" data-sub="wCheck" aria-pressed="false">✅ Check <span class="st" data-cs="what"></span></button>
+    </div>
+    <div class="card fitcard" id="wIntro">
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="wIntroSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="A seedling by a window bends towards the light over three days"></svg></div>
+        <div class="fr">
+          <ol class="steps hideq" id="wIntroSteps"></ol>
+          <div class="player hideq" id="wIntroCtl"></div>
+          <div id="wIntroAsk" hidden><p class="qlabel" style="margin-bottom:6px" id="wIntroQ"></p><div class="cats one" id="wIntroCats"></div></div>
+          <div class="feedback" id="wIntroFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="wSort" hidden>
+      <div class="cb">
+        <p class="read">Each example is a different <b>tropism</b>. Drag it to its stimulus (or tap, then tap).</p>
+        <div class="bins c5" id="wsBins"></div>
+        <div class="sbank" id="wsBank"></div>
+        <div class="feedback" id="wsFb" aria-live="polite"></div>
+      </div>
+    </div>
+    <div class="card fitcard" id="wPN" hidden>
+      <div class="cb">
+        <div class="qbody"><div class="qpic"><div class="em" id="pnEm"></div><p class="qtext" id="pnText"></p></div><div class="cats" id="pnCats"></div></div>
+        <div class="feedback" id="pnFb" aria-live="polite"></div>
+        <div class="controls"><span class="dots" id="pnDots"></span><button class="btn primary" id="pnNext" hidden>Next →</button></div>
+      </div>
+    </div>
+    <div class="card fitcard" id="wCheck" hidden><div class="cb" data-check="what"></div></div>
+  </section>
+
+  <!-- 2 PHOTOTROPISM -->
+  <section class="panel" id="photo" role="tabpanel" aria-labelledby="tab-photo" hidden>
+    <div class="spexbar" data-spex="photo"></div>
+    <div class="subsw" data-subs="photo">
+      <button class="chip" data-sub="pLamp" aria-pressed="true">💡 Move the lamp</button>
+      <button class="chip" data-sub="pHow" aria-pressed="false">▶ How auxin works</button>
+      <button class="chip" data-sub="pRoot" aria-pressed="false">🔻 The root</button>
+      <button class="chip" data-sub="pCheck" aria-pressed="false">✅ Check <span class="st" data-cs="photo"></span></button>
+    </div>
+    <div class="card fitcard" id="pLamp">
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="plSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="A seedling in a clear jar and a lamp you can move; the shoot bends towards the lamp, the root away"></svg></div>
+        <div class="fr">
+          <p class="read hideq"><b>Drag the lamp</b> around the seedling (or use the buttons). Watch the shoot and the root. Try <b>left</b>, <b>above</b> and <b>right</b>.</p>
+          <div class="mini hideq" id="plPos"></div>
+          <div class="mini hideq" id="plOpts"></div>
+          <div class="read hideq" id="plRead"></div>
+          <div id="plAsk" hidden><p class="qlabel" style="margin-bottom:6px">The lamp is on the left. Why does the shoot bend to the left?</p><div class="cats one" id="plCats"></div></div>
+          <div class="feedback" id="plFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="pHow">
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="pHowSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="A shoot drawn as cells: auxin moves to the shaded side and the cells there stretch, so the shoot bends towards the light"></svg></div>
+        <div class="fr">
+          <ol class="steps hideq" id="pHowSteps"></ol>
+          <div class="player hideq" id="pHowCtl"></div>
+          <div id="pHowAsk" hidden><p class="qlabel" style="margin-bottom:6px" id="pHowQ"></p><div class="cats one" id="pHowCats"></div></div>
+          <div class="feedback" id="pHowFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="pRoot">
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="pRootSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="A root drawn as cells: auxin moves to the shaded side and slows growth there, so the root bends away from the light"></svg></div>
+        <div class="fr">
+          <ol class="steps hideq" id="pRootSteps"></ol>
+          <div class="player hideq" id="pRootCtl"></div>
+          <div id="pRootAsk" hidden><p class="qlabel" style="margin-bottom:6px" id="pRootQ"></p><div class="cats one" id="pRootCats"></div></div>
+          <div class="feedback" id="pRootFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="pCheck" hidden><div class="cb" data-check="photo"></div></div>
+  </section>
+
+  <!-- 3 GRAVITROPISM -->
+  <section class="panel" id="grav" role="tabpanel" aria-labelledby="tab-grav" hidden>
+    <div class="spexbar" data-spex="grav"></div>
+    <div class="subsw" data-subs="grav">
+      <button class="chip" data-sub="gTurn" aria-pressed="true">🔄 Turn the seedling</button>
+      <button class="chip" data-sub="gClino" aria-pressed="false">🌀 Clinostat &amp; space</button>
+      <button class="chip" data-sub="gWhy" aria-pressed="false">❓ Why is it useful?</button>
+      <button class="chip" data-sub="gCheck" aria-pressed="false">✅ Check <span class="st" data-cs="grav"></span></button>
+    </div>
+    <div class="card fitcard" id="gTurn">
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="gtSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="A seedling in a dark box; turn it and watch the shoot curve up and the root curve down"></svg></div>
+        <div class="fr">
+          <p class="read hideq">The seedling is in a <b>dark</b>, damp box: no light, only <b>gravity</b>. Choose how to place it, then let it grow.</p>
+          <div class="mini hideq" id="gtPos"></div>
+          <div class="controls hideq"><button class="btn primary" id="gtGo">⏩ Grow for 1 day</button><button class="chip" id="gtAux" aria-pressed="false">🟠 Show auxin</button></div>
+          <div class="read hideq" id="gtRead"></div>
+          <div id="gtAsk" hidden><p class="qlabel" style="margin-bottom:6px">The seedling lies on its side. Why does the shoot curve upwards?</p><div class="cats one" id="gtCats"></div></div>
+          <div class="feedback" id="gtFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="gClino">
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="gClinoSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="A seedling on a slowly turning clinostat grows straight; in space roots and shoots grow in any direction"></svg></div>
+        <div class="fr">
+          <ol class="steps hideq" id="gClinoSteps"></ol>
+          <div class="player hideq" id="gClinoCtl"></div>
+          <div id="gClinoAsk" hidden><p class="qlabel" style="margin-bottom:6px" id="gClinoQ"></p><div class="cats one" id="gClinoCats"></div></div>
+          <div class="feedback" id="gClinoFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="gWhy" hidden><div class="cb" id="gwBox"></div></div>
+    <div class="card fitcard" id="gCheck" hidden><div class="cb" data-check="grav"></div></div>
+  </section>
+
+  <!-- 4 MORE TROPISMS -->
+  <section class="panel" id="more" role="tabpanel" aria-labelledby="tab-more" hidden>
+    <div class="spexbar" data-spex="more"></div>
+    <div class="subsw" data-subs="more">
+      <button class="chip" data-sub="mHydro" aria-pressed="true">💧 Hydrotropism</button>
+      <button class="chip" data-sub="mThigmo" aria-pressed="false">🌿 Thigmotropism</button>
+      <button class="chip" data-sub="mChemo" aria-pressed="false">🌸 Chemotropism</button>
+      <button class="chip" data-sub="mCheck" aria-pressed="false">✅ Check <span class="st" data-cs="more"></span></button>
+    </div>
+    <div class="card fitcard" id="mHydro">
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="mHydroSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="A root in dry soil grows towards a patch of wet soil"></svg></div>
+        <div class="fr">
+          <ol class="steps hideq" id="mHydroSteps"></ol>
+          <div class="player hideq" id="mHydroCtl"></div>
+          <div id="mHydroAsk" hidden><p class="qlabel" style="margin-bottom:6px" id="mHydroQ"></p><div class="cats one" id="mHydroCats"></div></div>
+          <div class="feedback" id="mHydroFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="mThigmo">
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="mThigmoSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="A pea tendril touches a stick and coils round it"></svg></div>
+        <div class="fr">
+          <ol class="steps hideq" id="mThigmoSteps"></ol>
+          <div class="player hideq" id="mThigmoCtl"></div>
+          <div id="mThigmoAsk" hidden><p class="qlabel" style="margin-bottom:6px" id="mThigmoQ"></p><div class="cats one" id="mThigmoCats"></div></div>
+          <div class="feedback" id="mThigmoFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="mChemo">
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="mChemoSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="A pollen tube grows from the stigma down to the ovule"></svg></div>
+        <div class="fr">
+          <ol class="steps hideq" id="mChemoSteps"></ol>
+          <div class="player hideq" id="mChemoCtl"></div>
+          <div id="mChemoAsk" hidden><p class="qlabel" style="margin-bottom:6px" id="mChemoQ"></p><div class="cats one" id="mChemoCats"></div></div>
+          <div class="feedback" id="mChemoFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="mCheck" hidden><div class="cb" data-check="more"></div></div>
+  </section>
+
+  <!-- 5 DARWIN -->
+  <section class="panel" id="tip" role="tabpanel" aria-labelledby="tab-tip" hidden>
+    <div class="spexbar" data-spex="tip"></div>
+    <div class="subsw" data-subs="tip">
+      <button class="chip" data-sub="tDarwin" aria-pressed="true">🔬 Darwin's experiment</button>
+      <button class="chip" data-sub="tCloze" aria-pressed="false">🧩 Explain it</button>
+      <button class="chip" data-sub="tCheck" aria-pressed="false">✅ Check <span class="st" data-cs="tip"></span></button>
+    </div>
+    <div class="card fitcard" id="tDarwin">
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="tdSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="Four grass seedlings with light from the left: normal, tip cut off, foil cap on the tip, foil on the stem"></svg></div>
+        <div class="fr">
+          <p class="read hideq" id="tdRead">In 1880 <b>Charles Darwin</b> and his son Francis shone light from one side on grass seedlings. <b>Predict</b>: will each seedling <b>bend</b> towards the light or grow <b>straight</b>?</p>
+          <div class="predgrid hideq" id="tdPred"></div>
+          <div class="controls hideq"><button class="btn primary" id="tdGo" disabled>⏩ Wait 2 days</button></div>
+          <div id="tdAsk" hidden><p class="qlabel" style="margin-bottom:6px" id="tdQ"></p><div class="cats one" id="tdCats"></div></div>
+          <div class="feedback" id="tdFb" aria-live="polite"></div>
+          <div class="controls"><button class="btn primary" id="tdNext" hidden>Next question →</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="tCloze" hidden>
+      <div class="cb">
+        <p class="read">Explain phototropism in your own sentence. <b>Drag a word into each gap</b> (or tap, then tap). Four words are not needed.</p>
+        <div class="cloze" id="tcText"></div>
+        <div class="sbank" id="tcBank"></div>
+        <div class="feedback" id="tcFb" aria-live="polite"></div>
+      </div>
+    </div>
+    <div class="card fitcard" id="tCheck" hidden><div class="cb" data-check="tip"></div></div>
+  </section>
+
+  <!-- 6 PRACTICAL 10 -->
+  <section class="panel" id="prac" role="tabpanel" aria-labelledby="tab-prac" hidden>
+    <div class="spexbar" data-spex="prac"></div>
+    <div class="subsw" data-subs="prac">
+      <button class="chip" data-sub="xLab" aria-pressed="true">🧫 Tackling tropisms</button>
+      <button class="chip" data-sub="xCheck" aria-pressed="false">✅ Check <span class="st" data-cs="prac"></span></button>
+    </div>
+    <div class="card fitcard" id="xLab">
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="xlSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="A Petri dish of radish seeds: the set-up and the seedlings after 7 days"></svg></div>
+        <div class="fr">
+          <div class="mini" id="xlPick"></div>
+          <p class="read hideq" id="xlRead"></p>
+          <div id="xlPred"><p class="qlabel" style="margin-bottom:6px">🤔 Hypothesis: what will the seedlings do?</p><div class="cats one" id="xlPredCats"></div></div>
+          <div class="controls"><button class="btn primary" id="xlGo" hidden>⏩ Wait 7 days</button></div>
+          <div id="xlAsk" hidden><p class="qlabel" style="margin-bottom:6px" id="xlQ"></p><div class="cats one" id="xlCats"></div></div>
+          <div class="feedback" id="xlFb" aria-live="polite"></div>
+          <table class="rec hideq" id="xlTab" hidden></table>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="xCheck" hidden><div class="cb" data-check="prac"></div></div>
+  </section>
+
+  <!-- 7 AUXIN IN USE -->
+  <section class="panel" id="use" role="tabpanel" aria-labelledby="tab-use" hidden>
+    <div class="spexbar" data-spex="use"></div>
+    <div class="subsw" data-subs="use">
+      <button class="chip" data-sub="uRoot" aria-pressed="true">🌿 Rooting powder</button>
+      <button class="chip" data-sub="uWeed" aria-pressed="false">🌾 Weedkillers</button>
+      <button class="chip" data-sub="uFruit" aria-pressed="false">🍅 Seedless fruit</button>
+      <button class="chip" data-sub="uCheck" aria-pressed="false">✅ Check <span class="st" data-cs="use"></span></button>
+    </div>
+    <div class="card fitcard" id="uRoot">
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="uRootSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="Two cuttings: the one dipped in rooting powder grows many roots"></svg></div>
+        <div class="fr">
+          <ol class="steps hideq" id="uRootSteps"></ol>
+          <div class="player hideq" id="uRootCtl"></div>
+          <div id="uRootAsk" hidden><p class="qlabel" style="margin-bottom:6px" id="uRootQ"></p><div class="cats one" id="uRootCats"></div></div>
+          <div class="feedback" id="uRootFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="uWeed">
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="uWeedSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="A lawn sprayed with selective weedkiller: the broad-leaved weeds die, the grass grows on"></svg></div>
+        <div class="fr">
+          <ol class="steps hideq" id="uWeedSteps"></ol>
+          <div class="player hideq" id="uWeedCtl"></div>
+          <div id="uWeedAsk" hidden><p class="qlabel" style="margin-bottom:6px" id="uWeedQ"></p><div class="cats one" id="uWeedCats"></div></div>
+          <div class="feedback" id="uWeedFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="uFruit">
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="uFruitSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="A tomato flower sprayed with auxin grows into a seedless tomato"></svg></div>
+        <div class="fr">
+          <ol class="steps hideq" id="uFruitSteps"></ol>
+          <div class="player hideq" id="uFruitCtl"></div>
+          <div id="uFruitAsk" hidden><p class="qlabel" style="margin-bottom:6px" id="uFruitQ"></p><div class="cats one" id="uFruitCats"></div></div>
+          <div class="feedback" id="uFruitFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="uCheck" hidden><div class="cb" data-check="use"></div></div>
+  </section>
+
+  <!-- 8 TEST YOURSELF -->
+  <section class="panel" id="test" role="tabpanel" aria-labelledby="tab-test" hidden>
+    <div class="spexbar" data-spex="test"></div>
+    <div class="card"><div class="cb" id="testBox"></div></div>
+  </section>
+
+  <!-- 9 CERTIFICATE -->
+  <section class="panel" id="cert" role="tabpanel" aria-labelledby="tab-cert" hidden>
+    <div class="spexbar" data-spex="cert"></div>
+    <div class="card">
+      <h2>My certificate</h2>
+      <div class="cb certwrap">
+        <label>Your name: <input class="word" id="certName" autocomplete="off" maxlength="40" style="max-width:300px"></label>
+        <div class="sheet" id="certSheet"></div>
+        <div class="controls">
+          <button class="btn primary" id="certPrint">🖨 Print my certificate</button>
+          <button class="btn" id="resetAll">↺ Start again (delete my progress)</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- overlays -->
+<div class="overlay" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="box">
+    <h3 id="helpTitle">How to use this simulation</h3>
+    <ol>
+      <li><b>Marie</b> is your guide. <b>📖 Marie's guide</b> (top right) explains all the key words.</li>
+      <li><b>1 · Tropisms</b>: what a tropism is, the five tropisms, positive or negative.</li>
+      <li><b>2 · Phototropism</b>: move a lamp round a seedling, see how auxin makes the shoot bend towards the light and the root away.</li>
+      <li><b>3 · Gravitropism</b>: turn a seedling in the dark, a clinostat and plants in space.</li>
+      <li><b>4 · More tropisms</b>: roots to water, tendrils round a stick, pollen tubes to the ovule.</li>
+      <li><b>5 · Darwin</b>: repeat Darwin's famous experiment and explain it.</li>
+      <li><b>6 · Practical 10</b>: the virtual version of the workbook practical “Tackling tropisms”.</li>
+      <li><b>7 · Auxin in use</b>: rooting powder, weedkillers and seedless fruit.</li>
+      <li><b>Animations</b>: <b>👣 Step by step</b> plays one step at a time: read it, then press <b>Next step ▶</b>. <b>↺ Replay step</b> shows the same step again. <b>▶ Play all</b> plays everything, with a stop after each step (<b>⏸ Pause</b> to stop).</li>
+      <li><b>✅ Check</b> (in tabs 1–7) has 3 quick questions. <b>8 · Test yourself</b> mixes everything (12 questions).</li>
+      <li><b>Wrong answer?</b> The first time you get a tip. The second time the simulation shows the answer.
+        Stars: right first time ★★★ · right after a tip ★★ · answer shown: no stars. Win 7 badges and print your
+        <b>9 · 🏅 Certificate</b>. Your progress is saved in this browser.</li>
+    </ol>
+    <h3>The biology</h3>
+    <ul>
+      <li>A <b>tropism</b> is a <b>growth response</b> of a plant to a stimulus that comes from <b>one direction</b>. Towards the stimulus = <b>positive</b>, away = <b>negative</b>.</li>
+      <li><b>Auxin</b> is a plant hormone made in the tips of shoots and roots. It moves to the <b>shaded</b> side (or the <b>lower</b> side). In shoots it makes cells <b>stretch</b> more; in roots it <b>slows</b> growth.</li>
+    </ul>
+    <p class="hint">The drawings are models, not to scale. Growth is shown in time-lapse: real bending takes hours to days.</p>
+    <p style="text-align:right"><button class="btn primary" data-close="help">Close</button></p>
+  </div>
+</div>
+
+<div class="overlay" id="present" role="dialog" aria-modal="true" aria-label="Marie's guide">
+  <div class="box">
+    <div class="spexbar" data-spex="present"></div>
+    <div id="presentSlide"></div>
+    <div class="slidenav">
+      <button class="btn" id="pPrev">← Back</button>
+      <span class="pg" id="pPg"></span>
+      <button class="btn primary" id="pNext">Next →</button>
+      <button class="btn" data-close="present">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+<div id="printArea"></div>
+
+<footer>Tropism = growth towards (+) or away from (−) a stimulus from one direction. Auxin moves to the shaded or lower side.</footer>
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const TEACHER = /[?&#]teacher\b/i.test(location.search + location.hash);   // teacher preview
+
+  /* ============================ 3 CONFIG ============================ */
+  const PRAISE = "You really know how plants respond.";
+  const Q = (id, em, text, opts, tip, why) => ({ id, em, text, ans: "a", opts: opts.map((o, i) => [String.fromCharCode(97 + i), o]), tip, why });
+  const CHECKS = {
+    what: [
+      Q("c1", "🌱", "What is a tropism?", ["A growth response of a plant to a stimulus from one direction", "A fast movement of a plant, like a reflex", "A plant hormone", "The way a plant makes food"],
+        "It is slow and happens by growing.", "A <b>tropism</b> is a <b>growth</b> response to a stimulus that comes from <b>one direction</b>."),
+      Q("c2", "➕", "A shoot grows towards the light. This is…", ["positive phototropism", "negative phototropism", "positive gravitropism", "negative gravitropism"],
+        "Towards the stimulus is positive. Which stimulus?", "Growth <b>towards</b> light = <b>positive phototropism</b>."),
+      Q("c3", "⬇️", "Which stimulus causes gravitropism (geotropism)?", ["Gravity", "Light", "Water", "Touch"],
+        "“Geo” means Earth.", "<b>Gravitropism</b> (geotropism) is a response to <b>gravity</b>."),
+    ],
+    photo: [
+      Q("c1", "🟠", "Where is auxin made?", ["In the tips of shoots and roots", "In the leaves only", "In the seeds", "In the soil"],
+        "Remember where the orange dots started.", "<b>Auxin</b> is made in the <b>tips</b> of shoots (and roots)."),
+      Q("c2", "💡", "Light comes from the right. Where does auxin collect in the shoot?", ["On the left (shaded) side", "On the right (lit) side", "Evenly on both sides", "Only in the roots"],
+        "Auxin moves away from the light.", "Auxin moves to the <b>shaded</b> side: here the <b>left</b> side."),
+      Q("c3", "📏", "What does auxin do to the cells on the shaded side of a shoot?", ["It makes them stretch (elongate) more", "It makes them divide into green cells", "It stops them growing", "It makes them die"],
+        "The shoot bends because one side gets longer.", "Auxin makes the shaded-side cells <b>stretch more</b>, so the shoot bends <b>towards</b> the light."),
+    ],
+    grav: [
+      Q("c1", "🔄", "A seedling lies on its side. Where does auxin collect?", ["On the lower side", "On the upper side", "In the leaves", "Nowhere: it stops"],
+        "Gravity pulls it…", "Auxin collects on the <b>lower</b> side of the shoot and the root."),
+      Q("c2", "🌱", "Roots grow downwards. This is…", ["positive gravitropism", "negative gravitropism", "positive phototropism", "thigmotropism"],
+        "Towards the pull of gravity.", "Roots grow <b>towards</b> gravity: <b>positive gravitropism</b>."),
+      Q("c3", "🌀", "Why does a seedling on a turning clinostat grow straight?", ["Gravity pulls equally on all sides, so auxin is spread evenly", "The clinostat removes gravity", "It is spun too fast to grow", "Light stops it bending"],
+        "It turns slowly, round and round.", "As it turns, gravity acts on <b>every side</b> in turn: auxin stays <b>even</b>, so no side grows faster."),
+    ],
+    more: [
+      Q("c1", "💧", "Roots grow towards wet soil. This is…", ["positive hydrotropism", "negative hydrotropism", "phototropism", "chemotropism"],
+        "“Hydro” means water.", "Growth towards <b>water</b> = <b>positive hydrotropism</b>."),
+      Q("c2", "🌿", "A pea tendril coils round a stick. Which stimulus?", ["Touch (thigmotropism)", "Light (phototropism)", "Gravity (gravitropism)", "Chemicals (chemotropism)"],
+        "It happens where the tendril touches the stick.", "<b>Thigmotropism</b> is a response to <b>touch</b>."),
+      Q("c3", "🌸", "A pollen tube grows down to the ovule. Which tropism?", ["Chemotropism: it follows chemicals from the ovule", "Phototropism", "Gravitropism", "Hydrotropism"],
+        "The ovule sends out a chemical signal.", "<b>Chemotropism</b>: the pollen tube grows towards <b>chemicals</b> from the ovule."),
+    ],
+    tip: [
+      Q("c1", "✂", "Darwin cut the tip off a seedling. In light from one side it…", ["did not bend", "bent towards the light", "bent away from the light", "grew roots"],
+        "Which part detects the light?", "Without its <b>tip</b> the seedling did <b>not bend</b>: the tip detects the light."),
+      Q("c2", "🎩", "A foil cap on the tip, light from one side. The seedling…", ["grows straight: no light reaches the tip", "bends towards the light", "bends away from the light", "dies"],
+        "The foil blocks light.", "The cap stops light reaching the <b>tip</b>, so it grows <b>straight</b>."),
+      Q("c3", "🧩", "Foil round the stem below the tip, light from one side. The seedling…", ["bends towards the light: the tip can still detect it", "grows straight", "bends away", "stops growing"],
+        "Which part is still in the light?", "The <b>tip</b> is uncovered, so it detects the light and the seedling <b>bends</b>. The bending happens lower down: a <b>messenger</b> (auxin) travels down."),
+    ],
+    prac: [
+      Q("c1", "🧫", "Why is there a control dish in Practical 10?", ["To compare: it shows how seedlings grow without the one-sided stimulus", "To grow more seeds", "To keep spare seeds", "To test the cotton wool"],
+        "What do we compare the other dishes with?", "The <b>control</b> is the comparison: everything the same except the factor we test."),
+      Q("c2", "📏", "Which must be the same for every dish (a fair test)?", ["Type of seed, amount of water, temperature, time", "The direction of the light", "The way the dish is turned", "Nothing"],
+        "Only one thing (the independent variable) changes.", "Seed type, water, temperature and time are <b>control variables</b>."),
+      Q("c3", "🔦", "The dish is lit from one side only. The shoots grow…", ["towards the light", "away from the light", "straight up only", "into the cotton wool"],
+        "Shoots show positive phototropism.", "Shoots grow <b>towards</b> the light: auxin collects on the shaded side."),
+    ],
+    use: [
+      Q("c1", "🌿", "Why do gardeners dip cuttings in rooting powder?", ["It contains auxin, so roots grow quickly", "It kills pests", "It feeds the leaves", "It stops the cutting growing"],
+        "What does the powder contain?", "Rooting powder contains <b>auxin</b>: cuttings grow <b>roots</b> faster, so you get many new plants quickly."),
+      Q("c2", "🌾", "A selective weedkiller (synthetic auxin) is sprayed on a lawn. What happens?", ["Broad-leaved weeds grow too fast and die; the grass is not harmed", "All plants die", "The grass dies; the weeds grow", "Nothing happens"],
+        "Grass has narrow leaves and takes in very little.", "Broad leaves take in much auxin: the weeds <b>grow too fast</b> and die. Narrow grass leaves take in little."),
+      Q("c3", "🍅", "How can farmers get seedless tomatoes?", ["Spray auxin on flowers that were not pollinated", "Water them more", "Pick them early", "Grow them in the dark"],
+        "Normally seeds make the fruit grow.", "<b>Auxin</b> sprayed on unpollinated flowers makes the fruit grow <b>without seeds</b>."),
+    ],
+  };
+  const QBANK = [
+    Q("t1", "🌻", "A plant on a windowsill bends towards the window. This is…", ["positive phototropism", "negative phototropism", "gravitropism", "hydrotropism"], "Light + towards.", "Growth towards light = <b>positive phototropism</b>."),
+    Q("t2", "🌱", "Roots grow away from light. This is…", ["negative phototropism", "positive phototropism", "positive gravitropism", "thigmotropism"], "Away from the stimulus is negative.", "Roots show <b>negative phototropism</b>."),
+    Q("t3", "⬆️", "Shoots grow up, even in the dark. This is…", ["negative gravitropism", "positive gravitropism", "positive phototropism", "hydrotropism"], "Up is away from the pull of gravity.", "Shoots grow <b>away</b> from gravity: <b>negative gravitropism</b>."),
+    Q("t4", "🟠", "What is auxin?", ["A plant hormone that controls growth", "A plant sugar", "A mineral from the soil", "A type of cell"], "Plants have hormones too.", "<b>Auxin</b> is a plant <b>hormone</b> (plant growth regulator)."),
+    Q("t5", "🌗", "Light comes from the left. Which side of the shoot grows faster?", ["The right (shaded) side, where there is more auxin", "The left (lit) side", "Both the same", "Neither"], "The shoot bends to the left.", "The <b>shaded</b> side has more auxin and grows faster, so the shoot bends <b>towards</b> the light."),
+    Q("t6", "🔻", "In a root, more auxin…", ["slows growth, so the root bends away from the light", "speeds growth, so the root bends towards the light", "makes the root green", "has no effect"], "Roots react the opposite way to shoots.", "In roots, auxin <b>slows</b> growth on the shaded side; the lit side grows more, so the root bends <b>away</b> from the light."),
+    Q("t7", "🔄", "A seedling is laid on its side in the dark. After a day…", ["the shoot curves up and the root curves down", "both grow sideways", "the shoot curves down and the root up", "nothing happens"], "Shoots: away from gravity. Roots: towards it.", "Shoot <b>up</b> (negative gravitropism), root <b>down</b> (positive gravitropism)."),
+    Q("t8", "🚀", "In space there is no up or down. How do seedlings grow?", ["Roots and shoots grow in any direction, but shoots still grow towards light", "Exactly as on Earth", "They don't grow at all", "Roots always grow up"], "Which stimulus is missing in space?", "Without gravity, there is no gravitropism, but <b>phototropism</b> still works."),
+    Q("t9", "💧", "Why is positive hydrotropism useful?", ["Roots find water in the soil", "Leaves find light", "Flowers attract insects", "Stems grow taller"], "“Hydro” = water.", "Roots grow towards <b>water</b>, which the plant needs for photosynthesis and to stay firm."),
+    Q("t10", "🌿", "Why do climbing plants have tendrils?", ["To coil round supports and climb up to the light", "To take in water", "To make seeds", "To catch insects"], "Think of thigmotropism.", "Tendrils coil round supports (<b>thigmotropism</b>), so the plant climbs up to the <b>light</b>."),
+    Q("t11", "🔬", "What did Darwin's experiment show?", ["The tip of the shoot detects the light", "The roots detect the light", "Light breaks down the stem", "Leaves bend the plant"], "Which seedlings did not bend?", "Seedlings without a tip, or with a covered tip, did not bend: the <b>tip</b> detects light."),
+    Q("t12", "📩", "The bending happens below the tip. This shows that…", ["a messenger (auxin) travels down from the tip", "the tip bends by itself", "light travels down the stem", "the root sends a signal"], "Detection and response are in different places.", "A chemical <b>messenger</b> — <b>auxin</b> — travels from the tip down to where the cells stretch."),
+    Q("t13", "🧫", "In Practical 10 a dish of seedlings is fixed on its side. After a week…", ["roots grow down and shoots grow up", "roots and shoots grow sideways", "roots grow up", "nothing grows"], "Gravity acts on the seedlings.", "Roots: <b>positive gravitropism</b> (down). Shoots: <b>negative gravitropism</b> (up)."),
+    Q("t14", "🌿", "Rooting powder contains…", ["auxin", "glucose", "chlorophyll", "starch"], "It is a plant hormone.", "Rooting powder contains <b>auxin</b>, which makes cuttings grow roots."),
+    Q("t15", "🌾", "Why does a selective weedkiller kill dandelions but not grass?", ["Dandelions have broad leaves and take in more of the auxin", "Grass is stronger", "Dandelions grow in the dark", "The weedkiller is sprayed only on dandelions"], "Compare the shape of the leaves.", "Broad leaves take in more synthetic <b>auxin</b>; the weeds grow too fast and die."),
+    Q("t16", "🍅", "Seedless fruit can be made by…", ["spraying auxin on unpollinated flowers", "removing the leaves", "growing the plant on its side", "using rooting powder on the fruit"], "Normally, seeds make hormones that make the fruit grow.", "<b>Auxin</b> on unpollinated flowers makes the fruit grow without seeds."),
+  ];
+  const FIRST_ROUND = ["t1", "t2", "t3", "t4", "t5", "t6", "t7", "t9", "t11", "t12", "t13", "t15"];
+
+  /* ============================ 4 ENGINE ============================ */
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs = {}, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  const bigger = (n) => (n >= 20 ? n : n <= 13 ? 16 : n <= 15 ? 17 : 18);   // letters in the pictures (teacher, 31 Oct 2026); emoji and big numbers stay
+  const txt = (parent, x, y, s, attrs = {}) => { const t = el("text", { x, y, ...attrs }, parent); if (attrs["font-size"]) t.setAttribute("font-size", bigger(+attrs["font-size"])); t.textContent = s; return t; };
+  const h = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+  const shuffle = (arr) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const reduced = () => window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // ANIM.k: the step player slows moves down (1.5) or fast-forwards earlier steps for ↺ Replay step (0)
+  const ANIM = { k: 1 };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms * ANIM.k));
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  // tween: calls f(t) with t from 0 to 1 over ms milliseconds
+  function tween(ms, f) {
+    return new Promise((res) => {
+      if (reduced()) { f(1); return res(); }
+      ms *= ANIM.k;
+      if (ms <= 0) { requestAnimationFrame(() => { f(1); res(); }); return; }
+      const t0 = performance.now();
+      const step = (now) => { const t = Math.min(1, (now - t0) / ms); f(t); if (t < 1) requestAnimationFrame(step); else res(); };
+      requestAnimationFrame(step);
+    });
+  }
+  const ease = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  const pathD = (pts) => "M" + pts.map((p) => p.join(" ")).join(" L");
+
+  /* Marie, the guide (same drawing as in the Grade 7 simulations) */
+  const SPEX = `<svg class="spex" viewBox="0 0 100 100" data-mood="talk" aria-hidden="true">
+    <circle cx="50" cy="50" r="49" fill="#DCE3EA"/>
+    <path d="M24 47 Q20 15 50 13 Q80 14 77 47 L78 63 Q73 67 68 60 L32 60 Q27 66 22 61Z" fill="#3B2A22"/>
+    <path d="M10 100 Q12 76 50 71 Q88 76 90 100Z" fill="#7F8C6B"/>
+    <rect x="44.5" y="60" width="11" height="13" rx="3" fill="#E6BFA3"/>
+    <path d="M41 71 L50 86 L35 82Z" fill="#8E9B79" stroke="#6B775A" stroke-width="1"/><path d="M59 71 L50 86 L65 82Z" fill="#8E9B79" stroke="#6B775A" stroke-width="1"/>
+    <circle cx="50" cy="93" r="1.6" fill="#A1887F"/>
+    <circle cx="29.5" cy="47" r="4" fill="#E6BFA3"/><circle cx="70.5" cy="47" r="4" fill="#E6BFA3"/><circle cx="29.3" cy="52.5" r="1.4" fill="#26A69A"/>
+    <ellipse cx="50" cy="45" rx="20.5" ry="23" fill="#F0CDB4"/>
+    <path d="M29.5 41 Q29 20 45 18.5 Q63 16.5 72 30 Q74 38 72.5 47 Q67 34 57 31 Q49 29 45 25.5 Q39 31 29.5 41Z" fill="#3B2A22"/>
+    <path d="M44.5 19.5 Q47 23 45.5 27" stroke="#A8A29E" stroke-width="1.6" fill="none"/><path d="M50 21 Q63 21 70 32" stroke="#5A463C" stroke-width="1.2" fill="none"/>
+    <circle cx="37" cy="54" r="3.3" fill="#F48FB1" opacity=".35"/><circle cx="63" cy="54" r="3.3" fill="#F48FB1" opacity=".35"/>
+    <g class="brow" stroke="#3B2A22" stroke-width="1.6" fill="none" stroke-linecap="round"><path d="M35 35.5 q5 -2.5 10 -0.5"/><path d="M55 35 q5 -2 10 0.5"/></g>
+    <circle cx="41" cy="44" r="2.2" fill="#4E342E"/><circle cx="59" cy="44" r="2.2" fill="#4E342E"/>
+    <path d="M50 46 q-2.2 5 0 6.2" stroke="#D49F82" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <rect class="lens" x="32" y="37.5" width="16.5" height="13.5" rx="6" stroke="#B98A70" stroke-width="1.2"/>
+    <rect class="lens" x="51.5" y="37.5" width="16.5" height="13.5" rx="6" stroke="#B98A70" stroke-width="1.2"/>
+    <path d="M48.5 42 q1.5 -1.6 3 0 M32 41 L28 40 M68 41 L72 40" stroke="#B98A70" stroke-width="1.1" fill="none"/>
+    <ellipse class="m m-talk" cx="50" cy="58.5" rx="3.6" ry="2.6" fill="#B5545C"/>
+    <path class="m m-happy" d="M43 56.5 Q50 63.5 57 56.5Z" fill="#B5545C"/>
+    <path class="m m-think" d="M45.5 59 h8" stroke="#B5545C" stroke-width="2" stroke-linecap="round"/>
+    <circle class="m m-wow" cx="50" cy="59" r="3.2" fill="#B5545C"/>
+    <path class="m m-hmm" d="M44 59.5 q3 -2.2 6 0 t6 0" stroke="#B5545C" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>`;
+  function spexBar(name) {
+    const bar = document.querySelector(`[data-spex="${name}"]`);
+    if (bar && !bar.firstChild) bar.innerHTML = SPEX + `<div class="bubble" aria-live="polite"></div>`;
+    return bar;
+  }
+  function say(name, html, mood = "talk", cls = "") {
+    const bar = spexBar(name); if (!bar) return;
+    bar.querySelector(".spex").dataset.mood = mood;
+    const b = bar.querySelector(".bubble"); b.className = "bubble" + (cls ? " " + cls : ""); b.innerHTML = html;
+  }
+
+  /* sound: off by default; tiny tones made in the browser */
+  let actx = null;
+  function beep(f, d, type = "sine", v = 0.06, when = 0) {
+    if (!P.sound || ANIM.k === 0) return;   // silent while fast-forwarding
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + when;
+      o.type = type; o.frequency.value = f; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + d + 0.02);
+    } catch (e) {}
+  }
+  const SND = {
+    zap: () => beep(880, 0.08, "square", 0.03),
+    pop: () => beep(520, 0.07, "sine", 0.05),
+    star: () => { beep(660, 0.12); beep(990, 0.18, "sine", 0.06, 0.1); },
+    tip: () => beep(250, 0.22, "triangle", 0.07),
+    badge: () => [523, 659, 784, 1047].forEach((f, i) => beep(f, 0.18, "sine", 0.06, i * 0.11)),
+  };
+
+  /* progress: stars, badges – saved in this browser */
+  const STORE = "g8-tropisms-v1";
+  const TABK = ["what", "photo", "grav", "more", "tip", "prac", "use", "test"];
+  const P = { stars: Object.fromEntries(TABK.map((t) => [t, {}])), done: {}, badges: {}, name: "", sound: false, seenIntro: false, testRounds: 0 };
+  function save() { try { localStorage.setItem(STORE, JSON.stringify(P)); } catch (e) {} }
+  function load() {
+    try {
+      const d = JSON.parse(localStorage.getItem(STORE) || "{}");
+      for (const k in d) if (k in P) P[k] = d[k];
+      for (const t of TABK) P.stars[t] = P.stars[t] || {};
+      P.done = P.done || {};
+    } catch (e) {}
+  }
+  const starsOf = (st) => (st.revealed ? 0 : st.mistakes ? 2 : 3);
+  const starsHTML = (n, of = 3) => `<span class="stars" aria-label="${n} stars">${"★".repeat(n)}<span class="off">${"★".repeat(Math.max(0, of - n))}</span></span>`;
+  const tabStars = (t) => Object.values(P.stars[t]).reduce((s, n) => s + n, 0);
+  const has = (t, id) => id in P.stars[t];
+  const BADGES = [
+    { id: "what", em: "🌱", name: "Tropism spotter", how: "what is a tropism, sort, positive or negative", got: () => ["intro", "sort"].every((k) => has("what", k)) && PN.every((p) => has("what", "pn-" + p.id)) },
+    { id: "photo", em: "☀️", name: "Light seeker", how: "move the lamp, how auxin works, the root", got: () => ["lamp", "how", "root"].every((k) => has("photo", k)) },
+    { id: "grav", em: "⬇️", name: "Gravity guru", how: "turn the seedling, clinostat, 3 whys", got: () => ["turn", "clino"].every((k) => has("grav", k)) && GW.every((q) => has("grav", "q-" + q.id)) },
+    { id: "more", em: "💧", name: "Tropism collector", how: "hydro-, thigmo- and chemotropism", got: () => ["hydro", "thigmo", "chemo"].every((k) => has("more", k)) },
+    { id: "tip", em: "🔬", name: "Darwin's assistant", how: "Darwin's experiment, explain it", got: () => ["darwin1", "darwin2", "cloze"].every((k) => has("tip", k)) },
+    { id: "prac", em: "🧫", name: "Lab technician", how: "all 4 dishes of Practical 10", got: () => DISHES.every((d) => has("prac", "dish-" + d.id)) },
+    { id: "use", em: "🧪", name: "Plant grower", how: "rooting powder, weedkiller, seedless fruit", got: () => ["root", "weed", "fruit"].every((k) => has("use", k)) },
+  ];
+  function toast(msg) { const t = $("toast"); t.innerHTML = msg; t.classList.remove("on"); void t.offsetWidth; t.classList.add("on"); clearTimeout(toast.k); toast.k = setTimeout(() => t.classList.remove("on"), 3200); }
+  let curTab = "glands";
+  function refreshStars() {
+    let total = 0;
+    for (const t in P.stars) { const n = tabStars(t); total += n; const s = document.querySelector(`[data-ts="${t}"]`); if (s) s.textContent = n ? "★" + n : ""; }
+    $("starSum").textContent = "★ " + total;
+    for (const t in CHECKS) {
+      const n = CHECKS[t].reduce((s, q) => s + (P.stars[t]["chk-" + q.id] ?? 0), 0), any = CHECKS[t].some((q) => has(t, "chk-" + q.id));
+      const c = document.querySelector(`[data-cs="${t}"]`); if (c) c.textContent = any ? "★" + n : "";
+    }
+    for (const b of BADGES) if (!P.badges[b.id] && b.got()) {
+      P.badges[b.id] = new Date().toISOString().slice(0, 10);
+      toast(`${b.em} New badge: <b>${b.name}</b>!`); SND.badge();
+      if (curTab !== "cert") setTimeout(() => say(curTab, `${b.em} You won the <b>${b.name}</b> badge! See 🏅 Certificate.`, "happy", "good"), 900);
+    }
+    save();
+  }
+  function addStars(tab, id, n) {
+    P.stars[tab][id] = Math.max(P.stars[tab][id] ?? -1, n);
+    if (n) SND.star();
+    refreshStars();
+  }
+  function fbSet(e, cls, html) { e.className = "feedback " + cls; e.innerHTML = html; }
+
+  /* questions: 1st wrong → a tip, 2nd wrong → the answer is shown.
+     opts = [value, html] makes buttons in box; or items = existing elements with data-v (e.g. the body labels) */
+  const setDis = (b, v) => { if ("disabled" in b) b.disabled = v; else if (v) b.setAttribute("data-dis", ""); else b.removeAttribute("data-dis"); };
+  const isDis = (b) => ("disabled" in b ? b.disabled : b.hasAttribute("data-dis"));
+  function ask({ box, fb, opts, items, correct, tip, answer, good, cls = "cat", spex, onDone }) {
+    const st = { mistakes: 0, revealed: false, done: false };
+    let btns;
+    if (items) { btns = items; btns.forEach((b) => { setDis(b, false); b.classList.remove("right", "wrong"); }); box.classList.add("ask"); }
+    else { box.replaceChildren(); btns = opts.map(([v, html]) => { const b = h(`<button class="${cls}" data-v="${v}">${html}</button>`); box.appendChild(b); return b; }); }
+    btns.forEach((b) => {
+      b.onclick = () => { if (!isDis(b)) pick(b.dataset.v, b); };
+      b.onkeydown = (e) => { if ((e.key === "Enter" || e.key === " ") && !("disabled" in b)) { e.preventDefault(); b.onclick(); } };
+    });
+    function finish() { st.done = true; box.classList.remove("ask"); btns.forEach((b) => setDis(b, true)); onDone && onDone(st); }
+    function pick(v, b) {
+      if (st.done) return;
+      if (correct.includes(v)) {
+        b.classList.add("right");
+        fbSet(fb, "good", `✔ ${typeof good === "function" ? good(v) : good}`);
+        spex && say(spex, st.mistakes ? "Yes! You got it after the tip. ★★" : "Brilliant – right first time! ★★★", "happy", "good");
+        return finish();
+      }
+      st.mistakes++; b.classList.add("wrong"); setDis(b, true); SND.tip();
+      if (st.mistakes === 1) { fbSet(fb, "tip", "💡 Tip: " + (typeof tip === "function" ? tip(v) : tip)); spex && say(spex, "Hmm, not quite. Read my tip and try again!", "hmm", "tip"); }
+      else {
+        st.revealed = true;
+        btns.forEach((x) => correct.includes(x.dataset.v) && x.classList.add("right"));
+        fbSet(fb, "ans", "The answer: " + answer);
+        spex && say(spex, "Here is the answer – read why, and you'll get the next one!", "think", "ans");
+        finish();
+      }
+    }
+    return st;
+  }
+
+  /* drag, or tap then tap (as in the Salt naming simulation) */
+  let SEL = null;
+  function unselect() { if (SEL) SEL.classList.remove("sel"); SEL = null; }
+  function pickable(tile, slotSel, drop) {
+    tile.addEventListener("click", (e) => {
+      if (tile.dataset.dragged) { delete tile.dataset.dragged; e.stopPropagation(); return; }
+      if (tile.dataset.locked) return;
+      e.stopPropagation();
+      const same = SEL === tile; unselect();
+      if (!same) { SEL = tile; tile.classList.add("sel"); tile._drop = drop; }
+    });
+    tile.addEventListener("pointerdown", (e) => {
+      if (e.button > 0 || tile.dataset.locked) return;
+      const sx = e.clientX, sy = e.clientY;
+      let ghost = null, hot = null;
+      try { tile.setPointerCapture(e.pointerId); } catch (er) {}
+      const at = (x, y) => { const t = document.elementFromPoint(x, y); const s = t && t.closest(slotSel); return s && !s.classList.contains("full") ? s : null; };
+      const move = (ev) => {
+        if (!ghost && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 6) {
+          ghost = tile.cloneNode(true); ghost.classList.add("drag-ghost"); ghost.classList.remove("sel");
+          ghost.style.width = tile.offsetWidth + "px";
+          document.body.appendChild(ghost); tile.classList.add("lifting");
+        }
+        if (!ghost) return;
+        ghost.style.left = ev.clientX + "px"; ghost.style.top = ev.clientY + "px";
+        const s = at(ev.clientX, ev.clientY);
+        if (s !== hot) { hot && hot.classList.remove("hot"); hot = s; hot && hot.classList.add("hot"); }
+      };
+      const up = (ev) => {
+        tile.removeEventListener("pointermove", move); tile.removeEventListener("pointerup", up); tile.removeEventListener("pointercancel", up);
+        if (!ghost) return;
+        tile.dataset.dragged = "1"; setTimeout(() => delete tile.dataset.dragged, 0);
+        ghost.remove(); tile.classList.remove("lifting"); hot && hot.classList.remove("hot");
+        const s = ev.type === "pointerup" && at(ev.clientX, ev.clientY);
+        if (s) { unselect(); drop(tile, s); }
+      };
+      tile.addEventListener("pointermove", move); tile.addEventListener("pointerup", up); tile.addEventListener("pointercancel", up);
+    });
+  }
+  // a tapped slot receives the selected tile
+  document.addEventListener("click", (e) => {
+    const s = e.target.closest(".slot");
+    if (s && SEL && !s.classList.contains("full") && SEL._drop && SEL._slots && SEL._slots.includes(s)) { const t = SEL; unselect(); t._drop(t, s); }
+  });
+  const shakeEl = (e) => { e.classList.remove("shake", "bounce"); void e.offsetWidth; e.classList.add(e.classList.contains("tile") ? "bounce" : "shake"); setTimeout(() => e.classList.remove("shake", "bounce"), 450); };
+
+  /* a drop task: tiles go into slots.
+     fits(tile, slot) → true if right. mode "task": one tip for the whole task, the 2nd mistake fills everything in;
+     mode "tile": each tile has its own tip → answer (stars per tile). */
+  function dropTask({ tiles, slots, fits, home, place, tip, fb, spex, mode = "task", onTile, onDone }) {
+    const st = { mistakes: 0, revealed: false, done: false };
+    const left = new Set(tiles);
+    for (const t of tiles) {
+      t._st = { mistakes: 0, revealed: false };
+      t._slots = slots;
+      pickable(t, slots.map((s) => "#" + s.id).join(","), drop);
+    }
+    function lock(t, s, shown) {
+      t.dataset.locked = "1"; t.classList.remove("sel"); t.classList.add(shown ? "shown" : "locked");
+      place(t, s); left.delete(t);
+      if (onTile) onTile(t, s);
+      if (!left.size || ![...left].some((x) => home(x))) finishAll();
+    }
+    function finishAll() { if (st.done) return; st.done = true; onDone && onDone(st); }
+    function revealAll() { st.revealed = true; for (const t of [...left]) { const s = home(t); if (s) lock(t, s, true); } }
+    function drop(t, s) {
+      if (st.done || t.dataset.locked) return;
+      if (fits(t, s)) {
+        SND.pop(); lock(t, s, false);
+        if (mode === "task" && !st.done) fb && fbSet(fb, "good", "✔ Right!");
+        return;
+      }
+      SND.tip(); shakeEl(s); shakeEl(t);
+      if (mode === "tile") {
+        t._st.mistakes++;
+        if (t._st.mistakes === 1) { fbSet(fb, "tip", "💡 Tip: " + tip(t, s)); spex && say(spex, "Hmm, not quite. Read my tip and try again!", "hmm", "tip"); }
+        else { t._st.revealed = true; const hs = home(t); fbSet(fb, "ans", "The answer: " + tip(t, s, true)); spex && say(spex, "I've put that one in the right place for you.", "think", "ans"); lock(t, hs, true); }
+        return;
+      }
+      st.mistakes++;
+      if (st.mistakes === 1) { fbSet(fb, "tip", "💡 Tip: " + tip(t, s)); spex && say(spex, "Hmm, not quite. Read my tip and try again!", "hmm", "tip"); }
+      else { revealAll(); fbSet(fb, "ans", "The answer is shown: the blue cards were placed for you. Read them carefully!"); spex && say(spex, "Here is the answer – read it, and you'll get the next one!", "think", "ans"); }
+    }
+    return st;
+  }
+
+  /* a short quiz (Checks and Test yourself): one question at a time, tip → answer */
+  function quiz({ root, tab, list, prefix, spex, title, onEnd, again }) {
+    let qi = 0; const QR = [];
+    root.innerHTML = `<div class="qhead"><h2></h2><div class="dots"></div></div><div class="qbody"></div><div class="feedback" aria-live="polite"></div>
+      <div class="controls"><button class="btn primary" hidden>Next question →</button></div>`;
+    const [hd, dots, body, fb, next] = [root.querySelector("h2"), root.querySelector(".dots"), root.querySelector(".qbody"), root.querySelector(".feedback"), root.querySelector(".btn")];
+    const paint = () => { dots.innerHTML = list.map((_, k) => { const r = QR[k]; return `<span class="dot${k === qi ? " now" : ""}${r ? (r.n > 0 ? " done" : " zero") : ""}">${k + 1}</span>`; }).join(""); };
+    function loadQ() {
+      const q = list[qi];
+      hd.textContent = `${title} · question ${qi + 1} of ${list.length}`; paint();
+      fb.className = "feedback"; fb.innerHTML = ""; next.hidden = true; body.replaceChildren();
+      body.appendChild(h(`<div class="qpic"><div class="em">${q.em}</div><p class="qtext">${q.text}</p></div>`));
+      const box = h(`<div class="cats"></div>`); body.appendChild(box);
+      const right = q.opts.find(([v]) => v === q.ans)[1];
+      ask({ box, fb, spex, opts: shuffle(q.opts), correct: [q.ans], tip: q.tip, answer: `<b>${right}</b>. ${q.why}`, good: q.why,
+        onDone: (st) => { const n = starsOf(st); QR[qi] = { label: q.text, n }; paint();
+          if (prefix) addStars(tab, prefix + q.id, n);
+          next.hidden = false; next.textContent = qi < list.length - 1 ? "Next question →" : "See my result →"; next.focus({ preventScroll: true }); } });
+    }
+    next.addEventListener("click", () => { if (qi < list.length - 1) { qi++; loadQ(); } else end(); });
+    function end() {
+      const right = QR.filter((r) => r.n === 3).length, stars = QR.reduce((s, r) => s + r.n, 0), max = list.length * 3;
+      root.innerHTML = `<h2 style="color:var(--navy)">${title} · your result</h2>
+        <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:end"><div><div class="score">${right}/${list.length}</div><div class="hint">right first time</div></div>
+        <div><div class="score" style="color:var(--star)">★ ${stars}</div><div class="hint">stars out of ${max}</div></div></div>
+        <p>${stars >= max * 0.9 ? "Outstanding! ${PRAISE}" : stars >= max * 0.66 ? "Well done! Look again at the questions without ★★★." : "Good try! Read Marie's guide (📖, top right), then play again."}</p>
+        <ul class="review">${QR.map((r, k) => `<li><span>${k + 1}. ${r.label}</span>${starsHTML(r.n)}</li>`).join("")}</ul>
+        <div class="controls"><button class="btn primary">${again}</button></div>`;
+      root.querySelector(".btn").addEventListener("click", () => onEnd(true));
+      onEnd(false, stars);
+    }
+    loadQ();
+  }
+  function runCheck(tab) {
+    const root = document.querySelector(`[data-check="${tab}"]`);
+    quiz({ root, tab, list: CHECKS[tab], prefix: "chk-", spex: tab, title: "Check", again: "↺ Try the Check again",
+      onEnd: (restart, stars) => { if (restart) runCheck(tab); else say(tab, `Check finished: <b>★ ${stars}</b> out of 9!`, "happy", "good"); } });
+  }
+
+
+  /* ============================ STEP PLAYER ============================ */
+  // every numbered-step animation: "👣 Step by step" (Next step ▶ · ↺ Replay step) or "▶ Play all" (slower, a 3 s stop after each step, ⏸ Pause)
+  const SLOW = 1.5, STOP_MS = 3000;
+  function stepper(o) {
+    // o: { host, list, steps: [async (ctx) => …], start: () => ctx, end(ctx), first, playLabel, nextLabel(i), onBusy(b), hold }
+    const host = $(o.host), n = o.steps.length;
+    host.innerHTML = `<div class="mini modesw" role="group" aria-label="How to watch"><button class="chip" data-m="step">👣 Step by step</button><button class="chip" data-m="play">▶ Play all</button></div>
+      <div class="controls"><button class="btn primary" data-b="go"></button><button class="btn" data-b="two"></button></div><div class="stepn" aria-live="polite"></div>`;
+    const go = host.querySelector('[data-b="go"]'), two = host.querySelector('[data-b="two"]'), num = host.querySelector(".stepn");
+    const S = { mode: "step", i: 0, ctx: null, busy: false, playing: false, stopReq: false, held: false };
+    const mark = (k) => { if (o.list) [...$(o.list).children].forEach((x, j) => { x.classList.toggle("on", j === k); x.classList.toggle("done", j < k); }); };
+    const busy = (b) => { S.busy = b; if (o.onBusy) o.onBusy(b); paint(); };
+    function paint() {
+      host.querySelectorAll(".modesw .chip").forEach((c) => { c.setAttribute("aria-pressed", c.dataset.m === S.mode); c.disabled = S.busy && c.dataset.m !== S.mode; });
+      if (S.mode === "step") {
+        go.textContent = S.i === 0 ? o.first : S.i >= n ? "↺ Start again" : (o.nextLabel && o.nextLabel(S.i)) || "Next step ▶";
+        go.disabled = S.busy; two.textContent = "↺ Replay step"; two.disabled = S.busy || S.i === 0;
+      } else if (!S.playing) {
+        go.textContent = S.i === 0 ? o.playLabel : S.i >= n ? "↺ Play again" : "▶ Go on"; go.disabled = false;
+        two.textContent = "⏸ Pause"; two.disabled = true;
+      } else {
+        go.textContent = S.held ? "▶ Go on" : o.playLabel; go.disabled = !S.held;
+        two.textContent = S.stopReq ? "⏸ Stopping after this step…" : "⏸ Pause"; two.disabled = S.held || S.stopReq;
+      }
+    }
+    function reset() {
+      if (S.ctx && S.ctx.stop) S.ctx.stop();
+      S.ctx = o.start(); S.i = 0; S.playing = S.stopReq = S.held = false; mark(-1); num.textContent = ""; paint();
+    }
+    async function run(k) {
+      mark(k); num.textContent = `Step ${k + 1} of ${n}`;
+      ANIM.k = SLOW;
+      try { await o.steps[k](S.ctx); } finally { ANIM.k = 1; }
+      S.i = k + 1;
+      if (S.i >= n) { mark(n); num.textContent = `✔ All ${n} steps`; o.end(S.ctx); }
+    }
+    async function next() {
+      if (S.busy) return;
+      if (S.i >= n) reset();
+      busy(true); await run(S.i); busy(false);
+    }
+    async function replay() {   // redraw, fast-forward the earlier steps, then play the last step again
+      if (S.busy || S.i === 0) return;
+      const k = S.i - 1; busy(true);
+      if (S.ctx && S.ctx.stop) S.ctx.stop();
+      S.ctx = o.start(); ANIM.k = 0;
+      try { for (let j = 0; j < k; j++) { mark(j); await o.steps[j](S.ctx); } } finally { ANIM.k = 1; }
+      await run(k); busy(false);
+    }
+    const hold = () => new Promise((r) => { const t0 = performance.now(); let held = 0, last = t0;
+      const tick = () => { const now = performance.now(); if (S.held) held += now - last; last = now;
+        if (S.stopReq || now - t0 - held >= STOP_MS) return r(); setTimeout(tick, 100); }; tick(); });
+    async function play() {
+      if (S.held) { S.held = false; if (S.ctx) S.ctx.hold = false; paint(); return; }
+      if (S.busy) return;
+      if (S.i >= n) reset();
+      S.playing = true; S.stopReq = false; busy(true);
+      while (S.i < n && !S.stopReq) { await run(S.i); if (S.i < n && !S.stopReq) await hold(); }
+      S.playing = S.stopReq = S.held = false; busy(false);
+    }
+    function pause() {
+      if (!S.playing) return;
+      if (o.hold) { S.held = true; S.ctx.hold = true; }   // stops at once (the day of glucose)
+      else S.stopReq = true;                              // stops at the end of this step
+      paint();
+    }
+    host.querySelectorAll(".modesw .chip").forEach((c) => c.addEventListener("click", () => { if (S.busy || S.mode === c.dataset.m) return; S.mode = c.dataset.m; reset(); }));
+    go.addEventListener("click", () => (S.mode === "step" ? next() : play()));
+    two.addEventListener("click", () => (S.mode === "step" ? replay() : pause()));
+    reset();
+    return { reset, S };
+  }
+
+  const hl = (on) => { document.querySelectorAll(".part-on").forEach((x) => x.classList.remove("part-on")); (Array.isArray(on) ? on : [on]).forEach((e) => e && e.classList.add("part-on")); };
+  // a dot (hormone, glucose…) moved along a polyline
+  async function travel(g, pts, ms, { r = 6, fill = "#E53935", stroke = "#fff", keep = false } = {}) {
+    const d = el("circle", { r, fill, stroke, "stroke-width": 1.5, cx: pts[0][0], cy: pts[0][1] }, g);
+    const p = el("path", { d: pathD(pts), fill: "none" }, g), L = p.getTotalLength();
+    await tween(ms, (t) => { const q = p.getPointAtLength(L * t); d.setAttribute("cx", q.x); d.setAttribute("cy", q.y); });
+    p.remove(); if (!keep) d.remove();
+    return d;
+  }
+  const label = (g, x, y, s, size = 15, fill = "#1F3A5F", extra = {}) => txt(g, x, y, s, { "text-anchor": "middle", "font-size": size, "font-weight": 700, fill, stroke: "#fff", "stroke-width": 4, "paint-order": "stroke", ...extra });
+  // a smooth closed (or open) curve through points (Catmull-Rom → Bézier)
+  function smooth(pts, closed = true) {
+    const n = pts.length, P = (i) => pts[(i + n) % n], f = (v) => v.toFixed(1);
+    let d = `M${f(pts[0][0])} ${f(pts[0][1])}`;
+    for (let i = 0; i < (closed ? n : n - 1); i++) {
+      const p0 = closed ? P(i - 1) : pts[Math.max(0, i - 1)], p1 = P(i), p2 = P(i + 1), p3 = closed ? P(i + 2) : pts[Math.min(n - 1, i + 2)];
+      d += ` C${f(p1[0] + (p2[0] - p0[0]) / 6)} ${f(p1[1] + (p2[1] - p0[1]) / 6)} ${f(p2[0] - (p3[0] - p1[0]) / 6)} ${f(p2[1] - (p3[1] - p1[1]) / 6)} ${f(p2[0])} ${f(p2[1])}`;
+    }
+    return d + (closed ? "Z" : "");
+  }
+  /* ============================ 5 DRAWING HELPERS ============================ */
+  const WAT = "#29B6F6", CO2C = "#78909C", OXY = "#E53935", BLUEBLACK = "#1A1F4E", ORBROWN = "#D2802D";
+  const ATOM = { C: { r: 10, fill: "#37474F", ink: "#fff" }, O: { r: 10, fill: "#E53935", ink: "#fff" }, H: { r: 7, fill: "#FFFFFF", ink: "#37474F" } };
+  function atom(g, e, x, y) {
+    const a = ATOM[e], w = el("g", { transform: `translate(${x} ${y})` }, g);
+    el("circle", { r: a.r, fill: a.fill, stroke: e === "H" ? "#78909C" : "#fff", "stroke-width": 1.5 }, w);
+    const t = el("text", { y: e === "H" ? 3.5 : 4, "text-anchor": "middle", "font-size": e === "H" ? 9 : 11, "font-weight": 700, fill: a.ink }, w); t.textContent = e;
+    w._e = e; w._x = x; w._y = y; return w;
+  }
+  const moveTo = (w, x, y) => { w._x = x; w._y = y; w.setAttribute("transform", `translate(${x} ${y})`); };
+  const MOL = {
+    CO2: (x, y) => [["O", x - 17, y], ["C", x, y], ["O", x + 17, y]],
+    H2O: (x, y) => [["O", x, y], ["H", x - 13, y + 8], ["H", x + 13, y + 8]],
+    O2: (x, y) => [["O", x - 9, y], ["O", x + 9, y]],
+  };
+  const drawMol = (g, kind, x, y) => MOL[kind](x, y).map(([e, ax, ay]) => atom(g, e, ax, ay));
+  // glucose, simplified ring (5 C + 1 O), C6 on top: 6 C, 12 H, 6 O. Returns [{ e, x, y, p }] (p = the atom it is bonded to)
+  function glucoseAtoms(cx, cy) {
+    const R = 24, A = [], add = (e, x, y, p) => { A.push({ e, x, y, p }); return A.length - 1; };
+    const pol = (i, d, deg) => [A[i].x + d * Math.cos((deg * Math.PI) / 180), A[i].y + d * Math.sin((deg * Math.PI) / 180)];
+    const ring = [-30, 30, 90, 150, 210, 270].map((deg, k) => add(k === 0 ? "O" : "C", cx + R * Math.cos((deg * Math.PI) / 180), cy + R * Math.sin((deg * Math.PI) / 180), -1));
+    [1, 2, 3, 4].forEach((k) => {
+      const deg = [-30, 30, 90, 150, 210, 270][k], i = ring[k];
+      const o = add("O", ...pol(i, 21, deg - 22), i); add("H", ...pol(o, 14, deg - 22), o);
+      add("H", ...pol(i, 18, deg + 30), i);
+    });
+    const c5 = ring[5], c6 = add("C", ...pol(c5, 23, 270), c5);
+    add("H", ...pol(c5, 17, 330), c5);
+    add("H", ...pol(c6, 16, 330), c6); add("H", ...pol(c6, 16, 210), c6);
+    const o6 = add("O", ...pol(c6, 21, 270), c6); add("H", ...pol(o6, 14, 330), o6);
+    return { atoms: A, ring };
+  }
+  function drawGlucose(g, cx, cy, { bonds = true } = {}) {
+    const G = glucoseAtoms(cx, cy), bg = el("g", {}, g);
+    if (bonds) glucoseBonds(bg, G);
+    const ws = G.atoms.map((a) => atom(g, a.e, a.x, a.y));
+    return { ...G, ws, bg };
+  }
+  function glucoseBonds(bg, G) {
+    const L = (a, b) => el("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, stroke: "#546E7A", "stroke-width": 3 }, bg);
+    G.ring.forEach((i, k) => L(G.atoms[i], G.atoms[G.ring[(k + 1) % 6]]));
+    G.atoms.forEach((a) => { if (a.p >= 0 && !G.ring.includes(G.atoms.indexOf(a))) L(a, G.atoms[a.p]); });
+  }
+  const hex = (g, x, y, s = 8, attrs = {}) => el("path", { d: `M${x - s} ${y} L${x - s / 2} ${y - s * 0.87} L${x + s / 2} ${y - s * 0.87} L${x + s} ${y} L${x + s / 2} ${y + s * 0.87} L${x - s / 2} ${y + s * 0.87}Z`, fill: "#FDD835", stroke: "#F9A825", "stroke-width": 1.5, ...attrs }, g);
+  const hexAt = (g, s = 8) => { const w = el("g", { transform: "translate(0 0)" }, g); hex(w, 0, 0, s); return w; };
+  const dot = (g, x, y, fill, r = 6) => el("circle", { cx: x, cy: y, r, fill, stroke: "#fff", "stroke-width": 1.5 }, g);
+  // a leaf along the x axis from its base (0,0): length L, half-width W
+  const leafD = (L, W) => `M0 0 C${L * 0.25} ${-W * 1.25} ${L * 0.7} ${-W * 1.05} ${L} 0 C${L * 0.7} ${W * 1.05} ${L * 0.25} ${W * 1.25} 0 0Z`;
+  function leaf(g, x, y, deg, L, W, fill = "#7CB342", stroke = "#33691E") {
+    const w = el("g", { transform: `translate(${x} ${y}) rotate(${deg})` }, g);
+    el("path", { d: leafD(L, W), fill, stroke, "stroke-width": 2 }, w);
+    el("path", { d: `M2 0 Q${L * 0.5} ${-W * 0.12} ${L * 0.92} 0`, fill: "none", stroke, "stroke-width": 1.5, opacity: 0.7 }, w);
+    return w;
+  }
+  // an upright leaf centred on (cx, cy): length L, half-width W
+  const vleafD = (cx, cy, L, W) => `M${cx} ${cy + L / 2} C${cx - W * 1.25} ${cy + L / 4} ${cx - W * 1.05} ${cy - L / 5} ${cx} ${cy - L / 2} C${cx + W * 1.05} ${cy - L / 5} ${cx + W * 1.25} ${cy + L / 4} ${cx} ${cy + L / 2}Z`;
+  const starD = (cx, cy, R, r) => "M" + [...Array(10)].map((_, i) => { const a = -Math.PI / 2 + (i * Math.PI) / 5, d = i % 2 ? r : R; return `${(cx + d * Math.cos(a)).toFixed(1)} ${(cy + d * Math.sin(a)).toFixed(1)}`; }).join(" L") + "Z";
+  let clipN = 0;
+  const clipOf = (svg, d) => { let defs = svg.querySelector("defs") || el("defs", {}, svg); const id = "clp" + ++clipN; const c = el("clipPath", { id }, defs); el("path", { d }, c); return `url(#${id})`; };
+  const fade = (e, a, b, ms = 500) => tween(ms, (t) => e.setAttribute("opacity", a + (b - a) * t));
+  const moveG = (w, x0, y0, x1, y1, ms, extra = "") => tween(ms, (t) => { const k = ease(t); w.setAttribute("transform", `translate(${x0 + (x1 - x0) * k} ${y0 + (y1 - y0) * k})${extra}`); });
+  // a small potted plant: pot base centre (x, y), stem height h
+  function pottedPlant(g, x, y, h = 90, leafCol = "#7CB342") {
+    const w = el("g", {}, g);
+    el("path", { d: `M${x - 30} ${y - 34} L${x + 30} ${y - 34} L${x + 22} ${y} L${x - 22} ${y}Z`, fill: "#BF6F3F", stroke: "#8D4A25", "stroke-width": 2 }, w);
+    el("rect", { x: x - 34, y: y - 42, width: 68, height: 10, rx: 3, fill: "#C97B4A", stroke: "#8D4A25", "stroke-width": 2 }, w);
+    el("line", { x1: x, y1: y - 42, x2: x, y2: y - 42 - h, stroke: "#558B2F", "stroke-width": 5, "stroke-linecap": "round" }, w);
+    for (let k = 0; k < 4; k++) { const yy = y - 42 - h * (0.3 + 0.2 * k); leaf(w, x, yy, k % 2 ? -25 : 205, 34 - k * 3, 11, leafCol); }
+    return w;
+  }
+
+
+  /* ============================ 5b TROPISM DRAWING ============================ */
+  const AUX = "#FB8C00", SHOOT = "#558B2F", ROOT = "#E8DCCB", ROOTL = "#A1887F", GRAV = "#5E35B1";
+  const rad = (d) => (d * Math.PI) / 180;
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+  const sstep = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+  // an organ (shoot or root) as a curve: base (x, y), heading h0 (0 up, 90 right, 180 down), length L,
+  // total bend (degrees) that happens in the growing zone (z0…z1 of the length)
+  function organPts(x, y, h0, L, bend, n = 26, z0 = 0.3, z1 = 0.88) {
+    const pts = [[x, y]], hs = [h0], dl = L / n;
+    for (let i = 1; i <= n; i++) { const s = (i - 0.5) / n, h = h0 + bend * sstep(z0, z1, s); x += Math.sin(rad(h)) * dl; y -= Math.cos(rad(h)) * dl; pts.push([x, y]); hs.push(h); }
+    return { pts, hs };
+  }
+  const ptsD = (pts) => "M" + pts.map((p) => p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" L");
+  // a seedling into group g (cleared): seed, shoot with two seed leaves, root with root hairs
+  function seedling(g, { x, y, sh = 0, sL = 140, sBend = 0, rh = 180, rL = 100, rBend = 0, sw = 8, rw = 5, seed = true, leaves = true, hairs = true, leafL = 22 }) {
+    g.replaceChildren();
+    const S = organPts(x, y, sh, sL, sBend), R = organPts(x, y, rh, rL, rBend);
+    if (rL > 2) {
+      el("path", { d: ptsD(R.pts), fill: "none", stroke: ROOTL, "stroke-width": rw + 2.5, "stroke-linecap": "round", "stroke-linejoin": "round" }, g);
+      el("path", { d: ptsD(R.pts), fill: "none", stroke: ROOT, "stroke-width": rw, "stroke-linecap": "round", "stroke-linejoin": "round" }, g);
+      if (hairs) for (let i = Math.floor(R.pts.length * 0.3); i < R.pts.length - 3; i += 2) { const [px, py] = R.pts[i], h = rad(R.hs[i]); for (const s of [-1, 1]) el("line", { x1: px, y1: py, x2: px + Math.cos(h) * 7 * s, y2: py + Math.sin(h) * 7 * s, stroke: "#D7CCC8", "stroke-width": 1.3 }, g); }
+    }
+    if (sL > 2) {
+      el("path", { d: ptsD(S.pts), fill: "none", stroke: SHOOT, "stroke-width": sw, "stroke-linecap": "round", "stroke-linejoin": "round" }, g);
+      const [tx, ty] = S.pts.at(-1), th = S.hs.at(-1);
+      if (leaves) { leaf(g, tx, ty, th - 90 - 40, leafL, leafL * 0.4, "#8BC34A"); leaf(g, tx, ty, th - 90 + 40, leafL, leafL * 0.4, "#8BC34A"); }
+    }
+    if (seed) el("ellipse", { cx: x, cy: y, rx: 8, ry: 6, fill: "#8D6E63", stroke: "#5D4037", "stroke-width": 1.5, transform: `rotate(${sh} ${x} ${y})` }, g);
+    return { S, R };
+  }
+  // auxin dots near the tip of an organ. shift(h) gives the side (−1 left … +1 right of the growth direction) for heading h
+  function auxinDots(g, O, { from = 0.55, n = 10, w = 4, shift = () => 0, r = 3.4 } = {}) {
+    const N = O.pts.length - 1;
+    for (let k = 0; k < n; k++) {
+      const s = from + (1 - from) * ((k % 5) / 4) * 0.92, i = Math.round(s * N), [px, py] = O.pts[i], h = O.hs[i];
+      const ok = (k % 2 ? 1 : -1) * (0.35 + 0.5 * ((k * 7) % 5) / 4), a = clamp(shift(h), -1, 1);
+      const off = w * (ok * (1 - Math.abs(a) * 0.8) + a * 0.75);
+      el("circle", { cx: px + Math.cos(rad(h)) * off, cy: py + Math.sin(rad(h)) * off, r, fill: AUX, stroke: "#fff", "stroke-width": 0.8 }, g);
+    }
+  }
+  // a shoot as two columns of cells, base centre (x, y), growing up. hA = left column cell lengths, hB = right column
+  // (bottom → top). If one side is longer, the strip bends away from that side.
+  function strip(g, x, y, hA, hB, w, { fill = "#DCEDC8", line = "#7CB342", capFill = "#C5E1A5", cap = true } = {}) {
+    let L = [x - w / 2, y], R = [x + w / 2, y]; const cells = [];
+    for (let i = 0; i < hA.length; i++) {
+      const dx = R[0] - L[0], dy = R[1] - L[1], len = Math.hypot(dx, dy), u = [dy / len, -dx / len];
+      const TL = [L[0] + u[0] * hA[i], L[1] + u[1] * hA[i]]; let TR = [R[0] + u[0] * hB[i], R[1] + u[1] * hB[i]];
+      const ex = TR[0] - TL[0], ey = TR[1] - TL[1], el2 = Math.hypot(ex, ey); TR = [TL[0] + (ex / el2) * w, TL[1] + (ey / el2) * w];
+      const M = [(L[0] + R[0]) / 2, (L[1] + R[1]) / 2], TM = [(TL[0] + TR[0]) / 2, (TL[1] + TR[1]) / 2];
+      cells.push({ a: [L, M, TM, TL], b: [M, R, TR, TM] });
+      L = TL; R = TR;
+    }
+    const poly = (pts) => el("path", { d: "M" + pts.map((p) => p.join(" ")).join(" L") + "Z", fill, stroke: line, "stroke-width": 2 }, g);
+    cells.forEach((c) => { poly(c.a); poly(c.b); });
+    const dx = R[0] - L[0], dy = R[1] - L[1], len = Math.hypot(dx, dy), u = [dy / len, -dx / len], M = [(L[0] + R[0]) / 2, (L[1] + R[1]) / 2];
+    const tip = [M[0] + u[0] * w * 0.75, M[1] + u[1] * w * 0.75];
+    if (cap) el("path", { d: `M${L[0]} ${L[1]} Q${L[0] + u[0] * w * 0.7} ${L[1] + u[1] * w * 0.7} ${tip[0]} ${tip[1]} Q${R[0] + u[0] * w * 0.7} ${R[1] + u[1] * w * 0.7} ${R[0]} ${R[1]}Z`, fill: capFill, stroke: line, "stroke-width": 2 }, g);
+    const mid = (pts) => [pts.reduce((s, p) => s + p[0], 0) / 4, pts.reduce((s, p) => s + p[1], 0) / 4];
+    return { cells, L, R, u, tip, capMid: [M[0] + u[0] * w * 0.3, M[1] + u[1] * w * 0.3], mid };
+  }
+  // light rays from one side (dashed yellow lines with arrowheads)
+  function rays(g, x1, y1, x2, y2, n = 3, gap = 30) {
+    const w = el("g", {}, g), ang = (Math.atan2(y2 - y1, x2 - x1) * 180) / Math.PI, nx = -Math.sin(rad(ang)), ny = Math.cos(rad(ang));
+    for (let k = 0; k < n; k++) { const o = (k - (n - 1) / 2) * gap;
+      el("line", { x1: x1 + nx * o, y1: y1 + ny * o, x2: x2 + nx * o, y2: y2 + ny * o, stroke: "#FBC02D", "stroke-width": 4, "stroke-dasharray": "9 6" }, w);
+      el("path", { d: "M0 0 L-12 -7 L-12 7Z", fill: "#FBC02D", transform: `translate(${x2 + nx * o} ${y2 + ny * o}) rotate(${ang})` }, w); }
+    return w;
+  }
+  const sunIcon = (g, x, y, r = 18) => { const w = el("g", {}, g); for (let k = 0; k < 8; k++) { const a = (k * Math.PI) / 4; el("line", { x1: x + (r + 5) * Math.cos(a), y1: y + (r + 5) * Math.sin(a), x2: x + (r + 13) * Math.cos(a), y2: y + (r + 13) * Math.sin(a), stroke: "#FFB300", "stroke-width": 3, "stroke-linecap": "round" }, w); } el("circle", { cx: x, cy: y, r, fill: "#FFD54F", stroke: "#FFB300", "stroke-width": 2 }, w); return w; };
+  const gravArrow = (g, x, y, len = 60) => { const w = el("g", {}, g); el("line", { x1: x, y1: y, x2: x, y2: y + len, stroke: GRAV, "stroke-width": 5 }, w); el("path", { d: `M${x - 10} ${y + len - 4} L${x} ${y + len + 12} L${x + 10} ${y + len - 4}Z`, fill: GRAV }, w); label(w, x, y - 8, "gravity", 15, GRAV); return w; };
+  const growTo = (ms, f) => tween(ms, (t) => f(ease(t)));
+
+  // the standard animation view: steps, step player, one question at the end
+  function animSetup(A) {
+    const id = A.sub;
+    $(id + "Steps").innerHTML = A.steps.map((s) => `<li>${s}</li>`).join("");
+    stepper({ host: id + "Ctl", list: id + "Steps", first: A.first, playLabel: "▶ Play all",
+      start: () => { $(id + "Ask").hidden = true; asking(id, false); fbSet($(id + "Fb"), "", ""); return A.draw($(id + "Svg")); },
+      steps: A.run, end: (C) => {
+        if (A.endSay) say(A.tab, A.endSay, "happy");
+        if (A.end) A.end(C);
+        if (has(A.tab, A.star)) return;
+        $(id + "Q").innerHTML = A.q; $(id + "Ask").hidden = false; asking(id, true);
+        ask({ box: $(id + "Cats"), fb: $(id + "Fb"), spex: A.tab, opts: shuffle(A.opts.map((t, i) => [String.fromCharCode(97 + i), t])), correct: ["a"], tip: A.tip,
+          answer: `<b>${A.opts[0]}</b>. ${A.good}`, good: A.good, onDone: (st) => { addStars(A.tab, A.star, starsOf(st)); asking(id, false); } });
+      } });
+  }
+
+  /* ============================ 6 TAB 1 · TROPISMS ============================ */
+  function introDraw(svg) {
+    svg.replaceChildren();
+    el("rect", { x: 0, y: 0, width: 640, height: 400, fill: "#FFF8E1" }, svg);
+    el("rect", { x: 30, y: 50, width: 150, height: 190, fill: "#BBDEFB", stroke: "#8D6E63", "stroke-width": 8 }, svg);
+    el("line", { x1: 105, y1: 50, x2: 105, y2: 240, stroke: "#8D6E63", "stroke-width": 5 }, svg);
+    sunIcon(svg, 70, 95, 20);
+    label(svg, 105, 266, "window", 15, "#6D4C41");
+    el("rect", { x: 230, y: 330, width: 380, height: 16, fill: "#A1887F" }, svg);
+    // see-through pot
+    el("path", { d: "M330 262 L430 262 L418 330 L342 330Z", fill: "#8D6E63", opacity: 0.85 }, svg);
+    const C = { svg, plant: el("g", {}, svg), fx: el("g", {}, svg), sB: 0, rB: 0 };
+    el("path", { d: "M330 262 L430 262 L418 330 L342 330Z", fill: "none", stroke: "#BF6F3F", "stroke-width": 4 }, svg);
+    label(svg, 470, 300, "pot (cut open)", 14, "#6D4C41", { "text-anchor": "start" });
+    C.clock = label(svg, 520, 40, "Day 0", 20, "#1F3A5F");
+    C.draw = () => seedling(C.plant, { x: 380, y: 266, sL: 150, sBend: C.sB, rL: 56, rBend: C.rB });
+    C.draw();
+    return C;
+  }
+  const WI_RUN = [
+    async (C) => { label(C.fx, 380, 92, "a seedling", 16, "#33691E"); await wait(500); },
+    async (C) => { C.fx.replaceChildren(); rays(C.fx, 190, 120, 330, 140, 3, 28); label(C.fx, 255, 100, "light: from one side", 15, "#F57F17"); await wait(700); },
+    async (C) => { await growTo(2400, (t) => { C.sB = -42 * t; C.draw(); C.clock.textContent = "Day " + Math.round(3 * t); }); label(C.fx, 300, 60, "➕ towards the light", 16, "#2E7D32"); },
+    async (C) => { await growTo(1400, (t) => { C.rB = -18 * t; C.draw(); }); label(C.fx, 630, 374, "root: ➖ away from the light", 15, "#6D4C41", { "text-anchor": "end" }); },
+    async (C) => { const g = el("g", {}, C.fx); const O = organPts(380, 266, 0, 150, C.sB); auxinDots(g, O, { shift: () => 1, w: 4 }); label(C.fx, 455, 140, "auxin (a plant hormone)", 15, "#E65100", { "text-anchor": "start" }); SND.star(); await wait(400); },
+  ];
+  function setupIntro() {
+    animSetup({ sub: "wIntro", tab: "what", star: "intro", first: "▶ Watch the seedling", draw: introDraw, run: WI_RUN,
+      steps: ["Plants can't walk. But they can <b>grow</b> towards what they need.", "Light comes through the window from <b>one side</b>: a <b>stimulus</b>.",
+        "In 3 days the shoot grows <b>towards</b> the light: a <b>positive</b> tropism.", "Growth <b>away</b> from a stimulus is a <b>negative</b> tropism: the root grows away from the light.",
+        "A <b>tropism</b> is a slow <b>growth</b> response to a stimulus from one direction, controlled by the plant hormone <b>auxin</b>."],
+      endSay: "Tropisms are slow: they happen by <b>growing</b>, not by moving.",
+      q: "Which of these is a tropism?", opts: ["A shoot slowly bending towards a window", "A Venus flytrap snapping shut in a second", "A plant wilting when it has no water", "Leaves falling off in autumn"],
+      tip: "A tropism happens by growth, towards or away from a stimulus from one side.", good: "Slow <b>growth</b> towards a stimulus from one direction: a <b>tropism</b>. The flytrap is fast, it does not grow." });
+  }
+
+  // 🃏 sort the tropisms
+  const TROPS = [["photo", "☀ Light", "Phototropism"], ["grav", "⬇ Gravity", "Gravitropism"], ["hydro", "💧 Water", "Hydrotropism"], ["thigmo", "✋ Touch", "Thigmotropism"], ["chemo", "🧪 Chemicals", "Chemotropism"]];
+  const WS = [
+    { id: "s1", text: "A shoot bends towards a window", k: "photo" }, { id: "s2", text: "A root grows away from light", k: "photo" },
+    { id: "s3", text: "A root grows down into the soil", k: "grav" }, { id: "s4", text: "A shoot grows up, even in the dark", k: "grav" },
+    { id: "s5", text: "A root grows towards wet soil", k: "hydro" }, { id: "s6", text: "A pea tendril coils round a stick", k: "thigmo" },
+    { id: "s7", text: "A pollen tube grows down to the ovule", k: "chemo" }, { id: "s8", text: "A sunflower seedling turns to the Sun", k: "photo" },
+  ];
+  function setupWSort() {
+    $("wsBins").innerHTML = TROPS.map(([k, s, n]) => `<div class="slot multi" id="ws-${k}" data-k="${k}"><span class="sname">${s}<br><b>${n}</b></span></div>`).join("");
+    $("wsBank").replaceChildren(); fbSet($("wsFb"), "", "");
+    const tiles = shuffle(WS).map((c) => { const t = h(`<div class="tile" data-k="${c.k}" data-id="${c.id}" role="button" tabindex="0">${c.text}</div>`); $("wsBank").appendChild(t); return t; });
+    const slots = TROPS.map(([k]) => $("ws-" + k));
+    dropTask({ tiles, slots, spex: "what", fb: $("wsFb"), mode: "tile",
+      fits: (t, s) => t.dataset.k === s.dataset.k, home: (t) => $("ws-" + t.dataset.k), place: (t, s) => s.appendChild(t),
+      tip: (t, s, final) => { const c = WS.find((x) => x.id === t.dataset.id), tr = TROPS.find(([k]) => k === c.k); return final ? `“${c.text}” is <b>${tr[2].toLowerCase()}</b>: the stimulus is ${tr[1].slice(2).toLowerCase()}.` : "What is the stimulus? Light, gravity, water, touch or chemicals?"; },
+      onTile: (t) => { if (!t._st.revealed) fbSet($("wsFb"), "good", "✔ Right!"); },
+      onDone: () => {
+        const rev = tiles.filter((t) => t._st.revealed).length, mis = tiles.some((t) => t._st.mistakes);
+        addStars("what", "sort", rev ? (rev <= 2 ? 1 : 0) : mis ? 2 : 3);
+        fbSet($("wsFb"), "good", "✔ All 8 sorted! The name tells you the stimulus: <b>photo</b> = light, <b>gravi</b> = gravity, <b>hydro</b> = water, <b>thigmo</b> = touch, <b>chemo</b> = chemicals. <button class=\"btn small\" id=\"wsAgain\">↺ Again</button>");
+        $("wsAgain").onclick = setupWSort;
+        say("what", "Five tropisms, five stimuli!", "happy", "good");
+      } });
+  }
+
+  // ➕➖ positive or negative?
+  const PN = [
+    { id: "a", em: "🌻", text: "A shoot grows towards the light.", k: "p", why: "Towards light: <b>positive phototropism</b>." },
+    { id: "b", em: "🌱", text: "A root grows away from the light.", k: "n", why: "Away from light: <b>negative phototropism</b>." },
+    { id: "c", em: "⬇️", text: "A root grows down, in the direction of gravity.", k: "p", why: "Towards gravity: <b>positive gravitropism</b>." },
+    { id: "d", em: "⬆️", text: "A shoot grows up, against gravity.", k: "n", why: "Away from gravity: <b>negative gravitropism</b>." },
+    { id: "e", em: "💧", text: "A root grows towards wet soil.", k: "p", why: "Towards water: <b>positive hydrotropism</b>." },
+    { id: "f", em: "🌿", text: "A tendril grows round the stick it touches.", k: "p", why: "Towards the touch: <b>positive thigmotropism</b>." },
+  ];
+  let pnI = 0;
+  const PN_OPTS = [["p", "➕ Positive: towards the stimulus"], ["n", "➖ Negative: away from the stimulus"]];
+  function pnDots() { $("pnDots").innerHTML = PN.map((w, k) => { const n = P.stars.what["pn-" + w.id]; return `<span class="dot${k === pnI ? " now" : ""}${n === undefined ? "" : n > 0 ? " done" : " zero"}">${k + 1}</span>`; }).join(""); }
+  function setupPN() { pnI = 0; pnLoad(); }
+  function pnLoad() {
+    const w = PN[pnI];
+    $("pnEm").textContent = w.em; $("pnText").textContent = w.text; $("pnNext").hidden = true; fbSet($("pnFb"), "", ""); pnDots();
+    ask({ box: $("pnCats"), fb: $("pnFb"), spex: "what", opts: PN_OPTS, correct: [w.k], tip: "First find the stimulus. Does the plant grow towards it or away from it?",
+      answer: `<b>${PN_OPTS.find(([k]) => k === w.k)[1]}</b>. ${w.why}`, good: w.why,
+      onDone: (st) => { addStars("what", "pn-" + w.id, starsOf(st)); pnDots(); $("pnNext").hidden = false; $("pnNext").textContent = pnI < PN.length - 1 ? "Next →" : "↺ Start again"; } });
+  }
+  $("pnNext").addEventListener("click", () => { pnI = pnI < PN.length - 1 ? pnI + 1 : 0; pnLoad(); });
+
+  /* ============================ 7 TAB 2 · PHOTOTROPISM ============================ */
+  // 💡 move the lamp: a seedling in a clear jar; the shoot bends towards the lamp, the root away
+  const PL = { a: 90, sB: 0, rB: 0, hours: 0, aux: true, zoom: true, seen: {}, settle: 0, raf: 0, last: 0, drag: false };
+  const PL_C = [320, 200], PL_R = 205, PL_BASE = [320, 262];
+  function plLamp() { const a = rad(PL.a); return [PL_C[0] + PL_R * Math.cos(a), PL_C[1] - PL_R * Math.sin(a)]; }
+  const plPhi = () => { const [lx, ly] = plLamp(); return (Math.atan2(lx - PL_BASE[0], PL_BASE[1] - 90 - ly) * 180) / Math.PI; };
+  function plDraw() {
+    const svg = $("plSvg");
+    if (!PL.g) {
+      svg.replaceChildren();
+      el("rect", { x: 0, y: 0, width: 640, height: 400, rx: 12, fill: "#1C2833" }, svg);
+      label(svg, 20, 24, "a dark room", 14, "#B0BEC5", { stroke: "#1C2833", "text-anchor": "start" });
+      el("rect", { x: 255, y: 262, width: 130, height: 128, fill: "#6D4C41", opacity: 0.9 }, svg);
+      PL.rays = el("g", {}, svg); PL.g = el("g", {}, svg); PL.ax = el("g", {}, svg);
+      el("rect", { x: 250, y: 168, width: 140, height: 224, rx: 16, fill: "#B3E5FC", "fill-opacity": 0.12, stroke: "#B3E5FC", "stroke-width": 3 }, svg);
+      label(svg, 244, 384, "clear jar", 14, "#B3E5FC", { stroke: "#1C2833", "text-anchor": "end" });
+      PL.zoomG = el("g", {}, svg);
+      PL.lamp = el("g", { style: "cursor:grab" }, svg);
+      el("circle", { r: 34, fill: "#FFF59D", opacity: 0.25 }, PL.lamp);
+      el("path", { d: "M-20 -12 L20 -12 L28 10 L-28 10Z", fill: "#78909C", stroke: "#CFD8DC", "stroke-width": 2 }, PL.lamp);
+      el("ellipse", { cx: 0, cy: 12, rx: 18, ry: 8, fill: "#FFF176" }, PL.lamp);
+      PL.lampTxt = label(svg, 0, 0, "💡 drag me", 14, "#FFF59D", { stroke: "#1C2833" });
+      svg.addEventListener("pointerdown", (e) => { if (e.target.closest("g") === PL.lamp || PL.lamp.contains(e.target)) { PL.drag = true; svg.setPointerCapture(e.pointerId); plMove(e); } });
+      svg.addEventListener("pointermove", (e) => { if (PL.drag) plMove(e); });
+      svg.addEventListener("pointerup", () => { PL.drag = false; });
+      svg.addEventListener("pointercancel", () => { PL.drag = false; });
+    }
+    const [lx, ly] = plLamp(), phi = plPhi();
+    PL.lamp.setAttribute("transform", `translate(${lx} ${ly}) rotate(${(Math.atan2(PL_BASE[1] - 80 - ly, PL_BASE[0] - lx) * 180) / Math.PI - 90})`);
+    PL.lampTxt.setAttribute("x", lx); PL.lampTxt.setAttribute("y", ly - 40 < 16 ? ly + 52 : ly - 40);
+    PL.rays.replaceChildren();
+    const tx = PL_BASE[0] + Math.sin(rad(PL.sB * 0.6)) * 110, ty = PL_BASE[1] - 120;
+    for (let k = -1; k <= 1; k++) el("line", { x1: lx + k * 10, y1: ly + 14, x2: tx + k * 16, y2: ty + Math.abs(k) * 10, stroke: "#FFF176", "stroke-width": 3, "stroke-dasharray": "8 6", opacity: 0.7 }, PL.rays);
+    const { S, R } = seedling(PL.g, { x: PL_BASE[0], y: PL_BASE[1], sL: 150, sBend: PL.sB, rL: 105, rBend: PL.rB });
+    PL.ax.replaceChildren();
+    const d = [lx - PL_BASE[0], ly - (PL_BASE[1] - 80)], n = Math.hypot(...d), k = Math.min(1, Math.abs(phi) / 30);
+    const shift = (hh) => -(Math.cos(rad(hh)) * d[0] + Math.sin(rad(hh)) * d[1]) / n * 1.6 * k;
+    if (PL.aux) { auxinDots(PL.ax, S, { shift, w: 4 }); auxinDots(PL.ax, R, { shift, w: 2.6, n: 6, from: 0.7, r: 2.8 }); }
+    PL.zoomG.replaceChildren();
+    if (PL.zoom) plZoom(phi);
+  }
+  function plZoom(phi) {
+    const g = PL.zoomG, x0 = 466, y0 = 222;
+    el("rect", { x: x0, y: y0, width: 164, height: 168, rx: 10, fill: "#FFFFFF", stroke: "#90A4AE", "stroke-width": 2 }, g);
+    label(g, x0 + 82, y0 + 18, "🔬 shoot cells", 14, "#1F3A5F");
+    const side = Math.abs(phi) < 12 ? 0 : phi < 0 ? 1 : -1;   // +1: the right side is shaded
+    const hL = side === -1 ? 30 : side === 1 ? 18 : 24, hR = side === 1 ? 30 : side === -1 ? 18 : 24;
+    for (let i = 0; i < 4; i++) {
+      el("rect", { x: x0 + 42, y: y0 + 150 - (i + 1) * hL, width: 38, height: hL, fill: "#DCEDC8", stroke: "#7CB342", "stroke-width": 1.5 }, g);
+      el("rect", { x: x0 + 84, y: y0 + 150 - (i + 1) * hR, width: 38, height: hR, fill: "#DCEDC8", stroke: "#7CB342", "stroke-width": 1.5 }, g);
+      if (side) for (let k = 0; k < 2; k++) el("circle", { cx: x0 + (side === 1 ? 103 : 61) + (k ? 8 : -8), cy: y0 + 150 - (i + 0.5) * (side === 1 ? hR : hL), r: 3.4, fill: AUX }, g);
+      else el("circle", { cx: x0 + (i % 2 ? 61 : 103), cy: y0 + 150 - (i + 0.5) * 24, r: 3.4, fill: AUX }, g);
+    }
+    label(g, x0 + 61, y0 + 164, side === 1 ? "lit" : side === -1 ? "shaded" : "", 13, "#455A64");
+    label(g, x0 + 103, y0 + 164, side === 1 ? "shaded" : side === -1 ? "lit" : "", 13, "#455A64");
+    if (!side) label(g, x0 + 82, y0 + 164, "even", 13, "#455A64");
+  }
+  function plMove(e) {
+    const svg = $("plSvg"), pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    const q = pt.matrixTransform(svg.getScreenCTM().inverse());
+    PL.a = clamp((Math.atan2(PL_C[1] - q.y, q.x - PL_C[0]) * 180) / Math.PI, 12, 168);
+    if (q.y > PL_C[1] + 40) PL.a = q.x < PL_C[0] ? 168 : 12;
+    plDraw();
+  }
+  function plTick(now) {
+    if (!$("pLamp").offsetParent) { PL.raf = 0; return; }
+    const dt = Math.min(0.05, (now - (PL.last || now)) / 1000); PL.last = now;
+    const phi = plPhi(), tS = clamp(phi * 0.85, -62, 62), tR = clamp(phi * 0.32, -26, 26);
+    const step = (v, t, sp) => (Math.abs(t - v) < sp * dt ? t : v + Math.sign(t - v) * sp * dt);
+    const moving = Math.abs(tS - PL.sB) > 0.5;
+    PL.sB = step(PL.sB, tS, 28); PL.rB = step(PL.rB, tR, 12);
+    if (moving) PL.hours += dt * 8;
+    plDraw();
+    const zone = phi < -35 ? "left" : phi > 35 ? "right" : Math.abs(phi) < 12 ? "above" : null;
+    if (zone && Math.abs(tS - PL.sB) < 2) { PL.settle += dt; if (PL.settle > 0.8 && !PL.seen[zone]) { PL.seen[zone] = 1; plPaint(); plSeen(); } } else PL.settle = 0;
+    $("plRead").innerHTML = plText(phi) + `<br><span class="hint">⏱ time-lapse: ${Math.round(PL.hours)} hours</span>`;
+    PL.raf = requestAnimationFrame(plTick);
+  }
+  function plText(phi) {
+    if (Math.abs(phi) < 12) return "Light from <b>above</b>: auxin stays <b>even</b>, both sides grow the same. The shoot grows <b>straight up</b>.";
+    const L = phi < 0, s = L ? "left" : "right", o = L ? "right" : "left";
+    return `Light from the <b>${s}</b> → auxin moves to the <b>${o}</b> (shaded) side → those cells stretch more → the shoot bends <b>${s}</b>, towards the light. The root bends <b>${o}</b>, away from it.`;
+  }
+  function plPaint() {
+    $("plPos").innerHTML = [["left", 162, "⬅ Left"], ["above", 90, "⬆ Above"], ["right", 18, "➡ Right"]].map(([k, a, t]) => `<button class="chip" data-a="${a}">${t} <span class="st">${PL.seen[k] ? "✔" : ""}</span></button>`).join("") + `<button class="chip" id="plStraight">↺ Start straight</button>`;
+    $("plPos").querySelectorAll("[data-a]").forEach((b) => b.onclick = () => { PL.a = +b.dataset.a; plDraw(); });
+    $("plStraight").onclick = () => { PL.sB = 0; PL.rB = 0; PL.hours = 0; PL.a = 90; plDraw(); };
+  }
+  function plSeen() {
+    const n = Object.keys(PL.seen).length;
+    if (n < 3) { say("photo", `Good! Now try the lamp ${["left", "above", "right"].filter((k) => !PL.seen[k]).map((k) => `<b>${k === "above" ? "above" : "on the " + k}</b>`).join(" and ")}.`); return; }
+    say("photo", "The shoot always grows <b>towards</b> the light (positive), the root <b>away</b> (negative).", "happy");
+    if (has("photo", "lamp")) return;
+    $("plAsk").hidden = false; asking("pLamp", true);
+    const opts = [["a", "Auxin moves to the shaded (right) side; those cells stretch more, so the shoot bends left"], ["b", "Light makes the cells on the left side grow faster"], ["c", "Light destroys the cells on the left side"], ["d", "The lamp is warm, and the shoot likes heat"]];
+    ask({ box: $("plCats"), fb: $("plFb"), spex: "photo", opts: shuffle(opts), correct: ["a"], tip: "Switch on 🟠 Show auxin and 🔬 Cell zoom. Which side has more auxin and longer cells?",
+      answer: `<b>${opts[0][1]}</b>.`, good: "Auxin moves to the <b>shaded</b> side. There the cells <b>stretch</b> more, so that side gets longer and the shoot bends <b>towards</b> the light.",
+      onDone: (st) => { addStars("photo", "lamp", starsOf(st)); asking("pLamp", false); setTimeout(() => { $("plAsk").hidden = true; fitHeight(); }, 2500); } });
+  }
+  function setupLamp() {
+    $("plOpts").innerHTML = `<button class="chip" id="plAux" aria-pressed="true">🟠 Show auxin</button><button class="chip" id="plZoom" aria-pressed="true">🔬 Cell zoom</button>`;
+    $("plAux").onclick = () => { PL.aux = !PL.aux; $("plAux").setAttribute("aria-pressed", PL.aux); plDraw(); };
+    $("plZoom").onclick = () => { PL.zoom = !PL.zoom; $("plZoom").setAttribute("aria-pressed", PL.zoom); plDraw(); };
+    PL.a = 160; plPaint(); plDraw(); plStart();
+  }
+  function plStart() { if (!PL.raf) { PL.last = 0; PL.raf = requestAnimationFrame(plTick); } }
+
+  // ▶ how auxin works: two columns of cells; the shaded side stretches, the strip bends
+  const HW = { base: [330, 388], w: 70, n: 8, h0: 28 };
+  function howDraw(svg) {
+    svg.replaceChildren();
+    el("rect", { x: 0, y: 0, width: 640, height: 400, fill: "#F1F8E9" }, svg);
+    const C = { svg, hA: Array(HW.n).fill(HW.h0), hB: Array(HW.n).fill(HW.h0), g: el("g", {}, svg), dots: el("g", {}, svg), fx: el("g", {}, svg), p: -1 };
+    C.render = () => {
+      C.g.replaceChildren(); C.dots.replaceChildren();
+      const T = strip(C.g, HW.base[0], HW.base[1], C.hA, C.hB, HW.w);
+      if (C.p < 0) return;
+      const e = [(T.R[0] - T.L[0]) / HW.w, (T.R[1] - T.L[1]) / HW.w];
+      for (let k = 0; k < 8; k++) {
+        const spread = [T.capMid[0] + e[0] * ((k - 3.5) / 3.5) * 22 + T.u[0] * ((k % 2) * 8), T.capMid[1] + e[1] * ((k - 3.5) / 3.5) * 22 + T.u[1] * ((k % 2) * 8)];
+        const right = [T.capMid[0] + e[0] * (12 + (k % 3) * 7) + T.u[0] * ((k % 4) * 6 - 6), T.capMid[1] + e[1] * (12 + (k % 3) * 7) + T.u[1] * ((k % 4) * 6 - 6)];
+        const cell = T.cells[HW.n - 1 - (k % 4)].b, m = T.mid(cell), down = [m[0] + T.u[0] * (k < 4 ? 6 : -6), m[1] + T.u[1] * (k < 4 ? 6 : -6)];
+        const p = C.p, lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+        const q = p <= 1 ? spread : p <= 2 ? lerp(spread, right, ease(p - 1)) : lerp(right, down, ease(Math.min(1, p - 2)));
+        el("circle", { cx: q[0], cy: q[1], r: 4.5, fill: AUX, stroke: "#fff", "stroke-width": 1, opacity: Math.min(1, p) }, C.dots);
+      }
+    };
+    C.render();
+    label(svg, 230, 380, "lit side", 15, "#F57F17"); label(svg, 430, 380, "shaded side", 15, "#455A64");
+    label(svg, 420, 96, "tip", 15, "#33691E", { "text-anchor": "start" });
+    return C;
+  }
+  const HW_RUN = [
+    async (C) => { await tween(800, (t) => { C.p = t; C.render(); }); label(C.fx, 470, 120, "auxin is made here", 15, "#E65100", { "text-anchor": "start" }); },
+    async (C) => { sunIcon(C.fx, 40, 150, 20); rays(C.fx, 70, 170, 260, 170, 3, 34); await wait(600); },
+    async (C) => { await tween(1200, (t) => { C.p = 1 + t; C.render(); }); },
+    async (C) => { await tween(1400, (t) => { C.p = 2 + t; C.render(); }); },
+    async (C) => {
+      await tween(2600, (t) => { for (let i = 0; i < HW.n; i++) { const top = Math.max(0, (i - 3) / 4); C.hB[i] = HW.h0 + 13 * top * ease(t); C.hA[i] = HW.h0 + 2 * top * ease(t); } C.render(); });
+      label(C.fx, 560, 250, "longer cells", 15, "#33691E"); label(C.fx, 560, 270, "(stretched)", 15, "#33691E"); SND.star();
+    },
+  ];
+  function setupHow() {
+    animSetup({ sub: "pHow", tab: "photo", star: "how", first: "▶ Start", draw: howDraw, run: HW_RUN,
+      steps: ["<b>Auxin</b> is made in the <b>tip</b> of the shoot.", "Light shines from <b>one side</b> (here: the left).", "Auxin moves to the <b>shaded</b> side.",
+        "Auxin moves <b>down</b> the shaded side of the shoot.", "Cells on the shaded side <b>stretch</b> more. The shoot <b>bends towards the light</b>!"],
+      endSay: "Same number of cells on each side, but the shaded cells are <b>longer</b>: that is why the shoot bends.",
+      q: "Why does the shoot bend towards the light?", opts: ["The shaded side has more auxin, so its cells stretch more", "Light makes the lit side grow faster", "Light destroys the cells on the lit side", "The leaves pull the shoot towards the light"],
+      tip: "Which side ended up with longer cells?", good: "More <b>auxin</b> on the <b>shaded</b> side → its cells <b>stretch</b> more → the shoot bends towards the light: <b>positive phototropism</b>." });
+  }
+
+  // 🔻 the root: the same strip, growing down. In roots auxin slows growth.
+  function rootDraw(svg) {
+    svg.replaceChildren();
+    el("rect", { x: 0, y: 0, width: 640, height: 400, fill: "#E1F5FE" }, svg);
+    label(svg, 610, 24, "a root in a clear jar", 14, "#0277BD", { "text-anchor": "end" });
+    el("ellipse", { cx: 330, cy: 20, rx: 26, ry: 18, fill: "#8D6E63", stroke: "#5D4037", "stroke-width": 2 }, svg);
+    const C = { svg, hA: Array(7).fill(26), hB: Array(7).fill(26), wrap: el("g", { transform: "rotate(180 330 200)" }, svg), fx: el("g", {}, svg), p: -1 };
+    C.g = el("g", {}, C.wrap); C.dots = el("g", {}, C.wrap);
+    C.render = () => {
+      C.g.replaceChildren(); C.dots.replaceChildren();
+      const T = strip(C.g, 330, 362, C.hA, C.hB, 54, { fill: "#EFEBE9", line: "#A1887F", capFill: "#D7CCC8" });
+      if (C.p < 0) return;
+      const e = [(T.R[0] - T.L[0]) / 54, (T.R[1] - T.L[1]) / 54], lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+      for (let k = 0; k < 6; k++) {
+        const spread = [T.capMid[0] + e[0] * ((k - 2.5) / 2.5) * 16, T.capMid[1] + e[1] * ((k - 2.5) / 2.5) * 16];
+        const left = [T.capMid[0] - e[0] * (10 + (k % 3) * 6) + T.u[0] * ((k % 2) * 8 - 4), T.capMid[1] - e[1] * (10 + (k % 3) * 6) + T.u[1] * ((k % 2) * 8 - 4)];
+        const m = T.mid(T.cells[6 - (k % 3)].a), down = [m[0] + T.u[0] * (k < 3 ? 5 : -5), m[1] + T.u[1] * (k < 3 ? 5 : -5)];
+        const p = C.p, q = p <= 1 ? spread : p <= 2 ? lerp(spread, left, ease(p - 1)) : lerp(left, down, ease(Math.min(1, p - 2)));
+        el("circle", { cx: q[0], cy: q[1], r: 4.2, fill: AUX, stroke: "#fff", "stroke-width": 1, opacity: Math.min(1, p) }, C.dots);
+      }
+    };
+    C.render();
+    label(svg, 240, 70, "lit side", 15, "#F57F17"); label(svg, 430, 70, "shaded side", 15, "#455A64");
+    label(svg, 330, 396, "root tip", 15, "#6D4C41");
+    return C;
+  }
+  const RT_RUN = [
+    async (C) => { await tween(800, (t) => { C.p = t; C.render(); }); },
+    async (C) => { sunIcon(C.fx, 50, 250, 18); rays(C.fx, 80, 270, 260, 270, 3, 30); await tween(1200, (t) => { C.p = 1 + t; C.render(); }); },
+    async (C) => { await tween(1200, (t) => { C.p = 2 + t; C.render(); }); label(C.fx, 520, 230, "🐢 slower growth", 15, "#6D4C41"); },
+    async (C) => {
+      await tween(2600, (t) => { for (let i = 0; i < 7; i++) { const top = Math.max(0, (i - 2) / 4); C.hB[i] = 26 + 11 * top * ease(t); } C.render(); });
+      label(C.fx, 180, 330, "the lit side grew more", 15, "#F57F17"); label(C.fx, 520, 380, "bends away from the light", 15, "#6D4C41"); SND.star();
+    },
+  ];
+  function setupRoot() {
+    animSetup({ sub: "pRoot", tab: "photo", star: "root", first: "▶ Start", draw: rootDraw, run: RT_RUN,
+      steps: ["Auxin is also found in the <b>tip of the root</b>.", "Light from the left: auxin moves to the <b>shaded</b> side.",
+        "In roots, auxin <b>slows</b> cell growth: the shaded side grows <b>less</b>.", "The lit side grows <b>more</b>, so the root bends <b>away</b> from the light: <b>negative phototropism</b>."],
+      endSay: "Shoots and roots react to auxin in <b>opposite</b> ways.",
+      q: "Why does the root bend away from the light?", opts: ["Auxin on the shaded side slows growth there, so the lit side grows more", "Light makes the root cells shrink", "Auxin makes the shaded root cells stretch more", "The leaves pull the root"],
+      tip: "In roots, does auxin speed up or slow down growth?", good: "In roots, auxin <b>slows</b> growth on the shaded side. The lit side grows more, so the root bends <b>away</b> from the light." });
+  }
+
+  /* ============================ 8 TAB 3 · GRAVITROPISM ============================ */
+  const GT = { a: 90, t: 0, aux: false, busy: false, grown: {} };
+  const GT_POS = [[0, "⬆ Upright"], [90, "➡ On its side"], [180, "⬇ Upside down"]];
+  const gtTarget = (a) => ({ s: a === 0 ? 0 : a === 90 ? -90 : -170, r: a === 0 ? 0 : a === 90 ? -90 : 170 });
+  function gtDraw() {
+    const svg = $("gtSvg"); svg.replaceChildren();
+    el("rect", { x: 0, y: 0, width: 640, height: 400, fill: "#ECEFF1" }, svg);
+    el("rect", { x: 110, y: 20, width: 420, height: 362, rx: 14, fill: "#37474F", stroke: "#263238", "stroke-width": 4 }, svg);
+    label(svg, 320, 44, "dark, damp box (no light)", 15, "#CFD8DC", { stroke: "#37474F" });
+    gravArrow(svg, 585, 140, 90);
+    const T = gtTarget(GT.a), k = ease(GT.t);
+    const g = el("g", {}, svg);
+    const { S, R } = seedling(g, { x: 320, y: 205, sh: GT.a, sL: 110 + 30 * k, sBend: T.s * k, rh: GT.a + 180, rL: 85 + 25 * k, rBend: T.r * k });
+    if (GT.aux) { const ax = el("g", {}, svg), shift = (hh) => Math.sin(rad(hh)) * 1.3; auxinDots(ax, S, { shift, w: 4 }); auxinDots(ax, R, { shift, w: 2.6, n: 6, from: 0.65, r: 2.8 }); }
+    label(svg, 320, 372, `⏱ ${Math.round(24 * GT.t)} hours`, 16, "#CFD8DC", { stroke: "#37474F" });
+  }
+  function gtText() {
+    if (GT.t < 1) return GT.a === 0 ? "Upright: shoot up, root down. Press <b>⏩ Grow</b>." : "Press <b>⏩ Grow for 1 day</b> and watch.";
+    if (GT.a === 0) return "Upright: auxin is <b>even</b>. The shoot keeps growing up, the root down.";
+    return `Auxin collects on the <b>lower</b> side. In the shoot it makes the lower cells <b>stretch</b> → the shoot curves <b>up</b> (negative gravitropism). In the root it <b>slows</b> the lower cells → the root curves <b>down</b> (positive gravitropism).`;
+  }
+  function gtPaint() {
+    $("gtPos").innerHTML = GT_POS.map(([a, t]) => `<button class="chip" data-a="${a}" aria-pressed="${a === GT.a}">${t} <span class="st">${GT.grown[a] ? "✔" : ""}</span></button>`).join("");
+    $("gtPos").querySelectorAll(".chip").forEach((b) => b.onclick = () => { if (GT.busy) return; GT.a = +b.dataset.a; GT.t = 0; gtPaint(); gtDraw(); $("gtRead").innerHTML = gtText(); });
+    $("gtGo").disabled = GT.t >= 1;
+  }
+  function setupTurn() {
+    $("gtAux").onclick = () => { GT.aux = !GT.aux; $("gtAux").setAttribute("aria-pressed", GT.aux); gtDraw(); };
+    $("gtGo").onclick = async () => {
+      if (GT.busy || GT.t >= 1) return; GT.busy = true; $("gtGo").disabled = true;
+      await tween(3000, (t) => { GT.t = t; gtDraw(); }); GT.t = 1; gtDraw();
+      GT.busy = false; GT.grown[GT.a] = 1; gtPaint(); $("gtRead").innerHTML = gtText(); SND.pop();
+      if (GT.a === 90 && !has("grav", "turn")) {
+        $("gtAsk").hidden = false; asking("gTurn", true);
+        const opts = [["a", "Auxin collects on the lower side and makes those cells stretch more"], ["b", "Light from above pulls it up"], ["c", "Auxin collects on the upper side and makes it grow"], ["d", "The roots push the shoot up"]];
+        ask({ box: $("gtCats"), fb: $("gtFb"), spex: "grav", opts: shuffle(opts), correct: ["a"], tip: "There is no light in the box. Switch on 🟠 Show auxin: where is it?",
+          answer: `<b>${opts[0][1]}</b>.`, good: "Gravity makes auxin collect on the <b>lower</b> side. Those shoot cells <b>stretch</b> more, so the shoot curves <b>up</b>: negative gravitropism.",
+          onDone: (st) => { addStars("grav", "turn", starsOf(st)); asking("gTurn", false); setTimeout(() => { $("gtAsk").hidden = true; fitHeight(); }, 2500); } });
+      } else say("grav", GT.a === 180 ? "Even upside down: the shoot turns round to grow <b>up</b>, the root to grow <b>down</b>!" : "Try another position.", "happy");
+    };
+    gtPaint(); gtDraw(); $("gtRead").innerHTML = gtText();
+  }
+
+  // 🌀 clinostat and space
+  function clDraw(svg) {
+    svg.replaceChildren();
+    el("rect", { x: 0, y: 0, width: 640, height: 400, fill: "#ECEFF1" }, svg);
+    const C = { svg, alive: true, ang: 0, len: 0, spin: false };
+    C.stop = () => { C.alive = false; };
+    C.left = el("g", {}, svg);
+    el("rect", { x: 10, y: 40, width: 250, height: 300, rx: 12, fill: "#37474F" }, C.left);
+    label(C.left, 135, 64, "not turning", 15, "#CFD8DC", { stroke: "#37474F" });
+    C.lp = el("g", {}, C.left); seedling(C.lp, { x: 135, y: 200, sh: 90, sL: 80, rh: 270, rL: 60 });
+    gravArrow(svg, 300, 150, 70);
+    el("rect", { x: 405, y: 330, width: 70, height: 40, rx: 6, fill: "#78909C" }, svg);
+    label(svg, 440, 392, "motor", 14, "#455A64");
+    C.disc = el("g", {}, svg);
+    el("circle", { cx: 440, cy: 200, r: 120, fill: "#CFD8DC", stroke: "#78909C", "stroke-width": 4 }, C.disc);
+    for (let k = 0; k < 6; k++) el("line", { x1: 440, y1: 200, x2: 440 + 116 * Math.cos((k * Math.PI) / 3), y2: 200 + 116 * Math.sin((k * Math.PI) / 3), stroke: "#B0BEC5", "stroke-width": 2 }, C.disc);
+    C.cs = el("g", {}, C.disc); C.ca = el("g", {}, C.disc);
+    C.lab = label(svg, 440, 28, "clinostat", 16, "#1F3A5F");
+    C.fx = el("g", {}, svg);
+    C.render = () => {
+      const { S, R } = seedling(C.cs, { x: 440, y: 200, sh: 90, sL: 50 + C.len, rh: 270, rL: 40 + C.len * 0.7 });
+      C.ca.replaceChildren(); if (C.len > 0) { auxinDots(C.ca, S, { w: 4 }); }
+      C.disc.setAttribute("transform", `rotate(${C.ang} 440 200)`);
+    };
+    C.render();
+    const loop = () => { if (!C.alive || !document.contains(svg)) return; if (C.spin && !reduced()) { C.ang = (C.ang + 0.6) % 360; C.render(); } requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+    return C;
+  }
+  const CL_RUN = [
+    async (C) => { await growTo(1800, (t) => seedling(C.lp, { x: 135, y: 200, sh: 90, sL: 80 + 30 * t, sBend: -80 * t, rh: 270, rL: 60 + 20 * t, rBend: -80 * t })); },
+    async (C) => { C.spin = true; label(C.fx, 590, 96, "turns ↻", 15, "#1F3A5F"); label(C.fx, 590, 114, "slowly", 15, "#1F3A5F"); await wait(1500); },
+    async (C) => { await tween(2200, (t) => { C.len = 40 * t; if (reduced() || ANIM.k === 0) C.render(); }); C.render(); label(C.fx, 440, 56, "auxin even → grows straight", 15, "#E65100"); },
+    async (C) => {
+      C.left.replaceChildren();
+      el("rect", { x: 10, y: 40, width: 250, height: 300, rx: 12, fill: "#0D1B2A" }, C.left);
+      for (let k = 0; k < 30; k++) el("circle", { cx: 20 + (k * 53) % 230, cy: 50 + (k * 37) % 280, r: 1.3, fill: "#fff" }, C.left);
+      label(C.left, 135, 64, "🚀 in space", 15, "#E3F2FD", { stroke: "#0D1B2A" });
+      el("rect", { x: 85, y: 78, width: 100, height: 12, rx: 5, fill: "#FFF59D" }, C.left);
+      label(C.left, 135, 108, "lamp", 13, "#FFF59D", { stroke: "#0D1B2A" });
+      const sp = [[60, 240, 30, 110], [135, 270, -20, 200], [210, 235, 15, 300]];
+      for (const [x, y, sb, rh] of sp) { const g = el("g", {}, C.left); seedling(g, { x, y, sh: 0, sL: 85, sBend: sb * 0.3, rh, rL: 55, rBend: 70 }); }
+      C.spin = false;
+      label(C.left, 135, 330, "roots: any direction", 14, "#E3F2FD", { stroke: "#0D1B2A" });
+      await wait(800);
+    },
+  ];
+  function setupClino() {
+    animSetup({ sub: "gClino", tab: "grav", star: "clino", first: "▶ Start", draw: clDraw, run: CL_RUN,
+      steps: ["On its side and <b>not turning</b>: the shoot curves up, the root curves down.", "A <b>clinostat</b> turns the seedling slowly, so gravity pulls on <b>every side</b> in turn.",
+        "Auxin stays <b>even</b>: both sides grow the same, and the seedling grows <b>straight</b>.", "In <b>space</b> there is no up or down: roots grow in any direction, but shoots still grow <b>towards light</b>."],
+      endSay: "No one-sided gravity, no gravitropism!",
+      q: "Why does a seedling on a turning clinostat grow straight?", opts: ["As it turns, gravity acts on all sides equally, so auxin stays even", "The clinostat switches gravity off", "It turns too fast to grow", "Light from the side stops it bending"],
+      tip: "Gravity is still there, but which side is “down” keeps changing.", good: "Every side is “down” in turn, so <b>auxin</b> never collects on one side and both sides grow the same." });
+  }
+
+  // ❓ why is it useful?
+  const GW = [
+    Q("g1", "🥕", "A seed is planted upside down. Why is negative gravitropism useful for its shoot?", ["The shoot still grows up, out of the soil, to reach the light", "The shoot grows down to find water", "The shoot stays in the dark to be safe", "It makes the seed heavier"], "Where does a shoot need to go?", "The shoot grows <b>up</b> out of the soil to the <b>light</b> for photosynthesis."),
+    Q("g2", "⚓", "Why is positive gravitropism useful for roots?", ["Roots grow down into the soil: they anchor the plant and reach water and minerals", "Roots grow up to the light", "Roots make glucose in the soil", "Roots stop the plant growing"], "What do roots do for a plant?", "Roots grow <b>down</b>: they <b>anchor</b> the plant and take in <b>water</b> and <b>minerals</b>."),
+    Q("g3", "🌳", "A young tree is blown over but survives. How will its new shoots grow?", ["Upwards again (negative gravitropism)", "Sideways along the ground", "Down into the soil", "They will stop growing"], "Remember the seedling on its side.", "Auxin collects on the lower side, so the new shoots curve <b>up</b> again."),
+  ];
+  function setupGWhy() {
+    quiz({ root: $("gwBox"), tab: "grav", list: GW, prefix: "q-", spex: "grav", title: "Why is it useful?", again: "↺ Play again",
+      onEnd: (restart, stars) => { if (restart) setupGWhy(); else say("grav", `Done: <b>★ ${stars}</b> out of 9!`, "happy", "good"); } });
+  }
+
+  /* ============================ 9 TAB 4 · MORE TROPISMS ============================ */
+  // 💧 hydrotropism
+  function hyDraw(svg) {
+    svg.replaceChildren();
+    el("rect", { x: 0, y: 0, width: 640, height: 60, fill: "#E3F2FD" }, svg);
+    el("rect", { x: 0, y: 60, width: 640, height: 340, fill: "#D7B98E" }, svg);
+    for (let i = 0; i < 80; i++) el("circle", { cx: (i * 89) % 640, cy: 70 + ((i * 47) % 320), r: 1.5 + (i % 3), fill: "#BCA07A", opacity: 0.7 }, svg);
+    label(svg, 120, 200, "dry soil", 16, "#795548");
+    const C = { svg, fx: el("g", {}, svg) };
+    C.wet = el("g", { opacity: 0 }, svg);
+    el("ellipse", { cx: 480, cy: 310, rx: 120, ry: 70, fill: "#6D4C41", opacity: 0.85 }, C.wet);
+    for (let k = 0; k < 9; k++) el("path", { d: `M${410 + (k * 23) % 150} ${280 + (k * 17) % 50} q4 8 0 10 q-4 -2 0 -10Z`, fill: "#4FC3F7" }, C.wet);
+    label(C.wet, 480, 395, "💧 wet soil", 16, "#0277BD");
+    C.p = el("g", {}, svg);
+    C.r = { L: 30, b: 0 };
+    C.render = () => seedling(C.p, { x: 220, y: 70, sL: 50, rL: C.r.L, rBend: C.r.b, rw: 6 });
+    C.render();
+    return C;
+  }
+  const HY_RUN = [
+    async (C) => { await fade(C.wet, 0, 1, 700); },
+    async (C) => { await growTo(1400, (t) => { C.r.L = 30 + 70 * t; C.render(); }); const O = organPts(220, 70, 180, C.r.L, 0), [x, y] = O.pts.at(-1); el("circle", { cx: x, cy: y, r: 14, fill: "none", stroke: "#0288D1", "stroke-width": 3 }, C.fx); label(C.fx, x + 22, y + 5, "the root tip detects water", 15, "#0277BD", { "text-anchor": "start" }); },
+    async (C) => { C.fx.replaceChildren(); await growTo(2400, (t) => { C.r.L = 100 + 200 * t; C.r.b = -58 * t; C.render(); }); label(C.fx, 480, 200, "➕ towards the water", 16, "#0277BD"); SND.star(); },
+  ];
+  function setupHydro() {
+    animSetup({ sub: "mHydro", tab: "more", star: "hydro", first: "▶ Start", draw: hyDraw, run: HY_RUN,
+      steps: ["Near the seed the soil is <b>dry</b>. Over there it is <b>wet</b>.", "The <b>root tip</b> detects the water.", "The root grows <b>towards</b> the water: <b>positive hydrotropism</b>."],
+      q: "Why is hydrotropism useful for a plant?", opts: ["Roots find water, which the plant needs for photosynthesis and to keep its cells firm", "Roots avoid water so they don't drown", "Leaves get more light", "Flowers get more pollen"],
+      tip: "What do roots take in from the soil?", good: "Roots grow towards <b>water</b>: the plant needs it for <b>photosynthesis</b> and to keep its cells firm." });
+  }
+
+  // 🌿 thigmotropism: a pea tendril coils round a stick
+  function thDraw(svg) {
+    svg.replaceChildren();
+    el("rect", { x: 0, y: 0, width: 640, height: 400, fill: "#F1F8E9" }, svg);
+    el("rect", { x: 0, y: 370, width: 640, height: 30, fill: "#8D6E63" }, svg);
+    el("rect", { x: 392, y: 20, width: 16, height: 352, rx: 4, fill: "#D7B98E", stroke: "#A1887F", "stroke-width": 2 }, svg);
+    label(svg, 400, 14, "stick", 14, "#795548");
+    el("path", { d: "M180 372 C185 300 170 240 190 200 C205 170 200 120 210 70", fill: "none", stroke: SHOOT, "stroke-width": 8, "stroke-linecap": "round" }, svg);
+    leaf(svg, 188, 250, 200, 50, 18); leaf(svg, 196, 180, -20, 50, 18); leaf(svg, 205, 110, 200, 44, 16);
+    label(svg, 120, 300, "pea plant", 15, "#33691E");
+    const C = { svg, t: el("path", { fill: "none", stroke: "#7CB342", "stroke-width": 4, "stroke-linecap": "round" }, svg), coil: el("path", { fill: "none", stroke: "#7CB342", "stroke-width": 4, "stroke-linecap": "round" }, svg), fx: el("g", {}, svg) };
+    C.set = (reach, wave) => { const ex = 230 + reach * 140, ey = 180 - reach * 8 + wave * 25; C.t.setAttribute("d", `M196 190 Q${210 + reach * 60} ${165 + wave * 30} ${ex} ${ey}`); };
+    C.set(0.3, 0);
+    return C;
+  }
+  const TH_RUN = [
+    async (C) => { label(C.fx, 250, 120, "tendril", 15, "#33691E"); await tween(2400, (t) => C.set(0.3 + 0.25 * t, Math.sin(t * Math.PI * 3))); },
+    async (C) => { await tween(1200, (t) => C.set(0.55 + 0.42 * t, (1 - t) * 0.3)); el("circle", { cx: 371, cy: 172, r: 10, fill: "none", stroke: "#E65100", "stroke-width": 3 }, C.fx); label(C.fx, 300, 220, "✋ touch!", 16, "#E65100"); },
+    async (C) => {
+      const pts = []; for (let t = 0; t <= 5 * Math.PI; t += 0.15) pts.push([400 + 13 * Math.cos(t + Math.PI), 172 - t * 5.5]);
+      C.coil.setAttribute("d", ptsD([[371, 172], ...pts]));
+      const L = C.coil.getTotalLength(); C.coil.setAttribute("stroke-dasharray", L);
+      await tween(2600, (t) => C.coil.setAttribute("stroke-dashoffset", L * (1 - t)));
+      label(C.fx, 520, 110, "coils round", 16, "#33691E"); label(C.fx, 520, 130, "the stick", 16, "#33691E"); SND.star();
+    },
+  ];
+  function setupThigmo() {
+    animSetup({ sub: "mThigmo", tab: "more", star: "thigmo", first: "▶ Start", draw: thDraw, run: TH_RUN,
+      steps: ["A pea plant grows a thin <b>tendril</b>. It slowly waves around.", "The tendril <b>touches</b> a stick.", "The side touching the stick grows <b>less</b>, the outer side <b>more</b>: the tendril <b>coils</b> round the stick. This is <b>thigmotropism</b> (touch)."],
+      q: "How does coiling round a stick help the pea plant?", opts: ["It can climb up a support to reach more light", "It gets more water", "It makes the stick grow", "It protects the plant from insects"],
+      tip: "Pea stems are thin and weak. Where is the light?", good: "Holding on to supports, the plant <b>climbs</b> up to the <b>light</b> without needing a thick stem." });
+  }
+
+  // 🌸 chemotropism: the pollen tube grows to the ovule
+  function chDraw(svg) {
+    svg.replaceChildren();
+    el("rect", { x: 0, y: 0, width: 640, height: 400, fill: "#FCE4EC" }, svg);
+    el("path", { d: "M300 70 L300 230 Q240 250 236 310 Q240 380 320 384 Q400 380 404 310 Q400 250 340 230 L340 70Z", fill: "#C5E1A5", stroke: "#689F38", "stroke-width": 3 }, svg);
+    el("ellipse", { cx: 320, cy: 62, rx: 40, ry: 16, fill: "#AED581", stroke: "#689F38", "stroke-width": 3 }, svg);
+    el("ellipse", { cx: 320, cy: 318, rx: 34, ry: 44, fill: "#FFF9C4", stroke: "#F9A825", "stroke-width": 3 }, svg);
+    for (const [x, d] of [[200, -1], [440, 1]]) el("path", { d: `M${x} 300 q${d * 70} -90 ${d * 140} -60 q${-d * 30} 60 ${-d * 140} 60Z`, fill: "#F48FB1", stroke: "#EC407A", "stroke-width": 2 }, svg);
+    label(svg, 410, 60, "stigma", 15, "#33691E", { "text-anchor": "start" }); label(svg, 360, 160, "style", 15, "#33691E", { "text-anchor": "start" });
+    label(svg, 320, 330, "ovule", 15, "#F57F17"); label(svg, 470, 380, "ovary", 15, "#33691E");
+    const C = { svg, grain: el("g", {}, svg), chem: el("g", {}, svg), tube: el("path", { d: "M318 64 C312 120 330 180 318 240 C312 260 316 270 320 276", fill: "none", stroke: "#FFB300", "stroke-width": 5, "stroke-linecap": "round" }, svg), fx: el("g", {}, svg) };
+    const L = C.tube.getTotalLength(); C.tube.setAttribute("stroke-dasharray", L); C.tube.setAttribute("stroke-dashoffset", L); C.L = L;
+    el("circle", { cx: 0, cy: 0, r: 10, fill: "#FFCA28", stroke: "#F57F17", "stroke-width": 2 }, C.grain); C.grain.setAttribute("transform", "translate(318 -20)");
+    return C;
+  }
+  const CH_RUN = [
+    async (C) => { await tween(1200, (t) => C.grain.setAttribute("transform", `translate(318 ${-20 + 76 * ease(t)})`)); label(C.fx, 200, 40, "pollen grain", 15, "#F57F17"); },
+    async (C) => {
+      const ds = [...Array(10)].map((_, k) => el("circle", { cx: 320, cy: 300, r: 4, fill: "#8E24AA", opacity: 0.8 }, C.chem));
+      await tween(2000, (t) => ds.forEach((d, k) => { d.setAttribute("cy", 300 - t * (40 + k * 22)); d.setAttribute("cx", 320 + Math.sin(k * 2) * 10); d.setAttribute("opacity", 0.9 - 0.4 * t); }));
+      label(C.fx, 440, 230, "chemicals from the ovule", 15, "#6A1B9A");
+    },
+    async (C) => { await tween(2600, (t) => C.tube.setAttribute("stroke-dashoffset", C.L * (1 - t))); label(C.fx, 170, 200, "pollen tube", 15, "#F57F17"); SND.star(); },
+  ];
+  function setupChemo() {
+    animSetup({ sub: "mChemo", tab: "more", star: "chemo", first: "▶ Start", draw: chDraw, run: CH_RUN,
+      steps: ["A <b>pollen grain</b> lands on the <b>stigma</b> of a flower.", "The <b>ovule</b> releases <b>chemicals</b>.", "A <b>pollen tube</b> grows down the style <b>towards the chemicals</b>, to the ovule: <b>chemotropism</b>."],
+      q: "What does the pollen tube grow towards?", opts: ["Chemicals released by the ovule", "The light", "The pull of gravity only", "Water in the petals"],
+      tip: "“Chemo” means chemicals.", good: "It grows towards <b>chemicals</b> from the ovule (<b>chemotropism</b>), so the male cell reaches the egg cell." });
+  }
+
+  /* ============================ 10 TAB 5 · DARWIN ============================ */
+  const DW = [
+    { id: "A", name: "A · normal", bend: true }, { id: "B", name: "B · tip cut off", bend: false },
+    { id: "C", name: "C · foil cap on tip", bend: false }, { id: "D", name: "D · foil on stem", bend: true },
+  ];
+  const DX = [130, 260, 390, 520];
+  let tdPick = {}, tdBusy = false, tdT = 0;
+  function tdDraw() {
+    const svg = $("tdSvg"); svg.replaceChildren();
+    el("rect", { x: 0, y: 0, width: 640, height: 400, fill: "#FFFDE7" }, svg);
+    sunIcon(svg, 34, 60, 16); rays(svg, 54, 90, 120, 120, 3, 26);
+    label(svg, 34, 30, "light", 14, "#F57F17");
+    DW.forEach((s, i) => {
+      const x = DX[i], g = el("g", {}, svg), bend = s.bend ? -38 * ease(tdT) : 0, L = s.id === "B" ? 120 + 12 * tdT : 150 + 40 * tdT;
+      el("path", { d: `M${x - 34} 334 L${x + 34} 334 L${x + 26} 372 L${x - 26} 372Z`, fill: "#BF6F3F", stroke: "#8D4A25", "stroke-width": 2 }, g);
+      const O = organPts(x, 334, 0, L, bend);
+      el("path", { d: ptsD(O.pts), fill: "none", stroke: "#9CCC65", "stroke-width": 14, "stroke-linecap": s.id === "B" ? "butt" : "round" }, g);
+      const n = O.pts.length - 1;
+      if (s.id === "C") el("path", { d: ptsD(O.pts.slice(Math.round(n * 0.86))), fill: "none", stroke: "#B0BEC5", "stroke-width": 20, "stroke-linecap": "round" }, g);
+      if (s.id === "D") el("path", { d: ptsD(O.pts.slice(Math.round(n * 0.12), Math.round(n * 0.7))), fill: "none", stroke: "#B0BEC5", "stroke-width": 20 }, g);
+      if (s.id === "B") { el("ellipse", { cx: x + 32, cy: 328, rx: 10, ry: 6, fill: "#9CCC65", transform: `rotate(-20 ${x + 32} 328)` }, g); label(g, x + 42, 318, "✂", 16, "#455A64"); }
+      label(svg, x, 392, s.name, 15, "#1F3A5F");
+      if (tdT >= 1) label(svg, x, 40, s.bend ? "↖ bent" : "⬆ straight", 16, s.bend ? "#2E7D32" : "#C62828");
+    });
+  }
+  function tdPaint() {
+    $("tdPred").innerHTML = DW.map((s) => { const p = tdPick[s.id], res = tdT >= 1 ? (p === (s.bend ? "b" : "s") ? " ✔" : " ✖") : "";
+      return `<div class="predrow"><b>${s.id}</b><button class="chip" data-s="${s.id}" data-v="b" aria-pressed="${p === "b"}">↖ bends</button><button class="chip" data-s="${s.id}" data-v="s" aria-pressed="${p === "s"}">⬆ straight</button><span>${res}</span></div>`; }).join("");
+    $("tdPred").querySelectorAll(".chip").forEach((b) => b.onclick = () => { if (tdT > 0 || tdBusy) return; tdPick[b.dataset.s] = b.dataset.v; tdPaint(); });
+    $("tdGo").disabled = DW.some((s) => !tdPick[s.id]) || tdT > 0;
+  }
+  const TD_Q = [
+    { star: "darwin1", q: "Which part of the seedling detects the light?", opts: ["The tip", "The stem below the tip", "The roots", "The seed"],
+      tip: "Look at B and C. What was missing or covered?", good: "No tip (B) or a covered tip (C): <b>no bending</b>. The <b>tip</b> detects the light." },
+    { star: "darwin2", q: "D bent, although the bending part of its stem was covered by foil. What does this show?", opts: ["A messenger travels from the tip down to the stem, where the bending happens", "The foil let the light through", "The stem detects the light through the foil", "Seedling D had no tip"],
+      tip: "The tip detects the light, but where does the bending happen?", good: "The tip sends a chemical <b>messenger</b> down the stem. Later scientists found it: <b>auxin</b>." },
+  ];
+  function tdAsk(i) {
+    const D = TD_Q[i];
+    if (!D) { $("tdNext").hidden = false; $("tdNext").textContent = "↺ Do it again"; $("tdNext").onclick = setupDarwin; return; }
+    if (has("tip", D.star)) return tdAsk(i + 1);
+    $("tdQ").textContent = D.q; $("tdAsk").hidden = false; asking("tDarwin", true); $("tdNext").hidden = true; fbSet($("tdFb"), "", "");
+    ask({ box: $("tdCats"), fb: $("tdFb"), spex: "tip", opts: shuffle(D.opts.map((t, k) => [String.fromCharCode(97 + k), t])), correct: ["a"], tip: D.tip, answer: `<b>${D.opts[0]}</b>. ${D.good}`, good: D.good,
+      onDone: (st) => { addStars("tip", D.star, starsOf(st)); asking("tDarwin", false); $("tdNext").hidden = false; $("tdNext").textContent = i === 0 ? "Next question →" : "↺ Do it again"; $("tdNext").onclick = i === 0 ? () => tdAsk(1) : setupDarwin; } });
+  }
+  function setupDarwin() {
+    tdPick = {}; tdT = 0; $("tdAsk").hidden = true; asking("tDarwin", false); $("tdNext").hidden = true; fbSet($("tdFb"), "", "");
+    tdDraw(); tdPaint();
+    $("tdGo").onclick = async () => {
+      if (tdBusy) return; tdBusy = true; $("tdGo").disabled = true;
+      await tween(3000, (t) => { tdT = t; tdDraw(); }); tdT = 1; tdDraw(); tdPaint(); tdBusy = false; SND.star();
+      const right = DW.filter((s) => tdPick[s.id] === (s.bend ? "b" : "s")).length;
+      say("tip", `${right} of 4 predictions right. A and D bent; B and C grew straight.`, "happy");
+      tdAsk(0);
+    };
+  }
+
+  // 🧩 explain it: fill the gaps
+  const CLOZE = { text: "Light is detected by the {tip} of the shoot. The tip makes a hormone called {auxin}. Auxin moves to the {shaded} side. There the cells {stretch} more, so the shoot bends {towards} the light.",
+    words: { tip: "tip", auxin: "auxin", shaded: "shaded", stretch: "stretch", towards: "towards" }, extra: ["root", "lit", "shrink", "away from"] };
+  function setupCloze() {
+    $("tcText").innerHTML = CLOZE.text.replace(/\{(\w+)\}/g, (_, k) => `<span class="slot gap" id="tc-${k}" data-k="${k}"></span>`) + `<div class="slot multi xbin" id="tc-x" data-k="x"><span class="sname">🚫 Not needed</span></div>`;
+    $("tcBank").replaceChildren(); fbSet($("tcFb"), "", "");
+    const items = [...Object.entries(CLOZE.words).map(([k, w]) => [k, w]), ...CLOZE.extra.map((w) => ["x", w])];
+    const tiles = shuffle(items).map(([k, w]) => { const t = h(`<div class="tile" data-k="${k}" role="button" tabindex="0">${w}</div>`); $("tcBank").appendChild(t); return t; });
+    const slots = [...Object.keys(CLOZE.words).map((k) => $("tc-" + k)), $("tc-x")];
+    const TIPS = { tip: "Which part did Darwin cover or cut off?", auxin: "The name of the plant hormone.", shaded: "Auxin moves away from the light.", stretch: "The cells get longer.", towards: "Shoots show positive phototropism.", x: "This word does not fit any gap." };
+    dropTask({ tiles, slots, spex: "tip", fb: $("tcFb"), mode: "tile",
+      fits: (t, s) => t.dataset.k === s.dataset.k, home: (t) => $("tc-" + t.dataset.k),
+      place: (t, s) => { s.appendChild(t); if (s.id !== "tc-x") s.classList.add("full"); },
+      tip: (t, s, final) => final ? `“${t.textContent}” is placed for you. ${TIPS[t.dataset.k]}` : TIPS[t.dataset.k],
+      onTile: (t) => { if (!t._st.revealed) fbSet($("tcFb"), "good", "✔ Right!"); },
+      onDone: () => {
+        const rev = tiles.filter((t) => t._st.revealed).length, mis = tiles.some((t) => t._st.mistakes);
+        addStars("tip", "cloze", rev ? (rev <= 2 ? 1 : 0) : mis ? 2 : 3);
+        fbSet($("tcFb"), "good", "✔ That is the full explanation of phototropism! <button class=\"btn small\" id=\"tcAgain\">↺ Again</button>");
+        $("tcAgain").onclick = setupCloze; say("tip", "You can now explain phototropism like a scientist.", "happy", "good");
+      } });
+  }
+
+  /* ============================ 11 TAB 6 · PRACTICAL 10 ============================ */
+  // seeds: 6 radish seeds; each dish gives the final shoot/root headings and bends (vertical dishes) or random directions (flat)
+  const SEEDX = [150, 186, 222, 258, 294, 330];
+  const DISHES = [
+    { id: "ctrl", chip: "Control", read: "<b>Control</b>: the dish lies <b>flat</b> on the bench in normal room light, with no box. We look at it <b>from above</b>.",
+      pred: ["The seedlings grow in different directions: there is no one-sided stimulus in the dish", "All the roots point the same way", "Nothing grows"], predOK: 0,
+      res: ["mixed", "spread in all directions"],
+      q: "In the flat control dish the roots point in different directions. Why?", opts: ["Gravity pulls down through the dish and light comes from all around: no one-sided stimulus in the dish", "The seeds were dead", "Roots always grow sideways", "The auxin was destroyed"],
+      tip: "For a dish lying flat, where is “down”?", good: "No stimulus comes from one side <b>within</b> the dish, so there is no common direction. The control is what we <b>compare</b> the other dishes with." },
+    { id: "geo", chip: "Activity 1 · gravity", read: "<b>Activity 1</b>: the dish is fixed <b>on its side</b> to a wall (it stands upright), in normal room light. Gravity pulls down.",
+      pred: ["Roots grow down, shoots grow up", "Roots grow up, shoots grow down", "Everything grows sideways"], predOK: 0,
+      res: ["up", "down"],
+      q: "Explain the result of Activity 1 using auxin.", opts: ["Auxin collects on the lower side: in shoots it makes cells stretch (curve up), in roots it slows growth (curve down)", "Auxin collects on the upper side of shoots and roots", "Light from the room makes the roots grow down", "Gravity destroys auxin"],
+      tip: "Where does auxin collect when something lies sideways?", good: "Auxin collects on the <b>lower</b> side. Shoots: lower cells stretch → <b>up</b> (negative gravitropism). Roots: lower cells slowed → <b>down</b> (positive gravitropism)." },
+    { id: "photo", chip: "Activity 2 · light", read: "<b>Activity 2</b>: the upright dish is in a <b>box</b> with a hole on the <b>left</b>. A lamp shines in from the left only.",
+      pred: ["Shoots bend towards the light; roots still grow down", "Shoots bend away from the light", "Shoots grow straight up only"], predOK: 0,
+      res: ["towards the light (left)", "down, a little away from the light"],
+      q: "Explain why the shoots bend towards the light, using auxin.", opts: ["Auxin moves to the shaded side; those cells stretch more, so the shoot bends towards the light", "Light breaks down the cells on the lit side", "Auxin moves to the lit side and makes it grow", "The roots push the shoots"],
+      tip: "Which side has more auxin?", good: "Auxin moves to the <b>shaded</b> side; those cells <b>stretch</b> more, so the shoot bends <b>towards</b> the light: positive phototropism." },
+    { id: "ext", chip: "Extension · both", read: "<b>Extension</b>: the upright dish is in a box with light from <b>below</b> only. Now light and gravity pull in <b>opposite</b> directions for the shoots.",
+      pred: ["Shoots turn down towards the light; roots still grow down", "Shoots grow up; roots grow up", "No difference from Activity 1"], predOK: 0,
+      res: ["turned down, to the light", "down"],
+      q: "Light from below, gravity downwards. The shoots turned down; the roots still grew down. What does this show?", opts: ["In the shoots the light response was stronger than gravity; in the roots gravity was stronger", "Shoots do not respond to gravity at all", "Roots grow towards light", "Light and gravity had no effect"],
+      tip: "Which stimulus did each part follow?", good: "Shoots followed the <b>light</b> (phototropism won); roots followed <b>gravity</b>. Real results can vary between seeds: that's why we use 20 seeds!" },
+  ];
+  let xlI = 0, xlBusy = false, xlPredV = null, xlT = 0;
+  const RAND = [[200, 20], [130, -10], [250, 15], [80, 25], [300, -20], [20, 10]];
+  function xlDraw() {
+    const D = DISHES[xlI], svg = $("xlSvg"); svg.replaceChildren();
+    el("rect", { x: 0, y: 0, width: 640, height: 400, fill: "#F5F7FA" }, svg);
+    // the dish (left)
+    el("circle", { cx: 240, cy: 205, r: 160, fill: "#E1F5FE", stroke: "#90A4AE", "stroke-width": 5 }, svg);
+    el("circle", { cx: 240, cy: 205, r: 150, fill: "#FAFAFA", stroke: "#E0E0E0", "stroke-width": 2 }, svg);
+    for (let k = 0; k < 40; k++) el("circle", { cx: 120 + (k * 47) % 240, cy: 90 + (k * 31) % 230, r: 5 + (k % 4), fill: "#FFFFFF", stroke: "#EEEEEE" }, svg);
+    label(svg, 240, 30, D.id === "ctrl" ? "seen from above" : "seen from the front", 14, "#606A72");
+    const g = el("g", {}, svg), k = ease(xlT);
+    SEEDX.forEach((x0, i) => {
+      const x = D.id === "ctrl" ? 160 + (i % 3) * 80 : x0 + 20, y = D.id === "ctrl" ? 165 + Math.floor(i / 3) * 80 : 205, sg = el("g", {}, g);
+      let o;
+      if (D.id === "ctrl") o = { sh: RAND[i][0] + 140, sL: 14 * k, rh: RAND[i][0], rL: 60 * k, rBend: RAND[i][1] * k, leafL: 12 };
+      else if (D.id === "geo") o = { sh: 0, sL: 85 * k, sBend: (i % 2 ? 6 : -6) * k, rh: 180, rL: 80 * k, rBend: (i % 2 ? -5 : 5) * k };
+      else if (D.id === "photo") o = { sh: 0, sL: 85 * k, sBend: -50 * k, rh: 180, rL: 80 * k, rBend: -12 * k };
+      else o = { sh: 0, sL: 95 * k, sBend: (i % 2 ? 165 : -165) * k, rh: 180, rL: 80 * k, rBend: (i % 2 ? 6 : -6) * k };
+      seedling(sg, { x, y, sw: 4, rw: 3, hairs: xlT > 0.4, leaves: xlT > 0.3, leafL: 14, ...o });
+    });
+    if (D.id !== "ctrl") gravArrow(svg, 44, 40, 40);
+    // the set-up (right)
+    const S = el("g", {}, svg);
+    if (D.id === "ctrl") { sunIcon(S, 540, 70, 18); label(S, 540, 120, "room light", 14, "#F57F17"); el("rect", { x: 460, y: 300, width: 170, height: 10, fill: "#A1887F" }, S); el("ellipse", { cx: 545, cy: 294, rx: 60, ry: 10, fill: "#E1F5FE", stroke: "#90A4AE", "stroke-width": 3 }, S); label(S, 545, 334, "dish flat on the bench", 14, "#455A64"); }
+    else if (D.id === "geo") { sunIcon(S, 560, 70, 18); label(S, 560, 120, "room light", 14, "#F57F17"); el("rect", { x: 600, y: 150, width: 20, height: 200, fill: "#BCAAA4" }, S); el("rect", { x: 586, y: 200, width: 12, height: 100, rx: 4, fill: "#E1F5FE", stroke: "#90A4AE", "stroke-width": 3 }, S); label(S, 560, 372, "dish on the wall", 14, "#455A64"); }
+    else {
+      const below = D.id === "ext";
+      el("rect", { x: 486, y: 120, width: 130, height: 200, rx: 6, fill: "#C8A165", stroke: "#8D6E63", "stroke-width": 3 }, S);
+      el("rect", { x: below ? 530 : 486, y: below ? 314 : 200, width: below ? 40 : 8, height: below ? 8 : 40, fill: "#FFF59D" }, S);
+      label(S, 551, 112, "box", 14, "#6D4C41");
+      if (below) { sunIcon(S, 550, 360, 14); rays(svg, 240, 400, 240, 340, 3, 70); } else { sunIcon(S, 452, 220, 14); rays(svg, 14, 205, 86, 205, 3, 60); }
+      label(S, 551, below ? 396 : 104 - 20, below ? "lamp below" : "", 14, "#F57F17");
+      if (!below) label(S, 452, 190, "lamp", 14, "#F57F17");
+    }
+    label(svg, 240, 392, `Day ${Math.round(7 * xlT)}`, 18, "#1F3A5F");
+  }
+  function xlPaint() { $("xlPick").innerHTML = DISHES.map((d, i) => `<button class="chip" data-i="${i}" aria-pressed="${i === xlI}">${d.chip} <span class="st">${has("prac", "dish-" + d.id) ? "✔" : ""}</span></button>`).join("");
+    $("xlPick").querySelectorAll(".chip").forEach((b) => b.onclick = () => { if (xlBusy) return; xlI = +b.dataset.i; xlOpen(); }); }
+  function xlTable() {
+    const done = DISHES.filter((d) => has("prac", "dish-" + d.id));
+    $("xlTab").hidden = !done.length;
+    $("xlTab").innerHTML = `<tr><th>Dish</th><th>Shoots</th><th>Roots</th></tr>` + done.map((d) => `<tr><td>${d.chip}</td><td>${d.res[0]}</td><td>${d.res[1]}</td></tr>`).join("");
+  }
+  function xlOpen() {
+    const D = DISHES[xlI]; xlT = 0; xlPredV = null; xlPaint(); xlDraw(); xlTable();
+    $("xlRead").innerHTML = D.read; $("xlPred").hidden = false; $("xlGo").hidden = true; $("xlAsk").hidden = true; asking("xLab", false); fbSet($("xlFb"), "", "");
+    $("xlPredCats").innerHTML = D.pred.map((t, i) => `<button class="cat" data-v="${i}">${t}</button>`).join("");
+    $("xlPredCats").querySelectorAll(".cat").forEach((b) => b.onclick = () => { if (xlBusy) return; xlPredV = +b.dataset.v; $("xlPredCats").querySelectorAll(".cat").forEach((x) => x.classList.toggle("pickd", x === b)); $("xlGo").hidden = false; $("xlGo").textContent = "⏩ Wait 7 days"; $("xlGo").onclick = xlGrow; });
+    say("prac", "Read the set-up and write your <b>hypothesis</b> (choose one), then wait 7 days.");
+    fitHeight();
+  }
+  async function xlGrow() {
+    const D = DISHES[xlI]; if (xlBusy || xlPredV === null) return;
+    xlBusy = true; $("xlGo").hidden = true; $("xlPredCats").querySelectorAll(".cat").forEach((b) => (b.disabled = true));
+    await tween(3500, (t) => { xlT = t; xlDraw(); }); xlT = 1; xlDraw(); xlBusy = false; SND.star();
+    $("xlPred").hidden = true;
+    $("xlRead").innerHTML = (xlPredV === D.predOK ? "✔ Your hypothesis was supported! " : "Your hypothesis was not supported: that is fine, scientists learn from it. ") + `Shoots: <b>${D.res[0]}</b>. Roots: <b>${D.res[1]}</b>.`;
+    const next = () => { const n = DISHES.findIndex((d) => !has("prac", "dish-" + d.id)); $("xlGo").hidden = false; $("xlGo").textContent = n >= 0 ? "Next dish →" : "↺ Do it again"; $("xlGo").onclick = () => { xlI = n >= 0 ? n : xlI; xlOpen(); }; };
+    if (has("prac", "dish-" + D.id)) { next(); fitHeight(); return; }
+    $("xlQ").textContent = D.q; $("xlAsk").hidden = false; asking("xLab", true); fitHeight();
+    ask({ box: $("xlCats"), fb: $("xlFb"), spex: "prac", opts: shuffle(D.opts.map((t, i) => [String.fromCharCode(97 + i), t])), correct: ["a"], tip: D.tip, answer: `<b>${D.opts[0]}</b>. ${D.good}`, good: D.good,
+      onDone: (st) => { addStars("prac", "dish-" + D.id, starsOf(st)); asking("xLab", false); $("xlAsk").hidden = true; xlPaint(); xlTable(); next(); fitHeight();
+        if (DISHES.every((d) => has("prac", "dish-" + d.id))) say("prac", "All four dishes done! Compare your results with your real dishes.", "happy", "good"); } });
+  }
+  function setupLab() { xlOpen(); }
+
+  /* ============================ 12 TAB 7 · AUXIN IN USE ============================ */
+  function cutting(g, x, y, roots, rl) {
+    el("line", { x1: x, y1: y, x2: x, y2: y - 130, stroke: SHOOT, "stroke-width": 7, "stroke-linecap": "round" }, g);
+    leaf(g, x, y - 100, -30, 50, 17); leaf(g, x, y - 120, 210, 46, 16);
+    for (let k = 0; k < roots; k++) { const a = -60 + (120 * k) / Math.max(1, roots - 1); const O = organPts(x, y + 20, 180 + a * 0.6, rl * (0.7 + 0.3 * ((k * 5) % 3) / 2), a * 0.3); el("path", { d: ptsD(O.pts), fill: "none", stroke: ROOT, "stroke-width": 3, "stroke-linecap": "round" }, g); }
+  }
+  function urDraw(svg) {
+    svg.replaceChildren();
+    el("rect", { x: 0, y: 0, width: 640, height: 400, fill: "#F1F8E9" }, svg);
+    const C = { svg, fx: el("g", {}, svg), pA: el("g", {}, svg), pB: el("g", {}, svg), n: 0, l: 0, powder: false };
+    for (const x of [200, 440]) { el("path", { d: `M${x - 80} 230 L${x + 80} 230 L${x + 64} 380 L${x - 64} 380Z`, fill: "#8D6E63", opacity: 0.85, stroke: "#BF6F3F", "stroke-width": 4 }, svg); }
+    svg.appendChild(C.pA); svg.appendChild(C.pB); svg.appendChild(C.fx);
+    label(svg, 200, 398, "A", 18, "#1F3A5F"); label(svg, 440, 398, "B", 18, "#1F3A5F");
+    C.render = () => { C.pA.replaceChildren(); C.pB.replaceChildren(); cutting(C.pA, 200, 230, Math.round(2 + 8 * C.n), 20 + 90 * C.l); cutting(C.pB, 440, 230, 2, 20 + 25 * C.l);
+      if (C.powder) el("rect", { x: 193, y: 236, width: 14, height: 16, fill: "#FFFFFF", stroke: "#BDBDBD" }, C.pA); };
+    C.render();
+    return C;
+  }
+  const UR_RUN = [
+    async (C) => { label(C.fx, 320, 40, "two cuttings from the same plant", 16, "#33691E"); await wait(600); },
+    async (C) => { el("rect", { x: 40, y: 120, width: 70, height: 80, rx: 8, fill: "#FFFFFF", stroke: "#90A4AE", "stroke-width": 3 }, C.fx); label(C.fx, 75, 150, "rooting", 13, "#455A64"); label(C.fx, 75, 166, "powder", 13, "#455A64"); label(C.fx, 75, 184, "(auxin)", 13, "#E65100"); C.powder = true; C.render(); await wait(600); },
+    async (C) => { await growTo(2600, (t) => { C.n = t; C.l = t; C.render(); }); label(C.fx, 200, 215, "many roots", 15, "#33691E"); label(C.fx, 440, 215, "few roots", 15, "#C62828"); label(C.fx, 560, 40, "2 weeks later", 15, "#1F3A5F"); SND.star(); },
+  ];
+  function setupURoot() {
+    animSetup({ sub: "uRoot", tab: "use", star: "root", first: "▶ Start", draw: urDraw, run: UR_RUN,
+      steps: ["Two <b>cuttings</b> (pieces of stem) from the same plant.", "Cutting A is dipped in <b>rooting powder</b>, which contains <b>auxin</b>. B is not.", "Two weeks later: A has <b>many roots</b>, B only a few."],
+      q: "Why do gardeners use rooting powder?", opts: ["Auxin makes the cuttings grow roots quickly, so they get many new plants fast", "It kills insects", "It feeds the leaves", "It makes the cuttings flower"],
+      tip: "What did A grow that B did not?", good: "<b>Auxin</b> makes cuttings grow <b>roots</b> quickly: many identical new plants (clones) from one plant." });
+  }
+  function uwDraw(svg) {
+    svg.replaceChildren();
+    el("rect", { x: 0, y: 0, width: 640, height: 400, fill: "#E3F2FD" }, svg);
+    el("rect", { x: 0, y: 250, width: 640, height: 150, fill: "#7CB342" }, svg);
+    const C = { svg, grass: el("g", {}, svg), weeds: [], fx: el("g", {}, svg) };
+    for (let i = 0; i < 90; i++) { const x = (i * 7.1) % 640, hh = 30 + (i * 13) % 25; el("path", { d: `M${x} 330 q3 ${-hh / 2} ${(i % 2 ? 6 : -6)} ${-hh}`, fill: "none", stroke: "#33691E", "stroke-width": 3, "stroke-linecap": "round" }, C.grass); }
+    for (const x of [130, 330, 520]) {
+      const w = el("g", { transform: `translate(${x} 320)` }, svg);
+      for (let k = 0; k < 6; k++) leaf(w, 0, 0, k * 60 - 150, 46, 16, "#558B2F", "#33691E");
+      el("line", { x1: 0, y1: 0, x2: 0, y2: -60, stroke: "#689F38", "stroke-width": 4 }, w);
+      el("circle", { cx: 0, cy: -66, r: 14, fill: "#FDD835", stroke: "#F9A825", "stroke-width": 2 }, w);
+      C.weeds.push(w);
+    }
+    label(svg, 130, 386, "dandelion", 14, "#FFFFFF", { stroke: "#33691E" }); label(svg, 240, 386, "grass", 14, "#FFFFFF", { stroke: "#33691E" });
+    return C;
+  }
+  const UW_RUN = [
+    async (C) => { label(C.fx, 320, 40, "grass + broad-leaved weeds", 16, "#1F3A5F"); await wait(600); },
+    async (C) => { const ds = [...Array(30)].map((_, k) => el("circle", { cx: 20 + (k * 41) % 600, cy: 60, r: 3, fill: "#4FC3F7" }, C.fx)); await tween(1600, (t) => ds.forEach((d, k) => d.setAttribute("cy", 60 + t * (200 + (k % 5) * 12)))); label(C.fx, 320, 80, "selective weedkiller (synthetic auxin)", 15, "#0277BD"); },
+    async (C) => { await tween(2400, (t) => C.weeds.forEach((w, i) => { const x = [130, 330, 520][i]; w.setAttribute("transform", `translate(${x} ${320 + 10 * t}) rotate(${40 * t * (i % 2 ? 1 : -1)}) scale(${1 + 0.4 * t} ${1 - 0.5 * t})`); w.setAttribute("opacity", 1 - 0.55 * t); w.querySelectorAll("path").forEach((p) => p.setAttribute("fill", t > 0.5 ? "#A1887F" : "#558B2F")); }));
+      label(C.fx, 330, 200, "weeds grow too fast, twist and die", 16, "#C62828"); label(C.fx, 330, 224, "the grass is fine", 16, "#33691E"); SND.star(); },
+  ];
+  function setupUWeed() {
+    animSetup({ sub: "uWeed", tab: "use", star: "weed", first: "▶ Start", draw: uwDraw, run: UW_RUN,
+      steps: ["A lawn with <b>grass</b> (narrow leaves) and <b>broad-leaved weeds</b> (dandelions).", "It is sprayed with a <b>selective weedkiller</b>: a synthetic auxin.", "Broad leaves take in a lot: the weeds <b>grow too fast</b>, twist and die. Narrow grass leaves take in little: the grass is fine."],
+      q: "Why does the selective weedkiller kill the dandelions but not the grass?", opts: ["Broad leaves take in much more auxin, so the weeds grow too fast and die", "Grass is a stronger plant", "Dandelions grow in the dark", "The spray only lands on the dandelions"],
+      tip: "Compare the shape and size of the leaves.", good: "Broad leaves take in more <b>synthetic auxin</b>: too much, too fast growth kills them. Narrow grass leaves take in little." });
+  }
+  function ufDraw(svg) {
+    svg.replaceChildren();
+    el("rect", { x: 0, y: 0, width: 640, height: 400, fill: "#FFF8E1" }, svg);
+    const C = { svg, fx: el("g", {}, svg), A: el("g", {}, svg), B: el("g", {}, svg) };
+    for (const [x, g] of [[200, C.A], [440, C.B]]) { el("line", { x1: x, y1: 20, x2: x, y2: 120, stroke: SHOOT, "stroke-width": 5 }, svg); svg.appendChild(g); g.setAttribute("transform", `translate(${x} 150)`);
+      for (let k = 0; k < 5; k++) el("ellipse", { cx: 22 * Math.cos((k * 2 * Math.PI) / 5), cy: 22 * Math.sin((k * 2 * Math.PI) / 5), rx: 14, ry: 7, transform: `rotate(${k * 72} ${22 * Math.cos((k * 2 * Math.PI) / 5)} ${22 * Math.sin((k * 2 * Math.PI) / 5)})`, fill: "#FDD835" }, g);
+      el("circle", { r: 8, fill: "#9CCC65" }, g); }
+    label(svg, 200, 392, "A · pollinated", 15, "#1F3A5F"); label(svg, 440, 392, "B · not pollinated + auxin", 15, "#1F3A5F");
+    C.fruit = (g, seeds, t) => { g.replaceChildren(); const r = 8 + 52 * t; el("circle", { r, fill: t > 0.4 ? "#E53935" : "#9CCC65", stroke: "#B71C1C", "stroke-width": 2 }, g); if (t >= 1) { el("path", { d: `M0 ${-r} A${r} ${r} 0 0 1 0 ${r}Z`, fill: "#EF9A9A" }, g); el("circle", { cx: 26, cy: 0, r: 14, fill: "#FFCDD2" }, g); if (seeds) for (let k = 0; k < 8; k++) el("ellipse", { cx: 14 + (k % 4) * 9, cy: -22 + Math.floor(k / 4) * 44, rx: 4, ry: 3, fill: "#FFF9C4", stroke: "#F9A825" }, g); } };
+    return C;
+  }
+  const UF_RUN = [
+    async (C) => { const b = label(C.fx, 120, 120, "🐝", 30, "#000", { stroke: "none" }); await tween(1200, (t) => b.setAttribute("x", 120 + 70 * t)); label(C.fx, 200, 210, "pollen → seeds", 15, "#33691E"); },
+    async (C) => { const ds = [...Array(12)].map((_, k) => el("circle", { cx: 400 + (k * 13) % 80, cy: 60, r: 3, fill: AUX }, C.fx)); await tween(1300, (t) => ds.forEach((d, k) => d.setAttribute("cy", 60 + t * (70 + (k % 4) * 6)))); label(C.fx, 540, 120, "auxin spray", 15, "#E65100"); },
+    async (C) => { C.fx.replaceChildren(); await growTo(2400, (t) => { C.fruit(C.A, true, t); C.fruit(C.B, false, t); }); label(C.fx, 200, 245, "seeds", 15, "#33691E"); label(C.fx, 440, 245, "no seeds!", 15, "#C62828"); SND.star(); },
+  ];
+  function setupUFruit() {
+    animSetup({ sub: "uFruit", tab: "use", star: "fruit", first: "▶ Start", draw: ufDraw, run: UF_RUN,
+      steps: ["Flower A is <b>pollinated</b> by a bee. Seeds form and make the fruit grow.", "Flower B is <b>not</b> pollinated, but it is sprayed with <b>auxin</b>.", "Both grow into tomatoes, but B has <b>no seeds</b>: seedless fruit."],
+      q: "Why does tomato B have no seeds?", opts: ["It was not pollinated; the auxin made the fruit grow without fertilisation", "The auxin destroyed the seeds", "A bee ate the seeds", "The auxin turned the seeds into flesh"],
+      tip: "Seeds only form after pollination and fertilisation.", good: "No pollination → no seeds. <b>Auxin</b> made the fruit grow anyway: <b>seedless</b> fruit (e.g. some tomatoes, grapes)." });
+  }
+
+  /* ============================ 11 UI ============================ */
+  // every view fits on one screen: --avail = the height left for the activity; pictures shrink to it
+  function asking(id, on) { const f = $(id) && $(id).querySelector(".fit"); if (f) f.classList.toggle("asking", on); }
+  const boardZoom = () => (innerWidth >= 1500 ? 1.3 : 1);   // bigger pictures on the board
+  function fitHeight() {
+    const wide = innerWidth >= 900;
+    document.body.classList.toggle("fitmode", wide && !["test", "cert"].includes(curTab));
+    const card = [...document.querySelectorAll(".fitcard")].find((c) => c.offsetParent);
+    if (!card) return;
+    const ft = document.querySelector("footer"), below = parseFloat(getComputedStyle(document.querySelector("main")).paddingBottom) + (ft.offsetParent ? ft.offsetHeight : 0);
+    const avail = Math.max(180, Math.floor(innerHeight - (card.getBoundingClientRect().top + scrollY) - below - 26));
+    document.documentElement.style.setProperty("--avail", avail + "px");
+    card.querySelectorAll(".fitsvg").forEach((s) => {
+      if (!wide) { s.style.width = s.style.height = ""; return; }
+      const [, , vw, vh] = s.getAttribute("viewBox").split(" ").map(Number);
+      const extra = [...s.parentNode.children].filter((x) => x !== s).reduce((n, x) => { const hh = x.getBoundingClientRect().height; return n + (hh ? hh + 8 : 0); }, 0);
+      const hh = Math.max(120, Math.min(avail - (+s.dataset.reserve || extra), (+s.dataset.maxw * boardZoom() * vh) / vw, (innerWidth * 0.56 * vh) / vw));
+      s.style.height = hh + "px"; s.style.width = (hh * vw) / vh + "px";
+    });
+    card.querySelectorAll(".fitlab").forEach((w) => {
+      if (!wide) { w.style.width = ""; return; }
+      const [, , vw, vh] = w.querySelector("svg").getAttribute("viewBox").split(" ").map(Number);
+      w.style.width = Math.min(+w.dataset.maxw * boardZoom(), (avail * vw) / vh, innerWidth * 0.56) + "px";
+    });
+  }
+  addEventListener("resize", fitHeight);
+  if (window.ResizeObserver) { const ro = new ResizeObserver(() => fitHeight()); document.querySelectorAll("header, .spexbar, .subsw, .tabs").forEach((e) => ro.observe(e)); }
+  const TABS = ["what", "photo", "grav", "more", "tip", "prac", "use", "test", "cert"];
+  const SUBS = {}; document.querySelectorAll("[data-subs]").forEach((w) => (SUBS[w.dataset.subs] = [...w.querySelectorAll("[data-sub]")].map((b) => b.dataset.sub)));
+  const curSub = { what: "wIntro", photo: "pLamp", grav: "gTurn", more: "mHydro", tip: "tDarwin", prac: "xLab", use: "uRoot" };
+  const ready = {};
+  const SUB_SAY = {
+    wIntro: ["what", "Can plants move? Press <b>▶ Watch the seedling</b>. Read each step, then press <b>Next step ▶</b>."],
+    wSort: ["what", "Five kinds of tropism, one for each stimulus. Sort the examples!"],
+    wPN: ["what", "Towards the stimulus or away from it? Positive or negative?"],
+    pLamp: ["photo", "This is your seedling. <b>Drag the lamp</b> and watch it grow towards the light!"],
+    pHow: ["photo", "Let's zoom into the shoot and watch the <b>cells</b>. Press <b>▶ Start</b>."],
+    pRoot: ["photo", "And the root? It reacts the <b>opposite</b> way. Press <b>▶ Start</b>."],
+    gTurn: ["grav", "No light, just gravity. Turn the seedling and let it grow."],
+    gClino: ["grav", "What if gravity pulls on every side? Press <b>▶ Start</b>."],
+    gWhy: ["grav", "Why are these responses useful for the plant?"],
+    mHydro: ["more", "Roots can find water! Press <b>▶ Start</b>."],
+    mThigmo: ["more", "How does a pea plant climb? Press <b>▶ Start</b>."],
+    mChemo: ["more", "How does a pollen tube find the ovule? Press <b>▶ Start</b>."],
+    tDarwin: ["tip", "Be a scientist with Charles Darwin. <b>Predict</b> for each seedling first."],
+    tCloze: ["tip", "Put the right words in the gaps."],
+    xLab: ["prac", "The workbook practical, in 7 seconds instead of 7 days! Choose a dish."],
+    uRoot: ["use", "Gardeners use auxin too! Press <b>▶ Start</b>."],
+    uWeed: ["use", "How can a spray kill weeds but not grass? Press <b>▶ Start</b>."],
+    uFruit: ["use", "Tomatoes without seeds? Press <b>▶ Start</b>."],
+  };
+  const INIT = {
+    wIntro: setupIntro, wSort: setupWSort, wPN: setupPN, pLamp: setupLamp, pHow: setupHow, pRoot: setupRoot,
+    gTurn: setupTurn, gClino: setupClino, gWhy: setupGWhy, mHydro: setupHydro, mThigmo: setupThigmo, mChemo: setupChemo,
+    tDarwin: setupDarwin, tCloze: setupCloze, xLab: setupLab, uRoot: setupURoot, uWeed: setupUWeed, uFruit: setupUFruit,
+    wCheck: () => runCheck("what"), pCheck: () => runCheck("photo"), gCheck: () => runCheck("grav"), mCheck: () => runCheck("more"), tCheck: () => runCheck("tip"), xCheck: () => runCheck("prac"), uCheck: () => runCheck("use"),
+  };
+  function showSub(tab, sub) {
+    unselect();
+    curSub[tab] = sub;
+    if (curTab !== tab) return showTab(tab);
+    for (const s of SUBS[tab]) $(s).hidden = s !== sub;
+    document.querySelectorAll(`[data-subs="${tab}"] [data-sub]`).forEach((b) => b.setAttribute("aria-pressed", b.dataset.sub === sub));
+    if (SUB_SAY[sub]) say(...SUB_SAY[sub]);
+    else if (sub.endsWith("Check")) say(tab, "Three quick questions. Tip first, then the answer.");
+    fitHeight();
+    if (!ready[sub] && INIT[sub]) { ready[sub] = 1; INIT[sub](); fitHeight(); }
+    else if (sub === "pLamp") plStart();
+  }
+  document.querySelectorAll("[data-subs] [data-sub]").forEach((b) => b.addEventListener("click", () => showSub(b.closest("[data-subs]").dataset.subs, b.dataset.sub)));
+  let testReady = false;
+  function showTab(which) {
+    curTab = which; unselect();
+    for (const t of TABS) { $("tab-" + t).setAttribute("aria-selected", t === which); $(t).hidden = t !== which; }
+    if (curSub[which]) showSub(which, curSub[which]);
+    fitHeight();
+    if (which === "test" && !testReady) { testReady = true; newRound(); }
+    if (which === "cert") renderCert();
+  }
+  for (const t of TABS) $("tab-" + t).addEventListener("click", () => showTab(t));
+
+  // 6 Test yourself
+  let roundNo = 0;
+  function newRound() {
+    roundNo++;
+    const list = roundNo === 1 ? FIRST_ROUND.map((id) => QBANK.find((q) => q.id === id)) : shuffle(QBANK).slice(0, 12);
+    quiz({ root: $("testBox"), tab: "test", list, prefix: null, spex: "test", title: "Test yourself", again: "Play again (new questions)",
+      onEnd: (restart, stars) => {
+        if (restart) return newRound();
+        P.testRounds++; addStars("test", "best", stars);
+        say("test", `Round finished: <b>★ ${stars}</b> out of 36! ${stars >= 32 ? "Outstanding!" : "Look at the questions without ★★★ again."}`, "happy", "good");
+      } });
+    say("test", "12 questions about tropisms and auxin. A tip first, then the answer. Good luck!");
+  }
+
+  // overlays
+  function closeOv(id) { $(id).classList.remove("on"); if (id === "present" && !P.seenIntro) { P.seenIntro = true; save(); } }
+  document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => closeOv(b.dataset.close)));
+  document.querySelectorAll(".overlay").forEach((o) => o.addEventListener("click", (e) => { if (e.target === o) closeOv(o.id); }));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") document.querySelectorAll(".overlay.on").forEach((o) => closeOv(o.id)); });
+  $("helpBtn").addEventListener("click", () => $("help").classList.add("on"));
+  $("soundBtn").addEventListener("click", () => { P.sound = !P.sound; save(); markSound(); if (P.sound) SND.star(); });
+  const markSound = () => { $("soundBtn").setAttribute("aria-pressed", P.sound); $("soundBtn").textContent = P.sound ? "🔊 Sound" : "🔇 Sound"; };
+
+  // Marie's guide: 6 cards
+  const SLIDES = [
+    { say: "Hi, I'm <b>Marie</b>! Plants can't walk, but they can grow towards what they need.",
+      html: `<h3>1 · Tropisms</h3><div class="kw">
+        <div><b>Tropism</b>A <strong>growth</strong> response of a plant to a stimulus that comes from <strong>one direction</strong>.</div>
+        <div><b>➕ Positive</b>Growth <strong>towards</strong> the stimulus.</div>
+        <div><b>➖ Negative</b>Growth <strong>away</strong> from the stimulus.</div>
+        <div><b>Five tropisms</b>Photo- (light) · gravi-/geo- (gravity) · hydro- (water) · thigmo- (touch) · chemo- (chemicals).</div></div>` },
+    { say: "Auxin is the plant hormone behind phototropism.",
+      html: `<h3>2 · Phototropism and auxin</h3><div class="kw">
+        <div><b>Auxin</b>A plant hormone made in the <strong>tips</strong> of shoots and roots.</div>
+        <div><b>Light from one side</b>Auxin moves to the <strong>shaded</strong> side.</div>
+        <div><b>🌱 Shoot</b>Auxin makes the shaded cells <strong>stretch</strong> more → bends <strong>towards</strong> light (positive).</div>
+        <div><b>🔻 Root</b>Auxin <strong>slows</strong> the shaded cells → bends <strong>away</strong> from light (negative).</div></div>` },
+    { say: "Gravity works the same way: auxin goes to the lower side.",
+      html: `<h3>3 · Gravitropism</h3><div class="kw">
+        <div><b>⬆ Shoots</b>Grow <strong>up</strong>, against gravity: negative gravitropism.</div>
+        <div><b>⬇ Roots</b>Grow <strong>down</strong>, with gravity: positive gravitropism.</div>
+        <div><b>Auxin</b>Collects on the <strong>lower</strong> side of a seedling lying on its side.</div>
+        <div><b>🌀 Clinostat</b>Turns slowly: gravity acts on all sides, so the seedling grows straight.</div></div>` },
+    { say: "Three more tropisms.",
+      html: `<h3>4 · More tropisms</h3><div class="kw">
+        <div><b>💧 Hydrotropism</b>Roots grow towards water.</div>
+        <div><b>🌿 Thigmotropism</b>Tendrils coil round what they touch, so the plant can climb.</div>
+        <div><b>🌸 Chemotropism</b>Pollen tubes grow towards chemicals from the ovule.</div>
+        <div><b>Why?</b>Each response helps the plant get light, water or minerals, or make seeds.</div></div>` },
+    { say: "Darwin found that the tip is the key.",
+      html: `<h3>5 · Darwin's experiment (1880)</h3><div class="kw">
+        <div><b>Normal</b>Bends towards the light.</div>
+        <div><b>Tip cut off</b>No bending.</div>
+        <div><b>Foil cap on the tip</b>No bending: the tip detects light.</div>
+        <div><b>Foil on the stem</b>Still bends: a messenger (auxin) travels down from the tip.</div></div>` },
+    { say: "We use auxin, and you can test tropisms yourself.",
+      html: `<h3>6 · Auxin in use and Practical 10</h3><div class="kw">
+        <div><b>🌿 Rooting powder</b>Cuttings grow roots fast.</div>
+        <div><b>🌾 Selective weedkiller</b>Synthetic auxin: broad-leaved weeds grow too fast and die.</div>
+        <div><b>🍅 Seedless fruit</b>Auxin on unpollinated flowers.</div>
+        <div><b>🧫 Practical 10</b>Radish seeds in Petri dishes: a control, on its side (gravity), light from one side, and both.</div></div>` },
+  ];
+  let pi = 0;
+  function showPresent(i) {
+    pi = Math.max(0, Math.min(SLIDES.length - 1, i));
+    $("presentSlide").innerHTML = `<div class="slide">${SLIDES[pi].html}</div>`;
+    say("present", SLIDES[pi].say, pi === 0 ? "happy" : "talk");
+    $("pPg").textContent = `${pi + 1} / ${SLIDES.length}`; $("pPrev").disabled = pi === 0;
+    $("pNext").textContent = pi === SLIDES.length - 1 ? "Let's start! ✓" : "Next →";
+  }
+  $("pPrev").addEventListener("click", () => showPresent(pi - 1));
+  $("pNext").addEventListener("click", () => pi === SLIDES.length - 1 ? closeOv("present") : showPresent(pi + 1));
+  function openPresent(i = 0) { $("present").classList.add("on"); showPresent(i); }
+  $("guideBtn").addEventListener("click", () => openPresent(0));
+
+  // 7 Certificate
+  function certHTML() {
+    const total = Object.keys(P.stars).reduce((s, t) => s + tabStars(t), 0);
+    const won = BADGES.filter((b) => P.badges[b.id]).length;
+    return `<div class="seal">★ ${total}</div>
+      <div class="marie">${SPEX.replace('data-mood="talk"', 'data-mood="happy"').replace('class="spex"', 'class="spex" style="width:100%;height:auto"')}</div>
+      <div class="t1">Certificate · Plant hormones &amp; tropisms</div>
+      <div class="t2">Plant Growth Expert</div>
+      <div><div class="for">This certificate is awarded to</div><div class="who">${esc(P.name) || "&nbsp;"}</div>
+        <div class="for" style="margin-top:.6%">for exploring how plants respond with Marie: ${won} of ${BADGES.length} badges · ★ ${total} stars</div></div>
+      <div class="badges">${BADGES.map((b) => `<div class="badge${P.badges[b.id] ? " on" : ""}"><span class="em">${b.em}</span><b>${b.name}</b><span class="how">${P.badges[b.id] ? "✓ " + new Date(P.badges[b.id]).toLocaleDateString() : "to earn: " + b.how}</span></div>`).join("")}</div>
+      <div class="foot"><span>Grade 8 · Biology · ${new Date().toLocaleDateString()}</span><span class="sig">Biljana Taneska · Science teacher</span></div>`;
+  }
+  function renderCert() {
+    $("certName").value = P.name || "";
+    $("certSheet").innerHTML = certHTML();
+    const won = BADGES.filter((b) => P.badges[b.id]).length;
+    say("cert", !P.name ? "Type your <b>name</b>, then print your certificate!" : won === BADGES.length ? `All ${BADGES.length} badges: you are a plant growth expert! 🎉 Print your certificate.` : `You have <b>${won} of ${BADGES.length}</b> badges. Grey badges are still to earn – or print it now!`, won === BADGES.length ? "happy" : "talk", won === BADGES.length ? "good" : "");
+  }
+  $("certName").addEventListener("input", (e) => { P.name = e.target.value.slice(0, 40); save(); $("certSheet").innerHTML = certHTML(); });
+  $("certPrint").addEventListener("click", () => { $("printArea").innerHTML = `<div class="sheet">${certHTML()}</div>`; window.print(); });
+  $("resetAll").addEventListener("click", () => {
+    if (!confirm("Delete all your stars and badges in this browser?")) return;
+    try { localStorage.removeItem(STORE); } catch (e) {}
+    location.reload();
+  });
+
+  // start
+  load(); markSound();
+  TABS.forEach((t) => spexBar(t)); spexBar("present");
+  if (TEACHER) document.querySelector("main").insertAdjacentHTML("beforebegin", `<div class="tbanner">👩‍🏫 Teacher preview: all tabs are open; the intro guide does not open by itself. Students don't see this.</div>`);
+  refreshStars();
+  showTab("what");
+  say("what", "Hi, I'm <b>Marie</b>! Plants can't walk, but they can <b>grow</b> towards what they need. Press <b>▶ Watch the seedling</b>!", "happy");
+  if (!P.seenIntro && !TEACHER) openPresent(0);
+
+  // for the automatic tests only
+  window.__TROP = { P, showTab, showSub, CHECKS, QBANK, BADGES, PL, GT, DISHES, stepper };
+})();
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
