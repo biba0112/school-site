@@ -541,6 +541,49 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
 @media (prefers-reduced-motion:reduce){ .qhead .qtop.go{animation:none} }
 /* quiz / certificate: the card keeps its full height so the panel scrolls (teacher, 20 Nov 2026: Safari hid "Next question") */
 #quiz > .card, #cert > .card{flex-shrink:0}
+/* quiz: smaller boxes, Check always on screen, every question open (teacher, 20 Nov 2026) */
+#quiz > .card{overflow:clip}
+#qDots .dot{font:inherit;font-size:14px;font-weight:700;padding:0;cursor:pointer}
+#qDots .dot:hover{border-color:var(--focus)}
+#qDots .dot:focus-visible{outline:3px solid var(--focus);outline-offset:1px}
+#quiz .controls:has(> .btn.navy){position:sticky;bottom:0;z-index:3;background:var(--card,#fff);padding:6px 0;margin:-6px 0;box-shadow:0 -6px 8px -6px rgba(0,0,0,.18)}
+@media (min-width:900px){
+  #quiz .cb{gap:7px;padding:8px 12px}
+  #quiz #quizBox{gap:7px}
+  #quiz .part{gap:7px;padding-top:6px}
+  #quiz .spexbar{min-height:0;gap:8px}
+  #quiz .spex{width:46px;height:46px}
+  #quiz .bubble{font-size:17px;line-height:1.3;padding:4px 10px}
+  #quiz .bubble::before{top:12px} #quiz .bubble::after{top:14px}
+  #quiz .qhead .qtop{min-height:34px;font-size:15px;padding:3px 10px}
+  #quiz .qtype{font-size:13px;padding:2px 10px}
+  #quiz .qpic{min-height:0;font-size:40px;padding:4px 10px;gap:4px 14px}
+  #quiz .qpic .arr{font-size:22px}
+  #quiz .qpic svg{max-height:96px;width:auto}
+  #quiz .q{font-size:18px}
+  #quiz .qn{width:26px;height:26px;font-size:14px}
+  #quiz .cats{gap:6px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  #quiz .cats.wide{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #quiz .cat{font-size:16.5px;min-height:40px;padding:5px 10px;line-height:1.2}
+  #quiz .cats.tf .cat{font-size:20px;min-height:44px}
+  #quiz .feedback{font-size:17px;min-height:0;padding:5px 10px;line-height:1.3}
+  #quiz .pickgrid{gap:6px;grid-template-columns:repeat(5,minmax(0,1fr))}
+  #quiz .pk{grid-auto-flow:column;justify-content:start;align-items:center;justify-items:start;gap:6px;min-height:42px;padding:3px 8px;font-size:16px;text-align:left}
+  #quiz .pk .em{width:32px;height:32px;font-size:1.1rem}
+  #quiz .tile{font-size:16px;min-height:36px;padding:3px 9px}
+  #quiz .bank{min-height:44px;padding:5px;gap:6px}
+  #quiz .bin{min-height:70px}
+  #quiz .slot{min-height:40px;min-width:120px}
+  #quiz .chain{padding:6px 8px;gap:6px}
+  #quiz .olist{gap:4px} #quiz .oslot{min-height:38px}
+  #quiz .hint{font-size:15px}
+  #quiz .btn{min-height:40px}
+}
+@media (min-width:900px) and (max-height:820px){ #quiz .card > h2{display:none} }
+@media (max-width:899px){ #quiz .qpic{min-height:0;font-size:38px;padding:4px 8px;gap:4px 12px} #quiz .qpic .arr{font-size:20px} #quiz .qpic svg{max-height:120px;width:auto}
+  #quiz .spexbar{min-height:0} #quiz .spex{width:48px;height:48px} #quiz .bubble{font-size:17px;line-height:1.3;padding:4px 10px} #quiz .bubble::before{top:12px} #quiz .bubble::after{top:14px}
+  #quiz .pickgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px} #quiz .pk{grid-auto-flow:column;justify-content:start;align-items:center;justify-items:start;min-height:44px;padding:3px 8px;font-size:16px;text-align:left} #quiz .pk .em{width:32px;height:32px;font-size:1.1rem}
+  #quiz .cat{min-height:42px;font-size:17px;padding:6px 10px} #quiz .q{font-size:18px} #quiz .feedback{font-size:17px} }
 </style>
 </head>
 <body>
@@ -611,7 +654,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     <div class="card">
       <h2>🧠 Quiz · energy resources in real life</h2>
       <div class="cb">
-        <div class="qhead"><span class="hint">15 questions about energy resources. Use what you saw in the free lab!</span><div class="dots" id="qDots"></div></div>
+        <div class="qhead"><span class="hint">Tap a number to go to any question:</span><div class="dots" id="qDots"></div></div>
         <div class="spexbar" data-spex="quiz"></div>
         <div class="cb" id="quizBox" style="padding:0"></div>
       </div>
@@ -653,7 +696,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
       <li><b>Wrong answer?</b> The first time you get a tip. The second time you see the answer.
         Stars: right first time ★★★ · after a tip ★★ · answer shown: no stars.</li>
       <li>Words with a <span class="wd" style="cursor:default">dotted line</span> – and the key words at the top – tap them to see what they mean.</li>
-      <li><b>2 · 🧠 Quiz</b>: 15 questions about energy resources in real life. You can take it again – your best score counts.</li>
+      <li><b>2 · 🧠 Quiz</b>: 15 questions about energy resources in real life. Tap a number to go to any question. You can take it again – your best score counts.</li>
       <li><b>3 · 🏅 Certificate</b>: type your name and print it. You win the <b>Quiz champion</b> badge when you finish the quiz. Your progress is saved in this browser.</li>
     </ol>
     <p class="hint">New words? Use the <a href="https://school.taneski.com/science/g06/02-glossary-energy/glossary-en.pdf" target="_blank" rel="noopener">Glossary · Energy words</a> (also in 9 other languages on the Grade 6 page).</p>
@@ -1020,7 +1063,9 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   const meanStars = (sts) => Math.round(sts.reduce((s, st) => s + starsOf(st), 0) / Math.max(1, sts.length));
   const starsHTML = (n, of = 3) => `<span class="stars" aria-label="${n} stars">${"★".repeat(n)}<span class="off">${"★".repeat(Math.max(0, of - n))}</span></span>`;
   const quizNow = () => P.quiz.st.reduce((a, n) => a + (n || 0), 0);
-  const quizStars = () => Math.max(P.quiz.best || 0, P.quiz.i >= QUIZ.length ? quizNow() : 0);
+  const quizDone = () => QUIZ.every((_, i) => P.quiz.st[i] != null);   // finished = every question has stars (any order)
+  const nextOpen = (n) => { for (let k = 1; k <= QUIZ.length; k++) { const j = (n + k) % QUIZ.length; if (P.quiz.st[j] == null) return j; } return -1; };
+  const quizStars = () => Math.max(P.quiz.best || 0, quizDone() ? quizNow() : 0);
   const totalStars = () => quizStars();                          // quiz only (teacher, 27 Oct 2026)
   function toast(msg) { const t = $("toast"); t.innerHTML = msg; t.classList.remove("on"); void t.offsetWidth; t.classList.add("on"); clearTimeout(toast.k); toast.k = setTimeout(() => t.classList.remove("on"), 3400); }
 
@@ -2034,9 +2079,10 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   }
 
   /* the quiz: one question at a time; stars of the current go in P.quiz.st, the best finished go in P.quiz.best */
-  function quizDots() {
+  function quizDots(cur = P.quiz.i) {
     const Z = P.quiz;
-    $("qDots").innerHTML = QUIZ.map((_, i) => { const s = Z.st[i]; return `<span class="dot${i === Z.i ? " now" : ""}${s != null ? " s" + s : ""}" title="Question ${i + 1}">${i + 1}</span>`; }).join("");
+    $("qDots").innerHTML = QUIZ.map((_, i) => { const s = Z.st[i]; return `<button type="button" class="dot${i === cur ? " now" : ""}${s != null ? " s" + s : ""}" data-q="${i}" title="Go to question ${i + 1}" aria-label="Question ${i + 1}${s != null ? ", answered" : ""}">${i + 1}</button>`; }).join("");
+    $("qDots").onclick = (e) => { const d = e.target.closest(".dot"); if (!d) return; P.quiz.i = +d.dataset.q; save(); openQuiz(); const pn = $("quiz"); pn.scrollTop = 0; };
   }
   // bring the bottom "Next question" into view: scroll the quiz panel itself (laptop) or the page (phone), no smooth scroll
   function showNext(nx) {
@@ -2049,13 +2095,13 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     quizDots();
     if (Z.i >= QUIZ.length) return quizResult();
     const n = Z.i, q = QUIZ[n];
-    box.append(h(`<div class="qhead"><span class="qtype">${QTYPE[q.type]}</span><span class="of">Question ${n + 1} of ${QUIZ.length}</span><button class="btn small primary qtop" disabled title="Answer the question first">${n + 1 >= QUIZ.length ? "See my result →" : "Next question →"}</button></div>`),
+    box.append(h(`<div class="qhead"><span class="qtype">${QTYPE[q.type]}</span><span class="of">Question ${n + 1} of ${QUIZ.length}</span><button class="btn small primary qtop" disabled title="Answer the question first">${[-1, n].includes(nextOpen(n)) ? "See my result →" : "Next question →"}</button></div>`),
       h(`<div class="qpic" aria-hidden="true">${q.pic}</div>`), qline(n + 1, q.q));
     const c = h(`<div class="part"></div>`); box.append(c);
     say("quiz", n === 0 ? "Hi! 15 questions about energy resources. Ask yourself: will it run out, or will nature make more?" : ["Next one! Read the situation carefully.", "Think of what you saw in the free lab.", "Renewable = nature makes more. Non-renewable = it runs out."][n % 3], "talk");
     const done = (st) => {
-      Z.st[n] = starsOf(st); Z.i = n + 1; save(); quizDots(); refreshStars();
-      const last = Z.i >= QUIZ.length, nx = h(`<div class="controls"><button class="btn primary">${last ? "See my result →" : "Next question →"}</button></div>`);
+      Z.st[n] = starsOf(st); const nn = nextOpen(n); Z.i = nn < 0 ? QUIZ.length : nn; save(); quizDots(n); refreshStars();
+      const last = nn < 0, nx = h(`<div class="controls"><button class="btn primary">${last ? "See my result →" : "Next question →"}</button></div>`);
       const go = () => { openQuiz(); const pn = $("quiz"); pn.scrollTop = 0; pn.scrollIntoView({ behavior: "auto", block: "start" }); };
       nx.querySelector("button").onclick = go;
       const top = box.querySelector(".qtop"); if (top) { top.disabled = false; top.title = ""; top.classList.add("go"); top.onclick = go; }
