@@ -445,6 +445,8 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
 .qhead .qtop.go{animation:qpulse 1.2s ease-in-out 3}
 @keyframes qpulse{50%{box-shadow:0 0 0 6px rgba(230,81,0,.3)}}
 @media (prefers-reduced-motion:reduce){ .qhead .qtop.go{animation:none} }
+/* quiz / certificate: the card keeps its full height so the panel scrolls (teacher, 20 Nov 2026: Safari hid "Next question") */
+#quiz > .card, #cert > .card{flex-shrink:0}
 </style>
 </head>
 <body>
