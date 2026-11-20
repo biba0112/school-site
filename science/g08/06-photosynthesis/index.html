@@ -1,0 +1,2560 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Photosynthesis Simulation</title>
+<!--
+  IB MYP 3 Sciences · Grade 8 · Biology Unit 1 Interactions with the Environment
+  Photosynthesis: the word and symbol equations, where the reactants come from (root hair cells, xylem, stomata, light
+  absorbed by chlorophyll in chloroplasts), what glucose is used for, the colour of light (prism, absorption, filter garden)
+  and the starch test with four classic experiments (light, foil stencil, variegated leaf, no carbon dioxide).
+  Goes with Lesson 17 (photosynthesis, unit slides 174-180). Plant hormones and tropisms (Lesson 18) are a separate simulation.
+  Self-contained: no internet, no external libraries or fonts. Open in any modern browser.
+  The guide is Marie (named after Marie Curie), as in the other Grade 7-8 simulations. No read aloud (teacher, 27 Oct 2026).
+
+  Science kept correct (teacher notes, not shown to students):
+    · 6CO2 + 6H2O -> C6H12O6 + 6O2 (light energy, chlorophyll); 6 C, 12 H, 18 O on each side.
+    · Starch test: boil 1 min (kills and softens cells) -> Bunsen off -> hot ethanol in a water bath (removes chlorophyll;
+      ethanol is flammable) -> rinse in warm water (softens) -> iodine solution: blue-black = starch, orange-brown = none.
+    · Chlorophyll absorbs mostly red and blue light and reflects green light.
+  Simplifications:
+    · In "Watch it happen" the atoms of 6 CO2 + 6 H2O are moved straight into glucose + 6 O2. In reality the oxygen gas
+      comes from water (it takes 12 H2O, and 6 H2O are made again); the net equation is shown, not the real pathway.
+    · Glucose is drawn as a simplified ring (5 C + 1 O, with C6 on top); the bonds are not exact.
+    · Absorption bars and the filter-garden heights (clear 12.0, red 10.5, blue 9.5, green 3.0 cm after 7 days from 2.0 cm)
+      are typical, rounded values, not real measurements. Plants under green light still grow a little.
+    · "Respiration releases energy in every cell" is shown in one cell.
+
+  File sections:
+    1 STYLE   layout, colours
+    2 MARKUP  header · key · 7 tabs (The equation · Ingredients' journey · Uses of glucose · Colour of light · Starch test ·
+              Test yourself · Certificate) · overlays
+    3 CONFIG  Checks, Test yourself
+    4 ENGINE  drawing helpers, Marie, sound, stars, badges, storage, questions (tip -> answer), drag-or-tap, quizzes, steps
+    5 DRAWING atoms, molecules, glucose, leaves, plants
+    6 TAB 1   word equation, count the atoms, watch it happen
+    7 TAB 2   the journey, label the plant, in or out
+    8 TAB 3   where glucose goes, match, glucose detective
+    9 TAB 4   prism and leaf, filter garden
+   10 TAB 5   starch test method, order, four experiments
+   11 UI      tabs, one-screen fit, overlays, guide, certificate, start
+-->
+<style>
+/* ============================ 1 STYLE ============================ */
+:root{
+  --navy:#1F3A5F; --accent:#E65100; --ink:#263238; --muted:#606A72;
+  --bg:#F2F5F9; --card:#FFFFFF; --line:#DDE6F0; --sunk:#EEF2F7; --soft-blue:#E3F2FD;
+  --star:#F9A825; --ok:#2E7D32; --bad:#C62828; --focus:#1565C0;
+  --sen:#1E88E5; --rel:#8E24AA; --mot:#E53935; --nt:#43A047; --cns:#F9A825;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;font-size:18px}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:1rem/1.45 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;min-height:100dvh}
+h2,h3{margin:0}
+p{margin:0}
+button{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,[role="button"]:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+/* header (as in every simulation) */
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);
+  display:flex;align-items:center;gap:12px;padding:8px 16px;flex-wrap:wrap;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header h1{font-size:1.25rem;margin:0;font-weight:600}
+header .sub{font-size:.85rem;opacity:.85}
+.sub a.home{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55);white-space:nowrap}
+header .grow{flex:1}
+.hbtns{display:flex;gap:6px;flex-wrap:wrap}
+.credit{text-align:right;font-size:.74rem;line-height:1.3;opacity:.92;white-space:nowrap}
+.credit a{color:#fff;text-decoration:underline}
+.btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;
+  min-height:44px;padding:6px 14px;cursor:pointer;touch-action:manipulation}
+.btn:hover{border-color:var(--navy)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.small{min-height:36px;padding:4px 10px;font-size:.9rem}
+header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5);white-space:nowrap}
+header .btn[aria-pressed="true"]{background:rgba(255,255,255,.18)}
+.tbanner{background:#FFF8E1;border-bottom:2px solid #F9A825;padding:6px 16px;font-size:17px;font-weight:600}
+
+/* key bar */
+.keybar{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;padding:6px 16px;background:#fff;border-bottom:1px solid var(--line)}
+.keybar .k{display:flex;align-items:center;gap:6px}
+.keybar .k i{display:inline-block;width:22px;height:6px;border-radius:3px}
+.keybar .k i.dot{width:12px;height:12px;border-radius:50%}
+.keybar .tools{margin-left:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.keybar .sum{font-weight:700;color:var(--navy);white-space:nowrap}
+
+/* tabs + panels */
+main{flex:1;display:flex;flex-direction:column;gap:10px;padding:10px 16px 16px;min-height:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+/* main tabs: big coloured buttons (teacher, 27 Oct 2026) */
+.tabs{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0 4px}
+.tab{font:inherit;font-size:19px;font-weight:700;border:2px solid var(--navy);border-radius:14px;background:#fff;color:var(--navy);
+  padding:8px 9px;min-height:54px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;
+  box-shadow:0 3px 0 #C5D0DC;transition:background .15s,transform .1s}
+.tab:hover{background:#FFF3E0}
+.tab:active{transform:translateY(2px)}
+.tab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 0 #BF360C}
+.tab .ic{font-size:23px;line-height:1}
+.tab .tstar{font-size:15px;color:var(--star);margin-left:2px}
+.tab[aria-selected="true"] .tstar{color:#FFE082}
+@media (max-width:1499px){ .tab .tstar{display:none} }   /* 7 tabs: per-tab stars only on big screens; the total ★ stays top right */
+@media (min-width:1500px){ .tabs{gap:10px} .tab{font-size:24px;padding:8px 14px} .tab .ic{font-size:28px} .tab .tstar{font-size:17px} }
+.panel{display:flex;flex-direction:column;gap:10px;min-height:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0;display:flex;flex-direction:column}
+.card > h2{padding:6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line);color:var(--navy);font-weight:600}
+.cb{padding:10px 12px;display:grid;gap:10px;align-content:start;min-height:0}
+.label{font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.hint{color:var(--muted)}
+.grid2{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:860px){ .grid2{grid-template-columns:minmax(230px,280px) minmax(0,1fr)} }
+.split{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:980px){ .split{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)} }
+.subsw{display:flex;gap:8px;flex-wrap:wrap}
+.subsw .chip{min-height:46px;padding:6px 16px;font-weight:600}
+.chip{font:inherit;border:1px solid var(--line);background:#fff;border-radius:99px;padding:4px 11px;
+  min-height:38px;cursor:pointer;display:inline-flex;gap:6px;align-items:center;line-height:1.2}
+.chip[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.chip .st{color:var(--star);font-size:15px}
+.chip[aria-pressed="true"] .st{color:#FFE082}
+
+/* Marie, the guide */
+.spexbar{display:flex;align-items:center;gap:10px;min-height:76px}
+.spex{width:72px;height:72px;flex:none}
+.bubble{position:relative;background:#fff;border:2px solid var(--navy);border-radius:14px;padding:8px 12px;line-height:1.4;flex:1;min-width:0}
+.bubble::before{content:"";position:absolute;left:-11px;top:24px;border:10px solid transparent;border-right-color:var(--navy);border-left:0}
+.bubble::after{content:"";position:absolute;left:-7px;top:26px;border:8px solid transparent;border-right-color:#fff;border-left:0}
+.bubble.tip{background:#FFF8E1} .bubble.tip::after{border-right-color:#FFF8E1}
+.bubble.good{background:#E8F5E9} .bubble.good::after{border-right-color:#E8F5E9}
+.bubble.ans{background:var(--soft-blue)} .bubble.ans::after{border-right-color:var(--soft-blue)}
+.spex .lens{fill:#FFE0C2;fill-opacity:.45}
+.spex .m{display:none} .spex[data-mood="talk"] .m-talk,.spex[data-mood="happy"] .m-happy,.spex[data-mood="think"] .m-think,
+.spex[data-mood="wow"] .m-wow,.spex[data-mood="hmm"] .m-hmm{display:inline}
+.spex[data-mood="hmm"] .brow{transform:translateY(-2px)}
+
+/* lists to choose from */
+.obj{font:inherit;display:flex;align-items:center;gap:8px;text-align:left;border:1px solid var(--line);background:#fff;
+  border-radius:10px;padding:6px 10px;min-height:54px;cursor:pointer;line-height:1.2;width:100%}
+.obj .em{font-size:1.6rem;width:34px;text-align:center;flex:none}
+.obj .st{margin-left:auto;color:var(--star);font-size:15px;white-space:nowrap}
+.obj[aria-pressed="true"]{border:2px solid var(--accent);background:#FFF3E0}
+.cardlist{display:grid;gap:6px}
+@media (max-width:859px){ .cardlist{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))} }
+
+/* answers */
+.cats{display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.cat{font:inherit;border:1px solid #B0BEC5;background:#fff;border-radius:10px;padding:8px 12px;min-height:52px;cursor:pointer;font-weight:600;line-height:1.25;text-align:left}
+.cat.right{background:#E8F5E9;border:2px solid var(--ok)}
+.cat.wrong{background:#FFEBEE;border-color:var(--bad)}
+.cat:disabled{cursor:default}
+.cats.one{grid-template-columns:minmax(0,1fr)}
+.feedback{min-height:2.4em;border-radius:10px;padding:8px 12px;background:var(--sunk)}
+.feedback:empty{display:none}
+.feedback.tip{background:#FFF8E1;border-left:4px solid #F9A825}
+.feedback.ans{background:var(--soft-blue);border-left:4px solid var(--focus)}
+.feedback.good{background:#E8F5E9;border-left:4px solid var(--ok)}
+.feedback.info{background:var(--sunk);border-left:4px solid #90A4AE}
+.feedback.stop{background:#FFEBEE;border-left:4px solid var(--bad)}
+.didyou{background:#F3E5F5;border-left:4px solid #8E24AA;border-radius:8px;padding:6px 10px}
+.stars{color:var(--star);font-size:1.2rem;letter-spacing:2px}
+.stars .off{color:var(--line)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+/* step player: 👣 Step by step | ▶ Play all */
+.player{display:grid;gap:6px}
+.modesw{justify-content:center}
+.modesw .chip{min-height:38px}
+.stepn{text-align:center;color:var(--muted);font-weight:600;font-size:15px}
+.stepn:empty{display:none}
+.read{background:var(--soft-blue);border-left:5px solid var(--navy);border-radius:10px;padding:8px 12px}
+.qlabel{font-weight:700;color:var(--navy)}
+
+/* drag or tap */
+.tile{font:inherit;border:1px solid #B0BEC5;background:#fff;border-radius:10px;padding:8px 12px;min-height:48px;text-align:left;
+  font-weight:600;line-height:1.25;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;box-shadow:0 2px 0 var(--line)}
+.tile .em{margin-right:6px}
+.tile.sel{border-color:var(--focus);box-shadow:0 0 0 3px #BBDEFB}
+.tile.lifting{opacity:.3}
+.tile.locked{cursor:default;box-shadow:none;border:2px solid var(--ok);background:#E8F5E9;touch-action:auto}
+.tile.shown{border:2px solid var(--focus);background:var(--soft-blue)}
+.tile.bounce{animation:shake .4s}
+.drag-ghost{position:fixed;z-index:80;pointer-events:none;transform:translate(-50%,-60%) rotate(-3deg);box-shadow:0 10px 24px rgba(0,0,0,.25);max-width:280px}
+.bank{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px;border-radius:12px;background:var(--sunk);min-height:66px}
+.bank:empty::after{content:"✔ All placed";color:var(--muted);align-self:center}
+.slot{border:2px dashed #90A4AE;border-radius:12px;background:#fff;min-height:64px;padding:6px;display:grid;gap:4px;align-content:start;cursor:pointer}
+.slot.hot{border:2px solid var(--focus);background:var(--soft-blue)}
+.slot.shake{animation:shake .4s;border-color:var(--bad)}
+.slot.full{border-style:solid;border-color:var(--ok);cursor:default}
+.slot .sname{font-size:15px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+
+/* tab 2: neurones */
+.nSvg{width:100%;max-width:760px;display:block;margin:0 auto}
+.labwrap{position:relative;width:100%;max-width:820px;margin:0 auto}
+.labwrap svg{width:100%;display:block}
+.labwrap .slot{position:absolute;transform:translate(-50%,-50%);width:19%;min-height:44px;padding:3px;align-content:center;text-align:center;font-size:17px}
+.labwrap .slot .tile{width:100%;padding:4px 6px;min-height:36px;text-align:center;font-size:16px}
+.labwrap .slot.full{background:#E8F5E9}
+.labwrap .slot.info{cursor:pointer}
+.labwrap .slot.info:hover{box-shadow:0 0 0 3px #BBDEFB}
+.part-on{filter:drop-shadow(0 0 6px #FFB300)}
+.race{display:grid;gap:4px}
+.stop{font-size:15px}
+
+/* quizzes */
+.qhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.qhead h2{color:var(--navy)}
+.qbody{display:grid;gap:12px;max-width:1000px;width:100%;margin:0 auto}
+.qtext{font-weight:600;text-align:center}
+.qpic{display:grid;justify-items:center;gap:6px}
+.qpic .em{font-size:3.4rem;line-height:1.1}
+.qbody .cats{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:.78rem;font-weight:600;color:var(--muted);background:#fff}
+.dot.now{border-color:var(--navy);color:var(--navy)}
+.dot.done{background:var(--star);border-color:var(--star);color:#3E2A00}
+.dot.zero{background:#CFD8DC;border-color:#CFD8DC;color:#37474F}
+.review{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.review li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;padding:7px 12px;border:1px solid var(--line);border-radius:10px}
+.score{font-size:2.6rem;font-weight:700;line-height:1;color:var(--navy)}
+
+/* guide cards */
+.slide{display:grid;gap:10px}
+.slide h3{color:var(--navy)}
+.slide ul{margin:0;padding-left:1.2em;display:grid;gap:4px}
+.slide .pic{display:grid;justify-items:center}
+.slide .pic svg{width:100%;max-width:560px}
+.slidenav{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
+.slidenav .pg{color:var(--muted)}
+.kw{display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.kw div{border-radius:10px;padding:6px 10px;background:var(--sunk)}
+.kw b{display:block;color:var(--navy)}
+.kw svg{display:block;width:100%;max-width:420px;height:auto;margin:4px auto 0}
+.flow{display:flex;flex-wrap:wrap;gap:4px;align-items:center;justify-content:center;font-weight:600}
+.flow span{border-radius:8px;padding:4px 8px;background:var(--sunk)}
+.flow .s{background:#E3F2FD;color:#0D47A1} .flow .r{background:#F3E5F5;color:#6A1B9A} .flow .m{background:#FFEBEE;color:#B71C1C}
+
+/* overlays */
+.overlay{position:fixed;inset:0;background:rgba(31,58,95,.55);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+.overlay.on{display:flex}
+.overlay .box{background:#fff;border-radius:14px;max-width:780px;width:100%;max-height:92vh;overflow:auto;padding:16px 20px;display:grid;gap:10px}
+.overlay h3{margin:.1em 0 .2em;color:var(--navy)}
+.overlay li{margin:.2em 0}
+#present .box{max-width:1200px;width:96vw;height:94vh;max-height:none;font-size:1.3rem;align-content:start}
+#present .slide h3{font-size:2rem}
+#present .spex{width:110px;height:110px}
+#present .bubble{font-size:1.3rem}
+
+/* certificate */
+.certwrap{display:grid;gap:12px;justify-items:center}
+.sheet{width:100%;max-width:1000px;aspect-ratio:297/210;border:10px double var(--navy);border-radius:16px;background:#fff;
+  padding:3% 4%;display:grid;grid-template-rows:auto auto auto 1fr auto;gap:1.2%;text-align:center;position:relative;container-type:inline-size;overflow:hidden}
+.sheet .t1{font-size:max(15px,1.9cqw);letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.sheet .t2{font-size:max(26px,4.6cqw);font-weight:800;color:var(--navy);line-height:1.1}
+.sheet .who{font-size:max(24px,4.2cqw);font-weight:700;color:var(--accent);border-bottom:2px solid var(--line);padding:0 4%;justify-self:center;min-width:50%}
+.sheet .for{font-size:max(14px,1.8cqw)}
+.sheet .badges{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1.2cqw;align-content:center}
+.sheet .foot{display:flex;justify-content:space-between;align-items:end;font-size:max(12px,1.5cqw);color:var(--muted);gap:10px}
+.sheet .foot .sig{border-top:1px solid #90A4AE;padding-top:2px;min-width:30%}
+.sheet .marie{position:absolute;right:3%;top:4%;width:12%}
+.sheet .seal{position:absolute;left:3%;top:4%;width:11%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#FFE082,#F9A825);
+  display:grid;place-items:center;font-size:max(14px,2.4cqw);font-weight:800;color:#5D4037;box-shadow:0 0 0 4px #FFF8E1,0 0 0 6px #F9A825}
+.badge{display:grid;justify-items:center;gap:1px;padding:.6cqw .3cqw;border-radius:12px;border:2px dashed #CFD8DC;text-align:center;font-size:max(11px,1.35cqw);color:#90A4AE;line-height:1.15}
+.badge .em{font-size:max(22px,3.6cqw);filter:grayscale(1);opacity:.4;line-height:1.1}
+.badge.on{border:2px solid var(--star);background:#FFFDE7;color:var(--ink)}
+.badge.on .em{filter:none;opacity:1}
+.badge .how{font-size:max(10px,1.1cqw);color:var(--muted)}
+.word{font:inherit;font-size:20px;min-height:44px;padding:4px 8px;border:1px solid #B0BEC5;border-radius:8px}
+#printArea{display:none}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:12px;
+  z-index:90;box-shadow:0 8px 20px rgba(0,0,0,.25);font-weight:600;display:none}
+.toast.on{display:block;animation:pop .35s}
+@keyframes pop{from{transform:translate(-50%,20px);opacity:0}}
+footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
+
+/* big text, as in the Grade 7 simulations: 20 px for everything students read or press, labels at least 15 px */
+.card > h2{font-size:19px}
+.keybar{font-size:16px}
+main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
+.read,.feedback,.didyou,.bubble,.steps li,.slide{font-size:20px}
+.label{font-size:15px} .hint{font-size:16px}
+.qtext{font-size:22px} .qhead h2{font-size:20px}
+
+@media (max-width:1099px){ header .sub{font-size:.75rem} }
+@media (max-width:759px){
+  header h1{font-size:1.05rem}
+  .credit{order:3;flex-basis:100%;text-align:left;font-size:.7rem}
+  .credit br{display:none} .credit a{margin-left:6px}
+  .keybar{font-size:14px;gap:2px 10px}
+  .keybar .tools{margin-left:0}
+  .spex{width:56px;height:56px}
+  .bubble{font-size:17px}
+  main .btn,.cat,.obj,.chip,.tile{font-size:18px}
+  .read,.feedback,.didyou,.steps li{font-size:18px}
+  .hbtns .btn{min-height:38px;padding:4px 9px;font-size:.88rem}
+  .labwrap .slot{font-size:13px;width:23%;min-height:36px}
+  .labwrap .slot .tile{font-size:13px;padding:2px 3px;min-height:30px}
+  .labwrap .slot .sname{font-size:11px}
+  .pad{font-size:22px;min-height:180px}
+}
+@media (max-width:599px){ .tab{padding:6px 10px;font-size:20px;min-height:50px} .tab .ic{font-size:22px} .tab .full{display:none} }
+@media print{
+  @page{size:A4 landscape;margin:10mm}
+  body > *:not(#printArea){display:none!important}
+  #printArea{display:block}
+  #printArea .sheet{max-width:none;width:100%;aspect-ratio:auto;height:180mm;border-width:8px}
+  #printArea .badge{font-size:11pt} #printArea .badge .em{font-size:28pt} #printArea .badge .how{font-size:8pt}
+}
+@media (prefers-reduced-motion:reduce){ .beating,.tile.bounce,.slot.shake{animation:none} }
+
+/* every view: two columns on one screen (picture left; text, buttons, question right) */
+.fit{display:grid;gap:12px;grid-template-columns:minmax(0,1fr);align-items:start}
+.fl,.fr{display:grid;gap:8px;align-content:start;min-width:0}
+.fl{justify-items:center}
+.fitcard > .fit{padding:10px 12px}
+.cats.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.fit .cat{min-height:46px;padding:6px 10px}
+.pic{width:100%;max-width:760px;display:block;margin:0 auto;touch-action:manipulation}
+@media (min-width:900px){
+  .fit{grid-template-columns:max-content minmax(320px,1fr)}
+  .fr{max-height:var(--avail,none);overflow:auto}
+  .fitsvg{max-width:none}
+  .fit .controls,.fit .modesw{justify-content:flex-start}
+  .fit .stepn{text-align:left}
+  .fit.asking .hideq{display:none!important}
+  body.fitmode footer{display:none}
+  .fit .read{font-size:19px;padding:6px 10px}
+  .qbody{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);align-items:center;gap:10px 18px}
+  .qbody .cats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .qpic .em{font-size:2.4rem}
+  .review li{padding:4px 10px}
+}
+.mini{display:flex;flex-wrap:wrap;gap:6px}
+.mini .chip{min-height:40px;font-size:18px;padding:4px 12px}
+.slider{display:grid;gap:2px}
+.slider label{font-weight:700;color:var(--navy);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.slider input[type=range]{width:100%;height:34px;accent-color:var(--accent)}
+.slider .ends{display:flex;justify-content:space-between;font-size:15px;color:var(--muted)}
+.big{font-size:22px;font-weight:700;color:var(--navy)}
+.tag{display:inline-block;font-size:15px;font-weight:700;border-radius:99px;padding:1px 10px;color:#fff;background:var(--navy)}
+.tag.ok{background:var(--ok)} .tag.bad{background:var(--bad)} .tag.warn{background:#EF6C00}
+table.rec{border-collapse:collapse;width:100%;font-size:18px}
+table.rec th,table.rec td{border:1px solid var(--line);padding:3px 8px;text-align:left}
+table.rec th{background:#F7F9FC;color:var(--navy)}
+table.rec td.ok{background:#E8F5E9;font-weight:700}
+.part-on{filter:drop-shadow(0 0 6px #FFB300)}
+.lit{filter:drop-shadow(0 0 5px #FFD600)}
+svg text{font-family:"Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif}
+.hs{cursor:pointer}
+.hs circle{fill:#fff;fill-opacity:.85;stroke:#455A64;stroke-width:2.5}
+.ask .hs:not([data-dis]):hover circle{stroke:var(--focus);stroke-width:4}
+.hs.right circle{fill:var(--ok);fill-opacity:1;stroke:var(--ok)}
+.hs.wrong circle{fill:var(--bad);fill-opacity:.6;stroke:var(--bad)}
+.hs[data-dis]{cursor:default}
+.labwrap .slot{width:18%;min-height:40px;font-size:15px;padding:2px}
+.labwrap .slot .tile{font-size:15px;padding:2px 4px;min-height:34px}
+.labwrap .slot.info{cursor:pointer}
+.labbank{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:8px;border-radius:12px;background:var(--sunk)}
+.labbank:empty::after{content:"✔ All placed";color:var(--muted)}
+.labbank .tile{font-size:17px;padding:4px 10px;min-height:38px}
+.jobcard{border-radius:12px;padding:10px 14px;background:#FFF8E1;border:2px solid #F9A825;font-size:20px;font-weight:600}
+.steps li{font-size:18px}
+@media (min-width:900px){ .steps li{padding:3px 10px} }
+/* 8 tabs in one row on a 1366 px laptop */
+.tab{font-size:17px;padding:6px 8px;gap:4px;min-height:50px}
+.tab .ic{font-size:20px}
+@media (min-width:1500px){ .tab{font-size:22px;padding:8px 12px} .tab .ic{font-size:26px} }
+@media (max-width:599px){ .tab{padding:6px 9px;font-size:19px;min-height:48px} }
+.bigread{font-size:24px!important;line-height:1.35}
+@media (max-width:759px){ .bigread{font-size:20px!important} }
+
+/* ===== Endocrine system (30 Oct 2026) ===== */
+:root{ --ins:#1E88E5; --glu:#FB8C00; --adr:#E53935; --gluc:#FDD835; --hot:#D84315; --cold:#1565C0 }
+.tabs{gap:5px}
+.tab{font-size:16px;padding:6px 6px;gap:3px}
+@media (min-width:1500px){ .tabs{gap:8px} .tab{font-size:22px;padding:8px 12px} }
+.steps{margin:0;padding-left:1.4em;display:grid;gap:2px}
+.steps li{border-radius:8px;color:var(--muted)}
+.steps li.on{background:#FFF3E0;color:var(--ink);font-weight:600;box-shadow:inset 4px 0 0 var(--accent)}
+.steps li.done{color:var(--ink)}
+.steps li.done::marker{color:var(--ok)}
+.keybar .k b{font-weight:700}
+.hx{display:inline-block;width:13px;height:13px;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+/* bins for sorting (3 or 6 columns) */
+.bins{display:grid;gap:8px;width:100%}
+.bins.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.bins.c6{grid-template-columns:repeat(3,minmax(0,1fr))}
+.bins .slot{min-height:64px;align-content:start}
+.bins .slot .tile{width:100%;font-size:16px;padding:3px 6px;min-height:0}
+.bins .slot .sname{font-size:15px;display:flex;gap:6px;align-items:center}
+.bins .slot.multi.full{border-style:dashed;border-color:#90A4AE}
+.bins .slot.multi.hot{border-style:solid;border-color:var(--focus)}
+.bins .slot.done{border-style:solid;border-color:var(--ok);background:#F1F8E9}
+.sbank{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:8px;border-radius:12px;background:var(--sunk);min-height:56px}
+.sbank:empty::after{content:"✔ All placed";color:var(--muted);align-self:center}
+.sbank .tile{font-size:17px;padding:4px 10px;min-height:38px}
+@media (max-width:699px){ .bins.c3,.bins.c6{grid-template-columns:repeat(2,minmax(0,1fr))} }
+/* flow diagrams with slots */
+.flowgrid{display:grid;gap:6px;width:100%}
+.flowrow{display:grid;grid-template-columns:auto repeat(5,minmax(0,1fr));gap:4px;align-items:stretch}
+.flowrow .rh{writing-mode:vertical-rl;transform:rotate(180deg);font-weight:800;text-align:center;border-radius:8px;padding:4px 2px;color:#fff;font-size:15px}
+.flowrow .slot{min-height:58px;position:relative;align-content:center;padding:3px}
+.flowrow .slot:not(:last-child)::after{content:"→";position:absolute;right:-12px;top:50%;transform:translateY(-50%);font-weight:900;color:var(--navy);z-index:2}
+.flowrow .slot .tile{width:100%;font-size:15px;padding:3px 5px;min-height:0}
+.flowrow .slot .sname{font-size:13px}
+@media (max-width:699px){ .flowrow{grid-template-columns:minmax(0,1fr)} .flowrow .rh{writing-mode:horizontal-tb;transform:none} .flowrow .slot:not(:last-child)::after{content:"↓";right:auto;left:50%;top:auto;bottom:-14px} }
+.tc3{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;width:100%;align-items:start}
+.tc3 .col{display:grid;gap:6px;border-radius:12px;padding:8px}
+.tc3 .col h3{font-size:19px;text-align:center}
+.tc3 .col.hot{background:#FBE9E7} .tc3 .col.hot h3{color:var(--hot)}
+.tc3 .col.cold{background:#E3F2FD} .tc3 .col.cold h3{color:var(--cold)}
+.tc3 .mid{align-self:center;text-align:center;font-weight:800;color:var(--ok);font-size:20px;border:3px solid var(--ok);border-radius:50%;width:110px;height:110px;display:grid;place-items:center;background:#fff;line-height:1.15}
+.tc3 .slot{min-height:40px;align-content:center;padding:3px}
+.tc3 .row{display:grid;gap:5px;grid-template-columns:repeat(var(--n),minmax(0,1fr))}
+.tc3 .col{gap:4px!important;padding:6px!important}
+.tc3 .slot .tile{width:100%;font-size:16px;padding:3px 6px;min-height:0}
+.tc3 .sub{font-size:14px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+@media (max-width:699px){ .tc3{grid-template-columns:minmax(0,1fr)} .tc3 .mid{justify-self:center} }
+/* chips that toggle (scenario responses) */
+.pickset{display:grid;gap:6px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.pick{font:inherit;font-size:17px;font-weight:600;border:2px solid var(--line);background:#fff;border-radius:10px;padding:4px 10px;min-height:40px;cursor:pointer;text-align:left;line-height:1.2}
+.pick[aria-pressed="true"]{border-color:var(--navy);background:#E8EAF6}
+.pick.right{border-color:var(--ok);background:#E8F5E9}
+.pick.wrong{border-color:var(--bad);background:#FFEBEE}
+.pick:disabled{cursor:default}
+/* info cards */
+.icard{border-radius:12px;padding:8px 12px;background:#fff;border:2px solid var(--line);display:grid;gap:4px;font-size:19px}
+.icard h3{font-size:20px;color:var(--navy)}
+.meters{display:grid;gap:6px}
+.btnrow{display:flex;flex-wrap:wrap;gap:8px}
+.btn.ins{background:var(--ins);border-color:var(--ins);color:#fff;font-weight:700}
+.btn.glu{background:var(--glu);border-color:var(--glu);color:#fff;font-weight:700}
+.bigbtn{min-height:60px;font-size:22px!important;padding:8px 18px}
+.btn.hit{animation:hit .35s ease-out}
+@keyframes hit{40%{transform:scale(1.09);filter:brightness(1.35)}}
+.gstat{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:19px;font-weight:600}
+.gstat b{color:var(--navy)}
+.dsteps{display:flex;flex-wrap:wrap;gap:6px}
+.dsteps span{padding:4px 11px;border-radius:99px;background:var(--sunk);color:#606A72;font-size:16px;font-weight:700}
+.dsteps .on{background:var(--navy);color:#fff}
+.dsteps .ok{background:#C8E6C9;color:#1B5E20}
+.cats.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:699px){ .cats.three{grid-template-columns:minmax(0,1fr)} }
+.typecards{display:grid;gap:8px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.typecards div{border-radius:10px;padding:6px 10px;background:var(--sunk);font-size:17px}
+.typecards .tt{display:block;color:var(--navy);font-weight:700}
+@media (max-width:699px){ .typecards,.pickset{grid-template-columns:minmax(0,1fr)} }
+.sheet .badges{grid-template-columns:repeat(5,minmax(0,1fr))}
+.pulse{animation:pulse 0.6s infinite alternate}
+@keyframes pulse{from{transform:scale(1)}to{transform:scale(1.08)}}
+.shiver{animation:shiv .12s infinite alternate}
+@keyframes shiv{from{transform:translateX(-1.5px)}to{transform:translateX(1.5px)}}
+@media (prefers-reduced-motion:reduce){ .pulse,.shiver,.btn.hit{animation:none} }
+.beat,.pulse{transform-box:fill-box;transform-origin:center}
+
+#lpWrap .slot{width:31%;min-height:52px} #lpWrap .slot .tile{font-size:14px;padding:2px 4px}
+/* bigger letters (teacher, 31 Oct 2026): one place for the sizes. Laptop · board 1500 px+ · phone */
+:root{--t:23px;--t2:21px;--t3:19px;--small:18px;--tabf:18px}
+@media (min-width:1500px){ :root{--t:26px;--t2:24px;--t3:21px;--small:19px;--tabf:24px} }
+@media (max-width:759px){ :root{--t:20px;--t2:18px;--t3:16px;--small:15px;--tabf:19px} }
+header{padding-top:3px;padding-bottom:3px}
+header h1{font-size:24px;line-height:1.15}
+header .sub{font-size:16px}
+.credit{font-size:14px}
+.hbtns .btn{min-height:38px;padding:3px 10px;font-size:18px}
+.keybar{font-size:var(--t3);padding:2px 16px}
+.spexbar{min-height:58px}
+.spex{width:56px;height:56px}
+.bubble{font-size:var(--t);padding:4px 12px;line-height:1.3}
+.bubble::before{top:16px}
+.bubble::after{top:18px}
+.tab{font-size:var(--tabf);padding:4px 6px;min-height:44px}
+.tab .ic{font-size:calc(var(--tabf) + 3px)}
+.subsw{gap:6px}
+.subsw .chip{min-height:42px;padding:3px 12px;font-size:var(--t2)}
+main .btn,.overlay .btn,.cat,.obj,.chip,.tile,.pick,.word{font-size:var(--t)}
+.mini .chip{font-size:var(--t2);min-height:42px}
+.read,.feedback,.didyou,.slide{font-size:var(--t);line-height:1.32}
+.fit .read{font-size:var(--t);padding:5px 10px}
+.steps li{font-size:var(--t2);line-height:1.28}
+.label,.hint,.slider .ends,.tag,.stop{font-size:var(--t3)}
+.qtext{font-size:calc(var(--t) + 2px)} .qhead h2{font-size:var(--t)}
+.card > h2{font-size:var(--t)}
+.big{font-size:calc(var(--t) + 2px)}
+.bigread{font-size:calc(var(--t) + 3px)!important}
+.gstat{font-size:var(--t)}
+.jobcard{font-size:var(--t)}
+.icard{font-size:var(--t2)}
+table.rec{font-size:var(--t2)}
+.typecards div{font-size:var(--t3)}
+.dsteps span{font-size:var(--t3)}
+.labwrap .slot{font-size:var(--small)}
+.labwrap .slot .tile,.labbank .tile,.sbank .tile{font-size:var(--small)}
+.bins .slot .tile,.tc3 .slot .tile,.flowrow .slot .tile{font-size:var(--small)}
+.slot .sname,.bins .slot .sname,.flowrow .slot .sname,.tc3 .sub{font-size:16px}
+.flowrow .rh{font-size:var(--small)}
+.tc3 .col h3{font-size:var(--t2)}
+.tc3 .mid{font-size:var(--t2)}
+.sheet .t1{font-size:max(17px,2.2cqw)} .sheet .t2{font-size:max(30px,5.2cqw)} .sheet .who{font-size:max(27px,4.8cqw)}
+.sheet .for{font-size:max(16px,2cqw)} .sheet .foot{font-size:max(14px,1.7cqw)}
+.badge{font-size:max(13px,1.55cqw)} .badge .how{font-size:max(12px,1.25cqw)}
+#present .box,#present .bubble{font-size:1.45rem}
+#present .slide h3{font-size:2.2rem}
+#wyPick .chip{font-size:var(--t3);padding:3px 8px}
+.fit:has(.feedback:not(:empty)) .steps,.fit:has(.feedback:not(:empty)) .fr > .typecards{display:none}
+@media (min-width:900px) and (max-height:820px){ .fit .cats .cat.wrong,.fit .cats .cat[disabled]:not(.right),.fit:has(#scNext:not([hidden])) #scRead{display:none} }
+footer{font-size:16px}
+
+/* ===== Photosynthesis (5 Nov 2026) ===== */
+:root{ --wat:#29B6F6; --co2:#78909C; --oxy:#E53935; --chl:#43A047 }
+/* word equation */
+.eqwrap{display:grid;gap:4px;width:100%}
+.eqrow{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) minmax(150px,.9fr) minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:center}
+.eqrow .op{font-size:34px;font-weight:800;color:var(--navy);text-align:center}
+.eqs{min-height:68px;align-content:center;text-align:center}
+.eqs .tile{width:100%;text-align:center;min-height:0;padding:6px}
+.eqs.sm{min-height:50px}
+.arrowbox{display:grid;gap:2px;justify-items:stretch}
+.arrowbox .arr{font-size:46px;line-height:.8;text-align:center;color:var(--navy);font-weight:900}
+.eqlab{display:flex;justify-content:space-between;font-weight:700;color:var(--muted);font-size:var(--t3)}
+.eqbottom{display:grid;gap:8px;grid-template-columns:minmax(0,2fr) minmax(0,1fr)}
+.xbin{min-height:56px;background:#FAFAFA}
+.xbin .tile{font-size:var(--small)}
+.symline{font-size:var(--t);text-align:center;background:#E8F5E9;border-radius:10px;padding:6px 10px}
+.arrsm{font-weight:900}
+@media (max-width:899px){
+  .eqrow{grid-template-columns:minmax(0,1fr) auto minmax(0,1fr)}
+  .arrowbox{grid-column:1 / -1}
+  .arrowbox .arr{line-height:1}
+  .eqbottom{grid-template-columns:minmax(0,1fr)}
+}
+/* coefficients */
+.coefs{display:grid;gap:6px}
+.coef{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:8px;align-items:center;font-size:var(--t2);font-weight:600}
+.coef .n{font-size:calc(var(--t) + 4px);font-weight:800;color:var(--navy);min-width:1.6em;text-align:center}
+.coef .btn{min-height:40px;min-width:44px;padding:0 10px;font-size:var(--t);font-weight:800}
+.coef .fixed{color:var(--muted);font-size:var(--t3)}
+table.rec td.bad{background:#FFEBEE}
+/* safety box */
+.safety{background:#FFF3E0;border-left:4px solid #EF6C00;border-radius:8px;padding:5px 10px;font-size:var(--t3);line-height:1.3}
+/* order */
+.ord{display:grid;gap:8px;grid-template-columns:repeat(5,minmax(0,1fr))}
+.ord .slot{min-height:110px;align-content:start}
+.ord .slot .tile{width:100%;font-size:var(--small);padding:4px 6px;min-height:0}
+.ord .slot .sname{font-size:20px}
+@media (max-width:899px){ .ord{grid-template-columns:minmax(0,1fr)} .ord .slot{min-height:56px} }
+.sbank .tile{max-width:420px}
+#jsBins .slot,#umBins .slot{min-height:84px}
+#umBins .slot .sname{text-transform:none;letter-spacing:0;font-size:var(--t3);color:var(--ink);font-weight:600}
+.cat.pickd{border:2px solid var(--navy);background:#E8EAF6}
+.atomrow{display:flex;gap:6px;flex-wrap:wrap}.atomrow span{padding:3px 12px;border-radius:99px;background:#FFEBEE;border:2px solid #EF9A9A;font-size:var(--t2)}.atomrow span.ok{background:#E8F5E9;border-color:#81C784}
+.eqbottom{align-items:start}
+.xbin{display:flex;flex-wrap:wrap;gap:6px;align-items:center}.xbin .sname{flex-basis:100%}.xbin .tile{width:auto}
+.arrowbox .arr{pointer-events:none}
+</style>
+</head>
+<body>
+<!-- ============================ 2 MARKUP ============================ -->
+<header>
+  <div>
+    <h1>Photosynthesis</h1>
+    <div class="sub"><a class="home" href="https://school.taneski.com/science/g08/#biology" title="Back to Grade 8 science">← All Grade 8 science</a> · IB MYP 3 · Unit 1 Interactions with the Environment · with Marie</div>
+  </div>
+  <div class="grow"></div>
+  <div class="hbtns">
+    <button class="btn" id="guideBtn">📖 Marie's guide</button>
+    <button class="btn" id="soundBtn" aria-pressed="false" aria-label="Sound on or off">🔇 Sound</button>
+    <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
+  </div>
+  <div class="credit">Biljana Taneska · Science teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
+</header>
+
+<div class="keybar" aria-label="Key">
+  <span class="k"><i class="dot" style="background:var(--wat)"></i><b>Water</b></span>
+  <span class="k"><i class="dot" style="background:var(--co2)"></i><b>Carbon dioxide</b></span>
+  <span class="k"><i class="dot" style="background:var(--oxy)"></i><b>Oxygen</b></span>
+  <span class="k"><span class="hx" style="background:#F9A825"></span><b>Glucose</b></span>
+  <span class="k"><i style="background:#FFD600;box-shadow:0 0 0 1px #F9A825"></i>Light</span>
+  <div class="tools"><span class="sum" id="starSum">★ 0</span></div>
+</div>
+
+<main>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-eq" aria-selected="true" aria-controls="eq"><span class="ic">⚗️</span>1<span class="full"> · The equation</span><span class="tstar" data-ts="eq"></span></button>
+    <button class="tab" role="tab" id="tab-journey" aria-selected="false" aria-controls="journey"><span class="ic">🌿</span>2<span class="full"> · Ingredients' journey</span><span class="tstar" data-ts="journey"></span></button>
+    <button class="tab" role="tab" id="tab-uses" aria-selected="false" aria-controls="uses"><span class="ic">🍬</span>3<span class="full"> · Uses of glucose</span><span class="tstar" data-ts="uses"></span></button>
+    <button class="tab" role="tab" id="tab-light" aria-selected="false" aria-controls="light"><span class="ic">🌈</span>4<span class="full"> · Colour of light</span><span class="tstar" data-ts="light"></span></button>
+    <button class="tab" role="tab" id="tab-starch" aria-selected="false" aria-controls="starch"><span class="ic">🟤</span>5<span class="full"> · Starch test</span><span class="tstar" data-ts="starch"></span></button>
+    <button class="tab" role="tab" id="tab-test" aria-selected="false" aria-controls="test"><span class="ic">🏆</span>6<span class="full"> · Test yourself</span><span class="tstar" data-ts="test"></span></button>
+    <button class="tab" role="tab" id="tab-cert" aria-selected="false" aria-controls="cert"><span class="ic">🏅</span>7<span class="full"> · Certificate</span></button>
+  </div>
+
+  <!-- 1 THE EQUATION -->
+  <section class="panel" id="eq" role="tabpanel" aria-labelledby="tab-eq">
+    <div class="spexbar" data-spex="eq"></div>
+    <div class="subsw" data-subs="eq">
+      <button class="chip" data-sub="eWord" aria-pressed="true">🧩 Word equation</button>
+      <button class="chip" data-sub="eSym" aria-pressed="false">🔢 Count the atoms</button>
+      <button class="chip" data-sub="eAnim" aria-pressed="false">▶ Watch it happen</button>
+      <button class="chip" data-sub="eCheck" aria-pressed="false">✅ Check <span class="st" data-cs="eq"></span></button>
+    </div>
+    <div class="card" id="eWord">
+      <div class="cb">
+        <p class="read" id="ewRead"><b>Build the word equation for photosynthesis.</b> Drag each card into a box (or tap a card, then tap a box). Some cards are <b>not used</b> in photosynthesis.</p>
+        <div class="eqwrap">
+          <div class="eqrow">
+            <div class="slot eqs" id="ew-r1" data-k="r"><span class="sname">reactant</span></div><span class="op">+</span><div class="slot eqs" id="ew-r2" data-k="r"><span class="sname">reactant</span></div>
+            <div class="arrowbox"><div class="slot eqs sm" id="ew-up" data-k="up"><span class="sname">needs</span></div><div class="arr">⟶</div><div class="slot eqs sm" id="ew-dn" data-k="dn"><span class="sname">in the</span></div></div>
+            <div class="slot eqs" id="ew-p1" data-k="p"><span class="sname">product</span></div><span class="op">+</span><div class="slot eqs" id="ew-p2" data-k="p"><span class="sname">product</span></div>
+          </div>
+          <div class="eqlab"><span>⬅ Reactants: what goes in</span><span>Products: what comes out ➡</span></div>
+        </div>
+        <div class="eqbottom">
+          <div class="sbank" id="ewBank"></div>
+          <div class="slot multi xbin" id="ew-x" data-k="x"><span class="sname">🚫 Not used in photosynthesis</span></div>
+        </div>
+        <div class="feedback" id="ewFb" aria-live="polite"></div>
+        <div class="symline" id="ewSym" hidden>In symbols: <b>6CO₂ + 6H₂O <span class="arrsm">→</span> C₆H₁₂O₆ + 6O₂</b> <span class="hint">(light energy, chlorophyll)</span> <button class="btn small" id="ewAgain">↺ Again</button></div>
+      </div>
+    </div>
+    <div class="card fitcard" id="eSym" hidden>
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="esSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="The molecules on both sides of the equation, drawn as atoms"></svg></div>
+        <div class="fr">
+          <p class="read hideq">The same atoms go in and come out. Use <b>−</b> and <b>+</b> to choose how many of each molecule you need. One glucose is made.</p>
+          <div class="coefs" id="esCoef"></div>
+          <div class="atomrow" id="esTab"></div>
+          <div class="controls"><button class="btn primary" id="esCheck">✔ Check my equation</button></div>
+          <div class="feedback" id="esFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="eAnim" hidden>
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="eaSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="Inside a chloroplast: carbon dioxide and water molecules break apart and their atoms join into glucose and oxygen"></svg></div>
+        <div class="fr">
+          <ol class="steps hideq" id="eaSteps"></ol>
+          <div class="player hideq" id="eaCtl"></div>
+          <div id="eaAsk" hidden><p class="qlabel" style="margin-bottom:6px">What happens to the atoms in photosynthesis?</p><div class="cats one" id="eaCats"></div></div>
+          <div class="feedback" id="eaFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="eCheck" hidden><div class="cb" data-check="eq"></div></div>
+  </section>
+
+  <!-- 2 INGREDIENTS' JOURNEY -->
+  <section class="panel" id="journey" role="tabpanel" aria-labelledby="tab-journey" hidden>
+    <div class="spexbar" data-spex="journey"></div>
+    <div class="subsw" data-subs="journey">
+      <button class="chip" data-sub="jTrip" aria-pressed="true">▶ The journey</button>
+      <button class="chip" data-sub="jLabel" aria-pressed="false">🏷 Label the plant</button>
+      <button class="chip" data-sub="jSort" aria-pressed="false">🔄 In or out?</button>
+      <button class="chip" data-sub="jCheck" aria-pressed="false">✅ Check <span class="st" data-cs="journey"></span></button>
+    </div>
+    <div class="card fitcard" id="jTrip">
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="jtSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="A plant with its roots in the soil and a zoom into a leaf: water, carbon dioxide and light reach the chloroplasts"></svg></div>
+        <div class="fr">
+          <ol class="steps hideq" id="jtSteps"></ol>
+          <div class="player hideq" id="jtCtl"></div>
+          <div id="jtAsk" hidden><p class="qlabel" style="margin-bottom:6px">How does carbon dioxide get into the leaf?</p><div class="cats one" id="jtCats"></div></div>
+          <div class="feedback" id="jtFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="jLabel" hidden>
+      <div class="fit">
+        <div class="fl"><div class="labwrap fitlab" id="jlWrap" data-maxw="860"><svg id="jlSvg" viewBox="0 0 640 400" aria-label="A plant and a zoom into a leaf with label boxes"></svg></div></div>
+        <div class="fr">
+          <p class="read hideq"><b>Label the plant.</b> Drag each label into its box (or tap a label, then tap a box).</p>
+          <div class="labbank" id="jlBank"></div>
+          <div class="feedback" id="jlFb" aria-live="polite"></div>
+          <div class="didyou" id="jlInfo" hidden></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="jSort" hidden>
+      <div class="cb">
+        <div class="bins c3" id="jsBins"></div>
+        <div class="sbank" id="jsBank"></div>
+        <div class="feedback" id="jsFb" aria-live="polite"></div>
+      </div>
+    </div>
+    <div class="card fitcard" id="jCheck" hidden><div class="cb" data-check="journey"></div></div>
+  </section>
+
+  <!-- 3 USES OF GLUCOSE -->
+  <section class="panel" id="uses" role="tabpanel" aria-labelledby="tab-uses" hidden>
+    <div class="spexbar" data-spex="uses"></div>
+    <div class="subsw" data-subs="uses">
+      <button class="chip" data-sub="uTour" aria-pressed="true">▶ Where does glucose go?</button>
+      <button class="chip" data-sub="uMatch" aria-pressed="false">🔗 Match the use</button>
+      <button class="chip" data-sub="uQs" aria-pressed="false">🕵 Glucose detective</button>
+      <button class="chip" data-sub="uCheck" aria-pressed="false">✅ Check <span class="st" data-cs="uses"></span></button>
+    </div>
+    <div class="card fitcard" id="uTour">
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="utSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="Glucose made in a leaf goes to six uses around the plant"></svg></div>
+        <div class="fr">
+          <ol class="steps hideq" id="utSteps"></ol>
+          <div class="player hideq" id="utCtl"></div>
+          <div id="utAsk" hidden><p class="qlabel" style="margin-bottom:6px">Why do plants store glucose as starch?</p><div class="cats one" id="utCats"></div></div>
+          <div class="feedback" id="utFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="uMatch" hidden>
+      <div class="cb">
+        <p class="read">Glucose is changed into other things. <b>Drag each one to its job</b> (or tap, then tap).</p>
+        <div class="bins c3" id="umBins"></div>
+        <div class="sbank" id="umBank"></div>
+        <div class="feedback" id="umFb" aria-live="polite"></div>
+      </div>
+    </div>
+    <div class="card fitcard" id="uQs" hidden><div class="cb" id="uqBox"></div></div>
+    <div class="card fitcard" id="uCheck" hidden><div class="cb" data-check="uses"></div></div>
+  </section>
+
+  <!-- 4 COLOUR OF LIGHT -->
+  <section class="panel" id="light" role="tabpanel" aria-labelledby="tab-light" hidden>
+    <div class="spexbar" data-spex="light"></div>
+    <div class="subsw" data-subs="light">
+      <button class="chip" data-sub="lPrism" aria-pressed="true">🔦 Prism and leaf</button>
+      <button class="chip" data-sub="lGarden" aria-pressed="false">🌱 Filter garden</button>
+      <button class="chip" data-sub="lCheck" aria-pressed="false">✅ Check <span class="st" data-cs="light"></span></button>
+    </div>
+    <div class="card fitcard" id="lPrism">
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="lpSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="White light is split by a prism; a leaf absorbs red and blue light and reflects green light"></svg></div>
+        <div class="fr">
+          <ol class="steps hideq" id="lpSteps"></ol>
+          <div class="player hideq" id="lpCtl"></div>
+          <div id="lpAsk" hidden><p class="qlabel" style="margin-bottom:6px">Why do most leaves look green?</p><div class="cats one" id="lpCats"></div></div>
+          <div class="feedback" id="lpFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="lGarden" hidden>
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="lgSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="Four plants grow under red, blue, green and clear filters"></svg></div>
+        <div class="fr">
+          <p class="read hideq" id="lgRead"></p>
+          <div id="lgPred"><p class="qlabel" style="margin-bottom:6px">🤔 Predict: which plant will grow the <b>least</b>?</p><div class="cats two" id="lgPredCats"></div></div>
+          <div class="controls"><button class="btn primary" id="lgGo" hidden>⏩ Grow for 7 days</button></div>
+          <table class="rec" id="lgTab" hidden></table>
+          <div id="lgAsk" hidden><p class="qlabel" style="margin-bottom:6px">Why did the plant under the green filter grow least?</p><div class="cats one" id="lgCats"></div></div>
+          <div class="feedback" id="lgFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="lCheck" hidden><div class="cb" data-check="light"></div></div>
+  </section>
+
+  <!-- 5 STARCH TEST -->
+  <section class="panel" id="starch" role="tabpanel" aria-labelledby="tab-starch" hidden>
+    <div class="spexbar" data-spex="starch"></div>
+    <div class="subsw" data-subs="starch">
+      <button class="chip" data-sub="sMethod" aria-pressed="true">🧪 The method</button>
+      <button class="chip" data-sub="sOrder" aria-pressed="false">🔢 Put it in order</button>
+      <button class="chip" data-sub="sExp" aria-pressed="false">🔬 Four experiments</button>
+      <button class="chip" data-sub="sCheck" aria-pressed="false">✅ Check <span class="st" data-cs="starch"></span></button>
+    </div>
+    <div class="card fitcard" id="sMethod">
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="smSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="Testing a leaf for starch: boiling water, hot ethanol, warm water, iodine on a white tile"></svg></div>
+        <div class="fr">
+          <ol class="steps hideq" id="smSteps"></ol>
+          <div class="player hideq" id="smCtl"></div>
+          <div class="safety hideq">⚠ <b>Safety:</b> 🥽 eye protection · 🔥 ethanol is <b>flammable</b>: turn the Bunsen burner <b>off</b> before you use it · ♨ hot water: use forceps · iodine stains and irritates skin</div>
+          <div id="smAsk" hidden><p class="qlabel" style="margin-bottom:6px">Why do we put the leaf in hot ethanol?</p><div class="cats one" id="smCats"></div></div>
+          <div class="feedback" id="smFb" aria-live="polite"></div>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="sOrder" hidden>
+      <div class="cb">
+        <p class="read">Put the steps of the starch test in the right <b>order</b>. Drag each card into its box (or tap, then tap).</p>
+        <div class="ord" id="soSlots"></div>
+        <div class="sbank" id="soBank"></div>
+        <div class="feedback" id="soFb" aria-live="polite"></div>
+      </div>
+    </div>
+    <div class="card fitcard" id="sExp" hidden>
+      <div class="fit">
+        <div class="fl"><svg class="pic fitsvg" id="sxSvg" viewBox="0 0 640 400" data-maxw="860" aria-label="An experiment: the set-up at the top, the leaves tested with iodine at the bottom"></svg></div>
+        <div class="fr">
+          <div class="mini" id="sxPick"></div>
+          <p class="read hideq" id="sxRead"></p>
+          <div id="sxPred"><p class="qlabel" style="margin-bottom:6px" id="sxPredQ"></p><div class="cats two" id="sxPredCats"></div></div>
+          <div class="controls"><button class="btn primary" id="sxGo" hidden>🧪 Test with iodine</button></div>
+          <div id="sxAsk" hidden><p class="qlabel" style="margin-bottom:6px">What does this experiment show?</p><div class="cats one" id="sxCats"></div></div>
+          <div class="feedback" id="sxFb" aria-live="polite"></div>
+          <div class="didyou hideq" id="sxWhy" hidden></div>
+        </div>
+      </div>
+    </div>
+    <div class="card fitcard" id="sCheck" hidden><div class="cb" data-check="starch"></div></div>
+  </section>
+
+  <!-- 6 TEST YOURSELF -->
+  <section class="panel" id="test" role="tabpanel" aria-labelledby="tab-test" hidden>
+    <div class="spexbar" data-spex="test"></div>
+    <div class="card"><div class="cb" id="testBox"></div></div>
+  </section>
+
+  <!-- 7 CERTIFICATE -->
+  <section class="panel" id="cert" role="tabpanel" aria-labelledby="tab-cert" hidden>
+    <div class="spexbar" data-spex="cert"></div>
+    <div class="card">
+      <h2>My certificate</h2>
+      <div class="cb certwrap">
+        <label>Your name: <input class="word" id="certName" autocomplete="off" maxlength="40" style="max-width:300px"></label>
+        <div class="sheet" id="certSheet"></div>
+        <div class="controls">
+          <button class="btn primary" id="certPrint">🖨 Print my certificate</button>
+          <button class="btn" id="resetAll">↺ Start again (delete my progress)</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- overlays -->
+<div class="overlay" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="box">
+    <h3 id="helpTitle">How to use this simulation</h3>
+    <ol>
+      <li><b>Marie</b> is your guide. <b>📖 Marie's guide</b> (top right) explains all the key words.</li>
+      <li><b>1 · The equation</b>: build the word equation, count the atoms in the symbol equation and watch the atoms join up in a new way.</li>
+      <li><b>2 · Ingredients' journey</b>: follow water, carbon dioxide and light to the chloroplasts, label the plant and sort what goes in and out.</li>
+      <li><b>3 · Uses of glucose</b>: see where the glucose goes, match each use and solve 5 glucose puzzles.</li>
+      <li><b>4 · Colour of light</b>: split white light with a prism, see which colours a leaf absorbs and grow plants under coloured filters.</li>
+      <li><b>5 · Starch test</b>: test a leaf for starch, put the steps in order and do four classic experiments.</li>
+      <li><b>Animations</b>: <b>👣 Step by step</b> plays one step at a time: read it, then press <b>Next step ▶</b>. <b>↺ Replay step</b> shows the same step again. <b>▶ Play all</b> plays everything, with a stop after each step (<b>⏸ Pause</b> to stop).</li>
+      <li><b>✅ Check</b> (in tabs 1–5) has 3 quick questions. <b>6 · Test yourself</b> mixes everything (12 questions).</li>
+      <li><b>Wrong answer?</b> The first time you get a tip. The second time the simulation shows the answer.
+        Stars: right first time ★★★ · right after a tip ★★ · answer shown: no stars. Win 5 badges and print your
+        <b>7 · 🏅 Certificate</b>. Your progress is saved in this browser.</li>
+    </ol>
+    <h3>The biology</h3>
+    <ul>
+      <li><b>Photosynthesis</b>: plants make <b>glucose</b> from <b>carbon dioxide</b> and <b>water</b>, using <b>light energy</b> absorbed by <b>chlorophyll</b>. <b>Oxygen</b> is given off.</li>
+      <li>carbon dioxide + water → glucose + oxygen &nbsp;·&nbsp; 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂</li>
+    </ul>
+    <p class="hint">The drawings are models, not to scale. The plant heights in the filter garden are typical results, not real measurements.</p>
+    <p style="text-align:right"><button class="btn primary" data-close="help">Close</button></p>
+  </div>
+</div>
+
+<div class="overlay" id="present" role="dialog" aria-modal="true" aria-label="Marie's guide">
+  <div class="box">
+    <div class="spexbar" data-spex="present"></div>
+    <div id="presentSlide"></div>
+    <div class="slidenav">
+      <button class="btn" id="pPrev">← Back</button>
+      <span class="pg" id="pPg"></span>
+      <button class="btn primary" id="pNext">Next →</button>
+      <button class="btn" data-close="present">✕ Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+<div id="printArea"></div>
+
+<footer>Carbon dioxide + water → glucose + oxygen, using light energy absorbed by chlorophyll in the chloroplasts.</footer>
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const TEACHER = /[?&#]teacher\b/i.test(location.search + location.hash);   // teacher preview
+
+  /* ============================ 3 CONFIG ============================ */
+  const PRAISE = "You really know your photosynthesis.";
+  // quick checks (3 per tab) and Test yourself
+  const CHECKS = {
+    eq: [
+      { id: "c1", em: "🌿", text: "What is photosynthesis?", ans: "a",
+        opts: [["a", "Plants making glucose from carbon dioxide and water, using light energy"], ["b", "Plants breaking down glucose to release energy"], ["c", "Plants taking in oxygen at night"], ["d", "Plants taking in food from the soil"]],
+        tip: "“Photo” means light, “synthesis” means making.", why: "<b>Photosynthesis</b>: plants <b>make glucose</b> from <b>carbon dioxide</b> and <b>water</b>, using <b>light energy</b>. Oxygen is given off." },
+      { id: "c2", em: "⚗️", text: "Which are the reactants of photosynthesis?", ans: "a",
+        opts: [["a", "Carbon dioxide and water"], ["b", "Glucose and oxygen"], ["c", "Oxygen and water"], ["d", "Light and chlorophyll"]],
+        tip: "Reactants are what goes IN (left of the arrow).", why: "The reactants are <b>carbon dioxide</b> and <b>water</b>. Glucose and oxygen are the products. Light and chlorophyll are written above and below the arrow." },
+      { id: "c3", em: "🔢", text: "Which is the balanced symbol equation?", ans: "a",
+        opts: [["a", "6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂"], ["b", "CO₂ + H₂O → C₆H₁₂O₆ + O₂"], ["c", "6O₂ + C₆H₁₂O₆ → 6CO₂ + 6H₂O"], ["d", "6CO₂ + 12H₂O → C₆H₁₂O₆ + 3O₂"]],
+        tip: "Glucose has 6 carbon atoms. How many CO₂ do you need?", why: "<b>6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂</b>: 6 C, 12 H and 18 O on each side." },
+    ],
+    journey: [
+      { id: "c1", em: "💧", text: "How does water get into a plant?", ans: "a",
+        opts: [["a", "Through the root hair cells, from the soil"], ["b", "Through the stomata in the leaves"], ["c", "Through the flowers"], ["d", "It is made in the chloroplasts"]],
+        tip: "Where is the water? In the soil or in the air?", why: "Water enters the <b>root hair cells</b> from the soil, then travels up the <b>xylem</b> to the leaves." },
+      { id: "c2", em: "🕳", text: "What are stomata?", ans: "a",
+        opts: [["a", "Tiny holes, mostly on the underside of a leaf, that let gases in and out"], ["b", "Tubes that carry water"], ["c", "The green parts inside leaf cells"], ["d", "Hairs on the roots"]],
+        tip: "Carbon dioxide goes in and oxygen comes out through them.", why: "<b>Stomata</b> (one: a <b>stoma</b>) are tiny holes in the leaf. <b>Carbon dioxide</b> diffuses in, <b>oxygen</b> and water vapour diffuse out." },
+      { id: "c3", em: "🟢", text: "Where in the leaf cell does photosynthesis happen?", ans: "a",
+        opts: [["a", "In the chloroplasts, which contain chlorophyll"], ["b", "In the cell wall"], ["c", "In the vacuole"], ["d", "In the stomata"]],
+        tip: "Which part is green and absorbs light?", why: "Photosynthesis happens in the <b>chloroplasts</b>. Their <b>chlorophyll</b> absorbs the light energy." },
+    ],
+    uses: [
+      { id: "c1", em: "🥔", text: "How do plants store glucose?", ans: "a",
+        opts: [["a", "As starch"], ["b", "As oxygen"], ["c", "As chlorophyll"], ["d", "As water"]],
+        tip: "Iodine turns blue-black when it finds it.", why: "Glucose is stored as <b>starch</b> (in leaves, potatoes, seeds). Starch does not dissolve." },
+      { id: "c2", em: "🧱", text: "Plant cell walls are made of…", ans: "a",
+        opts: [["a", "cellulose, made from glucose"], ["b", "starch"], ["c", "protein"], ["d", "chlorophyll"]],
+        tip: "Wood and cotton are mostly this.", why: "<b>Cellulose</b> is made from glucose. It makes cell walls strong." },
+      { id: "c3", em: "🌱", text: "To make proteins from glucose, a plant also needs…", ans: "a",
+        opts: [["a", "nitrates from the soil"], ["b", "more light"], ["c", "oxygen from the air"], ["d", "starch"]],
+        tip: "It is a mineral, taken in by the roots.", why: "Plants need <b>nitrates</b> from the soil to make <b>amino acids</b> and <b>proteins</b> for growth." },
+    ],
+    light: [
+      { id: "c1", em: "🌈", text: "Which colours of light does chlorophyll absorb best?", ans: "a",
+        opts: [["a", "Red and blue"], ["b", "Green"], ["c", "Green and yellow"], ["d", "Only white"]],
+        tip: "Leaves look green. Is green absorbed or reflected?", why: "Chlorophyll absorbs <b>red</b> and <b>blue</b> light best and reflects <b>green</b>." },
+      { id: "c2", em: "🍃", text: "Why does a leaf look green?", ans: "a",
+        opts: [["a", "Chlorophyll reflects green light into our eyes"], ["b", "Chlorophyll absorbs green light"], ["c", "The leaf gives out green light"], ["d", "The Sun's light is green"]],
+        tip: "We see the colours that bounce off an object.", why: "The green light is <b>reflected</b> into our eyes, so the leaf looks green." },
+      { id: "c3", em: "💚", text: "A plant is grown under green light only. What happens?", ans: "a",
+        opts: [["a", "It grows very little: green light is mostly reflected, so little photosynthesis"], ["b", "It grows best: plants are green"], ["c", "It grows the same as in white light"], ["d", "It makes more chlorophyll and grows faster"]],
+        tip: "Remember the filter garden.", why: "Green light is mostly <b>reflected</b>, not absorbed. Little light energy → little <b>photosynthesis</b> → little growth." },
+    ],
+    starch: [
+      { id: "c1", em: "🟤", text: "Iodine solution is added to a leaf. It turns blue-black. This means…", ans: "a",
+        opts: [["a", "starch is present"], ["b", "there is no starch"], ["c", "glucose is present"], ["d", "the leaf is dead"]],
+        tip: "Iodine solution is orange-brown. What does starch do to it?", why: "<b>Blue-black</b> = <b>starch</b>. If it stays <b>orange-brown</b>, there is no starch." },
+      { id: "c2", em: "🔥", text: "Why must the Bunsen burner be turned off before using ethanol?", ans: "a",
+        opts: [["a", "Ethanol is flammable: it catches fire easily"], ["b", "Ethanol freezes near a flame"], ["c", "The leaf would turn blue"], ["d", "Iodine is explosive"]],
+        tip: "Think of the hazard symbol on an ethanol bottle.", why: "Ethanol is <b>flammable</b>. Heat it only in a hot water bath, with <b>no flame</b>." },
+      { id: "c3", em: "🌑", text: "Why is a plant kept in the dark for 2 days before an experiment?", ans: "a",
+        opts: [["a", "To use up its starch, so any starch found was made during the experiment"], ["b", "To make it grow faster"], ["c", "To kill the leaves"], ["d", "To make more chlorophyll"]],
+        tip: "In the dark it cannot photosynthesise, but it still respires.", why: "The plant is <b>destarched</b>: in the dark it uses up its starch. So any starch we find later was made in the experiment." },
+    ],
+  };
+  const QBANK = [
+    { id: "t1", em: "⚗️", text: "Which is the word equation for photosynthesis?", ans: "a",
+      opts: [["a", "carbon dioxide + water → glucose + oxygen"], ["b", "glucose + oxygen → carbon dioxide + water"], ["c", "oxygen + water → glucose + carbon dioxide"], ["d", "glucose + water → starch + oxygen"]],
+      tip: "Plants take in carbon dioxide and water.", why: "<b>carbon dioxide + water → glucose + oxygen</b> (light energy, chlorophyll)." },
+    { id: "t2", em: "💨", text: "Which gas do plants give off during photosynthesis?", ans: "a",
+      opts: [["a", "Oxygen"], ["b", "Carbon dioxide"], ["c", "Nitrogen"], ["d", "Water vapour only"]],
+      tip: "It is the gas we breathe in.", why: "<b>Oxygen</b> is a product of photosynthesis. It leaves the leaf through the stomata." },
+    { id: "t3", em: "☀️", text: "Where does the energy for photosynthesis come from?", ans: "a",
+      opts: [["a", "Light, absorbed by chlorophyll"], ["b", "The soil"], ["c", "Water"], ["d", "Oxygen"]],
+      tip: "“Photo” means light.", why: "<b>Light energy</b> is absorbed by <b>chlorophyll</b> in the chloroplasts." },
+    { id: "t4", em: "🔢", text: "How many oxygen atoms are on each side of 6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂?", ans: "a",
+      opts: [["a", "18"], ["b", "6"], ["c", "12"], ["d", "24"]],
+      tip: "6 CO₂ has 12 O; 6 H₂O has 6 O.", why: "Left: 12 + 6 = <b>18</b>. Right: 6 (glucose) + 12 (6 O₂) = <b>18</b>. Atoms are not lost or made." },
+    { id: "t5", em: "🪴", text: "Why do root hair cells have a long, thin shape?", ans: "a",
+      opts: [["a", "A large surface to absorb water and minerals from the soil"], ["b", "To catch light"], ["c", "To store starch"], ["d", "To let carbon dioxide in"]],
+      tip: "More surface touching the soil…", why: "The long hair gives a <b>large surface area</b> to absorb <b>water</b> and <b>minerals</b>." },
+    { id: "t6", em: "🚰", text: "Which tubes carry water from the roots to the leaves?", ans: "a",
+      opts: [["a", "Xylem"], ["b", "Stomata"], ["c", "Chloroplasts"], ["d", "Root hairs"]],
+      tip: "Remember the blue tube in the journey.", why: "The <b>xylem</b> carries water (and minerals) up from the roots to the leaves." },
+    { id: "t7", em: "🍃", text: "Where are most stomata found?", ans: "a",
+      opts: [["a", "On the underside of the leaf"], ["b", "On the roots"], ["c", "On the top of the leaf only"], ["d", "Inside the chloroplasts"]],
+      tip: "Remember the zoom into the leaf.", why: "Most <b>stomata</b> are on the <b>underside</b> of the leaf." },
+    { id: "t8", em: "⚡", text: "Every plant cell uses some glucose to…", ans: "a",
+      opts: [["a", "release energy in respiration"], ["b", "make light"], ["c", "absorb water"], ["d", "make carbon dioxide for photosynthesis"]],
+      tip: "All living things do this, day and night.", why: "<b>Respiration</b> releases energy from glucose in every living cell." },
+    { id: "t9", em: "🥔", text: "Why is starch good for storing glucose?", ans: "a",
+      opts: [["a", "It does not dissolve in water, so it stays where it is stored"], ["b", "It is green"], ["c", "It is a gas"], ["d", "It releases oxygen"]],
+      tip: "Glucose dissolves; starch…", why: "<b>Starch is insoluble</b>: it stays in the cells and does not draw water in." },
+    { id: "t10", em: "🍓", text: "Glucose is carried round the plant as…", ans: "a",
+      opts: [["a", "sucrose, in the phloem"], ["b", "starch, in the xylem"], ["c", "oxygen, in the stomata"], ["d", "cellulose, in the roots"]],
+      tip: "It is the sugar we buy in shops too.", why: "Glucose is changed into <b>sucrose</b>, which is carried in the <b>phloem</b>." },
+    { id: "t11", em: "🔺", text: "White light passes through a prism. What happens?", ans: "a",
+      opts: [["a", "It splits into a spectrum of colours"], ["b", "It turns green"], ["c", "It disappears"], ["d", "It turns into heat only"]],
+      tip: "Think of a rainbow.", why: "White light is a <b>mixture of colours</b>. A prism splits it into a <b>spectrum</b>." },
+    { id: "t12", em: "🎨", text: "Which colour of light is LEAST useful for photosynthesis?", ans: "a",
+      opts: [["a", "Green"], ["b", "Red"], ["c", "Blue"], ["d", "White"]],
+      tip: "Which colour is reflected by leaves?", why: "<b>Green</b> light is mostly reflected, so little of its energy is used." },
+    { id: "t13", em: "🧪", text: "In the starch test, why is the leaf boiled in water first?", ans: "a",
+      opts: [["a", "To kill and soften the cells, so the ethanol and iodine can get in"], ["b", "To make starch"], ["c", "To add chlorophyll"], ["d", "To turn the leaf blue"]],
+      tip: "It is the first step: the leaf has to be soft.", why: "Boiling <b>kills</b> the cells and <b>softens</b> the leaf, so chemicals can get in." },
+    { id: "t14", em: "🍂", text: "A variegated leaf (green and white) is tested for starch. Which part turns blue-black?", ans: "a",
+      opts: [["a", "Only the green parts"], ["b", "Only the white parts"], ["c", "The whole leaf"], ["d", "No part"]],
+      tip: "Which parts have chlorophyll?", why: "Only the <b>green</b> parts have <b>chlorophyll</b>, so only they photosynthesise and make starch." },
+    { id: "t15", em: "⭐", text: "A leaf is covered with foil with a star cut out, then put in the light. After the starch test…", ans: "a",
+      opts: [["a", "only the star turns blue-black"], ["b", "only the covered part turns blue-black"], ["c", "the whole leaf stays orange-brown"], ["d", "the whole leaf turns blue-black"]],
+      tip: "Where could the light reach the leaf?", why: "Only the <b>star</b> got light, so only there was starch made: a blue-black star." },
+    { id: "t16", em: "🫙", text: "Soda lime absorbs carbon dioxide. A leaf from a plant kept in a bag with soda lime stays orange-brown with iodine. This shows…", ans: "a",
+      opts: [["a", "carbon dioxide is needed for photosynthesis"], ["b", "soda lime makes starch"], ["c", "oxygen is needed for photosynthesis"], ["d", "light is not needed"]],
+      tip: "What was missing from the bag?", why: "Without <b>carbon dioxide</b> the plant could not photosynthesise, so no starch was made." },
+  ];
+  const FIRST_ROUND = ["t1", "t2", "t3", "t4", "t6", "t7", "t8", "t9", "t12", "t13", "t14", "t16"];
+
+  /* ============================ 4 ENGINE ============================ */
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs = {}, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  const bigger = (n) => (n >= 20 ? n : n <= 13 ? 16 : n <= 15 ? 17 : 18);   // letters in the pictures (teacher, 31 Oct 2026); emoji and big numbers stay
+  const txt = (parent, x, y, s, attrs = {}) => { const t = el("text", { x, y, ...attrs }, parent); if (attrs["font-size"]) t.setAttribute("font-size", bigger(+attrs["font-size"])); t.textContent = s; return t; };
+  const h = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+  const shuffle = (arr) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const reduced = () => window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  // ANIM.k: the step player slows moves down (1.5) or fast-forwards earlier steps for ↺ Replay step (0)
+  const ANIM = { k: 1 };
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms * ANIM.k));
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  // tween: calls f(t) with t from 0 to 1 over ms milliseconds
+  function tween(ms, f) {
+    return new Promise((res) => {
+      if (reduced()) { f(1); return res(); }
+      ms *= ANIM.k;
+      if (ms <= 0) { requestAnimationFrame(() => { f(1); res(); }); return; }
+      const t0 = performance.now();
+      const step = (now) => { const t = Math.min(1, (now - t0) / ms); f(t); if (t < 1) requestAnimationFrame(step); else res(); };
+      requestAnimationFrame(step);
+    });
+  }
+  const ease = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  const pathD = (pts) => "M" + pts.map((p) => p.join(" ")).join(" L");
+
+  /* Marie, the guide (same drawing as in the Grade 7 simulations) */
+  const SPEX = `<svg class="spex" viewBox="0 0 100 100" data-mood="talk" aria-hidden="true">
+    <circle cx="50" cy="50" r="49" fill="#DCE3EA"/>
+    <path d="M24 47 Q20 15 50 13 Q80 14 77 47 L78 63 Q73 67 68 60 L32 60 Q27 66 22 61Z" fill="#3B2A22"/>
+    <path d="M10 100 Q12 76 50 71 Q88 76 90 100Z" fill="#7F8C6B"/>
+    <rect x="44.5" y="60" width="11" height="13" rx="3" fill="#E6BFA3"/>
+    <path d="M41 71 L50 86 L35 82Z" fill="#8E9B79" stroke="#6B775A" stroke-width="1"/><path d="M59 71 L50 86 L65 82Z" fill="#8E9B79" stroke="#6B775A" stroke-width="1"/>
+    <circle cx="50" cy="93" r="1.6" fill="#A1887F"/>
+    <circle cx="29.5" cy="47" r="4" fill="#E6BFA3"/><circle cx="70.5" cy="47" r="4" fill="#E6BFA3"/><circle cx="29.3" cy="52.5" r="1.4" fill="#26A69A"/>
+    <ellipse cx="50" cy="45" rx="20.5" ry="23" fill="#F0CDB4"/>
+    <path d="M29.5 41 Q29 20 45 18.5 Q63 16.5 72 30 Q74 38 72.5 47 Q67 34 57 31 Q49 29 45 25.5 Q39 31 29.5 41Z" fill="#3B2A22"/>
+    <path d="M44.5 19.5 Q47 23 45.5 27" stroke="#A8A29E" stroke-width="1.6" fill="none"/><path d="M50 21 Q63 21 70 32" stroke="#5A463C" stroke-width="1.2" fill="none"/>
+    <circle cx="37" cy="54" r="3.3" fill="#F48FB1" opacity=".35"/><circle cx="63" cy="54" r="3.3" fill="#F48FB1" opacity=".35"/>
+    <g class="brow" stroke="#3B2A22" stroke-width="1.6" fill="none" stroke-linecap="round"><path d="M35 35.5 q5 -2.5 10 -0.5"/><path d="M55 35 q5 -2 10 0.5"/></g>
+    <circle cx="41" cy="44" r="2.2" fill="#4E342E"/><circle cx="59" cy="44" r="2.2" fill="#4E342E"/>
+    <path d="M50 46 q-2.2 5 0 6.2" stroke="#D49F82" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <rect class="lens" x="32" y="37.5" width="16.5" height="13.5" rx="6" stroke="#B98A70" stroke-width="1.2"/>
+    <rect class="lens" x="51.5" y="37.5" width="16.5" height="13.5" rx="6" stroke="#B98A70" stroke-width="1.2"/>
+    <path d="M48.5 42 q1.5 -1.6 3 0 M32 41 L28 40 M68 41 L72 40" stroke="#B98A70" stroke-width="1.1" fill="none"/>
+    <ellipse class="m m-talk" cx="50" cy="58.5" rx="3.6" ry="2.6" fill="#B5545C"/>
+    <path class="m m-happy" d="M43 56.5 Q50 63.5 57 56.5Z" fill="#B5545C"/>
+    <path class="m m-think" d="M45.5 59 h8" stroke="#B5545C" stroke-width="2" stroke-linecap="round"/>
+    <circle class="m m-wow" cx="50" cy="59" r="3.2" fill="#B5545C"/>
+    <path class="m m-hmm" d="M44 59.5 q3 -2.2 6 0 t6 0" stroke="#B5545C" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>`;
+  function spexBar(name) {
+    const bar = document.querySelector(`[data-spex="${name}"]`);
+    if (bar && !bar.firstChild) bar.innerHTML = SPEX + `<div class="bubble" aria-live="polite"></div>`;
+    return bar;
+  }
+  function say(name, html, mood = "talk", cls = "") {
+    const bar = spexBar(name); if (!bar) return;
+    bar.querySelector(".spex").dataset.mood = mood;
+    const b = bar.querySelector(".bubble"); b.className = "bubble" + (cls ? " " + cls : ""); b.innerHTML = html;
+  }
+
+  /* sound: off by default; tiny tones made in the browser */
+  let actx = null;
+  function beep(f, d, type = "sine", v = 0.06, when = 0) {
+    if (!P.sound || ANIM.k === 0) return;   // silent while fast-forwarding
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + when;
+      o.type = type; o.frequency.value = f; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + d + 0.02);
+    } catch (e) {}
+  }
+  const SND = {
+    zap: () => beep(880, 0.08, "square", 0.03),
+    pop: () => beep(520, 0.07, "sine", 0.05),
+    star: () => { beep(660, 0.12); beep(990, 0.18, "sine", 0.06, 0.1); },
+    tip: () => beep(250, 0.22, "triangle", 0.07),
+    badge: () => [523, 659, 784, 1047].forEach((f, i) => beep(f, 0.18, "sine", 0.06, i * 0.11)),
+  };
+
+  /* progress: stars, badges – saved in this browser */
+  const STORE = "g8-photosynthesis-v1";
+  const TABK = ["eq", "journey", "uses", "light", "starch", "test"];
+  const P = { stars: { eq: {}, journey: {}, uses: {}, light: {}, starch: {}, test: {} }, done: {}, badges: {}, name: "", sound: false, seenIntro: false, testRounds: 0 };
+  function save() { try { localStorage.setItem(STORE, JSON.stringify(P)); } catch (e) {} }
+  function load() {
+    try {
+      const d = JSON.parse(localStorage.getItem(STORE) || "{}");
+      for (const k in d) if (k in P) P[k] = d[k];
+      for (const t of TABK) P.stars[t] = P.stars[t] || {};
+      P.done = P.done || {};
+    } catch (e) {}
+  }
+  const starsOf = (st) => (st.revealed ? 0 : st.mistakes ? 2 : 3);
+  const starsHTML = (n, of = 3) => `<span class="stars" aria-label="${n} stars">${"★".repeat(n)}<span class="off">${"★".repeat(Math.max(0, of - n))}</span></span>`;
+  const tabStars = (t) => Object.values(P.stars[t]).reduce((s, n) => s + n, 0);
+  const has = (t, id) => id in P.stars[t];
+  const BADGES = [
+    { id: "eq", em: "⚗️", name: "Equation builder", how: "word equation, count the atoms, watch it happen", got: () => ["word", "sym", "anim"].every((k) => has("eq", k)) },
+    { id: "journey", em: "🌿", name: "Ingredient tracker", how: "the journey, label the plant, in or out", got: () => ["trip", "label", "sort"].every((k) => has("journey", k)) },
+    { id: "uses", em: "🍬", name: "Glucose guru", how: "where glucose goes, match, 5 puzzles", got: () => ["tour", "match"].every((k) => has("uses", k)) && UQ.every((q) => has("uses", "q-" + q.id)) },
+    { id: "light", em: "🌈", name: "Light catcher", how: "prism and leaf, filter garden", got: () => ["prism", "garden"].every((k) => has("light", k)) },
+    { id: "starch", em: "🟤", name: "Starch detective", how: "method, order, 4 experiments", got: () => ["method", "order"].every((k) => has("starch", k)) && SX.every((x) => has("starch", "exp-" + x.id)) },
+  ];
+  function toast(msg) { const t = $("toast"); t.innerHTML = msg; t.classList.remove("on"); void t.offsetWidth; t.classList.add("on"); clearTimeout(toast.k); toast.k = setTimeout(() => t.classList.remove("on"), 3200); }
+  let curTab = "glands";
+  function refreshStars() {
+    let total = 0;
+    for (const t in P.stars) { const n = tabStars(t); total += n; const s = document.querySelector(`[data-ts="${t}"]`); if (s) s.textContent = n ? "★" + n : ""; }
+    $("starSum").textContent = "★ " + total;
+    for (const t in CHECKS) {
+      const n = CHECKS[t].reduce((s, q) => s + (P.stars[t]["chk-" + q.id] ?? 0), 0), any = CHECKS[t].some((q) => has(t, "chk-" + q.id));
+      const c = document.querySelector(`[data-cs="${t}"]`); if (c) c.textContent = any ? "★" + n : "";
+    }
+    for (const b of BADGES) if (!P.badges[b.id] && b.got()) {
+      P.badges[b.id] = new Date().toISOString().slice(0, 10);
+      toast(`${b.em} New badge: <b>${b.name}</b>!`); SND.badge();
+      if (curTab !== "cert") setTimeout(() => say(curTab, `${b.em} You won the <b>${b.name}</b> badge! See 🏅 Certificate.`, "happy", "good"), 900);
+    }
+    save();
+  }
+  function addStars(tab, id, n) {
+    P.stars[tab][id] = Math.max(P.stars[tab][id] ?? -1, n);
+    if (n) SND.star();
+    refreshStars();
+  }
+  function fbSet(e, cls, html) { e.className = "feedback " + cls; e.innerHTML = html; }
+
+  /* questions: 1st wrong → a tip, 2nd wrong → the answer is shown.
+     opts = [value, html] makes buttons in box; or items = existing elements with data-v (e.g. the body labels) */
+  const setDis = (b, v) => { if ("disabled" in b) b.disabled = v; else if (v) b.setAttribute("data-dis", ""); else b.removeAttribute("data-dis"); };
+  const isDis = (b) => ("disabled" in b ? b.disabled : b.hasAttribute("data-dis"));
+  function ask({ box, fb, opts, items, correct, tip, answer, good, cls = "cat", spex, onDone }) {
+    const st = { mistakes: 0, revealed: false, done: false };
+    let btns;
+    if (items) { btns = items; btns.forEach((b) => { setDis(b, false); b.classList.remove("right", "wrong"); }); box.classList.add("ask"); }
+    else { box.replaceChildren(); btns = opts.map(([v, html]) => { const b = h(`<button class="${cls}" data-v="${v}">${html}</button>`); box.appendChild(b); return b; }); }
+    btns.forEach((b) => {
+      b.onclick = () => { if (!isDis(b)) pick(b.dataset.v, b); };
+      b.onkeydown = (e) => { if ((e.key === "Enter" || e.key === " ") && !("disabled" in b)) { e.preventDefault(); b.onclick(); } };
+    });
+    function finish() { st.done = true; box.classList.remove("ask"); btns.forEach((b) => setDis(b, true)); onDone && onDone(st); }
+    function pick(v, b) {
+      if (st.done) return;
+      if (correct.includes(v)) {
+        b.classList.add("right");
+        fbSet(fb, "good", `✔ ${typeof good === "function" ? good(v) : good}`);
+        spex && say(spex, st.mistakes ? "Yes! You got it after the tip. ★★" : "Brilliant – right first time! ★★★", "happy", "good");
+        return finish();
+      }
+      st.mistakes++; b.classList.add("wrong"); setDis(b, true); SND.tip();
+      if (st.mistakes === 1) { fbSet(fb, "tip", "💡 Tip: " + (typeof tip === "function" ? tip(v) : tip)); spex && say(spex, "Hmm, not quite. Read my tip and try again!", "hmm", "tip"); }
+      else {
+        st.revealed = true;
+        btns.forEach((x) => correct.includes(x.dataset.v) && x.classList.add("right"));
+        fbSet(fb, "ans", "The answer: " + answer);
+        spex && say(spex, "Here is the answer – read why, and you'll get the next one!", "think", "ans");
+        finish();
+      }
+    }
+    return st;
+  }
+
+  /* drag, or tap then tap (as in the Salt naming simulation) */
+  let SEL = null;
+  function unselect() { if (SEL) SEL.classList.remove("sel"); SEL = null; }
+  function pickable(tile, slotSel, drop) {
+    tile.addEventListener("click", (e) => {
+      if (tile.dataset.dragged) { delete tile.dataset.dragged; e.stopPropagation(); return; }
+      if (tile.dataset.locked) return;
+      e.stopPropagation();
+      const same = SEL === tile; unselect();
+      if (!same) { SEL = tile; tile.classList.add("sel"); tile._drop = drop; }
+    });
+    tile.addEventListener("pointerdown", (e) => {
+      if (e.button > 0 || tile.dataset.locked) return;
+      const sx = e.clientX, sy = e.clientY;
+      let ghost = null, hot = null;
+      try { tile.setPointerCapture(e.pointerId); } catch (er) {}
+      const at = (x, y) => { const t = document.elementFromPoint(x, y); const s = t && t.closest(slotSel); return s && !s.classList.contains("full") ? s : null; };
+      const move = (ev) => {
+        if (!ghost && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 6) {
+          ghost = tile.cloneNode(true); ghost.classList.add("drag-ghost"); ghost.classList.remove("sel");
+          ghost.style.width = tile.offsetWidth + "px";
+          document.body.appendChild(ghost); tile.classList.add("lifting");
+        }
+        if (!ghost) return;
+        ghost.style.left = ev.clientX + "px"; ghost.style.top = ev.clientY + "px";
+        const s = at(ev.clientX, ev.clientY);
+        if (s !== hot) { hot && hot.classList.remove("hot"); hot = s; hot && hot.classList.add("hot"); }
+      };
+      const up = (ev) => {
+        tile.removeEventListener("pointermove", move); tile.removeEventListener("pointerup", up); tile.removeEventListener("pointercancel", up);
+        if (!ghost) return;
+        tile.dataset.dragged = "1"; setTimeout(() => delete tile.dataset.dragged, 0);
+        ghost.remove(); tile.classList.remove("lifting"); hot && hot.classList.remove("hot");
+        const s = ev.type === "pointerup" && at(ev.clientX, ev.clientY);
+        if (s) { unselect(); drop(tile, s); }
+      };
+      tile.addEventListener("pointermove", move); tile.addEventListener("pointerup", up); tile.addEventListener("pointercancel", up);
+    });
+  }
+  // a tapped slot receives the selected tile
+  document.addEventListener("click", (e) => {
+    const s = e.target.closest(".slot");
+    if (s && SEL && !s.classList.contains("full") && SEL._drop && SEL._slots && SEL._slots.includes(s)) { const t = SEL; unselect(); t._drop(t, s); }
+  });
+  const shakeEl = (e) => { e.classList.remove("shake", "bounce"); void e.offsetWidth; e.classList.add(e.classList.contains("tile") ? "bounce" : "shake"); setTimeout(() => e.classList.remove("shake", "bounce"), 450); };
+
+  /* a drop task: tiles go into slots.
+     fits(tile, slot) → true if right. mode "task": one tip for the whole task, the 2nd mistake fills everything in;
+     mode "tile": each tile has its own tip → answer (stars per tile). */
+  function dropTask({ tiles, slots, fits, home, place, tip, fb, spex, mode = "task", onTile, onDone }) {
+    const st = { mistakes: 0, revealed: false, done: false };
+    const left = new Set(tiles);
+    for (const t of tiles) {
+      t._st = { mistakes: 0, revealed: false };
+      t._slots = slots;
+      pickable(t, slots.map((s) => "#" + s.id).join(","), drop);
+    }
+    function lock(t, s, shown) {
+      t.dataset.locked = "1"; t.classList.remove("sel"); t.classList.add(shown ? "shown" : "locked");
+      place(t, s); left.delete(t);
+      if (onTile) onTile(t, s);
+      if (!left.size || ![...left].some((x) => home(x))) finishAll();
+    }
+    function finishAll() { if (st.done) return; st.done = true; onDone && onDone(st); }
+    function revealAll() { st.revealed = true; for (const t of [...left]) { const s = home(t); if (s) lock(t, s, true); } }
+    function drop(t, s) {
+      if (st.done || t.dataset.locked) return;
+      if (fits(t, s)) {
+        SND.pop(); lock(t, s, false);
+        if (mode === "task" && !st.done) fb && fbSet(fb, "good", "✔ Right!");
+        return;
+      }
+      SND.tip(); shakeEl(s); shakeEl(t);
+      if (mode === "tile") {
+        t._st.mistakes++;
+        if (t._st.mistakes === 1) { fbSet(fb, "tip", "💡 Tip: " + tip(t, s)); spex && say(spex, "Hmm, not quite. Read my tip and try again!", "hmm", "tip"); }
+        else { t._st.revealed = true; const hs = home(t); fbSet(fb, "ans", "The answer: " + tip(t, s, true)); spex && say(spex, "I've put that one in the right place for you.", "think", "ans"); lock(t, hs, true); }
+        return;
+      }
+      st.mistakes++;
+      if (st.mistakes === 1) { fbSet(fb, "tip", "💡 Tip: " + tip(t, s)); spex && say(spex, "Hmm, not quite. Read my tip and try again!", "hmm", "tip"); }
+      else { revealAll(); fbSet(fb, "ans", "The answer is shown: the blue cards were placed for you. Read them carefully!"); spex && say(spex, "Here is the answer – read it, and you'll get the next one!", "think", "ans"); }
+    }
+    return st;
+  }
+
+  /* a short quiz (Checks and Test yourself): one question at a time, tip → answer */
+  function quiz({ root, tab, list, prefix, spex, title, onEnd, again }) {
+    let qi = 0; const QR = [];
+    root.innerHTML = `<div class="qhead"><h2></h2><div class="dots"></div></div><div class="qbody"></div><div class="feedback" aria-live="polite"></div>
+      <div class="controls"><button class="btn primary" hidden>Next question →</button></div>`;
+    const [hd, dots, body, fb, next] = [root.querySelector("h2"), root.querySelector(".dots"), root.querySelector(".qbody"), root.querySelector(".feedback"), root.querySelector(".btn")];
+    const paint = () => { dots.innerHTML = list.map((_, k) => { const r = QR[k]; return `<span class="dot${k === qi ? " now" : ""}${r ? (r.n > 0 ? " done" : " zero") : ""}">${k + 1}</span>`; }).join(""); };
+    function loadQ() {
+      const q = list[qi];
+      hd.textContent = `${title} · question ${qi + 1} of ${list.length}`; paint();
+      fb.className = "feedback"; fb.innerHTML = ""; next.hidden = true; body.replaceChildren();
+      body.appendChild(h(`<div class="qpic"><div class="em">${q.em}</div><p class="qtext">${q.text}</p></div>`));
+      const box = h(`<div class="cats"></div>`); body.appendChild(box);
+      const right = q.opts.find(([v]) => v === q.ans)[1];
+      ask({ box, fb, spex, opts: shuffle(q.opts), correct: [q.ans], tip: q.tip, answer: `<b>${right}</b>. ${q.why}`, good: q.why,
+        onDone: (st) => { const n = starsOf(st); QR[qi] = { label: q.text, n }; paint();
+          if (prefix) addStars(tab, prefix + q.id, n);
+          next.hidden = false; next.textContent = qi < list.length - 1 ? "Next question →" : "See my result →"; next.focus({ preventScroll: true }); } });
+    }
+    next.addEventListener("click", () => { if (qi < list.length - 1) { qi++; loadQ(); } else end(); });
+    function end() {
+      const right = QR.filter((r) => r.n === 3).length, stars = QR.reduce((s, r) => s + r.n, 0), max = list.length * 3;
+      root.innerHTML = `<h2 style="color:var(--navy)">${title} · your result</h2>
+        <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:end"><div><div class="score">${right}/${list.length}</div><div class="hint">right first time</div></div>
+        <div><div class="score" style="color:var(--star)">★ ${stars}</div><div class="hint">stars out of ${max}</div></div></div>
+        <p>${stars >= max * 0.9 ? "Outstanding! ${PRAISE}" : stars >= max * 0.66 ? "Well done! Look again at the questions without ★★★." : "Good try! Read Marie's guide (📖, top right), then play again."}</p>
+        <ul class="review">${QR.map((r, k) => `<li><span>${k + 1}. ${r.label}</span>${starsHTML(r.n)}</li>`).join("")}</ul>
+        <div class="controls"><button class="btn primary">${again}</button></div>`;
+      root.querySelector(".btn").addEventListener("click", () => onEnd(true));
+      onEnd(false, stars);
+    }
+    loadQ();
+  }
+  function runCheck(tab) {
+    const root = document.querySelector(`[data-check="${tab}"]`);
+    quiz({ root, tab, list: CHECKS[tab], prefix: "chk-", spex: tab, title: "Check", again: "↺ Try the Check again",
+      onEnd: (restart, stars) => { if (restart) runCheck(tab); else say(tab, `Check finished: <b>★ ${stars}</b> out of 9!`, "happy", "good"); } });
+  }
+
+
+  /* ============================ STEP PLAYER ============================ */
+  // every numbered-step animation: "👣 Step by step" (Next step ▶ · ↺ Replay step) or "▶ Play all" (slower, a 3 s stop after each step, ⏸ Pause)
+  const SLOW = 1.5, STOP_MS = 3000;
+  function stepper(o) {
+    // o: { host, list, steps: [async (ctx) => …], start: () => ctx, end(ctx), first, playLabel, nextLabel(i), onBusy(b), hold }
+    const host = $(o.host), n = o.steps.length;
+    host.innerHTML = `<div class="mini modesw" role="group" aria-label="How to watch"><button class="chip" data-m="step">👣 Step by step</button><button class="chip" data-m="play">▶ Play all</button></div>
+      <div class="controls"><button class="btn primary" data-b="go"></button><button class="btn" data-b="two"></button></div><div class="stepn" aria-live="polite"></div>`;
+    const go = host.querySelector('[data-b="go"]'), two = host.querySelector('[data-b="two"]'), num = host.querySelector(".stepn");
+    const S = { mode: "step", i: 0, ctx: null, busy: false, playing: false, stopReq: false, held: false };
+    const mark = (k) => { if (o.list) [...$(o.list).children].forEach((x, j) => { x.classList.toggle("on", j === k); x.classList.toggle("done", j < k); }); };
+    const busy = (b) => { S.busy = b; if (o.onBusy) o.onBusy(b); paint(); };
+    function paint() {
+      host.querySelectorAll(".modesw .chip").forEach((c) => { c.setAttribute("aria-pressed", c.dataset.m === S.mode); c.disabled = S.busy && c.dataset.m !== S.mode; });
+      if (S.mode === "step") {
+        go.textContent = S.i === 0 ? o.first : S.i >= n ? "↺ Start again" : (o.nextLabel && o.nextLabel(S.i)) || "Next step ▶";
+        go.disabled = S.busy; two.textContent = "↺ Replay step"; two.disabled = S.busy || S.i === 0;
+      } else if (!S.playing) {
+        go.textContent = S.i === 0 ? o.playLabel : S.i >= n ? "↺ Play again" : "▶ Go on"; go.disabled = false;
+        two.textContent = "⏸ Pause"; two.disabled = true;
+      } else {
+        go.textContent = S.held ? "▶ Go on" : o.playLabel; go.disabled = !S.held;
+        two.textContent = S.stopReq ? "⏸ Stopping after this step…" : "⏸ Pause"; two.disabled = S.held || S.stopReq;
+      }
+    }
+    function reset() {
+      if (S.ctx && S.ctx.stop) S.ctx.stop();
+      S.ctx = o.start(); S.i = 0; S.playing = S.stopReq = S.held = false; mark(-1); num.textContent = ""; paint();
+    }
+    async function run(k) {
+      mark(k); num.textContent = `Step ${k + 1} of ${n}`;
+      ANIM.k = SLOW;
+      try { await o.steps[k](S.ctx); } finally { ANIM.k = 1; }
+      S.i = k + 1;
+      if (S.i >= n) { mark(n); num.textContent = `✔ All ${n} steps`; o.end(S.ctx); }
+    }
+    async function next() {
+      if (S.busy) return;
+      if (S.i >= n) reset();
+      busy(true); await run(S.i); busy(false);
+    }
+    async function replay() {   // redraw, fast-forward the earlier steps, then play the last step again
+      if (S.busy || S.i === 0) return;
+      const k = S.i - 1; busy(true);
+      if (S.ctx && S.ctx.stop) S.ctx.stop();
+      S.ctx = o.start(); ANIM.k = 0;
+      try { for (let j = 0; j < k; j++) { mark(j); await o.steps[j](S.ctx); } } finally { ANIM.k = 1; }
+      await run(k); busy(false);
+    }
+    const hold = () => new Promise((r) => { const t0 = performance.now(); let held = 0, last = t0;
+      const tick = () => { const now = performance.now(); if (S.held) held += now - last; last = now;
+        if (S.stopReq || now - t0 - held >= STOP_MS) return r(); setTimeout(tick, 100); }; tick(); });
+    async function play() {
+      if (S.held) { S.held = false; if (S.ctx) S.ctx.hold = false; paint(); return; }
+      if (S.busy) return;
+      if (S.i >= n) reset();
+      S.playing = true; S.stopReq = false; busy(true);
+      while (S.i < n && !S.stopReq) { await run(S.i); if (S.i < n && !S.stopReq) await hold(); }
+      S.playing = S.stopReq = S.held = false; busy(false);
+    }
+    function pause() {
+      if (!S.playing) return;
+      if (o.hold) { S.held = true; S.ctx.hold = true; }   // stops at once (the day of glucose)
+      else S.stopReq = true;                              // stops at the end of this step
+      paint();
+    }
+    host.querySelectorAll(".modesw .chip").forEach((c) => c.addEventListener("click", () => { if (S.busy || S.mode === c.dataset.m) return; S.mode = c.dataset.m; reset(); }));
+    go.addEventListener("click", () => (S.mode === "step" ? next() : play()));
+    two.addEventListener("click", () => (S.mode === "step" ? replay() : pause()));
+    reset();
+    return { reset, S };
+  }
+
+  const hl = (on) => { document.querySelectorAll(".part-on").forEach((x) => x.classList.remove("part-on")); (Array.isArray(on) ? on : [on]).forEach((e) => e && e.classList.add("part-on")); };
+  // a dot (hormone, glucose…) moved along a polyline
+  async function travel(g, pts, ms, { r = 6, fill = "#E53935", stroke = "#fff", keep = false } = {}) {
+    const d = el("circle", { r, fill, stroke, "stroke-width": 1.5, cx: pts[0][0], cy: pts[0][1] }, g);
+    const p = el("path", { d: pathD(pts), fill: "none" }, g), L = p.getTotalLength();
+    await tween(ms, (t) => { const q = p.getPointAtLength(L * t); d.setAttribute("cx", q.x); d.setAttribute("cy", q.y); });
+    p.remove(); if (!keep) d.remove();
+    return d;
+  }
+  const label = (g, x, y, s, size = 15, fill = "#1F3A5F", extra = {}) => txt(g, x, y, s, { "text-anchor": "middle", "font-size": size, "font-weight": 700, fill, stroke: "#fff", "stroke-width": 4, "paint-order": "stroke", ...extra });
+  // a smooth closed (or open) curve through points (Catmull-Rom → Bézier)
+  function smooth(pts, closed = true) {
+    const n = pts.length, P = (i) => pts[(i + n) % n], f = (v) => v.toFixed(1);
+    let d = `M${f(pts[0][0])} ${f(pts[0][1])}`;
+    for (let i = 0; i < (closed ? n : n - 1); i++) {
+      const p0 = closed ? P(i - 1) : pts[Math.max(0, i - 1)], p1 = P(i), p2 = P(i + 1), p3 = closed ? P(i + 2) : pts[Math.min(n - 1, i + 2)];
+      d += ` C${f(p1[0] + (p2[0] - p0[0]) / 6)} ${f(p1[1] + (p2[1] - p0[1]) / 6)} ${f(p2[0] - (p3[0] - p1[0]) / 6)} ${f(p2[1] - (p3[1] - p1[1]) / 6)} ${f(p2[0])} ${f(p2[1])}`;
+    }
+    return d + (closed ? "Z" : "");
+  }
+  /* a label task: drag labels into boxes, then tap a box to read the job.
+     parts: [{ id, name, p, b, job }]; redraw(g) draws the picture; vw × 400 */
+  function labeller({ svg, wrap, bank, fb, info, parts, tab, star, draw, done, vw = 600, hlp = null, tileName = (p) => p.name }) {
+    svg.replaceChildren();
+    const g = el("g", {}, svg); draw(g);
+    const lines = el("g", {}, svg);
+    for (const p of parts) {
+      el("line", { x1: p.b[0], y1: p.b[1], x2: p.p[0], y2: p.p[1], stroke: "#455A64", "stroke-width": 1.4, "stroke-dasharray": "4 3", "data-k": p.id }, lines);
+      el("circle", { cx: p.p[0], cy: p.p[1], r: 3.5, fill: "#263238", "data-k": p.id }, lines);
+    }
+    wrap.querySelectorAll(".slot").forEach((x) => x.remove());
+    const slots = parts.map((p) => { const d = h(`<div class="slot" id="${tab}-ls-${p.id}" data-k="${p.id}" style="left:${(p.b[0] / vw) * 100}%;top:${(p.b[1] / 400) * 100}%"></div>`); wrap.appendChild(d); return d; });
+    bank.replaceChildren();
+    const tiles = shuffle(parts).map((p) => { const t = h(`<div class="tile" data-k="${p.id}" role="button" tabindex="0">${tileName(p)}</div>`); bank.appendChild(t); return t; });
+    info.hidden = true; fbSet(fb, "", "");
+    const show = (k) => { const p = parts.find((x) => x.id === k); hl(hlp ? $(hlp + k) : null); info.hidden = false; info.innerHTML = `💡 <b>${p.name}</b>: ${p.job}`; };
+    const L = { parts, slots, tiles, g, lines, show, finished: false };
+    dropTask({ tiles, slots, spex: tab, fb, mode: "tile",
+      fits: (t, s) => t.dataset.k === s.dataset.k, home: (t) => slots.find((s) => s.dataset.k === t.dataset.k),
+      place: (t, s) => { s.appendChild(t); s.classList.add("full"); },
+      tip: (t, s, final) => { const p = parts.find((x) => x.id === t.dataset.k); return final ? `<b>${p.name}</b> is placed for you. ${p.job}` : `Its job: ${p.job.replace(/<\/?b>/g, "")}`; },
+      onTile: (t) => { if (!t._st.revealed) fbSet(fb, "good", "✔ Right!"); show(t.dataset.k); },
+      onDone: () => {
+        const rev = tiles.filter((t) => t._st.revealed).length, mis = tiles.some((t) => t._st.mistakes);
+        addStars(tab, star, rev ? (rev <= 2 ? 1 : 0) : mis ? 2 : 3);
+        L.finished = true;
+        fbSet(fb, "good", `✔ All ${parts.length} labelled! Now <b>tap any label</b> to read its job again.`);
+        say(tab, "Well done! <b>Tap each label</b> to read what that gland does.", "happy", "good");
+        slots.forEach((s) => { s.classList.add("info"); s.addEventListener("click", () => show(s.dataset.k)); });
+        done && done();
+      } });
+    return L;
+  }
+
+
+  /* ============================ 5 DRAWING HELPERS ============================ */
+  const WAT = "#29B6F6", CO2C = "#78909C", OXY = "#E53935", BLUEBLACK = "#1A1F4E", ORBROWN = "#D2802D";
+  const ATOM = { C: { r: 10, fill: "#37474F", ink: "#fff" }, O: { r: 10, fill: "#E53935", ink: "#fff" }, H: { r: 7, fill: "#FFFFFF", ink: "#37474F" } };
+  function atom(g, e, x, y) {
+    const a = ATOM[e], w = el("g", { transform: `translate(${x} ${y})` }, g);
+    el("circle", { r: a.r, fill: a.fill, stroke: e === "H" ? "#78909C" : "#fff", "stroke-width": 1.5 }, w);
+    const t = el("text", { y: e === "H" ? 3.5 : 4, "text-anchor": "middle", "font-size": e === "H" ? 9 : 11, "font-weight": 700, fill: a.ink }, w); t.textContent = e;
+    w._e = e; w._x = x; w._y = y; return w;
+  }
+  const moveTo = (w, x, y) => { w._x = x; w._y = y; w.setAttribute("transform", `translate(${x} ${y})`); };
+  const MOL = {
+    CO2: (x, y) => [["O", x - 17, y], ["C", x, y], ["O", x + 17, y]],
+    H2O: (x, y) => [["O", x, y], ["H", x - 13, y + 8], ["H", x + 13, y + 8]],
+    O2: (x, y) => [["O", x - 9, y], ["O", x + 9, y]],
+  };
+  const drawMol = (g, kind, x, y) => MOL[kind](x, y).map(([e, ax, ay]) => atom(g, e, ax, ay));
+  // glucose, simplified ring (5 C + 1 O), C6 on top: 6 C, 12 H, 6 O. Returns [{ e, x, y, p }] (p = the atom it is bonded to)
+  function glucoseAtoms(cx, cy) {
+    const R = 24, A = [], add = (e, x, y, p) => { A.push({ e, x, y, p }); return A.length - 1; };
+    const pol = (i, d, deg) => [A[i].x + d * Math.cos((deg * Math.PI) / 180), A[i].y + d * Math.sin((deg * Math.PI) / 180)];
+    const ring = [-30, 30, 90, 150, 210, 270].map((deg, k) => add(k === 0 ? "O" : "C", cx + R * Math.cos((deg * Math.PI) / 180), cy + R * Math.sin((deg * Math.PI) / 180), -1));
+    [1, 2, 3, 4].forEach((k) => {
+      const deg = [-30, 30, 90, 150, 210, 270][k], i = ring[k];
+      const o = add("O", ...pol(i, 21, deg - 22), i); add("H", ...pol(o, 14, deg - 22), o);
+      add("H", ...pol(i, 18, deg + 30), i);
+    });
+    const c5 = ring[5], c6 = add("C", ...pol(c5, 23, 270), c5);
+    add("H", ...pol(c5, 17, 330), c5);
+    add("H", ...pol(c6, 16, 330), c6); add("H", ...pol(c6, 16, 210), c6);
+    const o6 = add("O", ...pol(c6, 21, 270), c6); add("H", ...pol(o6, 14, 330), o6);
+    return { atoms: A, ring };
+  }
+  function drawGlucose(g, cx, cy, { bonds = true } = {}) {
+    const G = glucoseAtoms(cx, cy), bg = el("g", {}, g);
+    if (bonds) glucoseBonds(bg, G);
+    const ws = G.atoms.map((a) => atom(g, a.e, a.x, a.y));
+    return { ...G, ws, bg };
+  }
+  function glucoseBonds(bg, G) {
+    const L = (a, b) => el("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, stroke: "#546E7A", "stroke-width": 3 }, bg);
+    G.ring.forEach((i, k) => L(G.atoms[i], G.atoms[G.ring[(k + 1) % 6]]));
+    G.atoms.forEach((a) => { if (a.p >= 0 && !G.ring.includes(G.atoms.indexOf(a))) L(a, G.atoms[a.p]); });
+  }
+  const hex = (g, x, y, s = 8, attrs = {}) => el("path", { d: `M${x - s} ${y} L${x - s / 2} ${y - s * 0.87} L${x + s / 2} ${y - s * 0.87} L${x + s} ${y} L${x + s / 2} ${y + s * 0.87} L${x - s / 2} ${y + s * 0.87}Z`, fill: "#FDD835", stroke: "#F9A825", "stroke-width": 1.5, ...attrs }, g);
+  const hexAt = (g, s = 8) => { const w = el("g", { transform: "translate(0 0)" }, g); hex(w, 0, 0, s); return w; };
+  const dot = (g, x, y, fill, r = 6) => el("circle", { cx: x, cy: y, r, fill, stroke: "#fff", "stroke-width": 1.5 }, g);
+  // a leaf along the x axis from its base (0,0): length L, half-width W
+  const leafD = (L, W) => `M0 0 C${L * 0.25} ${-W * 1.25} ${L * 0.7} ${-W * 1.05} ${L} 0 C${L * 0.7} ${W * 1.05} ${L * 0.25} ${W * 1.25} 0 0Z`;
+  function leaf(g, x, y, deg, L, W, fill = "#7CB342", stroke = "#33691E") {
+    const w = el("g", { transform: `translate(${x} ${y}) rotate(${deg})` }, g);
+    el("path", { d: leafD(L, W), fill, stroke, "stroke-width": 2 }, w);
+    el("path", { d: `M2 0 Q${L * 0.5} ${-W * 0.12} ${L * 0.92} 0`, fill: "none", stroke, "stroke-width": 1.5, opacity: 0.7 }, w);
+    return w;
+  }
+  // an upright leaf centred on (cx, cy): length L, half-width W
+  const vleafD = (cx, cy, L, W) => `M${cx} ${cy + L / 2} C${cx - W * 1.25} ${cy + L / 4} ${cx - W * 1.05} ${cy - L / 5} ${cx} ${cy - L / 2} C${cx + W * 1.05} ${cy - L / 5} ${cx + W * 1.25} ${cy + L / 4} ${cx} ${cy + L / 2}Z`;
+  const starD = (cx, cy, R, r) => "M" + [...Array(10)].map((_, i) => { const a = -Math.PI / 2 + (i * Math.PI) / 5, d = i % 2 ? r : R; return `${(cx + d * Math.cos(a)).toFixed(1)} ${(cy + d * Math.sin(a)).toFixed(1)}`; }).join(" L") + "Z";
+  let clipN = 0;
+  const clipOf = (svg, d) => { let defs = svg.querySelector("defs") || el("defs", {}, svg); const id = "clp" + ++clipN; const c = el("clipPath", { id }, defs); el("path", { d }, c); return `url(#${id})`; };
+  const fade = (e, a, b, ms = 500) => tween(ms, (t) => e.setAttribute("opacity", a + (b - a) * t));
+  const moveG = (w, x0, y0, x1, y1, ms, extra = "") => tween(ms, (t) => { const k = ease(t); w.setAttribute("transform", `translate(${x0 + (x1 - x0) * k} ${y0 + (y1 - y0) * k})${extra}`); });
+  // a small potted plant: pot base centre (x, y), stem height h
+  function pottedPlant(g, x, y, h = 90, leafCol = "#7CB342") {
+    const w = el("g", {}, g);
+    el("path", { d: `M${x - 30} ${y - 34} L${x + 30} ${y - 34} L${x + 22} ${y} L${x - 22} ${y}Z`, fill: "#BF6F3F", stroke: "#8D4A25", "stroke-width": 2 }, w);
+    el("rect", { x: x - 34, y: y - 42, width: 68, height: 10, rx: 3, fill: "#C97B4A", stroke: "#8D4A25", "stroke-width": 2 }, w);
+    el("line", { x1: x, y1: y - 42, x2: x, y2: y - 42 - h, stroke: "#558B2F", "stroke-width": 5, "stroke-linecap": "round" }, w);
+    for (let k = 0; k < 4; k++) { const yy = y - 42 - h * (0.3 + 0.2 * k); leaf(w, x, yy, k % 2 ? -25 : 205, 34 - k * 3, 11, leafCol); }
+    return w;
+  }
+
+  /* ============================ 6 TAB 1 · THE EQUATION ============================ */
+  // 🧩 word equation
+  const WORD = [
+    { id: "co2", name: "carbon dioxide", k: "r", tip: "It comes from the air and goes into the leaf through the stomata." },
+    { id: "h2o", name: "water", k: "r", tip: "It comes from the soil, through the roots." },
+    { id: "glu", name: "glucose", k: "p", tip: "It is the sugar the plant makes." },
+    { id: "o2", name: "oxygen", k: "p", tip: "It is the gas the plant gives off." },
+    { id: "light", name: "☀ light energy", k: "up", tip: "It is what the plant needs to make the reaction happen. We write it above the arrow." },
+    { id: "chl", name: "🟢 chlorophyll", k: "dn", tip: "The green pigment that absorbs the light. We write it below the arrow." },
+    { id: "nit", name: "nitrogen", k: "x", tip: "Nitrogen is not used in photosynthesis." },
+    { id: "soil", name: "soil", k: "x", tip: "Plants do not use up soil to make glucose! (Van Helmont showed this almost 400 years ago.)" },
+  ];
+  function setupWord() {
+    $("ewSym").hidden = true; $("ewBank").hidden = false; $("ewRead").hidden = false; document.querySelector(".eqlab").hidden = false; fbSet($("ewFb"), "", "");
+    const slots = ["ew-r1", "ew-r2", "ew-up", "ew-dn", "ew-p1", "ew-p2", "ew-x"].map((id) => $(id));
+    slots.forEach((s) => { s.classList.remove("full", "done"); s.querySelectorAll(".tile").forEach((t) => t.remove()); });
+    $("ewBank").replaceChildren();
+    const tiles = shuffle(WORD).map((w) => { const t = h(`<div class="tile" data-k="${w.k}" data-id="${w.id}" role="button" tabindex="0">${w.name}</div>`); $("ewBank").appendChild(t); return t; });
+    const homeOf = (t) => (t.dataset.k === "x" ? $("ew-x") : slots.find((s) => s.dataset.k === t.dataset.k && !s.classList.contains("full")));
+    dropTask({ tiles, slots, spex: "eq", fb: $("ewFb"), mode: "tile",
+      fits: (t, s) => t.dataset.k === s.dataset.k, home: homeOf,
+      place: (t, s) => { s.appendChild(t); if (s.id !== "ew-x") s.classList.add("full"); },
+      tip: (t, s, final) => { const w = WORD.find((x) => x.id === t.dataset.id); return final ? `<b>${w.name}</b> is placed for you. ${w.tip}` : w.tip; },
+      onTile: (t) => { if (!t._st.revealed) fbSet($("ewFb"), "good", "✔ Right!"); },
+      onDone: () => {
+        const rev = tiles.filter((t) => t._st.revealed).length, mis = tiles.some((t) => t._st.mistakes);
+        addStars("eq", "word", rev ? (rev <= 2 ? 1 : 0) : mis ? 2 : 3);
+        fbSet($("ewFb"), "good", "✔ <b>carbon dioxide + water → glucose + oxygen</b>, with light energy, in the chlorophyll. Now try <b>🔢 Count the atoms</b>.");
+        $("ewSym").hidden = false; $("ewBank").hidden = true; $("ewRead").hidden = true; document.querySelector(".eqlab").hidden = true; $("ewAgain").onclick = setupWord; fitHeight();
+        say("eq", "That is the <b>word equation</b>! The <b>reactants</b> go in, the <b>products</b> come out.", "happy", "good");
+      } });
+  }
+
+  // 🔢 count the atoms: choose the numbers in front of CO₂, H₂O and O₂ (one glucose)
+  const ES = { n: { CO2: 1, H2O: 1, O2: 1 }, st: null };
+  const ES_ROWS = [["CO2", "Carbon dioxide CO₂", "#78909C"], ["H2O", "Water H₂O", WAT], ["GLU", "Glucose C₆H₁₂O₆", "#F9A825"], ["O2", "Oxygen O₂", OXY]];
+  const esCount = () => { const n = ES.n; return { L: { C: n.CO2, H: 2 * n.H2O, O: 2 * n.CO2 + n.H2O }, R: { C: 6, H: 12, O: 6 + 2 * n.O2 } }; };
+  function esDraw() {
+    const svg = $("esSvg"); svg.replaceChildren();
+    const box = (x, y, w, hh, t) => { el("rect", { x, y, width: w, height: hh, rx: 14, fill: "#F7F9FC", stroke: "#DDE6F0", "stroke-width": 2 }, svg); label(svg, x + 12, y + 20, t, 16, "#1F3A5F", { "text-anchor": "start" }); };
+    box(8, 8, 290, 168, "carbon dioxide"); box(8, 186, 290, 168, "water"); box(342, 8, 290, 168, "glucose"); box(342, 186, 290, 168, "oxygen");
+    label(svg, 320, 186, "→", 44, "#1F3A5F");
+    const g = el("g", {}, svg), n = ES.n;
+    for (let i = 0; i < n.CO2; i++) drawMol(g, "CO2", 52 + 66 * (i % 4), 58 + 40 * Math.floor(i / 4));
+    for (let i = 0; i < n.H2O; i++) drawMol(g, "H2O", 50 + 66 * (i % 4), 228 + 40 * Math.floor(i / 4));
+    drawGlucose(g, 500, 112);
+    for (let i = 0; i < n.O2; i++) drawMol(g, "O2", 383 + 66 * (i % 4), 232 + 40 * Math.floor(i / 4));
+    const c = esCount(), same = (k) => c.L[k] === c.R[k];
+    const tally = (x, side) => txt(svg, x, 386, `C ${side.C}  ·  H ${side.H}  ·  O ${side.O}`, { "text-anchor": "middle", "font-size": 20, "font-weight": 800, fill: ["C", "H", "O"].every(same) ? "#2E7D32" : "#1F3A5F" });
+    tally(153, c.L); tally(487, c.R);
+    txt(svg, 320, 386, ["C", "H", "O"].every(same) ? "=" : "≠", { "text-anchor": "middle", "font-size": 26, "font-weight": 800, fill: ["C", "H", "O"].every(same) ? "#2E7D32" : "#C62828" });
+  }
+  function esPaint() {
+    $("esCoef").innerHTML = ES_ROWS.map(([k, name, col]) => k === "GLU"
+      ? `<div class="coef"><span><i class="dot" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${col}"></i> ${name}</span><span></span><span class="n">1</span><span class="fixed">fixed</span></div>`
+      : `<div class="coef"><span><i class="dot" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${col}"></i> ${name}</span><button class="btn" data-k="${k}" data-d="-1" aria-label="fewer ${name}">−</button><span class="n">${ES.n[k]}</span><button class="btn" data-k="${k}" data-d="1" aria-label="more ${name}">+</button></div>`).join("");
+    const done = ES.st && ES.st.done;
+    $("esCoef").querySelectorAll("button").forEach((b) => { b.disabled = done || ES.n[b.dataset.k] + +b.dataset.d < 1 || ES.n[b.dataset.k] + +b.dataset.d > 8;
+      b.onclick = () => { ES.n[b.dataset.k] += +b.dataset.d; SND.pop(); esPaint(); }; });
+    const c = esCount();
+    $("esTab").innerHTML = [["C", "carbon"], ["H", "hydrogen"], ["O", "oxygen"]].map(([k, n]) => `<span class="${c.L[k] === c.R[k] ? "ok" : ""}"><b>${k}</b> ${c.L[k]} → ${c.R[k]} ${c.L[k] === c.R[k] ? "✔" : "✖"}</span>`).join("");
+    esDraw(); fitHeight();
+  }
+  function setupSym() {
+    ES.n = { CO2: 1, H2O: 1, O2: 1 }; ES.st = { mistakes: 0, revealed: false, done: false };
+    fbSet($("esFb"), "", ""); $("esCheck").textContent = "✔ Check my equation"; $("esCheck").onclick = esCheck;
+    esPaint();
+  }
+  function esCheck() {
+    const st = ES.st, c = esCount(), bad = ["C", "H", "O"].find((k) => c.L[k] !== c.R[k]);
+    if (!bad) {
+      st.done = true; addStars("eq", "sym", starsOf(st));
+      fbSet($("esFb"), "good", "✔ Balanced! <b>6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂</b>. 6 C, 12 H and 18 O on each side: atoms are not lost or made, only <b>rearranged</b>.");
+      say("eq", st.mistakes ? "Yes! You got it after the tip. ★★" : "Brilliant – right first time! ★★★", "happy", "good");
+      $("esCheck").textContent = "↺ Again"; $("esCheck").onclick = setupSym; esPaint(); return;
+    }
+    st.mistakes++; SND.tip();
+    const tips = { C: "Count the <b>carbon</b> first: glucose has 6 C atoms. Each CO₂ has 1 C. How many CO₂ do you need?",
+      H: "Now the <b>hydrogen</b>: glucose has 12 H atoms. Each H₂O has 2 H. How many H₂O do you need?",
+      O: "Last, the <b>oxygen</b>: count the O on the left. Glucose has 6 O; each O₂ has 2 O. How many O₂ make the rest?" };
+    if (st.mistakes === 1) { fbSet($("esFb"), "tip", "💡 Tip: " + tips[bad]); say("eq", "Hmm, not quite. Read my tip and try again!", "hmm", "tip"); }
+    else {
+      st.revealed = true; st.done = true; ES.n = { CO2: 6, H2O: 6, O2: 6 }; addStars("eq", "sym", 0);
+      fbSet($("esFb"), "ans", "The answer: <b>6CO₂ + 6H₂O → C₆H₁₂O₆ + 6O₂</b>. Left: 6 C, 12 H, 12 + 6 = 18 O. Right: 6 C, 12 H, 6 + 12 = 18 O.");
+      say("eq", "Here is the answer – read why, and you'll get the next one!", "think", "ans");
+      $("esCheck").textContent = "↺ Again"; $("esCheck").onclick = setupSym; esPaint();
+    }
+  }
+
+  // ▶ watch it happen: atoms rearranged inside a chloroplast
+  const EA_STEPS = ["Six <b>carbon dioxide</b> molecules come in from the air.", "Six <b>water</b> molecules come up from the roots.", "<b>Chlorophyll</b> absorbs <b>light energy</b>.", "The molecules break apart; the atoms join up in a <b>new way</b>.", "Out come <b>1 glucose</b> + <b>6 oxygen</b> molecules. No atom is lost or made."];
+  let eaBusy = false;
+  const EA_CO2 = [...Array(6)].map((_, i) => [80 + 78 * (i % 3), 110 + 50 * Math.floor(i / 3)]);
+  const EA_H2O = [...Array(6)].map((_, i) => [80 + 78 * (i % 3), 268 + 50 * Math.floor(i / 3)]);
+  const EA_O2 = [...Array(6)].map((_, i) => [420 + 72 * (i % 3), 272 + 50 * Math.floor(i / 3)]);
+  function eaDraw() {
+    const svg = $("eaSvg"); svg.replaceChildren();
+    el("ellipse", { cx: 320, cy: 205, rx: 312, ry: 186, fill: "#E8F5E9", stroke: "#66BB6A", "stroke-width": 4 }, svg);
+    const thy = el("g", { opacity: 0.55 }, svg);
+    for (const [x, y] of [[320, 60], [300, 352], [450, 352], [600, 250], [70, 205]]) for (let k = 0; k < 4; k++) el("rect", { x: x - 22, y: y - 14 + k * 7, width: 44, height: 6, rx: 3, fill: "#43A047" }, thy);
+    label(svg, 320, 30, "inside a chloroplast", 17, "#2E7D32");
+    const C = { svg, thy, g: el("g", {}, svg), fx: el("g", {}, svg), ws: [] };
+    C.bonds = el("g", { opacity: 0 }, svg); svg.insertBefore(C.bonds, C.g);
+    // reactant atoms, hidden off the picture until they come in
+    EA_CO2.forEach(([x, y]) => MOL.CO2(x - 300, y).forEach(([e, ax, ay]) => C.ws.push(Object.assign(atom(C.g, e, ax, ay), { from: "co2", sx: ax + 300, sy: ay }))));
+    EA_H2O.forEach(([x, y]) => MOL.H2O(x, y + 200).forEach(([e, ax, ay]) => C.ws.push(Object.assign(atom(C.g, e, ax, ay), { from: "h2o", sx: ax, sy: ay - 200 }))));
+    // targets: glucose + 6 O₂
+    const G = glucoseAtoms(500, 130); glucoseBonds(C.bonds, G);
+    const T = { C: [], H: [], O: [] };
+    EA_O2.forEach(([x, y]) => MOL.O2(x, y).forEach(([e, ax, ay]) => T[e].push([ax, ay])));
+    G.atoms.forEach((a) => T[a.e].push([a.x, a.y]));
+    const order = { O: [...C.ws.filter((w) => w._e === "O" && w.from === "h2o"), ...C.ws.filter((w) => w._e === "O" && w.from === "co2")], C: C.ws.filter((w) => w._e === "C"), H: C.ws.filter((w) => w._e === "H") };
+    for (const e in order) order[e].forEach((w, i) => { w.tx = T[e][i][0]; w.ty = T[e][i][1]; });
+    C.lab = el("g", {}, svg);
+    return C;
+  }
+  const EA_RUN = [
+    async (C) => { label(C.lab, 158, 76, "6 CO₂", 18, "#455A64"); await tween(1400, (t) => C.ws.filter((w) => w.from === "co2").forEach((w) => moveTo(w, w.sx - 300 * (1 - ease(t)), w.sy))); },
+    async (C) => { label(C.lab, 158, 380, "6 H₂O", 18, "#0277BD"); await tween(1400, (t) => C.ws.filter((w) => w.from === "h2o").forEach((w) => moveTo(w, w.sx, w.sy + 200 * (1 - ease(t))))); },
+    async (C) => {
+      const rays = el("g", {}, C.fx);
+      const ls = [[0, 0, 300, 70], [40, 0, 330, 180], [120, 0, 590, 240], [0, 60, 320, 330]].map(([x1, y1, x2, y2]) => el("line", { x1, y1, x2: x1, y2: y1, stroke: "#FFD600", "stroke-width": 6, "stroke-linecap": "round", opacity: 0.9 }, rays));
+      const ends = [[300, 70], [330, 180], [590, 240], [320, 330]];
+      await tween(1000, (t) => ls.forEach((l, i) => { l.setAttribute("x2", +l.getAttribute("x1") + (ends[i][0] - l.getAttribute("x1")) * t); l.setAttribute("y2", +l.getAttribute("y1") + (ends[i][1] - l.getAttribute("y1")) * t); }));
+      C.thy.classList.add("lit"); C.thy.setAttribute("opacity", 1);
+      label(C.lab, 470, 200, "☀ light energy absorbed", 18, "#E65100");
+    },
+    async (C) => {
+      C.lab.replaceChildren(); C.fx.replaceChildren();
+      C.ws.forEach((w) => { w.x0 = w._x; w.y0 = w._y; w.mx = 260 + Math.random() * 120; w.my = 130 + Math.random() * 150; });
+      await tween(1300, (t) => C.ws.forEach((w) => moveTo(w, w.x0 + (w.mx - w.x0) * ease(t), w.y0 + (w.my - w.y0) * ease(t))));
+      await wait(300);
+      await tween(1500, (t) => C.ws.forEach((w) => moveTo(w, w.mx + (w.tx - w.mx) * ease(t), w.my + (w.ty - w.my) * ease(t))));
+    },
+    async (C) => {
+      await fade(C.bonds, 0, 1, 500);
+      label(C.lab, 500, 212, "1 glucose C₆H₁₂O₆", 18, "#F57F17"); label(C.lab, 492, 382, "6 O₂ → out of the leaf", 18, "#C62828");
+      label(C.lab, 180, 200, "6 C · 12 H · 18 O", 20, "#2E7D32"); label(C.lab, 180, 226, "in = out ✔", 20, "#2E7D32");
+      SND.star();
+    },
+  ];
+  function setupAnim() {
+    $("eaSteps").innerHTML = EA_STEPS.map((s) => `<li>${s}</li>`).join("");
+    stepper({ host: "eaCtl", list: "eaSteps", first: "▶ Start photosynthesis", playLabel: "▶ Play all", onBusy: (b) => { eaBusy = b; },
+      start: () => { $("eaAsk").hidden = true; asking("eAnim", false); fbSet($("eaFb"), "", ""); return eaDraw(); }, steps: EA_RUN, end: eaEnd });
+  }
+  function eaEnd() {
+    say("eq", "The same 36 atoms went in and came out. Light energy is now <b>stored</b> in the glucose.", "happy");
+    if (has("eq", "anim")) return;
+    $("eaAsk").hidden = false; asking("eAnim", true);
+    const opts = [["a", "They are rearranged: no atom is lost or made"], ["b", "Light destroys some of the atoms"], ["c", "New atoms are made from light"], ["d", "Carbon atoms turn into oxygen atoms"]];
+    ask({ box: $("eaCats"), fb: $("eaFb"), spex: "eq", opts: shuffle(opts), correct: ["a"], tip: "Count the atoms before and after.",
+      answer: `<b>${opts[0][1]}</b>. In every chemical reaction the atoms are only rearranged into new molecules.`, good: "In every chemical reaction the atoms are only <b>rearranged</b>: 6 C, 12 H and 18 O before and after.",
+      onDone: (st) => { addStars("eq", "anim", starsOf(st)); asking("eAnim", false); } });
+  }
+
+  /* ============================ 7 TAB 2 · INGREDIENTS' JOURNEY ============================ */
+  // the plant in the soil (left) and a zoom into a leaf (right). viewBox 640 × 400
+  const ZC = [480, 190], ZR = 148;   // zoom circle
+  const WPATH = [[120, 320], [168, 286], [170, 252], [170, 126], [198, 108], [222, 99]];   // water: root → xylem → leaf
+  function drawJourney(svg, { labels = true } = {}) {
+    svg.replaceChildren();
+    const S = {};
+    el("rect", { x: 0, y: 0, width: 640, height: 252, fill: "#E3F2FD" }, svg);
+    el("rect", { x: 0, y: 252, width: 640, height: 148, fill: "#8D6E63" }, svg);
+    el("line", { x1: 0, y1: 252, x2: 640, y2: 252, stroke: "#5D4037", "stroke-width": 3 }, svg);
+    for (let i = 0; i < 70; i++) el("circle", { cx: (i * 97) % 330 + 5, cy: 262 + ((i * 53) % 132), r: 1.6 + (i % 3), fill: "#6D4C41", opacity: 0.5 }, svg);
+    // the Sun
+    const sun = el("g", {}, svg);
+    for (let k = 0; k < 8; k++) { const a = (k * Math.PI) / 4; el("line", { x1: 40 + 28 * Math.cos(a), y1: 40 + 28 * Math.sin(a), x2: 40 + 38 * Math.cos(a), y2: 40 + 38 * Math.sin(a), stroke: "#FFB300", "stroke-width": 3, "stroke-linecap": "round" }, sun); }
+    el("circle", { cx: 40, cy: 40, r: 22, fill: "#FFD54F", stroke: "#FFB300", "stroke-width": 2 }, sun);
+    // roots with root hairs
+    const roots = el("g", {}, svg), rc = "#EFEBE9";
+    const branches = [[[170, 252], [168, 300], [165, 345], [160, 388]], [[168, 284], [140, 300], [118, 322], [96, 360]], [[167, 300], [200, 318], [222, 340], [240, 372]], [[165, 340], [145, 360], [128, 382]], [[169, 270], [200, 280], [228, 292]]];
+    branches.forEach((b, i) => el("path", { d: smooth(b, false), fill: "none", stroke: rc, "stroke-width": i ? 4 : 6, "stroke-linecap": "round" }, roots));
+    const hairs = el("g", {}, roots);
+    for (const b of [branches[1], branches[2], branches[3]]) {
+      const p = el("path", { d: smooth(b, false), fill: "none" }, svg), L = p.getTotalLength();
+      for (let t = 0.45; t <= 1; t += 0.07) { const q = p.getPointAtLength(L * t), q2 = p.getPointAtLength(Math.min(L, L * t + 1)), dx = q2.x - q.x, dy = q2.y - q.y, n = Math.hypot(dx, dy) || 1;
+        for (const s of [-1, 1]) el("line", { x1: q.x, y1: q.y, x2: q.x - (dy / n) * 9 * s, y2: q.y + (dx / n) * 9 * s, stroke: rc, "stroke-width": 1.5 }, hairs); }
+      p.remove();
+    }
+    // xylem (blue) inside the root, stem and leaf vein
+    S.xylem = el("path", { d: pathD(WPATH), fill: "none", stroke: "#1E88E5", "stroke-width": 2.5, opacity: 0.85 }, svg);
+    // stem and leaves
+    el("line", { x1: 170, y1: 252, x2: 170, y2: 60, stroke: "#558B2F", "stroke-width": 10, "stroke-linecap": "round" }, svg);
+    svg.appendChild(S.xylem);
+    leaf(svg, 170, 172, 192, 92, 26); leaf(svg, 170, 214, 14, 70, 20); leaf(svg, 170, 72, 245, 58, 18);
+    S.zleaf = leaf(svg, 170, 118, -20, 112, 30, "#8BC34A");
+    el("path", { d: pathD(WPATH.slice(3)), fill: "none", stroke: "#1E88E5", "stroke-width": 2.5, opacity: 0.85 }, svg);
+    // zoom lines
+    el("line", { x1: 222, y1: 99, x2: 352, y2: 112, stroke: "#455A64", "stroke-width": 1.5, "stroke-dasharray": "5 4" }, svg);
+    el("line", { x1: 222, y1: 99, x2: 352, y2: 268, stroke: "#455A64", "stroke-width": 1.5, "stroke-dasharray": "5 4" }, svg);
+    // ----- the zoom into the leaf -----
+    const z = el("g", { "clip-path": clipOf(svg, `M${ZC[0] - ZR} ${ZC[1]} a${ZR} ${ZR} 0 1 0 ${2 * ZR} 0 a${ZR} ${ZR} 0 1 0 ${-2 * ZR} 0Z`) }, svg);
+    el("rect", { x: 320, y: 30, width: 320, height: 320, fill: "#E3F2FD" }, z);
+    el("rect", { x: 320, y: 124, width: 320, height: 138, fill: "#F9FBE7" }, z);
+    for (let x = 326; x < 640; x += 28) el("rect", { x, y: 110, width: 27, height: 14, rx: 4, fill: "#F1F8E9", stroke: "#9CCC65", "stroke-width": 1.5 }, z);
+    S.chl = el("g", {}, z); S.pal = [];
+    for (let x = 334; x < 630; x += 26) {
+      el("rect", { x, y: 126, width: 23, height: 70, rx: 10, fill: "#C5E1A5", stroke: "#7CB342", "stroke-width": 1.5 }, z);
+      S.pal.push([x + 11.5, 160]);
+      for (let k = 0; k < 5; k++) el("ellipse", { cx: x + (k % 2 ? 16 : 7), cy: 136 + k * 12, rx: 4.2, ry: 2.8, fill: "#2E7D32" }, S.chl);
+    }
+    z.appendChild(S.chl);
+    const vein = [418, 232];
+    for (let r = 0; r < 2; r++) for (let x = 340 + r * 15; x < 630; x += 30) {
+      const y = 214 + r * 28; if (Math.hypot(x - vein[0], y - vein[1]) < 30) continue;
+      el("circle", { cx: x, cy: y, r: 12, fill: "#DCEDC8", stroke: "#9CCC65", "stroke-width": 1.5 }, z);
+      el("ellipse", { cx: x - 3, cy: y - 3, rx: 3.5, ry: 2.4, fill: "#2E7D32" }, S.chl);
+    }
+    el("circle", { cx: vein[0], cy: vein[1], r: 17, fill: "#BBDEFB", stroke: "#1E88E5", "stroke-width": 3 }, z);
+    for (const [dx, dy] of [[-6, -5], [6, -5], [0, 6]]) el("circle", { cx: vein[0] + dx, cy: vein[1] + dy, r: 4.5, fill: "#fff", stroke: "#1E88E5", "stroke-width": 1.5 }, z);
+    for (let x = 326; x < 640; x += 28) { if (x > 452 && x < 500) continue; el("rect", { x, y: 262, width: 27, height: 14, rx: 4, fill: "#F1F8E9", stroke: "#9CCC65", "stroke-width": 1.5 }, z); }
+    el("rect", { x: 456, y: 262, width: 48, height: 14, fill: "#E3F2FD" }, z);
+    for (const gx of [468, 492]) el("ellipse", { cx: gx, cy: 269, rx: 10, ry: 7.5, fill: "#9CCC65", stroke: "#558B2F", "stroke-width": 2 }, z);
+    el("circle", { cx: ZC[0], cy: ZC[1], r: ZR, fill: "none", stroke: "#455A64", "stroke-width": 3 }, svg);
+    S.fx = el("g", {}, svg);
+    if (labels) {
+      label(svg, 480, 362, "inside the leaf (zoom)", 15, "#455A64");
+      label(svg, 560, 104, "chloroplasts", 15, "#2E7D32");
+      label(svg, 397, 238, "xylem", 14, "#1565C0", { "text-anchor": "end" });
+      label(svg, 480, 300, "stoma", 15, "#33691E");
+      label(svg, 64, 392, "root hairs", 15, "#FFF", { stroke: "#5D4037" });
+      label(svg, 205, 192, "xylem", 14, "#1565C0", { "text-anchor": "start" });
+      label(svg, 290, 380, "soil", 16, "#FFF", { stroke: "#5D4037" });
+      label(svg, 110, 22, "air", 16, "#1F3A5F");
+    }
+    return S;
+  }
+  // travel a dot along a polyline (kept, so it can move on)
+  async function along(g, pts, ms, fill, r = 5.5) { return travel(g, pts, ms, { r, fill, keep: true }); }
+  const JT_STEPS = ["<b>Water</b> in the soil goes into the <b>root hair cells</b>.", "The water travels up the <b>xylem</b> (tubes) to the leaves.", "<b>Carbon dioxide</b> from the <b>air</b> goes into the leaf through the <b>stomata</b> (tiny holes under the leaf).", "<b>Chlorophyll</b> in the <b>chloroplasts</b> absorbs <b>light</b>.", "<b>Glucose</b> is made. <b>Oxygen</b> goes out through the stomata <b>into the air</b>."];
+  let jtBusy = false;
+  // a gas particle in the air: a dot, sometimes with a small tag (CO₂, O₂)
+  const gasDot = (g, x, y, fill, tag) => { const w = el("g", { transform: `translate(${x} ${y})`, opacity: 0 }, g); el("circle", { r: 6, fill, stroke: "#fff", "stroke-width": 1.5 }, w); if (tag) label(w, 0, -10, tag, 13, fill === OXY ? "#C62828" : "#455A64"); return w; };
+  // a thick arrow that grows along a polyline; dots can follow its path
+  async function growArrow(g, pts, col, ms = 900) {
+    const p = el("path", { d: pathD(pts), fill: "none", stroke: col, "stroke-width": 7, "stroke-linecap": "round", "stroke-linejoin": "round", opacity: 0.5 }, g);
+    const L = p.getTotalLength(); p.setAttribute("stroke-dasharray", L); p.setAttribute("stroke-dashoffset", L);
+    const [a, b] = pts.slice(-2), ang = (Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI;
+    const head = el("path", { d: "M4 0 L-14 -11 L-14 11Z", fill: col, opacity: 0, transform: `translate(${b[0]} ${b[1]}) rotate(${ang})` }, g);
+    await tween(ms, (t) => p.setAttribute("stroke-dashoffset", L * (1 - t)));
+    head.setAttribute("opacity", 0.75);
+    return p;
+  }
+  const followPath = (d, p, ms) => { const L = p.getTotalLength(); return tween(ms, (t) => { const q = p.getPointAtLength(L * ease(t)); d.setAttribute("transform", `translate(${q.x} ${q.y})`); }); };
+  const JT_RUN = [
+    async (C) => {
+      const starts = [[78, 352], [98, 384], [132, 372], [60, 330], [146, 392], [118, 398]];
+      C.w = await Promise.all(starts.map(([x, y], i) => wait(i * 150).then(() => along(C.S.fx, [[x, y], [106 + (i % 3) * 6, 344 - (i % 2) * 8], [120, 320]], 1300, WAT))));
+    },
+    async (C) => {
+      C.w.forEach((d) => d.remove());
+      await Promise.all(C.w.map((d, i) => wait(i * 180).then(() => travel(C.S.fx, WPATH, 1700, { r: 5.5, fill: WAT }))));
+      const zin = [[340, 232], [418, 232]];
+      C.w = await Promise.all([0, 1, 2, 3, 4].map((i) => wait(i * 160).then(() => along(C.S.fx, [...zin, [380 + i * 40, 168 + (i % 2) * 14]], 1500, WAT))));
+    },
+    async (C) => {
+      // a. around the plant: carbon dioxide comes down from the air, along a grey arrow, into the leaf
+      label(C.S.fx, 312, 34, "carbon dioxide", 15, "#455A64", { "text-anchor": "end" }); label(C.S.fx, 312, 52, "from the air", 15, "#455A64", { "text-anchor": "end" });
+      const ap = await growArrow(C.S.fx, [[328, 28], [328, 72], [302, 104], [254, 116]], "#607D8B");
+      const ds = [0, 1, 2, 3, 4].map((i) => gasDot(C.S.fx, 328, 28, CO2C, i === 1 || i === 3 ? "CO₂" : ""));
+      await Promise.all(ds.map((d, i) => wait(i * 240).then(async () => { await fade(d, 0, 1, 150); await followPath(d, ap, 1700); await fade(d, 1, 0, 250); d.remove(); })));
+      // b. in the zoom: from the air under the leaf, in through the stoma
+      label(C.S.fx, 404, 318, "air", 15, "#1F3A5F");
+      C.c = await Promise.all([0, 1, 2, 3, 4].map((i) => wait(i * 180).then(() => along(C.S.fx, [[600 - i * 10, 330], [482, 290], [480, 262], [470 + i * 6, 232], [372 + i * 48, 178 - (i % 2) * 16]], 2000, CO2C))));
+    },
+    async (C) => {
+      const rays = [[360, 46, 380, 150], [410, 36, 430, 150], [470, 32, 490, 150], [530, 36, 550, 150]].map(([x1, y1, x2, y2]) => ({ l: el("line", { x1, y1, x2: x1, y2: y1, stroke: "#FFD600", "stroke-width": 6, "stroke-linecap": "round" }, C.S.fx), x1, y1, x2, y2 }));
+      await tween(1100, (t) => rays.forEach((r) => { r.l.setAttribute("x2", r.x1 + (r.x2 - r.x1) * t); r.l.setAttribute("y2", r.y1 + (r.y2 - r.y1) * t); }));
+      C.S.chl.classList.add("lit"); C.S.chl.querySelectorAll("ellipse").forEach((e) => e.setAttribute("fill", "#43A047"));
+      C.rays = rays; await wait(400);
+    },
+    async (C) => {
+      await tween(600, (t) => [...C.w, ...C.c].forEach((d) => d.setAttribute("opacity", 1 - t)));
+      [...C.w, ...C.c].forEach((d) => d.remove());
+      const hs = C.S.pal.filter((_, i) => i % 2).map(([x, y]) => { const w = hexAt(C.S.fx, 8); w.setAttribute("transform", `translate(${x} ${y}) scale(0.1)`); return [w, x, y]; });
+      await tween(700, (t) => hs.forEach(([w, x, y]) => w.setAttribute("transform", `translate(${x} ${y}) scale(${0.1 + 0.9 * t})`)));
+      label(C.S.fx, 590, 218, "glucose", 15, "#F57F17");
+      // oxygen leaves through the stomata (zoom) and goes up from a leaf into the air, along a red arrow
+      label(C.S.fx, 100, 120, "oxygen", 15, "#C62828"); label(C.S.fx, 100, 138, "into the air", 15, "#C62828");
+      const op = await growArrow(C.S.fx, [[118, 186], [56, 178], [34, 136], [38, 98]], "#E53935");
+      const os = [0, 1, 2, 3, 4].map((i) => gasDot(C.S.fx, 118, 186, OXY, i === 1 || i === 3 ? "O₂" : ""));
+      await Promise.all([
+        ...[0, 1, 2, 3].map((i) => wait(i * 200).then(() => travel(C.S.fx, [[400 + i * 45, 190], [478, 236], [480, 262], [500 + i * 14, 300], [560 + i * 20, 330]], 1700, { r: 5.5, fill: OXY, keep: true }))),
+        ...os.map((d, i) => wait(i * 240).then(async () => { await fade(d, 0, 1, 150); await followPath(d, op, 1700); await fade(d, 1, 0, 300); d.remove(); })),
+      ]);
+      label(C.S.fx, 596, 296, "oxygen out", 15, "#C62828"); label(C.S.fx, 596, 314, "into the air", 15, "#C62828");
+    },
+  ];
+  function setupTrip() {
+    $("jtSteps").innerHTML = JT_STEPS.map((s) => `<li>${s}</li>`).join("");
+    stepper({ host: "jtCtl", list: "jtSteps", first: "▶ Follow the ingredients", playLabel: "▶ Play all", onBusy: (b) => { jtBusy = b; },
+      start: () => { $("jtAsk").hidden = true; asking("jTrip", false); fbSet($("jtFb"), "", ""); return { S: drawJourney($("jtSvg")) }; }, steps: JT_RUN, end: jtEnd });
+  }
+  function jtEnd() {
+    say("journey", "Water from the roots, carbon dioxide from the air, light from the Sun: all meet in the <b>chloroplasts</b>.", "happy");
+    if (has("journey", "trip")) return;
+    $("jtAsk").hidden = false; asking("jTrip", true);
+    const opts = [["a", "Through the stomata, tiny holes mostly on the underside of the leaf"], ["b", "Through the root hair cells"], ["c", "Up the xylem from the soil"], ["d", "It is made by the chloroplasts"]];
+    ask({ box: $("jtCats"), fb: $("jtFb"), spex: "journey", opts: shuffle(opts), correct: ["a"], tip: "Carbon dioxide is a gas in the air. Look at the bottom of the zoom.",
+      answer: `<b>${opts[0][1]}</b>.`, good: "Carbon dioxide <b>diffuses</b> into the leaf through the <b>stomata</b>.",
+      onDone: (st) => { addStars("journey", "trip", starsOf(st)); asking("jTrip", false); } });
+  }
+
+  // 🏷 label the plant
+  const JL_PARTS = [
+    { id: "hair", name: "Root hair cells", p: [104, 348], b: [64, 384], job: "Take in <b>water</b> and minerals from the soil. Their long, thin shape gives a <b>big surface</b>." },
+    { id: "xyl", name: "Xylem", p: [170, 200], b: [62, 232], job: "Tubes that carry <b>water</b> (and minerals) from the roots up to the leaves." },
+    { id: "leaf", name: "Leaf", p: [122, 178], b: [62, 120], job: "Broad and flat: a <b>large surface</b> to catch light. Most photosynthesis happens here." },
+    { id: "chl", name: "Chloroplasts", p: [441, 148], b: [572, 34], job: "Contain green <b>chlorophyll</b>, which absorbs light. <b>Photosynthesis happens here.</b>" },
+    { id: "sto", name: "Stoma", p: [480, 270], b: [578, 360], job: "A tiny hole (plural: <b>stomata</b>), mostly on the underside of the leaf. <b>Carbon dioxide</b> goes in; <b>oxygen</b> and water vapour go out." },
+  ];
+  function setupJLabel() {
+    labeller({ svg: $("jlSvg"), wrap: $("jlWrap"), bank: $("jlBank"), fb: $("jlFb"), info: $("jlInfo"), parts: JL_PARTS, tab: "journey", star: "label", vw: 640,
+      draw: (g) => drawJourney(g, { labels: false }) });
+  }
+
+  // 🔄 in or out?
+  const JS = [
+    { id: "co2", text: "Carbon dioxide", k: "in", tip: "It comes from the air, through the stomata." },
+    { id: "h2o", text: "Water", k: "in", tip: "It comes from the soil, through the root hair cells." },
+    { id: "light", text: "Light energy", k: "in", tip: "It comes from the Sun and is absorbed by chlorophyll." },
+    { id: "min", text: "Minerals (e.g. nitrates)", k: "in", tip: "They are dissolved in the soil water and taken in by the roots." },
+    { id: "o2", text: "Oxygen", k: "out", tip: "It is a product of photosynthesis. The plant gives most of it off." },
+    { id: "vap", text: "Water vapour", k: "out", tip: "Water evaporates from the leaf and leaves through the stomata." },
+    { id: "glu", text: "Glucose", k: "made", tip: "It is made in the chloroplasts by photosynthesis." },
+    { id: "sta", text: "Starch", k: "made", tip: "The plant makes it from glucose, to store it." },
+  ];
+  const JS_BINS = [["in", "⬇ Goes into the plant"], ["out", "⬆ Comes out of the plant"], ["made", "🏭 Made inside the plant"]];
+  function setupJSort() {
+    $("jsBins").innerHTML = JS_BINS.map(([k, n]) => `<div class="slot multi" id="js-${k}" data-k="${k}"><span class="sname">${n}</span></div>`).join("");
+    $("jsBank").replaceChildren(); fbSet($("jsFb"), "", "");
+    const tiles = shuffle(JS).map((c) => { const t = h(`<div class="tile" data-k="${c.k}" data-id="${c.id}" role="button" tabindex="0">${c.text}</div>`); $("jsBank").appendChild(t); return t; });
+    const slots = JS_BINS.map(([k]) => $("js-" + k));
+    dropTask({ tiles, slots, spex: "journey", fb: $("jsFb"), mode: "tile",
+      fits: (t, s) => t.dataset.k === s.dataset.k, home: (t) => $("js-" + t.dataset.k), place: (t, s) => s.appendChild(t),
+      tip: (t, s, final) => { const c = JS.find((x) => x.id === t.dataset.id); return final ? `<b>${c.text}</b> goes in <b>${JS_BINS.find(([k]) => k === c.k)[1]}</b>. ${c.tip}` : c.tip; },
+      onTile: (t) => { if (!t._st.revealed) fbSet($("jsFb"), "good", "✔ Right!"); },
+      onDone: () => {
+        const rev = tiles.filter((t) => t._st.revealed).length, mis = tiles.some((t) => t._st.mistakes);
+        addStars("journey", "sort", rev ? (rev <= 2 ? 1 : 0) : mis ? 2 : 3);
+        fbSet($("jsFb"), "good", "✔ All 8 sorted! <b>In</b>: carbon dioxide, water, light, minerals. <b>Out</b>: oxygen, water vapour. <b>Made</b>: glucose, then starch. <button class=\"btn small\" id=\"jsAgain\">↺ Again</button>");
+        $("jsAgain").onclick = setupJSort;
+        say("journey", "You know what goes in and what comes out of a plant!", "happy", "good");
+      } });
+  }
+
+  /* ============================ 8 TAB 3 · USES OF GLUCOSE ============================ */
+  const SRC = [380, 130];   // where glucose is made: the big leaf
+  const UT_DEST = {
+    resp: { name: "⚡ Respiration", at: [100, 138], col: "#E65100", path: [SRC, [322, 150], [322, 95], [215, 82], [112, 82]] },
+    starch: { name: "🥔 Starch", at: [470, 320], col: "#FFF", path: [SRC, [322, 150], [322, 300], [330, 320], [420, 345], [462, 352]] },
+    cell: { name: "🧱 Cellulose", at: [100, 252], col: "#6D4C41", path: [SRC, [322, 150], [322, 196], [170, 196], [112, 196]] },
+    prot: { name: "🌱 Proteins", at: [100, 345], col: "#FFF", path: [SRC, [322, 150], [322, 300], [318, 338], [230, 362], [178, 378]] },
+    fat: { name: "🌻 Fats and oils", at: [360, 30], anchor: "start", col: "#F57F17", path: [SRC, [322, 150], [322, 66]] },
+    suc: { name: "🍎 Sucrose", at: [570, 292], col: "#C62828", path: [SRC, [322, 158], [322, 204], [470, 200], [506, 224]] },
+  };
+  function utDraw() {
+    const svg = $("utSvg"); svg.replaceChildren();
+    const S = { svg };
+    el("rect", { x: 0, y: 0, width: 640, height: 300, fill: "#E3F2FD" }, svg);
+    el("rect", { x: 0, y: 300, width: 640, height: 100, fill: "#8D6E63" }, svg);
+    el("line", { x1: 0, y1: 300, x2: 640, y2: 300, stroke: "#5D4037", "stroke-width": 3 }, svg);
+    // roots, stolon and potato tuber
+    const rc = "#EFEBE9";
+    for (const b of [[[322, 300], [320, 340], [316, 385]], [[321, 318], [270, 340], [230, 362], [178, 378]], [[320, 330], [360, 352], [380, 380]]]) el("path", { d: smooth(b, false), fill: "none", stroke: rc, "stroke-width": 4, "stroke-linecap": "round" }, svg);
+    el("path", { d: smooth([[322, 304], [360, 322], [420, 345]], false), fill: "none", stroke: "#D7CCC8", "stroke-width": 4 }, svg);
+    S.tuber = el("ellipse", { cx: 470, cy: 355, rx: 55, ry: 30, fill: "#C8A165", stroke: "#795548", "stroke-width": 3 }, svg);
+    S.grains = el("g", {}, svg);
+    S.root = el("line", { x1: 178, y1: 378, x2: 178, y2: 378, stroke: rc, "stroke-width": 4, "stroke-linecap": "round" }, svg);
+    // stem, fruit branch, leaves, flower
+    el("line", { x1: 322, y1: 300, x2: 322, y2: 70, stroke: "#558B2F", "stroke-width": 10, "stroke-linecap": "round" }, svg);
+    el("path", { d: smooth([[322, 204], [400, 198], [470, 200], [506, 214]], false), fill: "none", stroke: "#689F38", "stroke-width": 5, "stroke-linecap": "round" }, svg);
+    S.phloem = el("path", { d: pathD(UT_DEST.suc.path.slice(1)), fill: "none", stroke: "#FB8C00", "stroke-width": 2.5, opacity: 0 }, svg);
+    S.fruit = el("circle", { cx: 510, cy: 238, r: 13, fill: "#AED581", stroke: "#558B2F", "stroke-width": 2 }, svg);
+    leaf(svg, 322, 232, 196, 88, 25); leaf(svg, 322, 112, 212, 64, 19);
+    S.big = leaf(svg, 322, 150, -20, 122, 34, "#8BC34A");
+    const fl = el("g", {}, svg);
+    for (let k = 0; k < 12; k++) { const a = (k * Math.PI) / 6; el("ellipse", { cx: 322 + 24 * Math.cos(a), cy: 58 + 24 * Math.sin(a), rx: 11, ry: 5.5, transform: `rotate(${(k * 30)} ${322 + 24 * Math.cos(a)} ${58 + 24 * Math.sin(a)})`, fill: "#FFCA28", stroke: "#F9A825" }, fl); }
+    S.seedC = el("circle", { cx: 322, cy: 58, r: 15, fill: "#6D4C41" }, svg);
+    S.seeds = el("g", {}, svg);
+    for (let k = 0; k < 9; k++) el("ellipse", { cx: 322 + (k % 3 - 1) * 8, cy: 58 + (Math.floor(k / 3) - 1) * 8, rx: 2.6, ry: 3.6, fill: "#3E2723" }, S.seeds);
+    // two cells: one for respiration, one building its wall
+    const cell = (x, y) => { const g = el("g", {}, svg); const wall = el("rect", { x: x - 55, y: y - 36, width: 110, height: 72, rx: 12, fill: "#F1F8E9", stroke: "#7CB342", "stroke-width": 2 }, g); el("circle", { cx: x - 22, cy: y - 6, r: 11, fill: "#B39DDB", stroke: "#7E57C2" }, g); return { g, wall }; };
+    S.rcell = cell(100, 82); S.ccell = cell(100, 196);
+    S.labs = {};
+    for (const k in UT_DEST) { const d = UT_DEST[k]; S.labs[k] = label(svg, d.at[0], d.at[1], d.name, 16, "#90A4AE", { ...(k === "prot" || k === "starch" ? { stroke: "#5D4037" } : {}), ...(d.anchor ? { "text-anchor": d.anchor } : {}) }); }
+    S.fx = el("g", {}, svg);
+    return S;
+  }
+  const hexStart = (g, x, y, s = 7) => { const w = el("g", { transform: `translate(${x} ${y})` }, g); hex(w, 0, 0, s); return w; };
+  async function hexTrip(g, pts, n = 3, ms = 1700) {
+    const p = el("path", { d: pathD(pts), fill: "none" }, g), L = p.getTotalLength();
+    const ws = [...Array(n)].map(() => hexStart(g, pts[0][0], pts[0][1]));
+    await Promise.all(ws.map((w, i) => wait(i * 250).then(() => tween(ms, (t) => { const q = p.getPointAtLength(L * t); w.setAttribute("transform", `translate(${q.x} ${q.y})`); }))));
+    p.remove(); return ws;
+  }
+  const reach = (C, k) => { const d = UT_DEST[k], l = C.S.labs[k]; l.setAttribute("fill", d.col === "#FFF" ? "#FFF" : d.col); };
+  const UT_STEPS = ["<b>Glucose</b> is made in the leaves by photosynthesis.", "⚡ <b>Respiration</b>: every cell uses glucose to <b>release energy</b>.", "🥔 <b>Starch</b>: stored in leaves, potatoes and seeds. It does not dissolve.", "🧱 <b>Cellulose</b>: builds strong <b>cell walls</b>.", "🌱 <b>Proteins</b>: made with <b>nitrates</b> from the soil, for <b>growth</b>.", "🌻 <b>Fats and oils</b>: an energy store in <b>seeds</b>.", "🍎 <b>Sucrose</b>: carried in the <b>phloem</b>, e.g. to make fruit sweet."];
+  let utBusy = false;
+  const UT_RUN = [
+    async (C) => {
+      const rays = [[250, 0, 360, 120], [330, 0, 400, 112], [420, 0, 430, 104]].map(([x1, y1, x2, y2]) => ({ l: el("line", { x1, y1, x2: x1, y2: y1, stroke: "#FFD600", "stroke-width": 5, "stroke-linecap": "round" }, C.S.fx), x1, y1, x2, y2 }));
+      await tween(800, (t) => rays.forEach((r) => { r.l.setAttribute("x2", r.x1 + (r.x2 - r.x1) * t); r.l.setAttribute("y2", r.y1 + (r.y2 - r.y1) * t); }));
+      C.made = [[365, 138], [392, 128], [418, 120]].map(([x, y]) => hexStart(C.S.fx, x, y, 8));
+      await tween(600, (t) => C.made.forEach((w, i) => w.setAttribute("transform", `translate(${[365, 392, 418][i]} ${[138, 128, 120][i]}) scale(${0.1 + 0.9 * t})`)));
+      label(C.S.fx, 452, 150, "glucose made here", 15, "#F57F17", { "text-anchor": "start" });
+      await tween(400, (t) => rays.forEach((r) => r.l.setAttribute("opacity", 1 - t)));
+    },
+    async (C) => {
+      const ws = await hexTrip(C.S.fx, UT_DEST.resp.path);
+      ws.forEach((w) => w.remove()); reach(C, "resp");
+      C.S.rcell.wall.setAttribute("fill", "#FFF59D"); C.S.rcell.g.classList.add("lit");
+      for (const [x, y] of [[132, 60], [140, 98], [62, 104]]) label(C.S.fx, x, y, "⚡", 22, "#F57F17");
+      SND.zap(); await wait(400);
+    },
+    async (C) => {
+      const ws = await hexTrip(C.S.fx, UT_DEST.starch.path);
+      ws.forEach((w) => w.remove()); reach(C, "starch");
+      const pts = [[440, 345], [462, 362], [486, 344], [505, 360], [452, 368], [478, 352], [495, 372], [430, 360]];
+      for (const [x, y] of pts) { el("ellipse", { cx: x, cy: y, rx: 6, ry: 4.5, fill: "#FFF8E1", stroke: "#BCAAA4" }, C.S.grains); await wait(70); }
+      SND.pop();
+    },
+    async (C) => {
+      const ws = await hexTrip(C.S.fx, UT_DEST.cell.path);
+      ws.forEach((w) => w.remove()); reach(C, "cell");
+      await tween(900, (t) => { C.S.ccell.wall.setAttribute("stroke-width", 2 + 7 * t); C.S.ccell.wall.setAttribute("stroke", "#8D6E63"); });
+      label(C.S.fx, 100, 272, "thicker cell wall", 14, "#6D4C41");
+    },
+    async (C) => {
+      const nits = [[60, 392], [120, 370], [232, 394], [90, 330]].map(([x, y]) => ({ d: dot(C.S.fx, x, y, "#8E24AA", 6), x, y }));
+      label(C.S.fx, 60, 318, "nitrates", 15, "#E1BEE7", { stroke: "#4A148C" });
+      await Promise.all([hexTrip(C.S.fx, UT_DEST.prot.path).then((ws) => ws.forEach((w) => w.remove())),
+        tween(1600, (t) => nits.forEach((n) => { n.d.setAttribute("cx", n.x + (178 - n.x) * ease(t)); n.d.setAttribute("cy", n.y + (378 - n.y) * ease(t)); }))]);
+      nits.forEach((n) => n.d.remove()); reach(C, "prot");
+      await tween(1000, (t) => { C.S.root.setAttribute("x2", 178 - 50 * t); C.S.root.setAttribute("y2", 378 + 14 * t); });
+      label(C.S.fx, 200, 396, "the root grows", 14, "#FFF", { stroke: "#5D4037" });
+    },
+    async (C) => {
+      const ws = await hexTrip(C.S.fx, UT_DEST.fat.path);
+      ws.forEach((w) => w.remove()); reach(C, "fat");
+      C.S.seedC.setAttribute("fill", "#8D6E63");
+      C.S.seeds.querySelectorAll("ellipse").forEach((e) => e.setAttribute("fill", "#FFB300"));
+      label(C.S.fx, 375, 68, "💧 oil", 16, "#F57F17", { "text-anchor": "start" });
+    },
+    async (C) => {
+      C.S.phloem.setAttribute("opacity", 1);
+      label(C.S.fx, 420, 190, "phloem", 14, "#E65100");
+      const ws = await hexTrip(C.S.fx, UT_DEST.suc.path, 4);
+      ws.forEach((w) => w.remove()); reach(C, "suc");
+      await tween(1000, (t) => { C.S.fruit.setAttribute("r", 13 + 11 * t); C.S.fruit.setAttribute("fill", t > 0.5 ? "#E53935" : "#AED581"); });
+      SND.star();
+    },
+  ];
+  function setupTour() {
+    $("utSteps").innerHTML = UT_STEPS.map((s) => `<li>${s}</li>`).join("");
+    stepper({ host: "utCtl", list: "utSteps", first: "▶ Make some glucose", playLabel: "▶ Play all", onBusy: (b) => { utBusy = b; },
+      start: () => { $("utAsk").hidden = true; asking("uTour", false); fbSet($("utFb"), "", ""); return { S: utDraw() }; }, steps: UT_RUN, end: utEnd });
+  }
+  function utEnd() {
+    say("uses", "One sugar, six uses! Glucose is the plant's <b>fuel</b> and its <b>building material</b>.", "happy");
+    if (has("uses", "tour")) return;
+    $("utAsk").hidden = false; asking("uTour", true);
+    const opts = [["a", "Starch does not dissolve in water, so it stays where it is stored"], ["b", "Starch is sweeter than glucose"], ["c", "Starch makes the leaves green"], ["d", "Starch releases oxygen"]];
+    ask({ box: $("utCats"), fb: $("utFb"), spex: "uses", opts: shuffle(opts), correct: ["a"], tip: "Sugar dissolves in tea. Does starch (e.g. flour) dissolve as well?",
+      answer: `<b>${opts[0][1]}</b>.`, good: "<b>Starch is insoluble</b>: it stays in the store and does not draw water into the cells. Later it can be changed back into glucose.",
+      onDone: (st) => { addStars("uses", "tour", starsOf(st)); asking("uTour", false); } });
+  }
+
+  // 🔗 match the use
+  const USES = [
+    { id: "resp", name: "⚡ Respiration", job: "Releases energy in every living cell" },
+    { id: "starch", name: "🥔 Starch", job: "A store in leaves, potatoes and seeds; does not dissolve" },
+    { id: "cell", name: "🧱 Cellulose", job: "Builds strong cell walls" },
+    { id: "prot", name: "🌱 Proteins", job: "For growth; made with nitrates from the soil" },
+    { id: "fat", name: "🌻 Fats and oils", job: "An energy store in seeds" },
+    { id: "suc", name: "🍎 Sucrose", job: "Carried in the phloem; makes fruit sweet" },
+  ];
+  function setupUMatch() {
+    $("umBins").innerHTML = USES.map((u) => `<div class="slot" id="um-${u.id}" data-k="${u.id}"><span class="sname">${u.job}</span></div>`).join("");
+    $("umBank").replaceChildren(); fbSet($("umFb"), "", "");
+    const tiles = shuffle(USES).map((u) => { const t = h(`<div class="tile" data-k="${u.id}" role="button" tabindex="0">${u.name}</div>`); $("umBank").appendChild(t); return t; });
+    const slots = USES.map((u) => $("um-" + u.id));
+    dropTask({ tiles, slots, spex: "uses", fb: $("umFb"), mode: "tile",
+      fits: (t, s) => t.dataset.k === s.dataset.k, home: (t) => $("um-" + t.dataset.k), place: (t, s) => { s.appendChild(t); s.classList.add("full"); },
+      tip: (t, s, final) => { const u = USES.find((x) => x.id === t.dataset.k); return final ? `<b>${u.name}</b>: ${u.job.toLowerCase()}.` : `Remember the animation: where did the glucose go to become <b>${u.name.slice(2).toLowerCase()}</b>?`; },
+      onTile: (t) => { if (!t._st.revealed) fbSet($("umFb"), "good", "✔ Right!"); },
+      onDone: () => {
+        const rev = tiles.filter((t) => t._st.revealed).length, mis = tiles.some((t) => t._st.mistakes);
+        addStars("uses", "match", rev ? (rev <= 2 ? 1 : 0) : mis ? 2 : 3);
+        fbSet($("umFb"), "good", "✔ All 6 matched! <button class=\"btn small\" id=\"umAgain\">↺ Again</button>");
+        $("umAgain").onclick = setupUMatch;
+        say("uses", "Now try the <b>🕵 Glucose detective</b>!", "happy", "good");
+      } });
+  }
+
+  // 🕵 glucose detective: 5 puzzles
+  const UQ = [
+    { id: "q1", em: "🥔", text: "Iodine is dropped on a cut potato. It turns blue-black. What is stored in the potato?", ans: "a",
+      opts: [["a", "Starch"], ["b", "Glucose"], ["c", "Oil"], ["d", "Protein"]], tip: "Iodine turns blue-black with one substance only.", why: "<b>Starch</b>: the potato plant stores the glucose it made in its tubers." },
+    { id: "q2", em: "🌻", text: "Sunflower seeds give us cooking oil. Where did the oil come from?", ans: "a",
+      opts: [["a", "The plant changed glucose into oil and stored it in the seeds"], ["b", "The roots took the oil from the soil"], ["c", "The leaves took it from the air"], ["d", "Bees brought it"]], tip: "Everything the plant builds starts as glucose.", why: "Glucose from photosynthesis was changed into <b>fats and oils</b>, an energy store for the seed." },
+    { id: "q3", em: "🥀", text: "A plant grows in soil with no nitrates. It is small with yellow leaves. Why?", ans: "a",
+      opts: [["a", "Without nitrates it cannot make enough proteins to grow"], ["b", "Without nitrates it cannot make glucose"], ["c", "Nitrates make leaves yellow"], ["d", "It has too much starch"]], tip: "Which substance is made from glucose AND nitrates?", why: "Plants need <b>nitrates</b> to make <b>proteins</b> for growth. (They also need magnesium to make chlorophyll.)" },
+    { id: "q4", em: "👕", text: "Cotton T-shirts and paper are made mostly of…", ans: "a",
+      opts: [["a", "cellulose, from plant cell walls"], ["b", "starch"], ["c", "protein"], ["d", "glucose"]], tip: "It makes plant cell walls strong.", why: "<b>Cellulose</b> fibres from plant cell walls: cotton, paper, wood." },
+    { id: "q5", em: "🌙", text: "At night there is no photosynthesis, but the plant still needs energy. Where does it get glucose from?", ans: "a",
+      opts: [["a", "It changes stored starch back into glucose for respiration"], ["b", "It stops all its cells until morning"], ["c", "It takes glucose from the soil"], ["d", "From the moonlight"]], tip: "What did the plant store during the day?", why: "Starch made in the day is changed back into <b>glucose</b> and used in <b>respiration</b>." },
+  ];
+  function setupUQs() {
+    quiz({ root: $("uqBox"), tab: "uses", list: UQ, prefix: "q-", spex: "uses", title: "Glucose detective", again: "↺ Play again",
+      onEnd: (restart, stars) => { if (restart) setupUQs(); else say("uses", `Detective work done: <b>★ ${stars}</b> out of 15!`, "happy", "good"); } });
+  }
+
+  /* ============================ 9 TAB 4 · COLOUR OF LIGHT ============================ */
+  const SPEC = [["red", "#E53935", 0.85], ["orange", "#FB8C00", 0.45], ["yellow", "#FDD835", 0.2], ["green", "#43A047", 0.1], ["blue", "#1E88E5", 0.95], ["indigo", "#3949AB", 0.85], ["violet", "#8E24AA", 0.75]];
+  const DARK = "#17202A";
+  const dl = (g, x, y, s, size, fill, extra = {}) => label(g, x, y, s, size, fill, { stroke: DARK, ...extra });
+  function lpDraw() {
+    const svg = $("lpSvg"); svg.replaceChildren();
+    el("rect", { x: 0, y: 0, width: 640, height: 400, rx: 12, fill: DARK }, svg);
+    const S = { svg };
+    S.sun = el("g", { opacity: 0 }, svg);
+    for (let k = 0; k < 8; k++) { const a = (k * Math.PI) / 4; el("line", { x1: 50 + 32 * Math.cos(a), y1: 110 + 32 * Math.sin(a), x2: 50 + 42 * Math.cos(a), y2: 110 + 42 * Math.sin(a), stroke: "#FFB300", "stroke-width": 3, "stroke-linecap": "round" }, S.sun); }
+    el("circle", { cx: 50, cy: 110, r: 26, fill: "#FFD54F", stroke: "#FFB300", "stroke-width": 2 }, S.sun);
+    S.white = el("line", { x1: 80, y1: 122, x2: 80, y2: 122, stroke: "#FFFFFF", "stroke-width": 9, "stroke-linecap": "round" }, svg);
+    S.rays = SPEC.map(([n, c]) => el("line", { x1: 280, y1: 172, x2: 280, y2: 172, stroke: c, "stroke-width": 9, "stroke-linecap": "round" }, svg));
+    el("path", { d: "M250 92 L192 252 L308 252Z", fill: "#B3E5FC", "fill-opacity": 0.35, stroke: "#E1F5FE", "stroke-width": 3 }, svg);
+    dl(svg, 250, 280, "prism", 16, "#E1F5FE");
+    S.leaf = el("g", { opacity: 0 }, svg);
+    const lp = el("path", { d: vleafD(530, 200, 270, 62), fill: "#7CB342", stroke: "#AED581", "stroke-width": 3 }, S.leaf);
+    const Lt = lp.getTotalLength(), pts = [...Array(400)].map((_, k) => lp.getPointAtLength((Lt * k) / 400)).filter((q) => q.x < 530);
+    LEFT = (y) => pts.reduce((b, q) => (Math.abs(q.y - y) < Math.abs(b.y - y) ? q : b)).x;
+    el("line", { x1: 530, y1: 335, x2: 530, y2: 75, stroke: "#C5E1A5", "stroke-width": 2.5 }, S.leaf);
+    for (let k = 0; k < 4; k++) for (const s of [-1, 1]) el("line", { x1: 530, y1: 290 - k * 50, x2: 530 + s * 44, y2: 260 - k * 50, stroke: "#C5E1A5", "stroke-width": 1.5 }, S.leaf);
+    S.hits = el("g", {}, svg);
+    S.bars = el("g", { opacity: 0 }, svg);
+    dl(S.bars, 130, 296, "light absorbed by chlorophyll", 14, "#FFFFFF");
+    SPEC.forEach(([n, c, a], i) => { el("rect", { x: 30 + i * 30, y: 380 - 70 * a, width: 24, height: 70 * a, fill: c }, S.bars); });
+    el("line", { x1: 26, y1: 380, x2: 240, y2: 380, stroke: "#B0BEC5", "stroke-width": 2 }, S.bars);
+    S.fx = el("g", {}, svg);
+    return S;
+  }
+  const LP_Y = SPEC.map((_, i) => 112 + i * 30);   // where each colour meets the leaf
+  let LEFT = null;
+  const leafX = (y) => (LEFT ? LEFT(y) + 5 : 470);
+  const rayTo = (r, i, f) => { const x = leafX(LP_Y[i]); r.setAttribute("x2", 280 + (x - 280) * f); r.setAttribute("y2", 172 + (LP_Y[i] - 172) * f); };
+  const LP_STEPS = ["Sunlight looks <b>white</b>, but it is a <b>mixture of colours</b>.", "A <b>prism</b> splits it into a <b>spectrum</b>: red, orange, yellow, green, blue, indigo, violet.", "The colours shine on a <b>leaf</b>.", "<b>Chlorophyll absorbs</b> mostly <b>red</b> and <b>blue</b> light: energy for photosynthesis.", "<b>Green</b> light is <b>reflected</b> into our eyes, so the leaf looks <b>green</b>."];
+  let lpBusy = false;
+  const LP_RUN = [
+    async (C) => { await fade(C.S.sun, 0, 1, 500); await tween(800, (t) => { C.S.white.setAttribute("x2", 80 + (224 - 80) * t); C.S.white.setAttribute("y2", 122 + (172 - 122) * t); }); dl(C.S.fx, 130, 100, "white light", 16, "#FFFFFF"); },
+    async (C) => {
+      await tween(1200, (t) => C.S.rays.forEach((r, i) => rayTo(r, i, 0.45 * t)));
+      dl(C.S.fx, 372, 128, "spectrum", 16, "#FFFFFF");
+    },
+    async (C) => {
+      await fade(C.S.leaf, 0, 1, 400);
+      await tween(1000, (t) => C.S.rays.forEach((r, i) => rayTo(r, i, 0.45 + 0.55 * t)));
+    },
+    async (C) => {
+      SPEC.forEach(([n, c, a], i) => { if (a < 0.4) return; const x = leafX(LP_Y[i]); el("circle", { cx: x + 10, cy: LP_Y[i], r: 4 + 10 * a, fill: "#FFF59D", opacity: 0.85, class: "lit" }, C.S.hits); });
+      dl(C.S.fx, 560, 380, "absorbed ✔", 16, "#FFF59D");
+      await fade(C.S.bars, 0, 1, 700);
+      SND.star();
+    },
+    async (C) => {
+      const gi = 3, x0 = leafX(LP_Y[gi]), y0 = LP_Y[gi];
+      const ref = el("line", { x1: x0, y1: y0, x2: x0, y2: y0, stroke: "#43A047", "stroke-width": 9, "stroke-linecap": "round" }, C.S.fx);
+      const yi = 2, x1 = leafX(LP_Y[yi]), y1 = LP_Y[yi];
+      const ref2 = el("line", { x1, y1, x2: x1, y2: y1, stroke: "#FDD835", "stroke-width": 4, "stroke-linecap": "round", opacity: 0.8 }, C.S.fx);
+      label(C.S.fx, 330, 352, "👁", 40, "#FFFFFF", { stroke: "none" });
+      await tween(1200, (t) => { ref.setAttribute("x2", x0 + (345 - x0) * t); ref.setAttribute("y2", y0 + (330 - y0) * t); ref2.setAttribute("x2", x1 + (352 - x1) * t * 0.7); ref2.setAttribute("y2", y1 + (330 - y1) * t * 0.7); });
+      dl(C.S.fx, 420, 300, "green reflected", 16, "#A5D6A7");
+      dl(C.S.fx, 330, 392, "the leaf looks green", 16, "#FFFFFF");
+    },
+  ];
+  function setupPrism() {
+    $("lpSteps").innerHTML = LP_STEPS.map((s) => `<li>${s}</li>`).join("");
+    stepper({ host: "lpCtl", list: "lpSteps", first: "▶ Switch on the Sun", playLabel: "▶ Play all", onBusy: (b) => { lpBusy = b; },
+      start: () => { $("lpAsk").hidden = true; asking("lPrism", false); fbSet($("lpFb"), "", ""); return { S: lpDraw() }; }, steps: LP_RUN, end: lpEnd });
+  }
+  function lpEnd() {
+    say("light", "Leaves use <b>red</b> and <b>blue</b> light. The <b>green</b> light they don't use is what we see.", "happy");
+    if (has("light", "prism")) return;
+    $("lpAsk").hidden = false; asking("lPrism", true);
+    const opts = [["a", "Chlorophyll absorbs red and blue light and reflects green light"], ["b", "Chlorophyll absorbs green light"], ["c", "Leaves give out green light"], ["d", "Sunlight is green"]];
+    ask({ box: $("lpCats"), fb: $("lpFb"), spex: "light", opts: shuffle(opts), correct: ["a"], tip: "We see the colour that bounces off an object into our eyes.",
+      answer: `<b>${opts[0][1]}</b>.`, good: "Chlorophyll <b>absorbs</b> red and blue light and <b>reflects</b> green light into our eyes.",
+      onDone: (st) => { addStars("light", "prism", starsOf(st)); asking("lPrism", false); } });
+  }
+
+  // 🌱 filter garden: 4 seedlings under red, blue, green and clear filters for 7 days
+  const GARDEN = [
+    { k: "r", name: "Red filter", col: "#E53935", cm: 10.5 },
+    { k: "b", name: "Blue filter", col: "#1E88E5", cm: 9.5 },
+    { k: "g", name: "Green filter", col: "#43A047", cm: 3.0 },
+    { k: "w", name: "Clear filter (white light)", short: "Clear (white)", col: "#90A4AE", cm: 12.0 },
+  ];
+  const G0 = 2.0, PXCM = 16, GX = [85, 235, 385, 535], POT = 336;
+  let lgPred = null, lgBusy = false;
+  function lgDraw(day = 0) {
+    const svg = $("lgSvg"); svg.replaceChildren();
+    el("rect", { x: 0, y: 0, width: 640, height: 400, fill: "#FAFAFA" }, svg);
+    el("rect", { x: 20, y: 22, width: 600, height: 18, rx: 9, fill: "#FFF59D", stroke: "#F9A825", "stroke-width": 2 }, svg);
+    label(svg, 320, 16, "lamp: the same light for every plant", 14, "#795548");
+    el("rect", { x: 0, y: POT + 40, width: 640, height: 24, fill: "#D7CCC8" }, svg);
+    GARDEN.forEach((p, i) => {
+      const x = GX[i];
+      for (let k = 0; k < 3; k++) el("line", { x1: x - 30 + k * 30, y1: 44, x2: x - 30 + k * 30, y2: 104, stroke: "#FDD835", "stroke-width": 3, "stroke-dasharray": "6 6" }, svg);
+      for (let k = 0; k < 3; k++) el("line", { x1: x - 30 + k * 30, y1: 128, x2: x - 30 + k * 30, y2: 170, stroke: p.k === "w" ? "#FDD835" : p.col, "stroke-width": 3, "stroke-dasharray": "6 6", opacity: 0.8 }, svg);
+      const hcm = G0 + ((p.cm - G0) * day) / 7;
+      const g = el("g", {}, svg), top = POT - hcm * PXCM;
+      const pale = p.k === "g";
+      el("line", { x1: x, y1: POT, x2: x, y2: top, stroke: pale ? "#C0CA33" : "#558B2F", "stroke-width": pale ? 3 : 5, "stroke-linecap": "round" }, g);
+      const n = Math.max(1, Math.floor((POT - top) / 26));
+      for (let k = 0; k < n; k++) { const yy = POT - 14 - k * 26; if (yy < top) break; const sz = 16 + Math.min(10, hcm); leaf(g, x, yy, k % 2 ? -30 : 210, pale ? 12 : sz, pale ? 5 : sz * 0.32, pale ? "#DCE775" : "#7CB342", pale ? "#9E9D24" : "#33691E"); }
+      leaf(g, x, top + 2, -60, pale ? 8 : 14, pale ? 3 : 5, pale ? "#DCE775" : "#8BC34A"); leaf(g, x, top + 2, 240, pale ? 8 : 14, pale ? 3 : 5, pale ? "#DCE775" : "#8BC34A");
+      el("path", { d: `M${x - 32} ${POT} L${x + 32} ${POT} L${x + 24} ${POT + 40} L${x - 24} ${POT + 40}Z`, fill: "#BF6F3F", stroke: "#8D4A25", "stroke-width": 2 }, svg);
+      el("rect", { x: x - 66, y: 108, width: 132, height: POT + 40 - 108, rx: 6, fill: p.k === "w" ? "#FFFFFF" : p.col, "fill-opacity": p.k === "w" ? 0.15 : 0.16, stroke: p.col, "stroke-width": 3 }, svg);
+      label(svg, x, 126, p.short || p.name, 15, p.k === "w" ? "#455A64" : p.col);
+      if (day > 0) label(svg, x, POT + 26, hcm.toFixed(1) + " cm", 16, "#FFFFFF", { stroke: "#5D4037" });
+    });
+    label(svg, 320, 396, `Day ${Math.round(day)} of 7`, 18, "#1F3A5F");
+  }
+  function setupGarden() {
+    lgPred = null; lgDraw(0);
+    $("lgRead").innerHTML = "Four <b>identical</b> bean seedlings (2.0 cm) grow for 7 days. A coloured <b>filter</b> lets only its own colour through. Everything else is the <b>same</b>: lamp, water, soil, temperature (a fair test).";
+    $("lgPred").hidden = false; $("lgGo").hidden = true; $("lgTab").hidden = true; $("lgAsk").hidden = true; fbSet($("lgFb"), "", "");
+    $("lgPredCats").innerHTML = GARDEN.map((p) => `<button class="cat" data-v="${p.k}" aria-pressed="false">${p.name}</button>`).join("");
+    $("lgPredCats").querySelectorAll(".cat").forEach((b) => b.onclick = () => {
+      if (lgBusy) return;
+      lgPred = b.dataset.v; $("lgPredCats").querySelectorAll(".cat").forEach((x) => { x.setAttribute("aria-pressed", x === b); x.classList.toggle("pickd", x === b); });
+      $("lgGo").hidden = false; say("light", "Good. A prediction is your idea before the test. Now press <b>⏩ Grow for 7 days</b>!");
+    });
+    $("lgGo").textContent = "⏩ Grow for 7 days"; $("lgGo").onclick = lgGrow;
+  }
+  async function lgGrow() {
+    if (lgBusy || !lgPred) return;
+    lgBusy = true; $("lgGo").hidden = true; $("lgPredCats").querySelectorAll(".cat").forEach((b) => (b.disabled = true));
+    await tween(reduced() ? 0 : 4200, (t) => lgDraw(7 * t)); lgDraw(7);
+    lgBusy = false; SND.star();
+    $("lgPred").hidden = true; $("lgRead").hidden = false;
+    $("lgTab").hidden = false;
+    $("lgTab").innerHTML = `<tr><th>Filter</th><th>Height after 7 days</th></tr>` + GARDEN.map((p) => `<tr><td>${p.name}</td><td class="${p.k === "g" ? "bad" : ""}">${p.cm.toFixed(1)} cm</td></tr>`).join("");
+    const right = lgPred === "g";
+    $("lgRead").innerHTML = right ? "✔ Your prediction was right: the plant under the <b>green</b> filter grew least." : `Your prediction was <b>${GARDEN.find((p) => p.k === lgPred).name.toLowerCase()}</b>, but the plant under the <b>green</b> filter grew least. That's science: we test our ideas!`;
+    fitHeight();
+    if (has("light", "garden")) { lgAgain(); return; }
+    $("lgAsk").hidden = false; asking("lGarden", true);
+    const opts = [["a", "Green light is mostly reflected by chlorophyll, so there was little energy for photosynthesis"], ["b", "Green light is too hot for plants"], ["c", "The green filter blocked the water"], ["d", "Plants are green, so green light is the best"]];
+    ask({ box: $("lgCats"), fb: $("lgFb"), spex: "light", opts: shuffle(opts), correct: ["a"], tip: "Remember the prism: which colour did the leaf NOT absorb?",
+      answer: `<b>${opts[0][1]}</b>.`, good: "Chlorophyll <b>reflects</b> green light. Little light energy was absorbed → little <b>photosynthesis</b> → little glucose for growth. Clear (white) light has all the colours, so that plant grew most.",
+      onDone: (st) => { addStars("light", "garden", starsOf(st)); asking("lGarden", false); $("lgAsk").hidden = true; lgAgain(); } });
+  }
+  function lgAgain() { $("lgGo").hidden = false; $("lgGo").textContent = "↺ Plant new seedlings"; $("lgGo").onclick = setupGarden; }
+
+  /* ============================ 10 TAB 5 · STARCH TEST ============================ */
+  const LEAF_GREEN = "#7CB342", LEAF_DARK = "#4E7D2A", LEAF_PALE = "#F3EBC8";
+  // 🧪 the method, step by step
+  function smDraw() {
+    const svg = $("smSvg"); svg.replaceChildren();
+    const S = { svg };
+    el("rect", { x: 0, y: 0, width: 640, height: 400, fill: "#F5F7FA" }, svg);
+    el("rect", { x: 0, y: 330, width: 640, height: 70, fill: "#D7CCC8" }, svg);
+    // tripod, gauze, Bunsen burner
+    for (const [x1, x2] of [[176, 190], [304, 290]]) el("line", { x1, y1: 330, x2, y2: 240, stroke: "#546E7A", "stroke-width": 5 }, svg);
+    el("line", { x1: 160, y1: 238, x2: 320, y2: 238, stroke: "#78909C", "stroke-width": 5 }, svg);
+    el("rect", { x: 222, y: 318, width: 36, height: 12, rx: 3, fill: "#455A64" }, svg);
+    el("rect", { x: 233, y: 272, width: 14, height: 48, fill: "#90A4AE", stroke: "#546E7A", "stroke-width": 2 }, svg);
+    S.flame = el("g", {}, svg);
+    el("path", { d: "M240 242 C230 256 232 268 240 272 C248 268 250 256 240 242Z", fill: "#42A5F5", opacity: 0.9 }, S.flame);
+    el("path", { d: "M240 252 C235 260 236 268 240 270 C244 268 245 260 240 252Z", fill: "#BBDEFB" }, S.flame);
+    // the big beaker (water bath)
+    el("rect", { x: 175, y: 152, width: 130, height: 84, fill: "#B3E5FC", opacity: 0.8 }, svg);
+    el("path", { d: "M172 120 L175 236 L305 236 L308 120", fill: "none", stroke: "#78909C", "stroke-width": 3 }, svg);
+    S.bub = el("g", {}, svg);
+    // boiling tube with ethanol (comes later)
+    S.tube = el("g", { opacity: 0 }, svg);
+    S.eth = el("rect", { x: 229, y: 150, width: 22, height: 70, fill: "#FAFAFA", stroke: "none" }, S.tube);
+    el("path", { d: "M228 84 L228 214 Q240 230 252 214 L252 84", fill: "none", stroke: "#78909C", "stroke-width": 2.5 }, S.tube);
+    label(S.tube, 240, 76, "ethanol", 14, "#455A64");
+    // warm water beaker
+    el("rect", { x: 397, y: 268, width: 82, height: 60, fill: "#E1F5FE" }, svg);
+    el("path", { d: "M394 244 L397 328 L479 328 L482 244", fill: "none", stroke: "#78909C", "stroke-width": 3 }, svg);
+    label(svg, 438, 236, "warm water", 14, "#0277BD");
+    // white tile and iodine dropper
+    el("rect", { x: 515, y: 312, width: 115, height: 18, rx: 3, fill: "#FFFFFF", stroke: "#B0BEC5", "stroke-width": 2 }, svg);
+    label(svg, 572, 350, "white tile", 14, "#455A64");
+    el("rect", { x: 566, y: 160, width: 9, height: 56, rx: 3, fill: "#ECEFF1", stroke: "#90A4AE", "stroke-width": 2 }, svg);
+    el("ellipse", { cx: 570.5, cy: 156, rx: 10, ry: 12, fill: "#6D4C41" }, svg);
+    label(svg, 572, 130, "iodine solution", 14, "#795548");
+    S.fx = el("g", {}, svg);
+    // the leaf
+    S.leaf = el("g", {}, svg);
+    el("line", { x1: 0, y1: 26, x2: 0, y2: 40, stroke: "#558B2F", "stroke-width": 3 }, S.leaf);
+    S.lp = el("path", { d: vleafD(0, 0, 56, 18), fill: LEAF_GREEN, stroke: "#33691E", "stroke-width": 2 }, S.leaf);
+    el("line", { x1: 0, y1: 25, x2: 0, y2: -24, stroke: "#33691E", "stroke-width": 1.2, opacity: 0.6 }, S.leaf);
+    S.pos = { x: 70, y: 190, r: 0, s: 1 }; setLeafPos(S, S.pos);
+    S.note = label(svg, 80, 140, "a leaf from a plant", 14, "#33691E"); S.note2 = label(svg, 80, 158, "that was in the light", 14, "#33691E");
+    S.tag = el("g", {}, svg);
+    return S;
+  }
+  const setLeafPos = (S, p) => S.leaf.setAttribute("transform", `translate(${p.x} ${p.y}) rotate(${p.r}) scale(${p.s})`);
+  const leafTo = (S, q, ms = 1100) => { const p0 = { ...S.pos }; return tween(ms, (t) => { const k = ease(t); S.pos = { x: p0.x + (q.x - p0.x) * k, y: p0.y + (q.y - p0.y) * k, r: p0.r + ((q.r ?? p0.r) - p0.r) * k, s: p0.s + ((q.s ?? p0.s) - p0.s) * k }; setLeafPos(S, S.pos); }); };
+  const mix = (a, b, t) => { const p = (c) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16)); const A = p(a), B = p(b); return "#" + A.map((v, i) => Math.round(v + (B[i] - v) * t).toString(16).padStart(2, "0")).join(""); };
+  const recolor = (e, a, b, ms) => tween(ms, (t) => e.setAttribute("fill", mix(a, b, t)));
+  const smTag = (S, lines, col = "#1F3A5F") => { S.tag.replaceChildren(); lines.forEach((s, i) => label(S.tag, 320, 28 + i * 22, s, 17, col)); };
+  const SM_STEPS = ["🔥 <b>Boil</b> the leaf in water (1 min): this <b>kills</b> and <b>softens</b> the cells.", "🚫 Turn the Bunsen burner <b>off</b>: ethanol is <b>flammable</b>!", "🧪 Leaf in hot <b>ethanol</b> (in the water bath): this <b>removes the chlorophyll</b>.", "💧 <b>Rinse</b> in warm water: this <b>softens</b> the brittle leaf.", "🟤 White tile + <b>iodine</b>: <b>blue-black</b> = starch; orange-brown = no starch."];
+  let smBusy = false;
+  const SM_RUN = [
+    async (C) => {
+      C.S.note.remove(); C.S.note2.remove();
+      await leafTo(C.S, { x: 210, y: 196 });
+      smTag(C.S, ["boiling water · 1 minute"]);
+      const bs = [...Array(10)].map((_, i) => el("circle", { cx: 185 + (i * 13) % 110, cy: 232, r: 3 + (i % 3), fill: "#fff", opacity: 0.9 }, C.S.bub));
+      await Promise.all([tween(1600, (t) => bs.forEach((b, i) => b.setAttribute("cy", 232 - ((t * 90 + i * 9) % 80)))), recolor(C.S.lp, LEAF_GREEN, LEAF_DARK, 1600)]);
+      C.S.bub.replaceChildren();
+    },
+    async (C) => { await fade(C.S.flame, 1, 0, 600); smTag(C.S, ["⚠ Bunsen burner OFF", "ethanol is flammable"], "#C62828"); SND.tip(); await wait(400); },
+    async (C) => {
+      await fade(C.S.tube, 0, 1, 500);
+      await leafTo(C.S, { x: 240, y: 186, s: 0.62 });
+      smTag(C.S, ["hot ethanol: the chlorophyll", "comes out of the leaf"]);
+      await Promise.all([recolor(C.S.lp, LEAF_DARK, LEAF_PALE, 2000), recolor(C.S.eth, "#FAFAFA", "#9CCC65", 2000)]);
+    },
+    async (C) => { await leafTo(C.S, { x: 438, y: 292, s: 1 }, 1300); smTag(C.S, ["warm water: softens the leaf"]); await wait(500); },
+    async (C) => {
+      await leafTo(C.S, { x: 572, y: 296, r: 90, s: 1 }, 1200);
+      for (let k = 0; k < 3; k++) { const d = el("circle", { cx: 570.5, cy: 220, r: 4, fill: "#8D4A1F" }, C.S.fx); await tween(380, (t) => d.setAttribute("cy", 220 + 74 * t)); d.remove(); }
+      await recolor(C.S.lp, LEAF_PALE, BLUEBLACK, 1300);
+      smTag(C.S, ["blue-black: the leaf contains starch ✔"], "#1A237E"); SND.star();
+    },
+  ];
+  function setupMethod() {
+    $("smSteps").innerHTML = SM_STEPS.map((s) => `<li>${s}</li>`).join("");
+    stepper({ host: "smCtl", list: "smSteps", first: "▶ Start the test", playLabel: "▶ Play all", onBusy: (b) => { smBusy = b; },
+      start: () => { $("smAsk").hidden = true; asking("sMethod", false); fbSet($("smFb"), "", ""); return { S: smDraw() }; }, steps: SM_RUN, end: smEnd });
+  }
+  function smEnd() {
+    say("starch", "That leaf was in the light, so it made glucose and stored it as <b>starch</b>.", "happy");
+    if (has("starch", "method")) return;
+    $("smAsk").hidden = false; asking("sMethod", true);
+    const opts = [["a", "To remove the chlorophyll, so we can see the colour of the iodine"], ["b", "To add starch to the leaf"], ["c", "To make the leaf softer"], ["d", "To kill the cells"]];
+    ask({ box: $("smCats"), fb: $("smFb"), spex: "starch", opts: shuffle(opts), correct: ["a"], tip: "What colour did the ethanol turn? What came out of the leaf?",
+      answer: `<b>${opts[0][1]}</b>.`, good: "Hot ethanol <b>removes the chlorophyll</b> (the ethanol turns green). On a pale leaf the blue-black colour is easy to see.",
+      onDone: (st) => { addStars("starch", "method", starsOf(st)); asking("sMethod", false); } });
+  }
+
+  // 🔢 put it in order
+  const ORDER = [
+    { t: "🔥 Boil the leaf in water for 1 minute", tip: "First the cells must be killed and softened." },
+    { t: "🚫 Turn off the Bunsen burner", tip: "This must happen BEFORE the ethanol comes near the hot water: ethanol is flammable." },
+    { t: "🧪 Put the leaf in hot ethanol in the water bath", tip: "Now the chlorophyll is removed, safely, with no flame." },
+    { t: "💧 Rinse the leaf in warm water", tip: "The ethanol made the leaf brittle; warm water softens it again." },
+    { t: "🟤 Spread it on a white tile and add iodine solution", tip: "The colour test is always the last step." },
+  ];
+  function setupOrder() {
+    $("soSlots").innerHTML = ORDER.map((_, i) => `<div class="slot" id="so-${i}" data-k="${i}"><span class="sname">${i + 1}</span></div>`).join("");
+    $("soBank").replaceChildren(); fbSet($("soFb"), "", "");
+    const tiles = shuffle(ORDER.map((o, i) => [o, i])).map(([o, i]) => { const t = h(`<div class="tile" data-k="${i}" role="button" tabindex="0">${o.t}</div>`); $("soBank").appendChild(t); return t; });
+    const slots = ORDER.map((_, i) => $("so-" + i));
+    dropTask({ tiles, slots, spex: "starch", fb: $("soFb"), mode: "tile",
+      fits: (t, s) => t.dataset.k === s.dataset.k, home: (t) => $("so-" + t.dataset.k), place: (t, s) => { s.appendChild(t); s.classList.add("full"); },
+      tip: (t, s, final) => { const o = ORDER[+t.dataset.k]; return final ? `“${o.t.slice(2)}” is step <b>${+t.dataset.k + 1}</b>. ${o.tip}` : o.tip; },
+      onTile: (t) => { if (!t._st.revealed) fbSet($("soFb"), "good", "✔ Right!"); },
+      onDone: () => {
+        const rev = tiles.filter((t) => t._st.revealed).length, mis = tiles.some((t) => t._st.mistakes);
+        addStars("starch", "order", rev ? (rev <= 2 ? 1 : 0) : mis ? 2 : 3);
+        fbSet($("soFb"), "good", "✔ Boil → Bunsen off → ethanol → rinse → iodine. <button class=\"btn small\" id=\"soAgain\">↺ Again</button>");
+        $("soAgain").onclick = setupOrder;
+        say("starch", "Perfect order! Now do the <b>🔬 Four experiments</b>.", "happy", "good");
+      } });
+  }
+
+  // 🔬 four experiments
+  const DESTARCH = "<b>Why 2 days in the dark first?</b> The plant <b>destarched</b>: it used up its starch. So any starch we find was made <b>during</b> the experiment.";
+  const SX = [
+    { id: "light", chip: "☀ Light or dark", read: "Two plants were destarched. Then plant <b>A</b> was put in the <b>light</b> for 6 hours. Plant <b>B</b> stayed in the <b>dark</b>.",
+      predQ: "🤔 Predict: which leaf will turn blue-black?", pred: [["a", "Only A (light)"], ["b", "Only B (dark)"], ["c", "Both"], ["d", "Neither"]], predAns: "a", leaves: [[170, "pos", "A"], [470, "neg", "B"]],
+      opts: [["a", "Light is needed for photosynthesis"], ["b", "Plants make starch only in the dark"], ["c", "Light destroys starch"], ["d", "Iodine only works in the light"]],
+      tip: "What was different between A and B?", good: "Only the plant in the <b>light</b> made starch: <b>light is needed</b> for photosynthesis.", why: DESTARCH },
+    { id: "star", chip: "⭐ Foil stencil", read: "A destarched plant had one leaf covered with <b>foil</b> with a <b>star cut out</b>. It was put in the light for 6 hours. Then the foil was taken off.",
+      predQ: "🤔 Predict: which part of the leaf will turn blue-black?", pred: [["a", "Only the star"], ["b", "Only the part under the foil"], ["c", "The whole leaf"], ["d", "No part"]], predAns: "a", leaves: [[320, "star", ""]],
+      opts: [["a", "Starch is made only where light reaches the leaf"], ["b", "Foil makes starch"], ["c", "Starch moves to the dark parts"], ["d", "The star was painted with iodine"]],
+      tip: "Where could the light get through the foil?", good: "Only the uncovered <b>star</b> got light, so only there was starch made: <b>light is needed</b>.", why: DESTARCH },
+    { id: "vari", chip: "🍃 Variegated leaf", read: "A <b>variegated</b> leaf is green in the middle and <b>white</b> at the edge (no chlorophyll there). The plant was destarched, then put in the light.",
+      predQ: "🤔 Predict: which parts will turn blue-black?", pred: [["a", "Only the green parts"], ["b", "Only the white parts"], ["c", "The whole leaf"], ["d", "No part"]], predAns: "a", leaves: [[320, "vari", ""]],
+      opts: [["a", "Chlorophyll is needed for photosynthesis"], ["b", "White parts store the most starch"], ["c", "Light is not needed"], ["d", "Iodine only colours green things"]],
+      tip: "What do the green parts have that the white parts don't?", good: "Only the green parts have <b>chlorophyll</b> to absorb light: <b>chlorophyll is needed</b>.", why: "<b>Before the test</b> the leaf was green and white. After the ethanol it is all pale, so look at the iodine colours carefully!" },
+    { id: "co2", chip: "🫙 No carbon dioxide", read: "Two destarched plants in clear bags, in the light. Bag <b>A</b> has <b>soda lime</b>, which absorbs carbon dioxide (soda lime is corrosive: gloves!). Bag <b>B</b> has none.",
+      predQ: "🤔 Predict: which leaf will turn blue-black?", pred: [["a", "Only B (no soda lime)"], ["b", "Only A (soda lime)"], ["c", "Both"], ["d", "Neither"]], predAns: "a", leaves: [[170, "neg", "A"], [470, "pos", "B"]],
+      opts: [["a", "Carbon dioxide is needed for photosynthesis"], ["b", "Soda lime makes starch"], ["c", "Oxygen is needed for photosynthesis"], ["d", "Plastic bags stop light"]],
+      tip: "Soda lime absorbs a gas. Which one, and is it a reactant of photosynthesis?", good: "Plant A had <b>no carbon dioxide</b>, so it could not photosynthesise: <b>carbon dioxide is needed</b>. Plant B is the <b>control</b>: the same, but with carbon dioxide.", why: DESTARCH },
+  ];
+  let sxI = 0, sxBusy = false, SXL = [];
+  // a leaf for the iodine test: green → pale → iodine pattern. kind: pos · neg · star · vari
+  function testLeaf(g, svg, cx, cy, kind) {
+    const L = 116, W = 34, d = vleafD(cx, cy, L, W), clip = clipOf(svg, d), w = el("g", {}, g);
+    el("line", { x1: cx, y1: cy + L / 2, x2: cx, y2: cy + L / 2 + 12, stroke: "#558B2F", "stroke-width": 3 }, w);
+    const base = el("path", { d, fill: kind === "vari" ? "#F1F8E9" : LEAF_GREEN, stroke: "#33691E", "stroke-width": 2 }, w);
+    const inner = kind === "vari" ? el("path", { d: vleafD(cx, cy + 2, L * 0.74, W * 0.55), fill: LEAF_GREEN, "clip-path": clip }, w) : null;
+    const io = el("g", { opacity: 0, "clip-path": clip }, w);
+    el("rect", { x: cx - 60, y: cy - L / 2, width: 120, height: L, fill: kind === "pos" ? BLUEBLACK : ORBROWN }, io);
+    if (kind === "star") el("path", { d: starD(cx, cy - 4, 30, 13), fill: BLUEBLACK }, io);
+    if (kind === "vari") el("path", { d: vleafD(cx, cy + 2, L * 0.74, W * 0.55), fill: BLUEBLACK }, io);
+    el("path", { d, fill: "none", stroke: "#33691E", "stroke-width": 2 }, w);
+    el("line", { x1: cx, y1: cy + L / 2 - 2, x2: cx, y2: cy - L / 2 + 8, stroke: "#33691E", "stroke-width": 1.3, opacity: 0.5 }, w);
+    return { async pale() { await Promise.all([recolor(base, base.getAttribute("fill"), LEAF_PALE, 1200), inner ? recolor(inner, LEAF_GREEN, LEAF_PALE, 1200) : null]); }, iodine: () => fade(io, 0, 1, 1200) };
+  }
+  const lamp = (g, x, y, w = 120) => { el("path", { d: `M${x - w / 2} ${y + 22} L${x - w / 2 + 16} ${y} L${x + w / 2 - 16} ${y} L${x + w / 2} ${y + 22}Z`, fill: "#546E7A" }, g); el("ellipse", { cx: x, cy: y + 23, rx: w / 2 - 6, ry: 5, fill: "#FFF59D" }, g);
+    for (let k = -1; k <= 1; k++) el("line", { x1: x + k * 30, y1: y + 32, x2: x + k * 40, y2: y + 62, stroke: "#FDD835", "stroke-width": 3, "stroke-dasharray": "5 5" }, g); };
+  function sxDraw() {
+    const svg = $("sxSvg"); svg.replaceChildren();
+    const X = SX[sxI], top = el("g", {}, svg);
+    el("rect", { x: 0, y: 0, width: 640, height: 400, fill: "#F5F7FA" }, svg); svg.appendChild(top);
+    if (X.id === "light") {
+      lamp(top, 170, 6); pottedPlant(top, 170, 210, 92); label(top, 170, 232, "A · in the light", 15, "#E65100");
+      el("rect", { x: 370, y: 8, width: 200, height: 206, rx: 6, fill: "#37474F", stroke: "#263238", "stroke-width": 3 }, top);
+      pottedPlant(top, 470, 208, 92, "#558B2F"); el("rect", { x: 370, y: 8, width: 200, height: 206, rx: 6, fill: "#263238", opacity: 0.55 }, top);
+      label(top, 470, 232, "B · in a dark cupboard", 15, "#37474F");
+    } else if (X.id === "co2") {
+      lamp(top, 320, 4, 300);
+      for (const [x, n, soda] of [[170, "A · soda lime", true], [470, "B · no soda lime", false]]) {
+        pottedPlant(top, x, 210, 82);
+        if (soda) { el("rect", { x: x + 34, y: 192, width: 40, height: 16, rx: 4, fill: "#ECEFF1", stroke: "#90A4AE", "stroke-width": 2 }, top); for (let k = 0; k < 7; k++) el("circle", { cx: x + 39 + k * 5, cy: 190, r: 3, fill: "#F5F5F5", stroke: "#B0BEC5" }, top); }
+        el("rect", { x: x - 80, y: 72, width: 160, height: 140, rx: 40, fill: "#E3F2FD", "fill-opacity": 0.25, stroke: "#78909C", "stroke-width": 2.5, "stroke-dasharray": "8 5" }, top);
+        label(top, x, 232, n, 15, "#455A64");
+      }
+    } else {
+      lamp(top, 320, 4);
+      const d = vleafD(320, 136, 150, 44);
+      el("line", { x1: 320, y1: 211, x2: 320, y2: 222, stroke: "#558B2F", "stroke-width": 3 }, top);
+      if (X.id === "vari") { el("path", { d, fill: "#F1F8E9", stroke: "#33691E", "stroke-width": 2 }, top); el("path", { d: vleafD(320, 138, 150 * 0.74, 44 * 0.55), fill: LEAF_GREEN }, top); el("path", { d, fill: "none", stroke: "#33691E", "stroke-width": 2 }, top); label(top, 455, 136, "white edge:", 15, "#455A64"); label(top, 455, 156, "no chlorophyll", 15, "#455A64"); }
+      else { el("path", { d, fill: LEAF_GREEN, stroke: "#33691E", "stroke-width": 2 }, top);
+        el("path", { d: `M200 40 H440 V230 H200Z ${starD(320, 132, 34, 15)}`, fill: "#B0BEC5", "fill-rule": "evenodd", "clip-path": clipOf(svg, d), stroke: "none" }, top);
+        el("path", { d, fill: "none", stroke: "#546E7A", "stroke-width": 2 }, top); label(top, 470, 136, "foil, with a star", 15, "#455A64"); label(top, 470, 156, "cut out", 15, "#455A64"); }
+    }
+    el("line", { x1: 10, y1: 246, x2: 630, y2: 246, stroke: "#CFD8DC", "stroke-width": 2 }, svg);
+    label(svg, 320, 266, "leaves tested with iodine", 15, "#606A72");
+    const bot = el("g", {}, svg);
+    SXL = X.leaves.map(([x, kind, n]) => { if (n) label(bot, x - 64, 326, n, 22, "#1F3A5F"); return testLeaf(bot, svg, x, 322, kind); });
+    return svg;
+  }
+  function setupExp() {
+    $("sxPick").innerHTML = SX.map((x, i) => `<button class="chip" data-i="${i}" aria-pressed="${i === sxI}">${x.chip} <span class="st"></span></button>`).join("");
+    $("sxPick").querySelectorAll(".chip").forEach((b) => b.addEventListener("click", () => { if (sxBusy) return; sxI = +b.dataset.i; sxOpen(); }));
+    sxOpen();
+  }
+  function sxPaint() { $("sxPick").querySelectorAll(".chip").forEach((b) => { b.setAttribute("aria-pressed", +b.dataset.i === sxI); b.querySelector(".st").textContent = has("starch", "exp-" + SX[+b.dataset.i].id) ? "✔" : ""; }); }
+  let sxPredV = null;
+  function sxOpen() {
+    const X = SX[sxI]; sxPaint(); sxDraw(); sxPredV = null;
+    $("sxRead").innerHTML = X.read; $("sxRead").hidden = false; $("sxWhy").hidden = true;
+    $("sxPredQ").textContent = X.predQ; $("sxPred").hidden = false; $("sxGo").hidden = true; $("sxAsk").hidden = true; asking("sExp", false); fbSet($("sxFb"), "", "");
+    $("sxPredCats").innerHTML = X.pred.map(([v, t]) => `<button class="cat" data-v="${v}">${t}</button>`).join("");
+    $("sxPredCats").querySelectorAll(".cat").forEach((b) => b.onclick = () => { if (sxBusy) return; sxPredV = b.dataset.v; $("sxPredCats").querySelectorAll(".cat").forEach((x) => x.classList.toggle("pickd", x === b)); $("sxGo").hidden = false; $("sxGo").textContent = "🧪 Test with iodine"; $("sxGo").onclick = sxTest; });
+    say("starch", "Read the set-up. <b>Predict</b> first, then test the leaves.");
+    fitHeight();
+  }
+  async function sxTest() {
+    const X = SX[sxI]; if (sxBusy || !sxPredV) return;
+    sxBusy = true; $("sxGo").hidden = true; $("sxPredCats").querySelectorAll(".cat").forEach((b) => (b.disabled = true));
+    const svg = $("sxSvg"), tag = label(svg, 320, 396, "boil · hot ethanol · rinse …", 16, "#455A64");
+    await Promise.all(SXL.map((L) => L.pale()));
+    tag.textContent = "… add iodine solution";
+    await Promise.all(SXL.map((L) => L.iodine()));
+    tag.textContent = "blue-black = starch · orange-brown = no starch"; SND.star();
+    sxBusy = false; $("sxPred").hidden = true;
+    const right = sxPredV === X.predAns;
+    $("sxRead").innerHTML = right ? "✔ Your prediction was <b>right</b>!" : `Your prediction was “${X.pred.find(([v]) => v === sxPredV)[1]}”. The result: “<b>${X.pred.find(([v]) => v === X.predAns)[1]}</b>”. That's why we test ideas!`;
+    $("sxWhy").innerHTML = X.why; $("sxWhy").hidden = false;
+    const next = () => { $("sxGo").hidden = false; const n = SX.findIndex((x) => !has("starch", "exp-" + x.id)); $("sxGo").textContent = n >= 0 ? "Next experiment →" : "↺ Do it again"; $("sxGo").onclick = () => { sxI = n >= 0 ? n : sxI; sxOpen(); }; };
+    if (has("starch", "exp-" + X.id)) { next(); fitHeight(); return; }
+    $("sxAsk").hidden = false; asking("sExp", true); fitHeight();
+    ask({ box: $("sxCats"), fb: $("sxFb"), spex: "starch", opts: shuffle(X.opts), correct: ["a"], tip: X.tip, answer: `<b>${X.opts[0][1]}</b>. ${X.good}`, good: X.good,
+      onDone: (st) => { addStars("starch", "exp-" + X.id, starsOf(st)); asking("sExp", false); $("sxAsk").hidden = true; sxPaint(); next();
+        if (SX.every((x) => has("starch", "exp-" + x.id))) say("starch", "Four experiments, three conclusions: photosynthesis needs <b>light</b>, <b>chlorophyll</b> and <b>carbon dioxide</b>!", "happy", "good"); } });
+  }
+
+  /* ============================ 11 UI ============================ */
+  // every view fits on one screen: --avail = the height left for the activity; pictures shrink to it
+  function asking(id, on) { const f = $(id) && $(id).querySelector(".fit"); if (f) f.classList.toggle("asking", on); }
+  const boardZoom = () => (innerWidth >= 1500 ? 1.3 : 1);   // bigger pictures on the board
+  function fitHeight() {
+    const wide = innerWidth >= 900;
+    document.body.classList.toggle("fitmode", wide && !["test", "cert"].includes(curTab));
+    const card = [...document.querySelectorAll(".fitcard")].find((c) => c.offsetParent);
+    if (!card) return;
+    const ft = document.querySelector("footer"), below = parseFloat(getComputedStyle(document.querySelector("main")).paddingBottom) + (ft.offsetParent ? ft.offsetHeight : 0);
+    const avail = Math.max(180, Math.floor(innerHeight - (card.getBoundingClientRect().top + scrollY) - below - 26));
+    document.documentElement.style.setProperty("--avail", avail + "px");
+    card.querySelectorAll(".fitsvg").forEach((s) => {
+      if (!wide) { s.style.width = s.style.height = ""; return; }
+      const [, , vw, vh] = s.getAttribute("viewBox").split(" ").map(Number);
+      const extra = [...s.parentNode.children].filter((x) => x !== s).reduce((n, x) => { const hh = x.getBoundingClientRect().height; return n + (hh ? hh + 8 : 0); }, 0);
+      const hh = Math.max(120, Math.min(avail - (+s.dataset.reserve || extra), (+s.dataset.maxw * boardZoom() * vh) / vw, (innerWidth * 0.56 * vh) / vw));
+      s.style.height = hh + "px"; s.style.width = (hh * vw) / vh + "px";
+    });
+    card.querySelectorAll(".fitlab").forEach((w) => {
+      if (!wide) { w.style.width = ""; return; }
+      const [, , vw, vh] = w.querySelector("svg").getAttribute("viewBox").split(" ").map(Number);
+      w.style.width = Math.min(+w.dataset.maxw * boardZoom(), (avail * vw) / vh, innerWidth * 0.56) + "px";
+    });
+  }
+  addEventListener("resize", fitHeight);
+  if (window.ResizeObserver) { const ro = new ResizeObserver(() => fitHeight()); document.querySelectorAll("header, .spexbar, .subsw, .tabs").forEach((e) => ro.observe(e)); }
+  const TABS = ["eq", "journey", "uses", "light", "starch", "test", "cert"];
+  const SUBS = {}; document.querySelectorAll("[data-subs]").forEach((w) => (SUBS[w.dataset.subs] = [...w.querySelectorAll("[data-sub]")].map((b) => b.dataset.sub)));
+  const curSub = { eq: "eWord", journey: "jTrip", uses: "uTour", light: "lPrism", starch: "sMethod" };
+  const ready = {};
+  const SUB_SAY = {
+    eWord: ["eq", "Plants make their own food. What goes <b>in</b> and what comes <b>out</b>? Build the <b>word equation</b>."],
+    eSym: ["eq", "Scientists write the equation with <b>symbols</b>. Atoms are never lost or made. Choose the numbers so both sides match!"],
+    eAnim: ["eq", "Let's zoom into a <b>chloroplast</b>. Press <b>▶ Start photosynthesis</b>, read each step, then press <b>Next step ▶</b>."],
+    jTrip: ["journey", "Where do the ingredients come from? Press <b>▶ Follow the ingredients</b>."],
+    jLabel: ["journey", "Label the parts that bring the ingredients to the chloroplasts."],
+    jSort: ["journey", "What goes <b>into</b> a plant, what comes <b>out</b>, and what is <b>made</b> inside?"],
+    uTour: ["uses", "The plant has made glucose. What does it do with it? Press <b>▶ Make some glucose</b>."],
+    uMatch: ["uses", "Match each substance made from glucose to its job."],
+    uQs: ["uses", "Five puzzles. Use what you know about glucose!"],
+    lPrism: ["light", "Is sunlight really white? Press <b>▶ Switch on the Sun</b>."],
+    lGarden: ["light", "Do plants grow equally well in every colour of light? <b>Predict</b> first!"],
+    sMethod: ["starch", "How do we know a leaf has made starch? Press <b>▶ Start the test</b>."],
+    sOrder: ["starch", "Put the five steps of the starch test in order."],
+    sExp: ["starch", "Four classic experiments. Choose one, <b>predict</b>, then test the leaves."],
+  };
+  const INIT = {
+    eWord: setupWord, eSym: setupSym, eAnim: setupAnim,
+    jTrip: setupTrip, jLabel: setupJLabel, jSort: setupJSort,
+    uTour: setupTour, uMatch: setupUMatch, uQs: setupUQs,
+    lPrism: setupPrism, lGarden: setupGarden,
+    sMethod: setupMethod, sOrder: setupOrder, sExp: setupExp,
+    eCheck: () => runCheck("eq"), jCheck: () => runCheck("journey"), uCheck: () => runCheck("uses"), lCheck: () => runCheck("light"), sCheck: () => runCheck("starch"),
+  };
+  function showSub(tab, sub) {
+    unselect();
+    curSub[tab] = sub;
+    if (curTab !== tab) return showTab(tab);
+    for (const s of SUBS[tab]) $(s).hidden = s !== sub;
+    document.querySelectorAll(`[data-subs="${tab}"] [data-sub]`).forEach((b) => b.setAttribute("aria-pressed", b.dataset.sub === sub));
+    if (SUB_SAY[sub]) say(...SUB_SAY[sub]);
+    else if (sub.endsWith("Check")) say(tab, "Three quick questions. Tip first, then the answer.");
+    fitHeight();
+    if (!ready[sub] && INIT[sub]) { ready[sub] = 1; INIT[sub](); fitHeight(); }
+  }
+  document.querySelectorAll("[data-subs] [data-sub]").forEach((b) => b.addEventListener("click", () => showSub(b.closest("[data-subs]").dataset.subs, b.dataset.sub)));
+  let testReady = false;
+  function showTab(which) {
+    curTab = which; unselect();
+    for (const t of TABS) { $("tab-" + t).setAttribute("aria-selected", t === which); $(t).hidden = t !== which; }
+    if (curSub[which]) showSub(which, curSub[which]);
+    fitHeight();
+    if (which === "test" && !testReady) { testReady = true; newRound(); }
+    if (which === "cert") renderCert();
+  }
+  for (const t of TABS) $("tab-" + t).addEventListener("click", () => showTab(t));
+
+  // 6 Test yourself
+  let roundNo = 0;
+  function newRound() {
+    roundNo++;
+    const list = roundNo === 1 ? FIRST_ROUND.map((id) => QBANK.find((q) => q.id === id)) : shuffle(QBANK).slice(0, 12);
+    quiz({ root: $("testBox"), tab: "test", list, prefix: null, spex: "test", title: "Test yourself", again: "Play again (new questions)",
+      onEnd: (restart, stars) => {
+        if (restart) return newRound();
+        P.testRounds++; addStars("test", "best", stars);
+        say("test", `Round finished: <b>★ ${stars}</b> out of 36! ${stars >= 32 ? "Outstanding!" : "Look at the questions without ★★★ again."}`, "happy", "good");
+      } });
+    say("test", "12 questions about photosynthesis. A tip first, then the answer. Good luck!");
+  }
+
+  // overlays
+  function closeOv(id) { $(id).classList.remove("on"); if (id === "present" && !P.seenIntro) { P.seenIntro = true; save(); } }
+  document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => closeOv(b.dataset.close)));
+  document.querySelectorAll(".overlay").forEach((o) => o.addEventListener("click", (e) => { if (e.target === o) closeOv(o.id); }));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") document.querySelectorAll(".overlay.on").forEach((o) => closeOv(o.id)); });
+  $("helpBtn").addEventListener("click", () => $("help").classList.add("on"));
+  $("soundBtn").addEventListener("click", () => { P.sound = !P.sound; save(); markSound(); if (P.sound) SND.star(); });
+  const markSound = () => { $("soundBtn").setAttribute("aria-pressed", P.sound); $("soundBtn").textContent = P.sound ? "🔊 Sound" : "🔇 Sound"; };
+
+  // Marie's guide: 5 cards
+  const SLIDES = [
+    { say: "Hi, I'm <b>Marie</b>! Plants don't eat: they <b>make their own food</b>. Let's find out how.",
+      html: `<h3>1 · Photosynthesis</h3><div class="kw">
+        <div><b>Photosynthesis</b>Plants make <strong>glucose</strong> (a sugar) from <strong>carbon dioxide</strong> and <strong>water</strong>, using <strong>light energy</strong>. Oxygen is given off.</div>
+        <div><b>Reactants</b>What goes in: carbon dioxide and water.</div>
+        <div><b>Products</b>What comes out: glucose and oxygen.</div>
+        <div><b>Chlorophyll</b>The green pigment in chloroplasts. It absorbs the light energy.</div></div>
+        <div class="flow"><span>carbon dioxide + water</span>→<span>glucose + oxygen</span></div>
+        <div class="flow"><span>6CO₂ + 6H₂O</span>→<span>C₆H₁₂O₆ + 6O₂</span></div>` },
+    { say: "Three ingredients, three ways in.",
+      html: `<h3>2 · Where do the ingredients come from?</h3><div class="kw">
+        <div><b>💧 Water</b>From the soil, into the <strong>root hair cells</strong>, up the <strong>xylem</strong> to the leaves.</div>
+        <div><b>💨 Carbon dioxide</b>From the air, into the leaf through the <strong>stomata</strong> (tiny holes, mostly underneath).</div>
+        <div><b>☀ Light</b>From the Sun, absorbed by <strong>chlorophyll</strong> in the <strong>chloroplasts</strong>.</div>
+        <div><b>⬆ Oxygen</b>Leaves the leaf through the stomata.</div></div>` },
+    { say: "Glucose is the plant's fuel and building material.",
+      html: `<h3>3 · What is glucose used for?</h3><div class="kw">
+        <div><b>⚡ Respiration</b>Releases energy in every cell.</div>
+        <div><b>🥔 Starch</b>Stored in leaves, potatoes, seeds. Does not dissolve.</div>
+        <div><b>🧱 Cellulose</b>Strong cell walls.</div>
+        <div><b>🌱 Proteins</b>For growth, made with nitrates from the soil.</div>
+        <div><b>🌻 Fats and oils</b>Energy store in seeds.</div>
+        <div><b>🍎 Sucrose</b>Carried in the phloem; sweet fruit.</div></div>` },
+    { say: "Why are leaves green?",
+      html: `<h3>4 · Light and chlorophyll</h3><ul>
+        <li>White light is a <b>mixture of colours</b>. A <b>prism</b> splits it into a <b>spectrum</b>.</li>
+        <li><b>Chlorophyll absorbs</b> mostly <b>red</b> and <b>blue</b> light and uses its energy.</li>
+        <li><b>Green</b> light is mostly <b>reflected</b>, so leaves look green.</li>
+        <li>Plants grow least in <b>green</b> light and best in white light (all colours).</li></ul>` },
+    { say: "The starch test shows where a leaf has photosynthesised.",
+      html: `<h3>5 · Testing a leaf for starch</h3>
+        <div class="flow"><span>Boil in water</span>→<span>Bunsen OFF</span>→<span>Hot ethanol</span>→<span>Rinse</span>→<span>Iodine</span></div>
+        <div class="kw">
+        <div><b>🟦 Blue-black</b>Starch is present: the leaf photosynthesised.</div>
+        <div><b>🟧 Orange-brown</b>No starch.</div>
+        <div><b>🌑 Destarch first</b>2 days in the dark, so any starch was made during the experiment.</div>
+        <div><b>⚠ Safety</b>Eye protection. Ethanol is flammable: no flame! Hot water: use forceps.</div></div>
+        <p>Experiments show that photosynthesis needs <b>light</b>, <b>chlorophyll</b> and <b>carbon dioxide</b>.</p>` },
+  ];
+  let pi = 0;
+  function showPresent(i) {
+    pi = Math.max(0, Math.min(SLIDES.length - 1, i));
+    $("presentSlide").innerHTML = `<div class="slide">${SLIDES[pi].html}</div>`;
+    say("present", SLIDES[pi].say, pi === 0 ? "happy" : "talk");
+    $("pPg").textContent = `${pi + 1} / ${SLIDES.length}`; $("pPrev").disabled = pi === 0;
+    $("pNext").textContent = pi === SLIDES.length - 1 ? "Let's start! ✓" : "Next →";
+  }
+  $("pPrev").addEventListener("click", () => showPresent(pi - 1));
+  $("pNext").addEventListener("click", () => pi === SLIDES.length - 1 ? closeOv("present") : showPresent(pi + 1));
+  function openPresent(i = 0) { $("present").classList.add("on"); showPresent(i); }
+  $("guideBtn").addEventListener("click", () => openPresent(0));
+
+  // 7 Certificate
+  function certHTML() {
+    const total = Object.keys(P.stars).reduce((s, t) => s + tabStars(t), 0);
+    const won = BADGES.filter((b) => P.badges[b.id]).length;
+    return `<div class="seal">★ ${total}</div>
+      <div class="marie">${SPEX.replace('data-mood="talk"', 'data-mood="happy"').replace('class="spex"', 'class="spex" style="width:100%;height:auto"')}</div>
+      <div class="t1">Certificate · Photosynthesis</div>
+      <div class="t2">Photosynthesis Expert</div>
+      <div><div class="for">This certificate is awarded to</div><div class="who">${esc(P.name) || "&nbsp;"}</div>
+        <div class="for" style="margin-top:.6%">for exploring how plants make their food with Marie: ${won} of ${BADGES.length} badges · ★ ${total} stars</div></div>
+      <div class="badges">${BADGES.map((b) => `<div class="badge${P.badges[b.id] ? " on" : ""}"><span class="em">${b.em}</span><b>${b.name}</b><span class="how">${P.badges[b.id] ? "✓ " + new Date(P.badges[b.id]).toLocaleDateString() : "to earn: " + b.how}</span></div>`).join("")}</div>
+      <div class="foot"><span>Grade 8 · Biology · ${new Date().toLocaleDateString()}</span><span class="sig">Biljana Taneska · Science teacher</span></div>`;
+  }
+  function renderCert() {
+    $("certName").value = P.name || "";
+    $("certSheet").innerHTML = certHTML();
+    const won = BADGES.filter((b) => P.badges[b.id]).length;
+    say("cert", !P.name ? "Type your <b>name</b>, then print your certificate!" : won === BADGES.length ? `All ${BADGES.length} badges: you are a photosynthesis expert! 🎉 Print your certificate.` : `You have <b>${won} of ${BADGES.length}</b> badges. Grey badges are still to earn – or print it now!`, won === BADGES.length ? "happy" : "talk", won === BADGES.length ? "good" : "");
+  }
+  $("certName").addEventListener("input", (e) => { P.name = e.target.value.slice(0, 40); save(); $("certSheet").innerHTML = certHTML(); });
+  $("certPrint").addEventListener("click", () => { $("printArea").innerHTML = `<div class="sheet">${certHTML()}</div>`; window.print(); });
+  $("resetAll").addEventListener("click", () => {
+    if (!confirm("Delete all your stars and badges in this browser?")) return;
+    try { localStorage.removeItem(STORE); } catch (e) {}
+    location.reload();
+  });
+
+  // start
+  load(); markSound();
+  TABS.forEach((t) => spexBar(t)); spexBar("present");
+  if (TEACHER) document.querySelector("main").insertAdjacentHTML("beforebegin", `<div class="tbanner">👩‍🏫 Teacher preview: all tabs are open; the intro guide does not open by itself. Students don't see this.</div>`);
+  refreshStars();
+  showTab("eq");
+  say("eq", "Hi, I'm <b>Marie</b>! Plants make their own food by <b>photosynthesis</b>. Let's start with the <b>equation</b>: drag the cards into the boxes.", "happy");
+  if (!P.seenIntro && !TEACHER) openPresent(0);
+
+  // for the automatic tests only
+  window.__PHOTO = { P, showTab, showSub, CHECKS, QBANK, SX, UQ, ES, BADGES, stepper };
+})();
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
