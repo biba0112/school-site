@@ -552,6 +552,11 @@ table.rvt td:first-child{text-align:left}
 .qsplit .cats{grid-template-columns:1fr}
 .qbody.rv{display:block}
 .qbody.rv .qtext{margin:8px 0 10px}
+.dots button.dot{font-family:inherit;cursor:pointer;padding:0}
+.qhead .dots button.dot:hover{box-shadow:0 0 0 2px #90CAF9}
+.skiphint{margin:4px 0 0;text-align:center}
+.skipt{font-style:normal;font-size:.85em;background:#ECEFF1;color:#546E7A;border-radius:999px;padding:1px 8px}
+.skipa{display:block;color:#37474F;margin-top:2px}
 .menuhead{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
 @media (max-width:900px){.tgrid{grid-template-columns:repeat(2,minmax(0,1fr))}.gdetail,.qsplit{grid-template-columns:1fr}.levels{grid-template-columns:1fr}
   .labwrap.rv{padding:26px 10%}.labwrap.rv .slot{width:27%;font-size:12px}table.rvt{font-size:15px}table.rvt th,table.rvt td{padding:3px 5px}
@@ -982,41 +987,67 @@ table.rvt td:first-child{text-align:left}
   }
 
   let UID = 0;
+  // a round: every question keeps its own page, so students can move freely (teacher, 21 Nov 2026):
+  // ← Back · Next → · tap a number; unanswered questions count 0 stars and are shown as "skipped" in the result
   function runRound(list, title, lv) {
     const root = $("testBox"); $("tMenu").hidden = true; root.hidden = false; unselect();
-    let qi = 0; const QR = [];
-    root.innerHTML = `<div class="qhead"><h2></h2><div class="dots"></div></div><div class="qbody rv"></div><div class="feedback" aria-live="polite"></div>
-      <div class="controls"><button class="btn" data-b="menu">← Menu</button><button class="btn primary" data-b="next" hidden>Next question →</button></div>`;
-    const hd = root.querySelector("h2"), dots = root.querySelector(".dots"), body = root.querySelector(".qbody"), fb = root.querySelector(".feedback");
-    const next = root.querySelector('[data-b="next"]');
+    let qi = 0, finishAsk = false; const QR = [], started = [];
+    root.innerHTML = `<div class="qhead"><h2></h2><div class="dots"></div></div><div class="qwrap"></div>
+      <div class="controls"><button class="btn" data-b="menu">← Menu</button><button class="btn" data-b="prev">← Back</button><button class="btn primary" data-b="next">Next →</button></div>
+      <p class="hint skiphint">You can go on without answering and come back: tap a number above.</p>`;
+    const hd = root.querySelector("h2"), dots = root.querySelector(".dots"), wrap = root.querySelector(".qwrap");
+    const prev = root.querySelector('[data-b="prev"]'), next = root.querySelector('[data-b="next"]');
     root.querySelector('[data-b="menu"]').onclick = testMenu;
-    const paint = () => { dots.innerHTML = list.map((_, k) => { const r = QR[k]; return `<span class="dot${k === qi ? " now" : ""}${r ? (r.n > 0 ? " done" : " zero") : ""}">${k + 1}</span>`; }).join(""); };
-    function loadQ() {
-      const it = list[qi]; unselect();
-      hd.textContent = `${title} · question ${qi + 1} of ${list.length}`; paint();
-      fb.className = "feedback"; fb.innerHTML = ""; next.hidden = true;
-      runItem(it, body, fb, (st) => {
-        const n = starsOf(st); QR[qi] = { label: it.q.replace(/<[^>]+>/g, ""), n }; paint();
-        addStars(it.lv, it.id, n);
-        next.hidden = false; next.textContent = qi < list.length - 1 ? "Next question →" : "See my result →"; next.focus({ preventScroll: true });
-      });
+    const panes = list.map(() => { const d = h(`<div class="qpane" hidden><div class="qbody rv"></div><div class="feedback" aria-live="polite"></div></div>`); wrap.appendChild(d); return d; });
+    const open = () => list.length - QR.filter(Boolean).length;
+    const paint = () => {
+      dots.innerHTML = list.map((_, k) => { const r = QR[k]; return `<button class="dot${k === qi ? " now" : ""}${r ? (r.n > 0 ? " done" : " zero") : ""}" data-k="${k}" aria-label="Question ${k + 1}${r ? "" : " (not answered)"}">${k + 1}</button>`; }).join("");
+      prev.disabled = qi === 0;
+      const last = qi === list.length - 1;
+      next.textContent = !last ? "Next →" : finishAsk ? "Finish anyway →" : "See my result →";
+    };
+    dots.addEventListener("click", (e) => { const d = e.target.closest("[data-k]"); if (d) show(+d.dataset.k); });
+    function show(k) {
+      qi = k; finishAsk = false; unselect();
+      panes.forEach((p, j) => (p.hidden = j !== k));
+      hd.textContent = `${title} · question ${k + 1} of ${list.length}`;
+      if (!started[k]) {
+        started[k] = 1;
+        const it = list[k], pane = panes[k];
+        runItem(it, pane.querySelector(".qbody"), pane.querySelector(".feedback"), (st) => {
+          const n = starsOf(st); QR[k] = { n }; addStars(it.lv, it.id, n); paint();
+          if (qi === k) next.focus({ preventScroll: true });
+        });
+      } else say("test", QR[k] ? "You have answered this one. Look at the answer again, or go on." : "Not answered yet. Have a go!");
+      paint();
     }
-    next.onclick = () => { if (qi < list.length - 1) { qi++; loadQ(); root.scrollIntoView({ block: "nearest" }); } else end(); };
+    prev.onclick = () => qi > 0 && show(qi - 1);
+    next.onclick = () => {
+      if (qi < list.length - 1) { show(qi + 1); root.scrollIntoView({ block: "nearest" }); return; }
+      const u = open();
+      if (u && !finishAsk) { finishAsk = true; paint(); say("test", `<b>${u}</b> question${u > 1 ? "s are" : " is"} not answered yet (white numbers). Tap a number to go back, or press <b>Finish anyway</b>.`, "hmm", "tip"); return; }
+      end();
+    };
+    const answerOf = (it) => it.type === "mcq" ? `<b>${it.opts.find(([v]) => v === it.ans)[1]}</b>. ${it.why}` : it.why;
     function end() {
-      const right = QR.filter((r) => r.n === 3).length, stars = QR.reduce((s, r) => s + r.n, 0), max = list.length * 3;
+      unselect();
+      const R = list.map((it, k) => ({ it, n: QR[k] ? QR[k].n : 0, skipped: !QR[k] }));
+      const right = R.filter((r) => r.n === 3).length, stars = R.reduce((s, r) => s + r.n, 0), max = list.length * 3, skipped = R.filter((r) => r.skipped).length;
       if (lv) { P.best[lv] = Math.max(P.best[lv] || 0, stars); refreshStars(); }
+      const lab = (it) => { const t = it.q.replace(/<[^>]+>/g, ""); return esc(t.length > 110 ? t.slice(0, 107) + "…" : t); };
       root.innerHTML = `<h2 style="color:var(--navy)">${title} · your result</h2>
         <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:end"><div><div class="score">${right}/${list.length}</div><div class="hint">right first time</div></div>
-        <div><div class="score" style="color:var(--star)">★ ${stars}</div><div class="hint">stars out of ${max}</div></div></div>
+        <div><div class="score" style="color:var(--star)">★ ${stars}</div><div class="hint">stars out of ${max}</div></div>
+        ${skipped ? `<div><div class="score" style="color:#78909C">${skipped}</div><div class="hint">skipped</div></div>` : ""}</div>
         <p>${stars >= max * 0.8 ? "Outstanding! You really know Unit 1." : stars >= max * 0.6 ? "Well done! Look again at the questions without ★★★." : "Good try! Read the Study guide cards for these topics, then play again."}</p>
-        <ul class="review">${QR.map((r, k) => `<li><span>${k + 1}. ${esc(r.label.length > 110 ? r.label.slice(0, 107) + "…" : r.label)}</span>${starsHTML(r.n)}</li>`).join("")}</ul>
+        <ul class="review">${R.map((r, k) => `<li><span>${k + 1}. ${lab(r.it)}${r.skipped ? ` <em class="skipt">skipped</em><br><small class="skipa">Answer: ${answerOf(r.it)}</small>` : ""}</span>${starsHTML(r.n)}</li>`).join("")}</ul>
         <div class="controls"><button class="btn" data-b="menu">← Menu</button><button class="btn primary" data-b="again">Play again (new questions)</button></div>`;
       root.querySelector('[data-b="menu"]').onclick = testMenu;
       root.querySelector('[data-b="again"]').onclick = () => (lv ? startLevel(lv) : startTopic(list[0].t));
-      say("test", `Round finished: <b>★ ${stars}</b> out of ${max}! ${lv && stars >= BADGE_AT ? "That wins the badge for this level!" : "Look at the questions without ★★★ again."}`, "happy", "good");
+      say("test", `Round finished: <b>★ ${stars}</b> out of ${max}! ${lv && stars >= BADGE_AT ? "That wins the badge for this level!" : skipped ? "Read the answers of the skipped questions, then play again." : "Look at the questions without ★★★ again."}`, "happy", "good");
     }
-    loadQ();
-    say("test", "A tip first, then the answer. Good luck!");
+    show(0);
+    say("test", "A tip first, then the answer. You can skip a question and come back to it. Good luck!");
   }
 
   function runItem(it, body, fb, done) {
