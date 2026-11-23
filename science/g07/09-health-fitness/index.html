@@ -1,0 +1,1543 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Health and Fitness Arcade</title>
+<!--
+  IB MYP 2 Sciences · Grade 7 · Biology Unit 2 The Secrets of a Long Life · week 1 "Introduction, Health and Fitness".
+  Health and fitness arcade (rebuilt 14 Nov 2026 at the teacher's request, grill-me; replaces the earlier 7-tab simulation,
+  which is in git history). Five short games, each teaching one idea, in the style of Wayground (Quizizz): a countdown bar,
+  100 points + a speed bonus, a streak of 3 doubles the points, reactions, a medal (gold 90 %, silver 70 %, bronze 50 % right)
+  and a "Remember" box at the end of each game. Best scores in localStorage "g7-health-v2".
+    1 Word match: 12 key words with simple meanings (3 rounds × 4 pairs, 45 s each; a wrong match costs 3 s).
+    2 Pulse finder: tap the wrist and the neck on a body; two fingers not the thumb; count a pulse for 15 s (72 bpm) and × 4;
+      calculations ×4 and ×2; resting heart rate 60–100 bpm; pulse = heart rate.
+    3 Heart-rate race: put 6 activities in order on a heart-rate meter (55, 70, 95, 125, 150, 190 bpm), then 5 questions
+      (oxygen and glucose, breathing rate, recovery, fit people recover faster).
+    4 Fitness sorter: 12 cards, 9 s each: stamina (heart and lungs), endurance (keep going long), strength, flexibility.
+    5 Fit life choices: 9 choices in Omar's day; a fitness meter and his posture/face change; what makes a person fit.
+    Final challenge (unlocks after all 5): 10 mixed questions, 15 s each. Certificate with the best scores.
+  Sources: Workbook pp. 2–8, revision eBook "Health and Fitness" and "Heart rate", Glossary 1. Nothing copied.
+  Simplification: stamina = heart and lungs (heart rate recovery test); endurance = how long you keep going (beep test).
+  Self-contained: no internet, no external libraries or fonts. Sound effects only, no read aloud. ?teacher opens the Final.
+-->
+<style>
+:root{
+  --navy:#1F3A5F; --accent:#E65100; --ink:#263238; --muted:#606A72;
+  --bg:#F2F5F9; --card:#FFFFFF; --line:#DDE6F0; --sunk:#EEF2F7; --soft-blue:#E3F2FD;
+  --star:#F9A825; --ok:#2E7D32; --bad:#C62828; --focus:#1565C0;
+  --sen:#1E88E5; --rel:#8E24AA; --mot:#E53935; --nt:#43A047; --cns:#F9A825;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;font-size:18px}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:1rem/1.45 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;min-height:100dvh}
+h2,h3{margin:0}
+p{margin:0}
+button{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible,[role="button"]:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+/* header (as in every simulation) */
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);
+  display:flex;align-items:center;gap:12px;padding:8px 16px;flex-wrap:wrap;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header h1{font-size:1.25rem;margin:0;font-weight:600}
+header .sub{font-size:.85rem;opacity:.85}
+.sub a.home{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55);white-space:nowrap}
+header .grow{flex:1}
+.hbtns{display:flex;gap:6px;flex-wrap:wrap}
+.credit{text-align:right;font-size:.74rem;line-height:1.3;opacity:.92;white-space:nowrap}
+.credit a{color:#fff;text-decoration:underline}
+.btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;
+  min-height:44px;padding:6px 14px;cursor:pointer;touch-action:manipulation}
+.btn:hover{border-color:var(--navy)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.small{min-height:36px;padding:4px 10px;font-size:.9rem}
+header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5);white-space:nowrap}
+header .btn[aria-pressed="true"]{background:rgba(255,255,255,.18)}
+.tbanner{background:#FFF8E1;border-bottom:2px solid #F9A825;padding:6px 16px;font-size:17px;font-weight:600}
+
+/* key bar */
+.keybar{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;padding:6px 16px;background:#fff;border-bottom:1px solid var(--line)}
+.keybar .k{display:flex;align-items:center;gap:6px}
+.keybar .k i{display:inline-block;width:22px;height:6px;border-radius:3px}
+.keybar .k i.dot{width:12px;height:12px;border-radius:50%}
+.keybar .tools{margin-left:auto;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.keybar .sum{font-weight:700;color:var(--navy);white-space:nowrap}
+
+/* tabs + panels */
+main{flex:1;display:flex;flex-direction:column;gap:10px;padding:10px 16px 16px;min-height:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+/* main tabs: big coloured buttons (teacher, 27 Oct 2026) */
+.tabs{display:flex;flex-wrap:wrap;gap:6px;padding:2px 0 4px}
+.tab{font:inherit;font-size:19px;font-weight:700;border:2px solid var(--navy);border-radius:14px;background:#fff;color:var(--navy);
+  padding:8px 9px;min-height:54px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:5px;
+  box-shadow:0 3px 0 #C5D0DC;transition:background .15s,transform .1s}
+.tab:hover{background:#FFF3E0}
+.tab:active{transform:translateY(2px)}
+.tab[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 3px 0 #BF360C}
+.tab .ic{font-size:23px;line-height:1}
+.tab .tstar{font-size:15px;color:var(--star);margin-left:2px}
+.tab[aria-selected="true"] .tstar{color:#FFE082}
+@media (max-width:1499px){ .tab .tstar{display:none} }   /* 7 tabs: per-tab stars only on big screens; the total ★ stays top right */
+@media (min-width:1500px){ .tabs{gap:10px} .tab{font-size:24px;padding:8px 14px} .tab .ic{font-size:28px} .tab .tstar{font-size:17px} }
+.panel{display:flex;flex-direction:column;gap:10px;min-height:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0;display:flex;flex-direction:column}
+.card > h2{padding:6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line);color:var(--navy);font-weight:600}
+.cb{padding:10px 12px;display:grid;gap:10px;align-content:start;min-height:0}
+.label{font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.hint{color:var(--muted)}
+.grid2{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:860px){ .grid2{grid-template-columns:minmax(230px,280px) minmax(0,1fr)} }
+.split{display:grid;gap:12px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:980px){ .split{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr)} }
+.subsw{display:flex;gap:8px;flex-wrap:wrap}
+.subsw .chip{min-height:46px;padding:6px 16px;font-weight:600}
+.chip{font:inherit;border:1px solid var(--line);background:#fff;border-radius:99px;padding:4px 11px;
+  min-height:38px;cursor:pointer;display:inline-flex;gap:6px;align-items:center;line-height:1.2}
+.chip[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
+.chip .st{color:var(--star);font-size:15px}
+.chip[aria-pressed="true"] .st{color:#FFE082}
+
+/* Marie, the guide */
+.spexbar{display:flex;align-items:center;gap:10px;min-height:76px}
+.spex{width:72px;height:72px;flex:none}
+.bubble{position:relative;background:#fff;border:2px solid var(--navy);border-radius:14px;padding:8px 12px;line-height:1.4;flex:1;min-width:0}
+.bubble::before{content:"";position:absolute;left:-11px;top:24px;border:10px solid transparent;border-right-color:var(--navy);border-left:0}
+.bubble::after{content:"";position:absolute;left:-7px;top:26px;border:8px solid transparent;border-right-color:#fff;border-left:0}
+.bubble.tip{background:#FFF8E1} .bubble.tip::after{border-right-color:#FFF8E1}
+.bubble.good{background:#E8F5E9} .bubble.good::after{border-right-color:#E8F5E9}
+.bubble.ans{background:var(--soft-blue)} .bubble.ans::after{border-right-color:var(--soft-blue)}
+.spex .lens{fill:#FFE0C2;fill-opacity:.45}
+.spex .m{display:none} .spex[data-mood="talk"] .m-talk,.spex[data-mood="happy"] .m-happy,.spex[data-mood="think"] .m-think,
+.spex[data-mood="wow"] .m-wow,.spex[data-mood="hmm"] .m-hmm{display:inline}
+.spex[data-mood="hmm"] .brow{transform:translateY(-2px)}
+
+/* lists to choose from */
+.obj{font:inherit;display:flex;align-items:center;gap:8px;text-align:left;border:1px solid var(--line);background:#fff;
+  border-radius:10px;padding:6px 10px;min-height:54px;cursor:pointer;line-height:1.2;width:100%}
+.obj .em{font-size:1.6rem;width:34px;text-align:center;flex:none}
+.obj .st{margin-left:auto;color:var(--star);font-size:15px;white-space:nowrap}
+.obj[aria-pressed="true"]{border:2px solid var(--accent);background:#FFF3E0}
+.cardlist{display:grid;gap:6px}
+@media (max-width:859px){ .cardlist{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))} }
+
+/* answers */
+.cats{display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.cat{font:inherit;border:1px solid #B0BEC5;background:#fff;border-radius:10px;padding:8px 12px;min-height:52px;cursor:pointer;font-weight:600;line-height:1.25;text-align:left}
+.cat.right{background:#E8F5E9;border:2px solid var(--ok)}
+.cat.wrong{background:#FFEBEE;border-color:var(--bad)}
+.cat:disabled{cursor:default}
+.cats.one{grid-template-columns:minmax(0,1fr)}
+.feedback{min-height:2.4em;border-radius:10px;padding:8px 12px;background:var(--sunk)}
+.feedback:empty{display:none}
+.feedback.tip{background:#FFF8E1;border-left:4px solid #F9A825}
+.feedback.ans{background:var(--soft-blue);border-left:4px solid var(--focus)}
+.feedback.good{background:#E8F5E9;border-left:4px solid var(--ok)}
+.feedback.info{background:var(--sunk);border-left:4px solid #90A4AE}
+.feedback.stop{background:#FFEBEE;border-left:4px solid var(--bad)}
+.didyou{background:#F3E5F5;border-left:4px solid #8E24AA;border-radius:8px;padding:6px 10px}
+.stars{color:var(--star);font-size:1.2rem;letter-spacing:2px}
+.stars .off{color:var(--line)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.read{background:var(--soft-blue);border-left:5px solid var(--navy);border-radius:10px;padding:8px 12px}
+.qlabel{font-weight:700;color:var(--navy)}
+
+/* drag or tap */
+.tile{font:inherit;border:1px solid #B0BEC5;background:#fff;border-radius:10px;padding:8px 12px;min-height:48px;text-align:left;
+  font-weight:600;line-height:1.25;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;box-shadow:0 2px 0 var(--line)}
+.tile .em{margin-right:6px}
+.tile.sel{border-color:var(--focus);box-shadow:0 0 0 3px #BBDEFB}
+.tile.lifting{opacity:.3}
+.tile.locked{cursor:default;box-shadow:none;border:2px solid var(--ok);background:#E8F5E9;touch-action:auto}
+.tile.shown{border:2px solid var(--focus);background:var(--soft-blue)}
+.tile.bounce{animation:shake .4s}
+.drag-ghost{position:fixed;z-index:80;pointer-events:none;transform:translate(-50%,-60%) rotate(-3deg);box-shadow:0 10px 24px rgba(0,0,0,.25);max-width:280px}
+.bank{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;padding:10px;border-radius:12px;background:var(--sunk);min-height:66px}
+.bank:empty::after{content:"✔ All placed";color:var(--muted);align-self:center}
+.slot{border:2px dashed #90A4AE;border-radius:12px;background:#fff;min-height:64px;padding:6px;display:grid;gap:4px;align-content:start;cursor:pointer}
+.slot.hot{border:2px solid var(--focus);background:var(--soft-blue)}
+.slot.shake{animation:shake .4s;border-color:var(--bad)}
+.slot.full{border-style:solid;border-color:var(--ok);cursor:default}
+.slot .sname{font-size:15px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted)}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+/* quizzes */
+.qhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.qhead h2{color:var(--navy)}
+.qbody{display:grid;gap:12px;max-width:1000px;width:100%;margin:0 auto}
+.qtext{font-weight:600;text-align:center}
+.qpic{display:grid;justify-items:center;gap:6px}
+.qpic .em{font-size:3.4rem;line-height:1.1}
+.qbody .cats{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dot{width:28px;height:28px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:.78rem;font-weight:600;color:var(--muted);background:#fff}
+.dot.now{border-color:var(--navy);color:var(--navy)}
+.dot.done{background:var(--star);border-color:var(--star);color:#3E2A00}
+.dot.zero{background:#CFD8DC;border-color:#CFD8DC;color:#37474F}
+.review{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.review li{display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 14px;padding:7px 12px;border:1px solid var(--line);border-radius:10px}
+.score{font-size:2.6rem;font-weight:700;line-height:1;color:var(--navy)}
+
+/* guide cards */
+.slide{display:grid;gap:10px}
+.slide h3{color:var(--navy)}
+.slide ul{margin:0;padding-left:1.2em;display:grid;gap:4px}
+.slide .pic{display:grid;justify-items:center}
+.slide .pic svg{width:100%;max-width:560px}
+.slidenav{display:flex;align-items:center;gap:8px;justify-content:space-between;flex-wrap:wrap}
+.slidenav .pg{color:var(--muted)}
+.kw{display:grid;gap:6px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.kw div{border-radius:10px;padding:6px 10px;background:var(--sunk)}
+.kw b{display:block;color:var(--navy)}
+.kw svg{display:block;width:100%;max-width:420px;height:auto;margin:4px auto 0}
+.flow{display:flex;flex-wrap:wrap;gap:4px;align-items:center;justify-content:center;font-weight:600}
+.flow span{border-radius:8px;padding:4px 8px;background:var(--sunk)}
+.flow .s{background:#E3F2FD;color:#0D47A1} .flow .r{background:#F3E5F5;color:#6A1B9A} .flow .m{background:#FFEBEE;color:#B71C1C}
+
+/* overlays */
+.overlay{position:fixed;inset:0;background:rgba(31,58,95,.55);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+.overlay.on{display:flex}
+.overlay .box{background:#fff;border-radius:14px;max-width:780px;width:100%;max-height:92vh;overflow:auto;padding:16px 20px;display:grid;gap:10px}
+.overlay h3{margin:.1em 0 .2em;color:var(--navy)}
+.overlay li{margin:.2em 0}
+#present .box{max-width:1200px;width:96vw;height:94vh;max-height:none;font-size:1.3rem;align-content:start}
+#present .slide h3{font-size:2rem}
+#present .spex{width:110px;height:110px}
+#present .bubble{font-size:1.3rem}
+
+/* certificate */
+.certwrap{display:grid;gap:12px;justify-items:center}
+.sheet{width:100%;max-width:1000px;aspect-ratio:297/210;border:10px double var(--navy);border-radius:16px;background:#fff;
+  padding:3% 4%;display:grid;grid-template-rows:auto auto auto 1fr auto;gap:1.2%;text-align:center;position:relative;container-type:inline-size;overflow:hidden}
+.sheet .t1{font-size:max(15px,1.9cqw);letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.sheet .t2{font-size:max(26px,4.6cqw);font-weight:800;color:var(--navy);line-height:1.1}
+.sheet .who{font-size:max(24px,4.2cqw);font-weight:700;color:var(--accent);border-bottom:2px solid var(--line);padding:0 4%;justify-self:center;min-width:50%}
+.sheet .for{font-size:max(14px,1.8cqw)}
+.sheet .badges{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1.2cqw;align-content:center}
+.sheet .foot{display:flex;justify-content:space-between;align-items:end;font-size:max(12px,1.5cqw);color:var(--muted);gap:10px}
+.sheet .foot .sig{border-top:1px solid #90A4AE;padding-top:2px;min-width:30%}
+.sheet .marie{position:absolute;right:3%;top:4%;width:12%}
+.sheet .seal{position:absolute;left:3%;top:4%;width:11%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#FFE082,#F9A825);
+  display:grid;place-items:center;font-size:max(14px,2.4cqw);font-weight:800;color:#5D4037;box-shadow:0 0 0 4px #FFF8E1,0 0 0 6px #F9A825}
+.badge{display:grid;justify-items:center;gap:1px;padding:.6cqw .3cqw;border-radius:12px;border:2px dashed #CFD8DC;text-align:center;font-size:max(11px,1.35cqw);color:#90A4AE;line-height:1.15}
+.badge .em{font-size:max(22px,3.6cqw);filter:grayscale(1);opacity:.4;line-height:1.1}
+.badge.on{border:2px solid var(--star);background:#FFFDE7;color:var(--ink)}
+.badge.on .em{filter:none;opacity:1}
+.badge .how{font-size:max(10px,1.1cqw);color:var(--muted)}
+.word{font:inherit;font-size:20px;min-height:44px;padding:4px 8px;border:1px solid #B0BEC5;border-radius:8px}
+#printArea{display:none}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:12px;
+  z-index:90;box-shadow:0 8px 20px rgba(0,0,0,.25);font-weight:600;display:none}
+.toast.on{display:block;animation:pop .35s}
+@keyframes pop{from{transform:translate(-50%,20px);opacity:0}}
+footer{color:var(--muted);font-size:.85rem;padding:0 16px 12px}
+
+/* big text, as in the Grade 7 simulations: 20 px for everything students read or press, labels at least 15 px */
+.card > h2{font-size:19px}
+.keybar{font-size:16px}
+main .btn,.overlay .btn,.cat,.obj,.chip,.tile{font-size:20px}
+.read,.feedback,.didyou,.bubble,.steps li,.slide{font-size:20px}
+.label{font-size:15px} .hint{font-size:16px}
+.qtext{font-size:22px} .qhead h2{font-size:20px}
+
+@media (max-width:1099px){ header .sub{font-size:.75rem} }
+@media (max-width:759px){
+  header h1{font-size:1.05rem}
+  .credit{order:3;flex-basis:100%;text-align:left;font-size:.7rem}
+  .credit br{display:none} .credit a{margin-left:6px}
+  .keybar{font-size:14px;gap:2px 10px}
+  .keybar .tools{margin-left:0}
+  .spex{width:56px;height:56px}
+  .bubble{font-size:17px}
+  main .btn,.cat,.obj,.chip,.tile{font-size:18px}
+  .read,.feedback,.didyou,.steps li{font-size:18px}
+  .hbtns .btn{min-height:38px;padding:4px 9px;font-size:.88rem}
+  .labwrap .slot{font-size:13px;width:23%;min-height:36px}
+  .labwrap .slot .tile{font-size:13px;padding:2px 3px;min-height:30px}
+  .labwrap .slot .sname{font-size:11px}
+  .pad{font-size:22px;min-height:180px}
+}
+@media (max-width:599px){ .tab{padding:6px 10px;font-size:20px;min-height:50px} .tab .ic{font-size:22px} .tab .full{display:none} }
+@media print{
+  @page{size:A4 landscape;margin:10mm}
+  body > *:not(#printArea){display:none!important}
+  #printArea{display:block}
+  #printArea .sheet{max-width:none;width:100%;aspect-ratio:auto;height:180mm;border-width:8px}
+  #printArea .badge{font-size:11pt} #printArea .badge .em{font-size:28pt} #printArea .badge .how{font-size:8pt}
+}
+@media (prefers-reduced-motion:reduce){ .beating,.tile.bounce,.slot.shake{animation:none} }
+/* ---------- the arcade (14 Nov 2026) ---------- */
+main{max-width:1240px;width:100%;margin:0 auto}
+.arcade{display:grid;gap:14px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.gcard{font:inherit;text-align:left;border:none;border-radius:20px;padding:16px 18px;min-height:170px;cursor:pointer;color:#fff;
+  background:linear-gradient(145deg,var(--c),color-mix(in srgb,var(--c) 70%,#000));display:grid;gap:6px;align-content:start;
+  box-shadow:0 6px 0 color-mix(in srgb,var(--c) 55%,#000);transition:transform .12s}
+.gcard:hover{transform:translateY(-3px)} .gcard:active{transform:translateY(3px);box-shadow:0 2px 0 color-mix(in srgb,var(--c) 55%,#000)}
+.gcard .gem{font-size:44px;line-height:1} .gcard b{font-size:24px} .gcard .goal{font-size:18px;opacity:.95}
+.gcard .best{font-size:16px;background:rgba(255,255,255,.22);border-radius:99px;padding:2px 10px;justify-self:start}
+.gcard.locked{filter:grayscale(.9);opacity:.6;cursor:not-allowed}
+#game{--gc:#7E57C2}
+.gbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;background:var(--gc);color:#fff;border-radius:14px;padding:8px 12px}
+.gbar .btn{background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.5)}
+.gtitle{font-size:22px;font-weight:800} .ground{font-size:18px;opacity:.9} .pts{margin-left:auto;font-size:22px} .pts b{font-size:26px}
+.streak{font-size:18px;font-weight:700} .streak.hot{background:#FF6D00;border-radius:99px;padding:2px 10px;animation:pulse 1s infinite}
+@keyframes pulse{50%{transform:scale(1.08)}}
+.tbar{height:12px;border-radius:6px;background:#E0E0E0;overflow:hidden;margin-top:6px} .tbar i{display:block;height:100%;width:100%;background:#43A047}
+.stage{background:#fff;border-radius:18px;border:1px solid var(--line);padding:16px;min-height:300px}
+.ready{display:grid;justify-items:center;gap:10px;text-align:center;padding:20px} .ready .bigem{font-size:80px} .ready h2{font-size:32px;color:var(--navy)} .ready p{font-size:22px;max-width:700px}
+.btn.big{font-size:26px!important;padding:10px 30px;min-height:60px}
+.qcard{display:grid;justify-items:center;gap:4px;text-align:center;margin-bottom:12px} .qem{font-size:52px;line-height:1.1}
+.qtext{font-size:26px;font-weight:700;color:var(--navy);margin:0}
+.tiles{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+.tileq{font:inherit;font-size:22px;font-weight:700;color:#fff;border:none;border-radius:16px;min-height:86px;padding:10px 14px;cursor:pointer;
+  background:var(--c);box-shadow:0 5px 0 color-mix(in srgb,var(--c) 60%,#000);transition:transform .1s}
+.tileq:active{transform:translateY(3px)} .tileq.right{outline:5px solid #1B5E20;background:#43A047} .tileq.wrong{background:#B71C1C;animation:shake .4s}
+.tileq.dim{opacity:.35} .tileq:disabled{cursor:default}
+.react{min-height:0;text-align:center;font-size:20px;margin-top:8px;border-radius:14px;padding:0 12px}
+.react.ok,.react.no{padding:8px 12px} .react.ok{background:#E8F5E9;border:2px solid #43A047} .react.no{background:#FFEBEE;border:2px solid #E53935}
+.react b{font-size:24px} .react .plus{font-weight:800;color:#2E7D32;font-size:24px}
+.react.pop{animation:pop .35s}
+.center{text-align:center}
+/* word match */
+.match{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:14px} .mcol{display:grid;gap:10px;align-content:start}
+.mword,.mdef{font:inherit;border:3px solid #CFD8DC;background:#fff;border-radius:14px;padding:10px 14px;cursor:pointer;text-align:left;min-height:64px}
+.mword{font-size:24px;font-weight:800;color:var(--navy);text-align:center} .mdef{font-size:20px;display:flex;gap:10px;align-items:center}
+.mdef .em{font-size:30px} .mword.sel{border-color:#7E57C2;background:#EDE7F6;transform:scale(1.03)}
+.mword.done,.mdef.done{border-color:#43A047;background:#E8F5E9;opacity:.75;cursor:default} .mword.shown,.mdef.shown{border-color:#1E88E5;background:#E3F2FD}
+.shake{animation:shake .4s}
+/* pictures + side */
+.two{display:grid;gap:16px;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);align-items:center}
+.pic{width:100%;max-height:min(56vh,430px);display:block;margin:0 auto}
+.side{display:grid;gap:10px}
+.spot{cursor:pointer} .spot:hover circle{stroke-width:4}
+.tapbtn{font:inherit;font-size:30px;font-weight:800;border:none;border-radius:18px;min-height:100px;width:100%;cursor:pointer;background:#E53935;color:#fff;box-shadow:0 6px 0 #8E0000;user-select:none;touch-action:manipulation}
+.tapbtn span{background:rgba(255,255,255,.25);border-radius:10px;padding:0 10px;margin-left:8px} .tapbtn.hit{animation:tap .18s}
+@keyframes tap{50%{transform:scale(.96) translateY(3px)}}
+/* heart-rate race */
+.race{display:grid;gap:14px;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) 150px;align-items:center}
+.race .bank{display:grid;gap:8px;align-content:start} .race .tile{font-size:20px;display:flex;align-items:center;gap:8px;width:100%}
+.race .tile .em{font-size:26px} .race .tile .bpm{margin-left:auto;color:#C62828}
+.meter{display:grid;gap:6px;border-left:12px solid;border-image:linear-gradient(#E53935,#FB8C00,#43A047) 1;padding-left:10px}
+.mslot{min-height:52px;display:flex;align-items:center} .mslot .sname{font-size:14px} .mslot .tile{width:100%}
+.bigheart{font-size:110px;color:#E53935;text-align:center;line-height:1;animation:hb 1s ease-in-out infinite;display:grid;justify-items:center}
+.bigheart span{font-size:24px;font-weight:800;color:var(--navy)}
+@keyframes hb{0%,100%{transform:scale(1)}15%{transform:scale(1.2)}30%{transform:scale(1)}}
+/* sorter */
+.fall{display:grid;justify-items:center;padding:10px 0 18px}
+.scard{font-size:28px;font-weight:800;color:var(--navy);background:#FFFDE7;border:4px solid #FBC02D;border-radius:20px;padding:18px 26px;max-width:640px;text-align:center;display:grid;gap:6px;animation:drop .45s}
+.scard .em{font-size:64px} @keyframes drop{from{transform:translateY(-60px);opacity:0}}
+.scard.flyok{animation:ok .6s forwards} .scard.flyno{animation:shake .4s}
+@keyframes ok{to{transform:scale(.6) translateY(80px);opacity:.2}}
+.bins{display:grid;gap:12px;grid-template-columns:repeat(4,minmax(0,1fr))}
+.binb{font:inherit;font-size:22px;font-weight:800;color:#fff;border:none;border-radius:16px;min-height:96px;cursor:pointer;background:var(--c);box-shadow:0 5px 0 color-mix(in srgb,var(--c) 60%,#000);display:grid;justify-items:center;align-content:center}
+.binb .em{font-size:34px} .binb.right{outline:5px solid #1B5E20} .binb.wrong{background:#555;animation:shake .4s} .binb.dim{opacity:.35}
+/* fit life */
+.omarbox{display:grid;gap:8px}
+.fitmeter{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center} .fm{height:22px;border-radius:11px;background:#ECEFF1;overflow:hidden}
+.fm i{display:block;height:100%;width:40%;transition:width .5s,background .5s}
+.tiles.two{grid-template-columns:1fr 1fr}
+/* end */
+.endcard{display:grid;justify-items:center;gap:10px;text-align:center} .medal{font-size:90px;line-height:1} .endcard h2{font-size:32px;color:var(--navy)}
+.endstats{display:flex;gap:30px} .endstats div{display:grid} .endstats b{font-size:40px;color:var(--navy)} .endstats span{color:var(--muted)}
+.remember{background:#FFF8E1;border:3px solid #FBC02D;border-radius:18px;padding:12px 20px;text-align:left;max-width:760px;width:100%}
+.remember h3{color:#E65100;font-size:24px;margin:0 0 6px} .remember li{font-size:21px;margin:4px 0}
+.wd{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:help;border-bottom:2px dotted var(--focus);font-weight:inherit}
+.wpop{position:fixed;z-index:85;width:min(340px,calc(100vw - 24px));background:#fff;border:2px solid var(--navy);border-radius:14px;box-shadow:0 12px 30px rgba(0,0,0,.25);padding:10px 12px;display:grid;gap:8px;font-size:18px}
+.wpop .wh{display:flex;align-items:center;gap:8px;font-size:20px;font-weight:700;color:var(--navy)} .wpop .controls{justify-content:flex-end}
+.sheet .badges{grid-template-columns:repeat(6,minmax(0,1fr))}
+@media (max-width:820px){
+  .two,.match{grid-template-columns:1fr} .race{grid-template-columns:1fr} .bigheart{font-size:70px}
+  .tiles{grid-template-columns:1fr} .bins{grid-template-columns:1fr 1fr} .qtext{font-size:22px} .tileq{font-size:20px;min-height:64px}
+  .scard{font-size:22px} .gtitle{font-size:19px} .pts{font-size:19px}
+}
+.pic{max-height:min(48vh,400px)}
+.endcard{gap:6px} .medal{font-size:64px} .endcard h2{font-size:28px} .endstats b{font-size:32px} .remember li{font-size:19px;margin:2px 0} .remember{padding:8px 16px}
+.stage{padding:12px}
+</style>
+</head>
+<body>
+<!-- ============================ 2 MARKUP ============================ -->
+<header>
+  <div>
+    <h1>Health and fitness arcade</h1>
+    <div class="sub"><a class="home" href="https://school.taneski.com/science/g07/#biology" title="Back to Grade 7 science">← All Grade 7 science</a> · IB MYP 2 · Unit 2 The Secrets of a Long Life · with Marie</div>
+  </div>
+  <div class="grow"></div>
+  <div class="hbtns">
+    <button class="btn" id="wordsBtn">📖 Key words</button>
+    <button class="btn" id="soundBtn" aria-pressed="false" aria-label="Sound on or off">🔇 Sound</button>
+    <button class="btn" id="helpBtn" aria-label="How to play">? How to play</button>
+  </div>
+  <div class="credit">Biljana Taneska · Science teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
+</header>
+
+<main>
+  <section id="menu">
+    <div class="spexbar" data-spex="menu"></div>
+    <div class="arcade" id="cards"></div>
+  </section>
+
+  <section id="game" hidden>
+    <div class="gbar">
+      <button class="btn small" id="gBack">← Arcade</button>
+      <span class="gtitle" id="gTitle"></span>
+      <span class="ground" id="gRound"></span>
+      <span class="streak" id="gStreak"></span>
+      <span class="pts">⭐ <b id="gScore">0</b></span>
+    </div>
+    <div class="tbar"><i id="gTime"></i></div>
+    <div class="spexbar" data-spex="game"></div>
+    <div class="stage" id="stage"></div>
+    <div class="react" id="react" aria-live="polite"></div>
+  </section>
+
+  <section id="cert" hidden>
+    <div class="spexbar" data-spex="cert"></div>
+    <div class="card">
+      <h2>My certificate</h2>
+      <div class="cb certwrap">
+        <label>Your name: <input class="word" id="certName" autocomplete="off" maxlength="40" style="max-width:300px"></label>
+        <div class="sheet" id="certSheet"></div>
+        <div class="controls">
+          <button class="btn primary" id="certPrint">🖨 Print my certificate</button>
+          <button class="btn navy" id="certBack">🏠 Back to the arcade</button>
+          <button class="btn" id="resetAll">↺ Delete my scores</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="overlay" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="box">
+    <h3 id="helpTitle">How to play</h3>
+    <ol>
+      <li>Choose a game in the <b>arcade</b>. Each game is short (2–3 minutes) and teaches one idea.</li>
+      <li>Answer before the <b>time bar</b> runs out. A right answer gives <b>100 points + a speed bonus</b>.</li>
+      <li>Three right in a row starts a <b>🔥 streak</b>: double points until you make a mistake.</li>
+      <li>At the end you win a medal (🥇 90 % right · 🥈 70 % · 🥉 50 %) and read the <b>🧠 Remember</b> box.</li>
+      <li>Play all 5 games to unlock the <b>🏆 Final challenge</b>, then print your <b>🏅 certificate</b>. Your best scores are saved in this browser.</li>
+      <li><b>📖 Key words</b> (top right) lists every word with its meaning.</li>
+    </ol>
+    <p style="text-align:right"><button class="btn primary" data-close="help">Close</button></p>
+  </div>
+</div>
+<div class="overlay" id="words" role="dialog" aria-modal="true" aria-labelledby="wordsTitle">
+  <div class="box">
+    <h3 id="wordsTitle">📖 Key words</h3>
+    <div class="kw" id="wordList"></div>
+    <p style="text-align:right"><button class="btn primary" data-close="words">Close</button></p>
+  </div>
+</div>
+<div class="wpop" id="wpop" role="dialog" aria-label="Meaning" hidden>
+  <div class="wh" id="wpHead"></div>
+  <div id="wpTxt"></div>
+  <div class="controls"><button class="btn small navy" id="wpOk">OK</button></div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<div id="printArea"></div>
+<footer>Stamina · endurance · strength · flexibility · heart rate (bpm) · pulse: count 15 s × 4.</footer>
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  const TEACHER = /[?&#]teacher\b/i.test(location.search + location.hash);
+
+  /* ============================ 3 CONFIG (the content of the five games) ============================ */
+  // Definitions in simple words, from the Workbook "The Secrets of a Long Life" (pp. 2–8), the revision eBook and Glossary 1.
+  const DEFS = {
+    health: { w: "Health", em: "💚", d: "Being well in body, mind and with other people – not only having no illness." },
+    fitness: { w: "Fitness", em: "🏃", d: "How well your body can do physical activity." },
+    exercise: { w: "Exercise", em: "⚽", d: "Activity that makes your body work harder than normal." },
+    recovery: { w: "Recovery", em: "📉", d: "How fast your heart rate goes back down after exercise." },
+    stamina: { w: "Stamina", em: "🫁", d: "How well your heart and lungs keep working during exercise." },
+    endurance: { w: "Endurance", em: "⏱️", d: "How long you can keep going before you get too tired." },
+    strength: { w: "Strength", em: "💪", d: "How much force your muscles can make to push, pull or lift." },
+    flexibility: { w: "Flexibility", em: "🤸", d: "How far and how easily your joints can bend and stretch." },
+    hr: { w: "Heart rate", em: "💓", d: "How many times your heart beats in one minute." },
+    pulse: { w: "Pulse", em: "✋", d: "The beat you feel in an artery each time your heart pumps." },
+    bpm: { w: "bpm", em: "🔢", d: "Beats per minute: the unit of heart rate." },
+    resting: { w: "Resting heart rate", em: "🪑", d: "Your heart rate when you sit still: about 60–100 bpm." },
+  };
+  const w = (k, label) => `<button type="button" class="wd" data-w="${k}">${label || DEFS[k].w}</button>`;
+  const MATCH_ROUNDS = [["stamina", "endurance", "strength", "flexibility"], ["health", "fitness", "exercise", "recovery"], ["hr", "pulse", "bpm", "resting"]];
+
+  // two people drawn in the games (the same drawing as the earlier versions)
+  const LENA = { id: "lena", name: "Lena", look: { skin: "#F6D5BD", hair: "#B5782E", style: "pony", top: "#26A69A", bottom: "#283593", sleeves: "short", legs: "shorts", shoe: "#ECEFF1" } };
+  const OMAR = { id: "omar", name: "Omar", look: { skin: "#C68E62", hair: "#2B1B12", style: "short", top: "#FB8C00", bottom: "#455A64", sleeves: "short", legs: "shorts", shoe: "#263238" } };
+
+  // game 2: where can you feel a pulse? (front view of a body; x, y in the picture)
+  const SPOTS = [
+    { id: "wrist", x: 296, y: 236, ok: true, why: "Yes! The <b>wrist</b>, on the thumb side: the radial artery." },
+    { id: "neck", x: 214, y: 100, ok: true, why: "Yes! The <b>neck</b>, next to the windpipe: the carotid artery (press on one side only)." },
+    { id: "elbow", x: 120, y: 176, ok: false, why: "Not a good place: there is no artery near the skin you can easily press here." },
+    { id: "knee", x: 228, y: 330, ok: false, why: "Not here: the knee is a joint with no easy pulse to feel." },
+    { id: "ear", x: 172, y: 56, ok: false, why: "Not here: you cannot feel a pulse on your ear." },
+    { id: "tummy", x: 200, y: 212, ok: false, why: "Not here: your tummy has no pulse you can feel with two fingers." },
+  ];
+  const PULSE_Q = [
+    { em: "✌️", text: "Which fingers do you use to feel a pulse?", ans: "a", opts: [["a", "Two fingers (index and middle)"], ["b", "Your thumb"], ["c", "Your whole hand"], ["d", "Your little finger"]],
+      why: "Two fingers. Your thumb has its own pulse, so you could count the wrong beats." },
+    { em: "⏱", text: "You count 18 beats in 15 seconds. What is the heart rate?", ans: "c", opts: [["a", "18 bpm"], ["b", "36 bpm"], ["c", "72 bpm"], ["d", "33 bpm"]], why: "15 s × 4 = 1 minute, so 18 × 4 = 72 bpm." },
+    { em: "⏱", text: "You count 35 beats in 30 seconds. What is the heart rate?", ans: "b", opts: [["a", "35 bpm"], ["b", "70 bpm"], ["c", "140 bpm"], ["d", "65 bpm"]], why: "30 s × 2 = 1 minute, so 35 × 2 = 70 bpm." },
+    { em: "⏱", text: "You count 20 beats in 15 seconds. What is the heart rate?", ans: "d", opts: [["a", "40 bpm"], ["b", "35 bpm"], ["c", "20 bpm"], ["d", "80 bpm"]], why: "20 × 4 = 80 bpm." },
+    { em: "🪑", text: "What is a normal resting heart rate?", ans: "a", opts: [["a", "About 60–100 bpm"], ["b", "About 10–20 bpm"], ["c", "About 150–200 bpm"], ["d", "Exactly 50 bpm"]], why: "At rest the heart beats about 60–100 times a minute." },
+    { em: "🤔", text: "Is your pulse the same number as your heart rate?", ans: "a", opts: [["a", "Yes: every pulse is one heartbeat"], ["b", "No: the pulse is always slower"], ["c", "No: the pulse is twice as fast"]], why: "Each heartbeat pushes blood through the arteries: one beat = one pulse." },
+  ];
+
+  // game 3: heart rate during activities (a 12-year-old)
+  const ACTS = [
+    { id: "sleep", name: "Sleeping", em: "😴", hr: 55 }, { id: "sit", name: "Sitting", em: "🪑", hr: 70 }, { id: "walk", name: "Walking", em: "🚶", hr: 95 },
+    { id: "cycle", name: "Cycling", em: "🚲", hr: 125 }, { id: "jog", name: "Jogging", em: "🏃", hr: 150 }, { id: "sprint", name: "Sprinting", em: "⚡", hr: 190 },
+  ];
+  const RACE_Q = [
+    { em: "🏃", text: "Why does your heart beat faster when you run?", ans: "b", opts: [["a", "To make you tired"], ["b", "Your muscles need more oxygen and glucose"], ["c", "Your heart gets cold"], ["d", "To slow your breathing"]],
+      why: "Working muscles need more oxygen and glucose, so the heart pumps blood faster." },
+    { em: "💨", text: "What else goes up when you exercise?", ans: "a", opts: [["a", "Your breathing rate"], ["b", "Your height"], ["c", "Your eyesight"], ["d", "Nothing"]], why: "You breathe faster and deeper to take in more oxygen." },
+    { em: "📉", text: "You stop running and sit down. What happens to your heart rate?", ans: "c", opts: [["a", "It stays high all day"], ["b", "It stops"], ["c", "It slowly goes back down to resting"], ["d", "It goes up even more"]],
+      why: "This is recovery: the heart rate goes back down to the resting rate." },
+    { em: "🏅", text: "Who recovers faster after exercise?", ans: "a", opts: [["a", "A fit person"], ["b", "An unfit person"], ["c", "They are always the same"]], why: "A fit heart pumps more blood with each beat, so it slows down faster." },
+    { em: "💓", text: "A heart rate of 190 bpm. What is the person doing?", ans: "d", opts: [["a", "Sleeping"], ["b", "Reading"], ["c", "Walking"], ["d", "Sprinting"]], why: "Only very hard exercise, like sprinting, makes the heart beat this fast." },
+  ];
+
+  // game 4: which part of fitness?
+  const PARTS = { stamina: { name: "Stamina", em: "🫁", col: "#E53935" }, endurance: { name: "Endurance", em: "⏱️", col: "#1E88E5" },
+    strength: { name: "Strength", em: "💪", col: "#F9A825" }, flexibility: { name: "Flexibility", em: "🤸", col: "#43A047" } };
+  const SORT = [
+    { t: "Heart rate recovery test", em: "❤️", k: "stamina" }, { t: "Climbing 5 floors of stairs and breathing easily after", em: "🏢", k: "stamina" },
+    { t: "Heart and lungs keep up in a fast dance class", em: "💃", k: "stamina" },
+    { t: "Beep (shuttle) test: keep going as long as you can", em: "🔁", k: "endurance" }, { t: "Cycling for 2 hours", em: "🚴", k: "endurance" },
+    { t: "Hiking 20 km in one day", em: "🥾", k: "endurance" },
+    { t: "Push-up test", em: "💪", k: "strength" }, { t: "Lifting a heavy box", em: "📦", k: "strength" }, { t: "Pull-ups on a bar", em: "🏋️", k: "strength" },
+    { t: "Touching your toes with straight legs", em: "🙇", k: "flexibility" }, { t: "Doing the splits", em: "🤸", k: "flexibility" },
+    { t: "Hands meeting behind your back", em: "🙆", k: "flexibility" },
+  ];
+  const SORT_WHY = { stamina: "Stamina = your heart and lungs keep working well.", endurance: "Endurance = how long you can keep going.",
+    strength: "Strength = how much force your muscles make.", flexibility: "Flexibility = how far your joints bend and stretch." };
+
+  // game 5: a day of choices (the first option is always shown in random order)
+  const DAY = [
+    { time: "7:30", em: "🚲", q: "How do you get to school?", good: "Cycle or walk", bad: "Get a lift in the car", why: "Cycling or walking is exercise every day." },
+    { time: "8:00", em: "🥣", q: "Breakfast?", good: "Porridge and fruit", bad: "Skip breakfast", why: "Breakfast gives you energy for the morning." },
+    { time: "10:30", em: "🥤", q: "You are thirsty.", good: "Water", bad: "Cola", why: "Water keeps you healthy; cola has lots of sugar." },
+    { time: "12:30", em: "🍎", q: "A snack at lunch break?", good: "An apple", bad: "Crisps", why: "Fruit gives vitamins and fibre; crisps are full of fat and salt." },
+    { time: "13:00", em: "🏢", q: "Your class is on the 3rd floor.", good: "Take the stairs", bad: "Take the lift", why: "Stairs train your legs, heart and lungs." },
+    { time: "16:00", em: "⚽", q: "After school?", good: "Play football with friends", bad: "Watch TV for 3 hours", why: "Being active most days makes you fitter." },
+    { time: "17:30", em: "🤸", q: "After sport?", good: "Stretch for 5 minutes", bad: "Just sit down", why: "Stretching keeps your muscles and joints flexible." },
+    { time: "18:00", em: "🚭", q: "Someone offers you a vape.", good: "Say no, thanks", bad: "Try it", why: "Vaping and smoking harm your heart and lungs." },
+    { time: "22:00", em: "🛌", q: "Bedtime?", good: "Sleep at 22:00 (9 hours)", bad: "Game until midnight", why: "Sleep helps your body recover and grow." },
+  ];
+
+  // final challenge: 10 quick questions from all five games
+  const FINAL = [
+    { em: "🫁", text: "How well your heart and lungs keep working during exercise is called…", ans: "a", opts: [["a", "stamina"], ["b", "flexibility"], ["c", "strength"], ["d", "health"]], why: "Stamina." },
+    { em: "🤸", text: "Touching your toes tests your…", ans: "c", opts: [["a", "strength"], ["b", "stamina"], ["c", "flexibility"], ["d", "heart rate"]], why: "Flexibility: how far your joints bend." },
+    { em: "⏱️", text: "How long you can keep going before you get too tired is…", ans: "b", opts: [["a", "strength"], ["b", "endurance"], ["c", "pulse"], ["d", "recovery"]], why: "Endurance." },
+    { em: "💪", text: "Push-ups test your…", ans: "d", opts: [["a", "flexibility"], ["b", "stamina"], ["c", "heart rate"], ["d", "strength"]], why: "Strength: the force your muscles make." },
+    { em: "💓", text: "Heart rate is…", ans: "a", opts: [["a", "the number of heartbeats in one minute"], ["b", "how big your heart is"], ["c", "how long you can run"], ["d", "your blood pressure"]], why: "Beats per minute (bpm)." },
+    { em: "✋", text: "Where can you easily feel your pulse?", ans: "b", opts: [["a", "Knee and elbow"], ["b", "Wrist and neck"], ["c", "Ear and nose"], ["d", "Tummy"]], why: "Wrist (thumb side) and neck, beside the windpipe." },
+    { em: "⏱", text: "22 beats in 15 seconds is…", ans: "c", opts: [["a", "44 bpm"], ["b", "37 bpm"], ["c", "88 bpm"], ["d", "22 bpm"]], why: "22 × 4 = 88 bpm." },
+    { em: "🏃", text: "Your heart beats faster during exercise because…", ans: "a", opts: [["a", "muscles need more oxygen and glucose"], ["b", "you are scared"], ["c", "the heart gets smaller"], ["d", "blood gets thicker"]], why: "The heart delivers more oxygen and glucose to the working muscles." },
+    { em: "💚", text: "Being healthy means…", ans: "d", opts: [["a", "never going to the doctor"], ["b", "having big muscles"], ["c", "running fast"], ["d", "being well in body, mind and with other people"]], why: "Health is physical, mental and social wellbeing." },
+    { em: "🌞", text: "Which helps most to make a person fit?", ans: "b", opts: [["a", "Sleeping 5 hours"], ["b", "Exercise most days, healthy food, enough sleep"], ["c", "Lots of cola"], ["d", "Only stretching once a month"]], why: "Regular exercise, healthy food and water, enough sleep and no smoking." },
+  ];
+
+  const GAMES = [
+    { id: "match", em: "🔤", name: "Word match", goal: "Match each fitness word with its meaning.", col: "#7E57C2",
+      intro: "Match each word with its meaning. Tap a word, then its card. Be quick: the clock is ticking!",
+      remember: ["<b>Stamina</b>: how well your heart and lungs keep working during exercise.", "<b>Endurance</b>: how long you can keep going.",
+        "<b>Strength</b>: how much force your muscles can make.", "<b>Flexibility</b>: how far your joints can bend and stretch."] },
+    { id: "pulse", em: "✋", name: "Pulse finder", goal: "Find a pulse and measure the heart rate.", col: "#E53935",
+      intro: "Where can you feel a pulse? How do you turn your count into a heart rate? Let's find out!",
+      remember: ["Feel your <b>pulse</b> at the <b>wrist</b> or the <b>neck</b> with <b>two fingers</b> (not your thumb).", "Count for <b>15 s and × 4</b> (or 30 s and × 2) = heart rate in <b>bpm</b>.",
+        "Resting heart rate: about <b>60–100 bpm</b>.", "One pulse = one heartbeat."] },
+    { id: "race", em: "📈", name: "Heart-rate race", goal: "Which activity makes your heart beat fastest?", col: "#FB8C00",
+      intro: "Put the activities in order on the heart-rate meter, from the slowest heart rate to the fastest.",
+      remember: ["The harder you exercise, the higher your <b>heart rate</b>.", "Muscles need more <b>oxygen and glucose</b>: the heart pumps faster, you breathe faster.",
+        "After exercise the heart rate goes back down: <b>recovery</b>. Fit people recover faster."] },
+    { id: "sort", em: "🗂", name: "Fitness sorter", goal: "Stamina, endurance, strength or flexibility?", col: "#1E88E5",
+      intro: "Each card is an activity or a test. Which part of fitness does it need most? Tap the right box before time runs out!",
+      remember: ["<b>Stamina</b> – heart and lungs (heart rate recovery test).", "<b>Endurance</b> – keep going for a long time (beep test).",
+        "<b>Strength</b> – push, pull, lift (push-up test).", "<b>Flexibility</b> – bend and stretch (toe touch)."] },
+    { id: "day", em: "🌞", name: "Fit life choices", goal: "What makes a person fit? Choose Omar's day.", col: "#43A047",
+      intro: "Help Omar through his day. Every good choice makes him fitter. Watch his fitness meter!",
+      remember: ["<b>What makes a person fit?</b>", "Exercise most days (walk, cycle, play sport) and stretch.", "Healthy food and water, enough sleep (9–11 h at your age).",
+        "No smoking or vaping."] },
+  ];
+
+  /* ============================ 4 ENGINE ============================ */
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs = {}, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  const txt = (parent, x, y, s, attrs = {}) => { const t = el("text", { x, y, ...attrs }, parent); t.textContent = s; return t; };
+  const h = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+  const shuffle = (arr) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const reduced = () => window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  // tween: calls f(t) with t from 0 to 1 over ms milliseconds
+  function tween(ms, f) {
+    return new Promise((res) => {
+      if (reduced()) { f(1); return res(); }
+      const t0 = performance.now();
+      const step = (now) => { const t = Math.min(1, (now - t0) / ms); f(t); if (t < 1) requestAnimationFrame(step); else res(); };
+      requestAnimationFrame(step);
+    });
+  }
+  const ease = (t) => t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  const pathD = (pts) => "M" + pts.map((p) => p.join(" ")).join(" L");
+
+  /* Marie, the guide (same drawing as in the Grade 7 simulations) */
+  const SPEX = `<svg class="spex" viewBox="0 0 100 100" data-mood="talk" aria-hidden="true">
+    <circle cx="50" cy="50" r="49" fill="#DCE3EA"/>
+    <path d="M24 47 Q20 15 50 13 Q80 14 77 47 L78 63 Q73 67 68 60 L32 60 Q27 66 22 61Z" fill="#3B2A22"/>
+    <path d="M10 100 Q12 76 50 71 Q88 76 90 100Z" fill="#7F8C6B"/>
+    <rect x="44.5" y="60" width="11" height="13" rx="3" fill="#E6BFA3"/>
+    <path d="M41 71 L50 86 L35 82Z" fill="#8E9B79" stroke="#6B775A" stroke-width="1"/><path d="M59 71 L50 86 L65 82Z" fill="#8E9B79" stroke="#6B775A" stroke-width="1"/>
+    <circle cx="50" cy="93" r="1.6" fill="#A1887F"/>
+    <circle cx="29.5" cy="47" r="4" fill="#E6BFA3"/><circle cx="70.5" cy="47" r="4" fill="#E6BFA3"/><circle cx="29.3" cy="52.5" r="1.4" fill="#26A69A"/>
+    <ellipse cx="50" cy="45" rx="20.5" ry="23" fill="#F0CDB4"/>
+    <path d="M29.5 41 Q29 20 45 18.5 Q63 16.5 72 30 Q74 38 72.5 47 Q67 34 57 31 Q49 29 45 25.5 Q39 31 29.5 41Z" fill="#3B2A22"/>
+    <path d="M44.5 19.5 Q47 23 45.5 27" stroke="#A8A29E" stroke-width="1.6" fill="none"/><path d="M50 21 Q63 21 70 32" stroke="#5A463C" stroke-width="1.2" fill="none"/>
+    <circle cx="37" cy="54" r="3.3" fill="#F48FB1" opacity=".35"/><circle cx="63" cy="54" r="3.3" fill="#F48FB1" opacity=".35"/>
+    <g class="brow" stroke="#3B2A22" stroke-width="1.6" fill="none" stroke-linecap="round"><path d="M35 35.5 q5 -2.5 10 -0.5"/><path d="M55 35 q5 -2 10 0.5"/></g>
+    <circle cx="41" cy="44" r="2.2" fill="#4E342E"/><circle cx="59" cy="44" r="2.2" fill="#4E342E"/>
+    <path d="M50 46 q-2.2 5 0 6.2" stroke="#D49F82" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <rect class="lens" x="32" y="37.5" width="16.5" height="13.5" rx="6" stroke="#B98A70" stroke-width="1.2"/>
+    <rect class="lens" x="51.5" y="37.5" width="16.5" height="13.5" rx="6" stroke="#B98A70" stroke-width="1.2"/>
+    <path d="M48.5 42 q1.5 -1.6 3 0 M32 41 L28 40 M68 41 L72 40" stroke="#B98A70" stroke-width="1.1" fill="none"/>
+    <ellipse class="m m-talk" cx="50" cy="58.5" rx="3.6" ry="2.6" fill="#B5545C"/>
+    <path class="m m-happy" d="M43 56.5 Q50 63.5 57 56.5Z" fill="#B5545C"/>
+    <path class="m m-think" d="M45.5 59 h8" stroke="#B5545C" stroke-width="2" stroke-linecap="round"/>
+    <circle class="m m-wow" cx="50" cy="59" r="3.2" fill="#B5545C"/>
+    <path class="m m-hmm" d="M44 59.5 q3 -2.2 6 0 t6 0" stroke="#B5545C" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>`;
+  function spexBar(name) {
+    const bar = document.querySelector(`[data-spex="${name}"]`);
+    if (bar && !bar.firstChild) bar.innerHTML = SPEX + `<div class="bubble" aria-live="polite"></div>`;
+    return bar;
+  }
+  function say(name, html, mood = "talk", cls = "") {
+    const bar = spexBar(name); if (!bar) return;
+    bar.querySelector(".spex").dataset.mood = mood;
+    const b = bar.querySelector(".bubble"); b.className = "bubble" + (cls ? " " + cls : ""); b.innerHTML = html;
+  }
+
+  /* sound: off by default; tiny tones made in the browser */
+  let actx = null;
+  function beep(f, d, type = "sine", v = 0.06, when = 0) {
+    if (!P.sound) return;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + when;
+      o.type = type; o.frequency.value = f; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + d + 0.02);
+    } catch (e) {}
+  }
+  const SND = {
+    zap: () => beep(880, 0.08, "square", 0.03),
+    pop: () => beep(520, 0.07, "sine", 0.05),
+    star: () => { beep(660, 0.12); beep(990, 0.18, "sine", 0.06, 0.1); },
+    tip: () => beep(250, 0.22, "triangle", 0.07),
+    badge: () => [523, 659, 784, 1047].forEach((f, i) => beep(f, 0.18, "sine", 0.06, i * 0.11)),
+  };
+
+  /* progress: stars, badges – saved in this browser */
+  const STORE = "g7-health-v2";
+  const P = { best: {}, played: {}, name: "", sound: false, seenIntro: false };
+  function save() { try { localStorage.setItem(STORE, JSON.stringify(P)); } catch (e) {} }
+  function load() {
+    try { const d = JSON.parse(localStorage.getItem(STORE) || "{}"); for (const k in d) if (k in P) P[k] = d[k]; P.best = P.best || {}; P.played = P.played || {}; } catch (e) {}
+  }
+  const starsOf = (st) => (st.revealed ? 0 : st.mistakes ? 2 : 3);
+  const starsHTML = (n, of = 3) => `<span class="stars" aria-label="${n} stars">${"★".repeat(n)}<span class="off">${"★".repeat(Math.max(0, of - n))}</span></span>`;
+  const tabStars = (t) => Object.values(P.stars[t]).reduce((s, n) => s + n, 0);
+  const has = (t, id) => id in P.stars[t];
+  function toast(msg) { const t = $("toast"); t.innerHTML = msg; t.classList.remove("on"); void t.offsetWidth; t.classList.add("on"); clearTimeout(toast.k); toast.k = setTimeout(() => t.classList.remove("on"), 3200); }
+  let curTab = "hf";
+
+
+  function fbSet(e, cls, html) { e.className = "feedback " + cls; e.innerHTML = html; }
+
+  /* questions: 1st wrong → a tip, 2nd wrong → the answer is shown.
+     opts = [value, html] makes buttons in box; or items = existing elements with data-v (e.g. the body labels) */
+  const setDis = (b, v) => { if ("disabled" in b) b.disabled = v; else if (v) b.setAttribute("data-dis", ""); else b.removeAttribute("data-dis"); };
+  const isDis = (b) => ("disabled" in b ? b.disabled : b.hasAttribute("data-dis"));
+  function ask({ box, fb, opts, items, correct, tip, answer, good, cls = "cat", spex, onDone }) {
+    const st = { mistakes: 0, revealed: false, done: false };
+    let btns;
+    if (items) { btns = items; btns.forEach((b) => { setDis(b, false); b.classList.remove("right", "wrong"); }); box.classList.add("ask"); }
+    else { box.replaceChildren(); btns = opts.map(([v, html]) => { const b = h(`<button class="${cls}" data-v="${v}">${html}</button>`); box.appendChild(b); return b; }); }
+    btns.forEach((b) => {
+      b.onclick = () => { if (!isDis(b)) pick(b.dataset.v, b); };
+      b.onkeydown = (e) => { if ((e.key === "Enter" || e.key === " ") && !("disabled" in b)) { e.preventDefault(); b.onclick(); } };
+    });
+    function finish() { st.done = true; box.classList.remove("ask"); btns.forEach((b) => setDis(b, true)); onDone && onDone(st); }
+    function pick(v, b) {
+      if (st.done) return;
+      if (correct.includes(v)) {
+        b.classList.add("right");
+        fbSet(fb, "good", `✔ ${typeof good === "function" ? good(v) : good}`);
+        spex && say(spex, st.mistakes ? "Yes! You got it after the tip. ★★" : "Brilliant – right first time! ★★★", "happy", "good");
+        return finish();
+      }
+      st.mistakes++; b.classList.add("wrong"); setDis(b, true); SND.tip();
+      if (st.mistakes === 1) { fbSet(fb, "tip", "💡 Tip: " + (typeof tip === "function" ? tip(v) : tip)); spex && say(spex, "Hmm, not quite. Read my tip and try again!", "hmm", "tip"); }
+      else {
+        st.revealed = true;
+        btns.forEach((x) => correct.includes(x.dataset.v) && x.classList.add("right"));
+        fbSet(fb, "ans", "The answer: " + answer);
+        spex && say(spex, "Here is the answer – read why, and you'll get the next one!", "think", "ans");
+        finish();
+      }
+    }
+    return st;
+  }
+
+  /* drag, or tap then tap (as in the Salt naming simulation) */
+  let SEL = null;
+  function unselect() { if (SEL) SEL.classList.remove("sel"); SEL = null; }
+  function pickable(tile, slotSel, drop) {
+    tile.addEventListener("click", (e) => {
+      if (tile.dataset.dragged) { delete tile.dataset.dragged; e.stopPropagation(); return; }
+      if (tile.dataset.locked) return;
+      e.stopPropagation();
+      const same = SEL === tile; unselect();
+      if (!same) { SEL = tile; tile.classList.add("sel"); tile._drop = drop; }
+    });
+    tile.addEventListener("pointerdown", (e) => {
+      if (e.button > 0 || tile.dataset.locked) return;
+      const sx = e.clientX, sy = e.clientY;
+      let ghost = null, hot = null;
+      try { tile.setPointerCapture(e.pointerId); } catch (er) {}
+      const at = (x, y) => { const t = document.elementFromPoint(x, y); const s = t && t.closest(slotSel); return s && !s.classList.contains("full") ? s : null; };
+      const move = (ev) => {
+        if (!ghost && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 6) {
+          ghost = tile.cloneNode(true); ghost.classList.add("drag-ghost"); ghost.classList.remove("sel");
+          ghost.style.width = tile.offsetWidth + "px";
+          document.body.appendChild(ghost); tile.classList.add("lifting");
+        }
+        if (!ghost) return;
+        ghost.style.left = ev.clientX + "px"; ghost.style.top = ev.clientY + "px";
+        const s = at(ev.clientX, ev.clientY);
+        if (s !== hot) { hot && hot.classList.remove("hot"); hot = s; hot && hot.classList.add("hot"); }
+      };
+      const up = (ev) => {
+        tile.removeEventListener("pointermove", move); tile.removeEventListener("pointerup", up); tile.removeEventListener("pointercancel", up);
+        if (!ghost) return;
+        tile.dataset.dragged = "1"; setTimeout(() => delete tile.dataset.dragged, 0);
+        ghost.remove(); tile.classList.remove("lifting"); hot && hot.classList.remove("hot");
+        const s = ev.type === "pointerup" && at(ev.clientX, ev.clientY);
+        if (s) { unselect(); drop(tile, s); }
+      };
+      tile.addEventListener("pointermove", move); tile.addEventListener("pointerup", up); tile.addEventListener("pointercancel", up);
+    });
+  }
+  // a tapped slot receives the selected tile
+  document.addEventListener("click", (e) => {
+    const s = e.target.closest(".slot");
+    if (s && SEL && !s.classList.contains("full") && SEL._drop && SEL._slots && SEL._slots.includes(s)) { const t = SEL; unselect(); t._drop(t, s); }
+  });
+  const shakeEl = (e) => { e.classList.remove("shake", "bounce"); void e.offsetWidth; e.classList.add(e.classList.contains("tile") ? "bounce" : "shake"); setTimeout(() => e.classList.remove("shake", "bounce"), 450); };
+
+  /* a drop task: tiles go into slots.
+     fits(tile, slot) → true if right. mode "task": one tip for the whole task, the 2nd mistake fills everything in;
+     mode "tile": each tile has its own tip → answer (stars per tile). */
+  function dropTask({ tiles, slots, fits, home, place, tip, fb, spex, mode = "task", onTile, onDone }) {
+    const st = { mistakes: 0, revealed: false, done: false };
+    const left = new Set(tiles);
+    for (const t of tiles) {
+      t._st = { mistakes: 0, revealed: false };
+      t._slots = slots;
+      pickable(t, slots.map((s) => "#" + s.id).join(","), drop);
+    }
+    function lock(t, s, shown) {
+      t.dataset.locked = "1"; t.classList.remove("sel"); t.classList.add(shown ? "shown" : "locked");
+      place(t, s); left.delete(t);
+      if (onTile) onTile(t, s);
+      if (!left.size || ![...left].some((x) => home(x))) finishAll();
+    }
+    function finishAll() { if (st.done) return; st.done = true; onDone && onDone(st); }
+    function revealAll() { st.revealed = true; for (const t of [...left]) { const s = home(t); if (s) lock(t, s, true); } }
+    function drop(t, s) {
+      if (st.done || t.dataset.locked) return;
+      if (fits(t, s)) {
+        SND.pop(); lock(t, s, false);
+        if (mode === "task" && !st.done) fb && fbSet(fb, "good", "✔ Right!");
+        return;
+      }
+      SND.tip(); shakeEl(s); shakeEl(t);
+      if (mode === "tile") {
+        t._st.mistakes++;
+        if (t._st.mistakes === 1) { fbSet(fb, "tip", "💡 Tip: " + tip(t, s)); spex && say(spex, "Hmm, not quite. Read my tip and try again!", "hmm", "tip"); }
+        else { t._st.revealed = true; const hs = home(t); fbSet(fb, "ans", "The answer: " + tip(t, s, true)); spex && say(spex, "I've put that one in the right place for you.", "think", "ans"); lock(t, hs, true); }
+        return;
+      }
+      st.mistakes++;
+      if (st.mistakes === 1) { fbSet(fb, "tip", "💡 Tip: " + tip(t, s)); spex && say(spex, "Hmm, not quite. Read my tip and try again!", "hmm", "tip"); }
+      else { revealAll(); fbSet(fb, "ans", "The answer is shown: the blue cards were placed for you. Read them carefully!"); spex && say(spex, "Here is the answer – read it, and you'll get the next one!", "think", "ans"); }
+    }
+    return st;
+  }
+
+  /* a short quiz (Checks and Test yourself): one question at a time, tip → answer */
+  function quiz({ root, tab, list, prefix, spex, title, onEnd, again }) {
+    let qi = 0; const QR = [];
+    root.innerHTML = `<div class="qhead"><h2></h2><div class="dots"></div></div><div class="qbody"></div><div class="feedback" aria-live="polite"></div>
+      <div class="controls"><button class="btn primary" hidden>Next question →</button></div>`;
+    const [hd, dots, body, fb, next] = [root.querySelector("h2"), root.querySelector(".dots"), root.querySelector(".qbody"), root.querySelector(".feedback"), root.querySelector(".btn")];
+    const paint = () => { dots.innerHTML = list.map((_, k) => { const r = QR[k]; return `<span class="dot${k === qi ? " now" : ""}${r ? (r.n > 0 ? " done" : " zero") : ""}">${k + 1}</span>`; }).join(""); };
+    function loadQ() {
+      const q = list[qi];
+      hd.textContent = `${title} · question ${qi + 1} of ${list.length}`; paint();
+      fb.className = "feedback"; fb.innerHTML = ""; next.hidden = true; body.replaceChildren();
+      body.appendChild(h(`<div class="qpic"><div class="em">${q.em}</div><p class="qtext">${q.text}</p></div>`));
+      const box = h(`<div class="cats"></div>`); body.appendChild(box);
+      const right = q.opts.find(([v]) => v === q.ans)[1];
+      ask({ box, fb, spex, opts: shuffle(q.opts), correct: [q.ans], tip: q.tip, answer: `<b>${right}</b>. ${q.why}`, good: q.why,
+        onDone: (st) => { const n = starsOf(st); QR[qi] = { label: q.text, n }; paint();
+          if (prefix) addStars(tab, prefix + q.id, n);
+          next.hidden = false; next.textContent = qi < list.length - 1 ? "Next question →" : "See my result →"; next.focus({ preventScroll: true }); } });
+    }
+    next.addEventListener("click", () => { if (qi < list.length - 1) { qi++; loadQ(); } else end(); });
+    function end() {
+      const right = QR.filter((r) => r.n === 3).length, stars = QR.reduce((s, r) => s + r.n, 0), max = list.length * 3;
+      root.innerHTML = `<h2 style="color:var(--navy)">${title} · your result</h2>
+        <div style="display:flex;flex-wrap:wrap;gap:24px;align-items:end"><div><div class="score">${right}/${list.length}</div><div class="hint">right first time</div></div>
+        <div><div class="score" style="color:var(--star)">★ ${stars}</div><div class="hint">stars out of ${max}</div></div></div>
+        <p>${stars >= max * 0.9 ? "Outstanding! You really know about health and fitness." : stars >= max * 0.66 ? "Well done! Look again at the questions without ★★★." : "Good try! Read Marie's guide (📖, top right), then play again."}</p>
+        <ul class="review">${QR.map((r, k) => `<li><span>${k + 1}. ${r.label}</span>${starsHTML(r.n)}</li>`).join("")}</ul>
+        <div class="controls"><button class="btn primary">${again}</button></div>`;
+      root.querySelector(".btn").addEventListener("click", () => onEnd(true));
+      onEnd(false, stars);
+    }
+    loadQ();
+  }
+  function runCheck(tab) {
+    const root = document.querySelector(`[data-check="${tab}"]`);
+    quiz({ root, tab, list: CHECKS[tab], prefix: "chk-", spex: tab, title: "Check", again: "↺ Try the Check again",
+      onEnd: (restart, stars) => { if (restart) runCheck(tab); else say(tab, `Check finished: <b>★ ${stars}</b> out of 9!`, "happy", "good"); } });
+  }
+
+
+  /* ============================ 5 PEOPLE (the moving figure) ============================ */
+  // A side-view person facing right, drawn as shaped body parts (13 Nov 2026: realistic people, teacher).
+  // Angles in degrees from "straight down" (0); forwards = positive (90 = pointing right, 180 = up, −90 = left).
+  // b = how far the body leans forwards. Lengths are for an adult (Coach Ana); BODY scales them for each person.
+  const L = { torso: 58, neck: 8, head: 15, up: 28, fore: 26, thigh: 35, shin: 34, foot: 5 };
+  // body build: s = size, hs = head size (children have bigger heads for their size), w = width, stoop (deg), belly
+  const BODY = { lena: { s: 0.86, hs: 1.1, w: 0.9, chest: 0.4 }, omar: { s: 0.88, hs: 1.1, w: 1.05 }, ana: { s: 1, hs: 0.95, w: 1, chest: 0.6, athl: 1 },
+    jo: { s: 0.96, hs: 1, w: 1.05, stoop: 12, belly: 1, old: 1 }, you: { s: 0.87, hs: 1.1, w: 0.95 } };
+  // how each person moves (age and fitness): tempo (speed of movement), stiff (0–1), wob (shaky), stride (step size), rep (s per push-up)
+  const PROF = { lena: { tempo: 1, stiff: 0, wob: 0, stride: 1, rep: 0.62, knee: 1 }, omar: { tempo: 0.8, stiff: 0.35, wob: 0.3, stride: 0.85, rep: 0.9, knee: 0.8 },
+    ana: { tempo: 1.1, stiff: 0, wob: 0, stride: 1.12, rep: 0.55, knee: 1.05 }, jo: { tempo: 0.45, stiff: 1, wob: 1, stride: 0.58, rep: 1.05, knee: 0.5 },
+    you: { tempo: 0.9, stiff: 0.2, wob: 0.1, stride: 0.95, rep: 0.8, knee: 0.9 } };
+  const bodyOf = (who) => BODY[who.id] || BODY.you, profOf = (who) => PROF[who.id] || PROF.you;
+  const legLen = (who) => (L.thigh + L.shin) * bodyOf(who).s;
+  const hipH = (who) => legLen(who) + L.foot * bodyOf(who).s;            // hip height when standing straight
+  const rad = (a) => (a * Math.PI) / 180;
+  const dir = (a, len) => [Math.sin(rad(a)) * len, Math.cos(rad(a)) * len];
+  const add = (p, q) => [p[0] + q[0], p[1] + q[1]];
+  const lerp2 = (p, q, t) => [p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t];
+  const shade = (hex, f) => { const n = parseInt(hex.slice(1), 16); const c = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => Math.round(v * f)); return "#" + c.map((v) => Math.max(0, Math.min(255, v)).toString(16).padStart(2, "0")).join(""); };
+  const P2 = (pts) => "M" + pts.map((p) => p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" L") + " Z";
+  // two-link arm/leg reaching for a point: the two absolute angles (bend = +1 joint forwards, −1 backwards)
+  function ik(S, E, l1, l2, bend) {
+    const dx = E[0] - S[0], dy = E[1] - S[1];
+    const d = Math.min(l1 + l2 - 0.01, Math.max(Math.abs(l1 - l2) + 0.01, Math.hypot(dx, dy)));
+    const base = Math.atan2(dx, dy) * 180 / Math.PI;
+    const a = Math.acos((l1 * l1 + d * d - l2 * l2) / (2 * l1 * d)) * 180 / Math.PI;
+    const a1 = base + bend * a, J = add(S, dir(a1, l1));
+    return [a1, Math.atan2(E[0] - J[0], E[1] - J[1]) * 180 / Math.PI];
+  }
+  // a body part with rounded ends: from A (radius rA) to B (radius rB); bulge makes a muscle shape
+  function seg(g, A, B, rA, rB, fill, { bulge = 0, bulgeAt = 0.4, line = null, lw = 1.2 } = {}) {
+    const dx = B[0] - A[0], dy = B[1] - A[1], len = Math.hypot(dx, dy) || 0.01, u = [dx / len, dy / len], n = [-u[1], u[0]];
+    const pts = [], N = 8;
+    const r = (t) => rA + (rB - rA) * t + bulge * Math.sin(Math.PI * Math.min(1, t / (2 * bulgeAt))) * (t < 2 * bulgeAt ? 1 : 0);
+    for (let i = 0; i <= N; i++) { const t = i / N, c = lerp2(A, B, t), rr = r(t); pts.push([c[0] + n[0] * rr, c[1] + n[1] * rr]); }
+    for (let i = 1; i < 8; i++) { const a = Math.PI * i / 8, c = Math.cos(a), s2 = Math.sin(a); pts.push([B[0] + (n[0] * c + u[0] * s2) * rB, B[1] + (n[1] * c + u[1] * s2) * rB]); }
+    for (let i = N; i >= 0; i--) { const t = i / N, c = lerp2(A, B, t), rr = r(t); pts.push([c[0] - n[0] * rr, c[1] - n[1] * rr]); }
+    for (let i = 1; i < 8; i++) { const a = Math.PI * i / 8, c = Math.cos(a), s2 = Math.sin(a); pts.push([A[0] - (n[0] * c + u[0] * s2) * rA, A[1] - (n[1] * c + u[1] * s2) * rA]); }
+    return el("path", { d: P2(pts), fill, stroke: line || shade(fill, 0.72), "stroke-width": lw, "stroke-linejoin": "round" }, g);
+  }
+  const POSE0 = { x: 0, y: 0, b: 0, a1: 4, f1: 10, a2: -6, f2: -2, l1: 3, k1: 2, l2: -3, k2: -3, hd: 0 };
+  const lerpPose = (A, B, t) => { const o = {}; for (const k in POSE0) o[k] = (A[k] ?? POSE0[k]) + ((B[k] ?? POSE0[k]) - (A[k] ?? POSE0[k])) * t;
+    for (const k of ["eyes", "face", "h1", "h2", "hand", "tl"]) o[k] = t < 0.5 ? A[k] : B[k]; return o; };
+
+  // ---- anatomical limbs (14 Nov 2026): one smooth outline with a FRONT and a BACK profile ----
+  // front = the bending side of the elbow (biceps) and the front of the leg (knee cap side)
+  const prof = (T, t) => { for (let i = 1; i < T.length; i++) if (t <= T[i][0]) { const [t0, v0] = T[i - 1], [t1, v1] = T[i], k = (t - t0) / (t1 - t0); return v0 + (v1 - v0) * (1 - Math.cos(Math.PI * k)) / 2; } return T[T.length - 1][1]; };
+  const SHAPE = {
+    up: { F: [[0, 5.4], [0.14, 6.3], [0.32, 5.0], [0.55, 5.3], [0.85, 4.0], [1, 3.7]], B: [[0, 5.8], [0.2, 6.1], [0.45, 5.5], [0.8, 4.1], [1, 3.9]] },
+    fore: { F: [[0, 3.8], [0.18, 4.5], [0.6, 3.2], [0.92, 2.4], [1, 2.4]], B: [[0, 4.1], [0.14, 4.5], [0.6, 3.1], [0.92, 2.3], [1, 2.3]] },
+    thigh: { F: [[0, 8.0], [0.35, 8.5], [0.8, 5.8], [1, 5.0]], B: [[0, 9.0], [0.25, 7.8], [0.7, 6.0], [1, 5.0]] },
+    shin: { F: [[0, 4.9], [0.12, 4.3], [0.6, 3.2], [0.9, 2.3], [1, 2.6]], B: [[0, 4.6], [0.27, 6.1], [0.6, 3.8], [0.9, 2.3], [1, 2.6]] },
+  };
+  // side = −1: the front profile is on the left of A→B (legs and arms facing right); widths × k; extra = clothes looseness
+  function limb(g, A, B, sh, k, fill, { extra = 0, t0 = 0, t1 = 1, line = null, hem = false } = {}) {
+    const dx = B[0] - A[0], dy = B[1] - A[1], len = Math.hypot(dx, dy) || 0.01, u = [dx / len, dy / len], n = [-u[1], u[0]];
+    const F = (t) => (prof(sh.F, t) + extra) * k, Bk = (t) => (prof(sh.B, t) + extra) * k;
+    const P = (t) => [A[0] + dx * t, A[1] + dy * t], N = 14, pts = [];
+    for (let i = 0; i <= N; i++) { const t = t0 + (t1 - t0) * i / N, c = P(t), r = F(t); pts.push([c[0] - n[0] * r, c[1] - n[1] * r]); }
+    const cE = P(t1), rE = (F(t1) + Bk(t1)) / 2;
+    if (hem) pts.push([cE[0] + u[0] * 0.6 * k, cE[1] + u[1] * 0.6 * k]);
+    else for (let i = 1; i < 7; i++) { const a = Math.PI * i / 7; pts.push([cE[0] + (-n[0] * Math.cos(a) + u[0] * Math.sin(a)) * rE, cE[1] + (-n[1] * Math.cos(a) + u[1] * Math.sin(a)) * rE]); }
+    for (let i = N; i >= 0; i--) { const t = t0 + (t1 - t0) * i / N, c = P(t), r = Bk(t); pts.push([c[0] + n[0] * r, c[1] + n[1] * r]); }
+    const cS = P(t0), rS = (F(t0) + Bk(t0)) / 2;
+    for (let i = 1; i < 7; i++) { const a = Math.PI * i / 7; pts.push([cS[0] + (n[0] * Math.cos(a) - u[0] * Math.sin(a)) * rS, cS[1] + (n[1] * Math.cos(a) - u[1] * Math.sin(a)) * rS]); }
+    return el("path", { d: P2(pts), fill, stroke: line || shade(fill, 0.7), "stroke-width": 1.1, "stroke-linejoin": "round" }, g);
+  }
+  // the hand at the wrist: "relaxed" (fingers together, slightly curled), "fist", "flat" (palm on the floor), "open"
+  function hand(g, W, ang, mode, sk, s) {
+    const ol = shade(sk, 0.68), d = dir(ang, 1), n = [-d[1], d[0]];
+    const at = (a, b) => [W[0] + d[0] * a * s + n[0] * b * s, W[1] + d[1] * a * s + n[1] * b * s];
+    if (mode === "fist") {
+      el("path", { d: P2([at(0, -2.6), at(3, -3.6), at(7.5, -3.4), at(8.6, -1), at(8.2, 2.4), at(5, 3.6), at(1, 2.8)]), fill: sk, stroke: ol, "stroke-width": 1 }, g);
+      for (const b of [-1.6, 0, 1.6]) el("path", { d: `M${at(7.6, b).map((v) => v.toFixed(1)).join(" ")} L${at(5.6, b).map((v) => v.toFixed(1)).join(" ")}`, stroke: ol, "stroke-width": 0.6 }, g);
+      return;
+    }
+    if (mode === "flat") {
+      const fl = (a, b) => [W[0] + a * s, W[1] + b * s];
+      el("path", { d: P2([fl(-1, -2.5), fl(6, -2.6), fl(13.5, -0.6), fl(14, 1.2), fl(6, 2.2), fl(-1, 2)]), fill: sk, stroke: ol, "stroke-width": 1 }, g);
+      for (const b of [-0.4, 0.6]) el("path", { d: `M${fl(8, b).join(" ")} L${fl(13.4, b + 0.3).join(" ")}`, stroke: ol, "stroke-width": 0.5 }, g);
+      return;
+    }
+    const curl = mode === "open" ? 0 : 1.4;
+    // palm, then the fingers (together, the tips curled a little) and the thumb
+    el("path", { d: P2([at(0, -2.4), at(6.2, -2.9), at(10.5, -2.4 + curl * 0.3), at(12, -0.6 + curl), at(11.3, 1.6 + curl), at(6.2, 2.7), at(0.5, 2.3)]), fill: sk, stroke: ol, "stroke-width": 1 }, g);
+    for (const b of [-1.2, 0.2, 1.5]) el("path", { d: `M${at(7, b).map((v) => v.toFixed(1)).join(" ")} L${at(11, b + curl * 0.5).map((v) => v.toFixed(1)).join(" ")}`, stroke: ol, "stroke-width": 0.55 }, g);
+    el("path", { d: P2([at(1.5, -2.2), at(4.5, -4.6), at(7.2, -4.4), at(7.4, -3.4), at(4.8, -2.4)]), fill: sk, stroke: ol, "stroke-width": 0.9 }, g);   // thumb
+  }
+  function shoe(g, An, ang, col, s) {
+    const f = dir(ang + 90, 1), up = dir(ang + 180, 1);
+    const p = (a, b) => [An[0] + f[0] * a * s + up[0] * b * s, An[1] + f[1] * a * s + up[1] * b * s];
+    const ol = shade(col, 0.55), light = col === "#FAFAFA" || col === "#ECEFF1";
+    el("path", { d: P2([p(-4.2, 4), p(-5, -1), p(-4.6, -4.2), p(11, -4.2), p(14.6, -3), p(15.4, -1), p(13, 1.8), p(7, 3.6), p(1.5, 5.2)]), fill: col, stroke: ol, "stroke-width": 1 }, g);
+    el("path", { d: P2([p(-4.8, -2.4), p(14.8, -2.4), p(15.4, -1), p(14.8, -4.4), p(-4.6, -4.4)]), fill: light ? "#CFD8DC" : "#FAFAFA", stroke: ol, "stroke-width": 0.6 }, g);   // sole
+    el("path", { d: `M${p(10.5, -2.4).join(" ")} Q${p(14, -1.5).join(" ")} ${p(13, 1.6).join(" ")}`, fill: "none", stroke: ol, "stroke-width": 0.7 }, g);   // toe cap
+    for (const a of [3, 5.5, 8]) el("path", { d: `M${p(a, 1.8 + (8 - a) * 0.15).join(" ")} l${(f[0] * 1.6 * s - up[0] * 1.2 * s).toFixed(1)} ${(f[1] * 1.6 * s - up[1] * 1.2 * s).toFixed(1)}`, stroke: light ? "#90A4AE" : "#ECEFF1", "stroke-width": 0.8 }, g);   // laces
+  }
+  // the torso: front and back outline from the hips (u = 0) to the shoulders (u = 1)
+  function torsoPath(H, S, bo, s, depth = 1) {
+    const dx = S[0] - H[0], dy = S[1] - H[1], len = Math.hypot(dx, dy), u = [dx / len, dy / len], n = [-u[1], u[0]];   // n points forwards
+    const w = bo.w * s * depth, ch = bo.chest || 0, be = bo.belly || 0, at = bo.athl || 0;
+    const FR = [[0, 9.5], [0.25, 8.6 + 4.5 * be], [0.45, 7.6 + 4 * be], [0.7, 9.4 + 2.5 * ch + at], [0.9, 8.5 + at], [1, 6.5]];
+    const BK = [[0, 10.5], [0.12, 11], [0.4, 7.4], [0.75, 8.6 + 2.2 * (bo.old || 0)], [0.95, 8 + at], [1, 6.5]];
+    const prof = (T, t) => { for (let i = 1; i < T.length; i++) if (t <= T[i][0]) { const [t0, v0] = T[i - 1], [t1, v1] = T[i], k = (t - t0) / (t1 - t0); return v0 + (v1 - v0) * (1 - Math.cos(Math.PI * k)) / 2; } return T[T.length - 1][1]; };
+    const pts = [];
+    for (let i = 0; i <= 12; i++) { const t = i / 12, c = lerp2(H, S, t), r = prof(FR, t) * w; pts.push([c[0] + n[0] * r, c[1] + n[1] * r]); }
+    for (let i = 1; i < 6; i++) { const a = Math.PI * i / 6, r = 6.5 * w; pts.push([S[0] + (n[0] * Math.cos(a) + u[0] * Math.sin(a) * 0.8) * r, S[1] + (n[1] * Math.cos(a) + u[1] * Math.sin(a) * 0.8) * r]); }
+    for (let i = 12; i >= 0; i--) { const t = i / 12, c = lerp2(H, S, t), r = prof(BK, t) * w; pts.push([c[0] - n[0] * r, c[1] - n[1] * r]); }
+    return { d: P2(pts), u, n, len, at: (t, side) => { const c = lerp2(H, S, t), r = prof(side > 0 ? FR : BK, t) * w; return [c[0] + side * n[0] * r, c[1] + side * n[1] * r]; } };
+  }
+
+  // draw a person into g; the hip is at (pose.x, pose.y). Returns key points.
+  function drawFig(g, who, pose, { far = 0.84 } = {}) {
+    g.replaceChildren();
+    const lk = who.look, bo = bodyOf(who), s = bo.s, Pz = Object.assign({}, POSE0, pose);
+    const stoop = Math.abs(Pz.b) < 50 ? (bo.stoop || 0) : 0;
+    const hip = [Pz.x, Pz.y], tA = 180 - (Pz.b + stoop);
+    const sh = add(hip, dir(tA, L.torso * s * (Pz.tl || 1)));
+    const shJ = add(hip, dir(tA, L.torso * s * (Pz.tl || 1) * 0.9));   // the shoulder joint sits a little below the top
+    if (Pz.h1) [Pz.a1, Pz.f1] = ik(shJ, Pz.h1, L.up * s, (L.fore + 6) * s, Pz.h1[2] ?? -1);
+    if (Pz.h2) [Pz.a2, Pz.f2] = ik(shJ, Pz.h2, L.up * s, (L.fore + 6) * s, Pz.h2[2] ?? -1);
+    const sk = lk.skin;
+    // arms and legs with real shapes; clothes follow the shape; a joint patch hides the seam at the elbow and the knee
+    const arm = (a, f, near, mode) => {
+      const c = near ? 1 : far, skc = shade(sk, c), top = shade(lk.top, c);
+      const E = add(shJ, dir(a, L.up * s)), W = add(E, dir(f, L.fore * s)), k = bo.w * s * (bo.athl ? 1.08 : 1) * (bo.old ? 0.92 : 1);
+      const long = lk.sleeves === "long", col = long ? top : skc;
+      limb(g, shJ, E, SHAPE.up, k, col);
+      limb(g, E, W, SHAPE.fore, k, col);
+      el("circle", { cx: E[0], cy: E[1], r: 3.55 * k, fill: col }, g);   // smooth elbow (hides the seam)
+      if (long) limb(g, add(E, dir(f, L.fore * s * 0.84)), W, SHAPE.fore, k, shade(top, 0.92), { extra: 0.6, t0: 0.84 * 0 + 0, t1: 1 });   // cuff
+      else limb(g, shJ, add(shJ, dir(a, L.up * s * 0.52)), SHAPE.up, k, top, { extra: 0.9, hem: true });   // short sleeve with a hem
+      const md = (near ? Pz.hand1 : Pz.hand2) || mode || ((near ? Pz.h1 : Pz.h2) ? "flat" : "relaxed");
+      hand(g, W, f, md, skc, s);
+      return W;
+    };
+    const leg = (l, k2, near) => {
+      const c = near ? 1 : far, bt = shade(lk.bottom, c), skc = shade(sk, c), k = bo.w * s * (bo.athl ? 1.06 : 1) * (bo.old ? 0.93 : 1);
+      const K = add(hip, dir(l, L.thigh * s)), An = add(K, dir(k2, L.shin * s));
+      const long = lk.legs === "long", col = long ? bt : skc;
+      limb(g, hip, K, SHAPE.thigh, k, col, { extra: long ? 0.8 : 0 });
+      limb(g, K, An, SHAPE.shin, k, col, { extra: long ? 1.1 : 0 });
+      el("circle", { cx: K[0], cy: K[1], r: (long ? 5.4 : 4.6) * k, fill: col }, g);   // smooth knee (hides the seam)
+      const bend = l - k2;
+      if (!long && bend > 15) { const kp = add(K, dir(l + 90, 4.6 * k)); el("path", { d: `M${add(kp, dir(l, -2.4 * k)).map((v) => v.toFixed(1)).join(" ")} Q${add(kp, dir(l + 90, 1.4 * k)).map((v) => v.toFixed(1)).join(" ")} ${add(kp, dir(l, 2.6 * k)).map((v) => v.toFixed(1)).join(" ")}`, fill: "none", stroke: shade(skc, 0.8), "stroke-width": 0.7 }, g); }   // the knee cap
+      if (long) { const a1 = add(hip, dir(l + 90, 3 * k)), a2 = add(K, dir(l + 90, 3.2 * k)); el("path", { d: `M${a1[0].toFixed(1)} ${a1[1].toFixed(1)} L${a2[0].toFixed(1)} ${a2[1].toFixed(1)}`, stroke: shade(bt, 0.8), "stroke-width": 0.8 }, g); }   // trouser crease
+      else limb(g, hip, add(hip, dir(l, L.thigh * s * 0.7)), SHAPE.thigh, k, bt, { extra: 1.3, hem: true });   // shorts with a hem
+      shoe(g, An, k2, shade(lk.shoe, c * 0.97), s);
+      return { K, An };
+    };
+    const R = {};
+    R.hand2 = arm(Pz.a2, Pz.f2, false);
+    R.leg2 = leg(Pz.l2, Pz.k2, false);
+    // neck, body, clothes
+    const tp = torsoPath(hip, sh, bo, s);
+    const hc = add(sh, dir(tA + Pz.hd * 0.6, (L.neck + L.head * bo.hs * 0.85) * s));
+    seg(g, add(sh, dir(tA, -4 * s)), add(sh, dir(tA + Pz.hd * 0.4, (L.neck + 3) * s)), 4.4 * s, 4 * s, sk);
+    el("path", { d: tp.d, fill: lk.top, stroke: shade(lk.top, 0.7), "stroke-width": 1.2 }, g);
+    // waistband / trousers top over the hips
+    const wb = [tp.at(0, 1), tp.at(0.22, 1), tp.at(0.22, -1), tp.at(0, -1)];
+    el("path", { d: P2([...wb, add(tp.at(0, -1), [tp.u[0] * -6 * s, tp.u[1] * -6 * s]), add(tp.at(0, 1), [tp.u[0] * -6 * s, tp.u[1] * -6 * s])]), fill: lk.bottom, stroke: shade(lk.bottom, 0.7), "stroke-width": 1 }, g);
+    el("path", { d: `M${tp.at(0.22, 1).map((v) => v.toFixed(1)).join(" ")} L${tp.at(0.22, -1).map((v) => v.toFixed(1)).join(" ")}`, stroke: shade(lk.top, 0.6), "stroke-width": 1.4 }, g);
+    // folds and details
+    const fold = (t1, t2, side, k) => { const a = tp.at(t1, side), b = tp.at(t2, side); el("path", { d: `M${a[0].toFixed(1)} ${a[1].toFixed(1)} Q${((a[0] + b[0]) / 2 - tp.n[0] * side * k).toFixed(1)} ${((a[1] + b[1]) / 2 - tp.n[1] * side * k).toFixed(1)} ${b[0].toFixed(1)} ${b[1].toFixed(1)}`, stroke: shade(lk.top, 0.78), "stroke-width": 1, fill: "none" }, g); };
+    fold(0.3, 0.5, -1, 4); fold(0.55, 0.75, 1, 3);
+    if (lk.cardigan) for (const t of [0.35, 0.55, 0.75]) { const p = tp.at(t, 1); el("circle", { cx: p[0] - tp.n[0] * 2.5, cy: p[1] - tp.n[1] * 2.5, r: 1.4 * s, fill: shade(lk.top, 0.55) }, g); }
+    const nl = tp.at(0.98, 1); el("path", { d: `M${(nl[0] - tp.n[0] * 2).toFixed(1)} ${(nl[1] - tp.n[1] * 2).toFixed(1)} q${(-tp.u[0] * 5 - tp.n[0] * 3).toFixed(1)} ${(-tp.u[1] * 5 - tp.n[1] * 3).toFixed(1)} ${(-tp.n[0] * 7).toFixed(1)} ${(-tp.n[1] * 7).toFixed(1)}`, stroke: shade(lk.top, 0.6), "stroke-width": 1.2, fill: "none" }, g);
+    if (lk.whistle) { const p = tp.at(0.7, 1); el("line", { x1: nl[0] - tp.n[0] * 4, y1: nl[1] - tp.n[1] * 4, x2: p[0] - tp.n[0] * 2, y2: p[1] - tp.n[1] * 2, stroke: "#FFEB3B", "stroke-width": 1 }, g); el("rect", { x: p[0] - 3, y: p[1] - 1, width: 6, height: 3, rx: 1, fill: "#B0BEC5" }, g); }
+    headAt(g, who, hc[0], hc[1], Pz.b + stoop * 0.4 + Pz.hd, s * bo.hs, Pz.face || (Pz.eyes === "closed" ? "sleep" : "calm"), Pz.swing || 0);
+    R.leg1 = leg(Pz.l1, Pz.k1, true);
+    R.hand1 = arm(Pz.a1, Pz.f1, true);
+    R.sh = sh; R.hip = hip; R.head = hc;
+    return R;
+  }
+  // the head in side view facing right (local frame, radius r), turned by `turn` degrees
+  function headAt(g, who, cx, cy, turn, s, face = "calm", swing = 0) {
+    const lk = who.look, r = L.head, H = lk.hair, sk = lk.skin, ol = shade(sk, 0.68);
+    const hg = el("g", { transform: `translate(${cx.toFixed(1)} ${cy.toFixed(1)}) rotate(${turn.toFixed(1)}) scale(${s.toFixed(3)})` }, g);
+    const p = (x, y) => `${(x * r).toFixed(1)} ${(y * r).toFixed(1)}`;
+    const hairD = shade(H, 0.72);
+    // hair behind the head
+    if (lk.style === "pony") { const sw = swing * 0.25; el("path", { d: `M${p(-0.7, -0.45)} Q${p(-1.45 - sw, -0.3)} ${p(-1.35 - sw, 0.55)} Q${p(-1.25 - sw, 1.15)} ${p(-1.05 - sw * 1.4, 1.3)} Q${p(-1.0 - sw, 0.7)} ${p(-0.8, 0.15)} Z`, fill: H, stroke: hairD, "stroke-width": 0.8 }, hg); el("ellipse", { cx: -0.8 * r, cy: -0.32 * r, rx: 0.12 * r, ry: 0.16 * r, fill: "#EC407A" }, hg); }
+    if (lk.style === "bun") el("circle", { cx: -0.62 * r, cy: -0.78 * r, r: 0.4 * r, fill: H, stroke: hairD, "stroke-width": 0.8 }, hg);
+    if (lk.style === "long") el("path", { d: `M${p(-0.6, -0.8)} Q${p(-1.25, 0)} ${p(-1.0, 1.25)} L${p(-0.3, 1.0)} Z`, fill: H }, hg);
+    // skull, jaw and face
+    el("path", { d: `M${p(-0.95, 0.25)} A${r} ${r} 0 1 1 ${p(0.98, 0.12)} Q${p(1.02, 0.45)} ${p(0.92, 0.66)} Q${p(0.82, 0.98)} ${p(0.45, 1.02)} Q${p(0.05, 1.02)} ${p(-0.25, 0.78)} Q${p(-0.7, 0.62)} ${p(-0.95, 0.25)} Z`, fill: sk, stroke: ol, "stroke-width": 0.9 }, hg);
+    el("path", { d: `M${p(0.97, 0.05)} Q${p(1.2, 0.3)} ${p(1.16, 0.38)} Q${p(1.08, 0.45)} ${p(0.95, 0.43)}`, fill: sk, stroke: ol, "stroke-width": 0.9 }, hg);   // nose
+    el("ellipse", { cx: 0.5 * r, cy: 0.5 * r, rx: 0.18 * r, ry: 0.12 * r, fill: "#EF9A9A", opacity: 0.35 }, hg);   // cheek
+    // eye and brow
+    if (face === "sleep") el("path", { d: `M${p(0.45, 0.05)} Q${p(0.6, 0.14)} ${p(0.75, 0.05)}`, fill: "none", stroke: "#4E342E", "stroke-width": 1 }, hg);
+    else {
+      el("path", { d: `M${p(0.47, 0.04)} Q${p(0.62, -0.08)} ${p(0.78, 0.03)} Q${p(0.62, 0.13)} ${p(0.47, 0.04)} Z`, fill: "#fff", stroke: "#5D4037", "stroke-width": 0.6 }, hg);
+      el("circle", { cx: 0.67 * r, cy: 0.03 * r, r: 0.075 * r, fill: lk.eye || "#4E342E" }, hg);
+      el("circle", { cx: 0.69 * r, cy: 0.0, r: 0.025 * r, fill: "#fff" }, hg);
+      el("path", { d: `M${p(0.47, 0.03)} Q${p(0.62, -0.1)} ${p(0.8, 0.0)}`, fill: "none", stroke: "#3E2723", "stroke-width": 0.9 }, hg);
+    }
+    const browY = face === "effort" ? 0.12 : face === "tired" ? 0.1 : 0;
+    el("path", { d: `M${p(0.44, -0.2 + browY * 0.4)} Q${p(0.62, -0.3)} ${p(0.82, -0.18 + browY)}`, fill: "none", stroke: lk.style === "bald" ? "#9E9E9E" : shade(H, 0.8), "stroke-width": 1.5, "stroke-linecap": "round" }, hg);
+    // mouth
+    if (face === "effort") { el("path", { d: `M${p(0.62, 0.68)} L${p(0.86, 0.66)} L${p(0.85, 0.75)} L${p(0.63, 0.76)} Z`, fill: "#fff", stroke: "#8D4A4A", "stroke-width": 0.8 }, hg); }
+    else if (face === "tired") el("ellipse", { cx: 0.76 * r, cy: 0.72 * r, rx: 0.08 * r, ry: 0.11 * r, fill: "#6D2E2E" }, hg);
+    else if (face === "happy") el("path", { d: `M${p(0.6, 0.64)} Q${p(0.76, 0.82)} ${p(0.9, 0.62)} Z`, fill: "#8D3B3B" }, hg);
+    else el("path", { d: `M${p(0.64, 0.68)} Q${p(0.76, 0.75)} ${p(0.88, 0.66)}`, fill: "none", stroke: "#8D4A4A", "stroke-width": 1.1, "stroke-linecap": "round" }, hg);
+    if (face === "effort" || face === "tired") el("path", { d: `M${p(0.95, -0.3)} q${0.04 * r} ${0.12 * r} 0 ${0.18 * r} q${-0.05 * r} ${-0.06 * r} 0 ${-0.18 * r}`, fill: "#81D4FA" }, hg);   // sweat drop
+    // hair on top
+    if (lk.style === "bald") {
+      el("path", { d: `M${p(-0.95, 0.3)} Q${p(-1.02, -0.2)} ${p(-0.8, -0.5)} Q${p(-0.62, -0.25)} ${p(-0.5, -0.05)} Q${p(-0.6, 0.3)} ${p(-0.7, 0.6)} Z`, fill: H, stroke: shade(H, 0.8), "stroke-width": 0.7 }, hg);
+      el("path", { d: `M${p(0.7, 0.55)} Q${p(0.82, 0.48)} ${p(0.98, 0.56)} Q${p(0.86, 0.64)} ${p(0.7, 0.6)} Z`, fill: H, stroke: shade(H, 0.8), "stroke-width": 0.6 }, hg);   // moustache
+      for (const [y, k] of [[-0.52, 0.14], [-0.4, 0.12]]) el("path", { d: `M${p(0.25, y)} q${0.2 * r} ${-k * r * 0.4} ${0.4 * r} 0`, fill: "none", stroke: ol, "stroke-width": 0.6 }, hg);   // forehead lines
+      el("path", { d: `M${p(0.8, 0.12)} l${0.1 * r} ${0.06 * r} M${p(0.8, 0.18)} l${0.09 * r} ${0.1 * r}`, stroke: ol, "stroke-width": 0.5 }, hg);
+    } else if (lk.style === "curly") {
+      for (const [x, y, rr] of [[-0.75, -0.55, 0.38], [-0.4, -0.85, 0.38], [0.05, -0.95, 0.36], [0.45, -0.82, 0.32], [-0.9, -0.1, 0.33], [0.72, -0.55, 0.25]]) el("circle", { cx: x * r, cy: y * r, r: rr * r, fill: H, stroke: hairD, "stroke-width": 0.6 }, hg);
+    } else {
+      const short = lk.style === "short";
+      el("path", { d: `M${p(-0.98, 0.32)} Q${p(-1.12, -0.85)} ${p(0.05, -1.08)} Q${p(0.92, -1.05)} ${p(1.0, -0.22)} Q${p(0.72, -0.58)} ${p(0.25, -0.5)} Q${p(-0.1, -0.42)} ${p(-0.3, -0.12)} Q${p(-0.45, 0.1)} ${p(short ? -0.42 : -0.5, short ? 0.18 : 0.3)} Q${p(-0.7, 0.2)} ${p(-0.98, 0.32)} Z`, fill: H, stroke: hairD, "stroke-width": 0.8 }, hg);
+      for (const [a, b2, c2] of [[[-0.6, -0.6], [-0.1, -0.95], [0.5, -0.9]], [[-0.8, -0.2], [-0.5, -0.75], [0.1, -0.85]]]) el("path", { d: `M${p(...a)} Q${p(...b2)} ${p(...c2)}`, fill: "none", stroke: hairD, "stroke-width": 0.7 }, hg);
+      if (short) for (let i = 0; i < 6; i++) el("circle", { cx: (-0.85 + i * 0.3) * r, cy: (-0.78 - Math.sin(i * 0.9) * 0.2) * r, r: 0.16 * r, fill: H }, hg);
+    }
+    // ear
+    el("path", { d: `M${p(-0.1, 0.0)} Q${p(-0.36, -0.06)} ${p(-0.34, 0.25)} Q${p(-0.3, 0.5)} ${p(-0.08, 0.45)}`, fill: shade(sk, 0.95), stroke: ol, "stroke-width": 0.9 }, hg);
+    el("path", { d: `M${p(-0.17, 0.08)} Q${p(-0.26, 0.2)} ${p(-0.16, 0.34)}`, fill: "none", stroke: ol, "stroke-width": 0.7 }, hg);
+    if (lk.glasses) { el("path", { d: `M${p(0.42, -0.08)} h${0.42 * r} v${0.24 * r} h${-0.42 * r} Z M${p(0.42, 0.0)} L${p(-0.15, -0.02)}`, fill: "rgba(255,255,255,.15)", stroke: "#37474F", "stroke-width": 1 }, hg); }
+    return hg;
+  }
+  // a face for buttons and tables
+  function faceSVG(who, size = 34) {
+    const s = document.createElementNS(NS, "svg"); s.setAttribute("viewBox", "-24 -24 48 48"); s.setAttribute("width", size); s.setAttribute("height", size); s.setAttribute("aria-hidden", "true");
+    el("circle", { cx: 0, cy: 0, r: 23, fill: "#E3EAF0" }, s);
+    seg(s, [0, 30], [0, 12], 9, 6, who.look.skin);
+    el("path", { d: "M-20 30 Q-18 16 0 15 Q18 16 20 30 Z", fill: who.look.top }, s);
+    headAt(s, who, -2, -2, 0, 1.05, "calm");
+    return s.outerHTML;
+  }
+
+  // ---- poses. Each returns a pose for phase p (0…1); G = ground line, X = centre, w = the person ----
+  const wave = (p, k = 1, ph = 0) => Math.sin(2 * Math.PI * (p * k + ph));
+  // one leg in a walking/running cycle: the thigh swings ±A; the knee bends while the leg swings FORWARDS (the swing phase)
+  // and is (almost) straight while the foot is on the ground and pushes back (the stance phase).
+  const gaitLeg = (p, A, K, base = 0) => { const sn = Math.sin(2 * Math.PI * p), cs = Math.cos(2 * Math.PI * p); const l = base + A * sn; return [l, l - K * Math.max(0, cs) - 4]; };
+  const GAITS = { walk: { A: 22, K: 28, b: 3, arm: 22, elbow: 18, bounce: 2, f: 0.9 }, jog: { A: 28, K: 62, b: 8, arm: 30, elbow: 80, bounce: 5, f: 1.35 },
+    sprint: { A: 42, K: 100, b: 15, arm: 50, elbow: 85, bounce: 7, f: 2.0 }, shuffle: { A: 15, K: 34, b: 10, arm: 15, elbow: 65, bounce: 2, f: 1.6 } };
+  function gait(name, X, G, p, w, extra = {}) {
+    const g = GAITS[name], pr = profOf(w), A = g.A * (extra.stride ?? pr.stride), K = g.K * Math.min(1.1, 0.6 + 0.4 * pr.stride);
+    const [l1, k1] = gaitLeg(p, A, K), [l2, k2] = gaitLeg(p + 0.5, A, K);
+    // the hip sits on the leg that is on the ground
+    const st = Math.cos(2 * Math.PI * p) < 0 ? l1 : l2;
+    const y = G - L.foot * bodyOf(w).s - legLen(w) * Math.cos(rad(st)) - g.bounce * Math.abs(Math.cos(2 * Math.PI * p)) * (name === "walk" ? 0 : 1);
+    const sw = wave(p);
+    return { x: X, y, b: g.b + (extra.lean || 0), a1: -g.arm * sw, f1: -g.arm * sw + g.elbow, a2: g.arm * sw, f2: g.arm * sw + g.elbow, l1, k1, l2, k2,
+      hand1: name === "walk" ? "relaxed" : "fist", hand2: name === "walk" ? "relaxed" : "fist", face: extra.face, swing: Math.abs(sw) * 6 };
+  }
+  // how fast the ground moves under a gait (so the feet do not slide): 4 × leg length × sin(A) per cycle
+  const gaitSpeed = (name, w, f) => 4 * legLen(w) * Math.sin(rad(GAITS[name].A * profOf(w).stride)) * f;
+  // ---- a real running cycle (14 Nov 2026): contact → stance → push-off → flight with back-kick → knee drive → reach ----
+  // keyframes for one leg: [phase, thigh angle, knee bend]; the other leg is half a cycle later. Stance = phase 0…0.36.
+  const RUNK = [[0, 24, 12], [0.12, 6, 34], [0.26, -18, 22], [0.36, -30, 14], [0.52, -14, 105], [0.7, 42, 92], [0.86, 50, 40], [1, 24, 12]];
+  const STANCE = 0.36;
+  const runLeg = (p, amp) => {
+    p = ((p % 1) + 1) % 1;
+    let i = 1; while (RUNK[i][0] < p) i++;
+    const [p0, l0, b0] = RUNK[i - 1], [p1, l1, b1] = RUNK[i], t = (p - p0) / (p1 - p0), e = (1 - Math.cos(Math.PI * t)) / 2;
+    const l = (l0 + (l1 - l0) * e) * amp, bend = (b0 + (b1 - b0) * e) * (0.45 + 0.55 * amp);
+    return [l, l - bend];
+  };
+  const legExt = (w, l, k) => (L.thigh * Math.cos(rad(l)) + L.shin * Math.cos(rad(k))) * bodyOf(w).s;
+  const legFwd = (w, l, k) => (L.thigh * Math.sin(rad(l)) + L.shin * Math.sin(rad(k))) * bodyOf(w).s;
+  // distance the body moves in one full cycle (two steps), from how far the planted foot travels back (+ the flight)
+  function runDist(w, amp) {
+    const [la, ka] = runLeg(0, amp), [lb, kb] = runLeg(STANCE, amp);
+    return 2 * (legFwd(w, la, ka) - legFwd(w, lb, kb)) / STANCE * 0.5;
+  }
+  function runPose(X, G, p, w, { amp = 1, lean = 10, face, rise = 1 } = {}) {
+    const [l1, k1] = runLeg(p, amp), [l2, k2] = runLeg(p + 0.5, amp), s = bodyOf(w).s, foot = L.foot * s;
+    const q1 = ((p % 1) + 1) % 1, q2 = (q1 + 0.5) % 1;
+    let y;
+    if (q1 < STANCE) y = G - foot - legExt(w, l1, k1);
+    else if (q2 < STANCE) y = G - foot - legExt(w, l2, k2);
+    else {   // flight: both feet off the ground, the body rises a little
+      const qa = q1 < 0.5 ? q1 : q2, t = (qa - STANCE) / (0.5 - STANCE);
+      const [la, ka] = runLeg(STANCE, amp), [lb, kb] = runLeg(0, amp);
+      y = G - foot - (legExt(w, la, ka) * (1 - t) + legExt(w, lb, kb) * t) - Math.sin(Math.PI * t) * 4 * s * amp * rise;
+    }
+    // arms bent at about 90°, swinging opposite to the legs
+    const sw = Math.max(-1, Math.min(1, (l1 - 10 * amp) / (40 * amp)));
+    const A = 38 * amp + 6;
+    return { x: X, y, b: lean, l1, k1, l2, k2, a1: -A * sw, f1: -A * sw + 92, a2: A * sw, f2: A * sw + 92, hand1: "fist", hand2: "fist", face, swing: 2 + Math.abs(sw) * 2.5 };
+  }
+  const POSES = {
+    stand: (X, G, p, w) => ({ x: X, y: G - hipH(w), swing: 0 }),
+    sleep: (X, G, p, w) => ({ x: X - 30, y: G - 26, b: 92, a1: -88, f1: -88, a2: -86, f2: -86, l1: -88, k1: -88, l2: -90, k2: -90, eyes: "closed", face: "sleep", hd: -4 + wave(p) * 1.5 }),
+    sit: (X, G, p, w) => { const s = bodyOf(w).s; return { x: X - 14 * s, y: G - (L.shin + L.foot + 9) * s, b: -4 + wave(p) * 1.2, a1: 25, f1: 85, a2: 20, f2: 80, l1: 90, k1: 0, l2: 88, k2: -2 }; },
+    yoga: (X, G, p, w) => { const t = (1 - Math.cos(2 * Math.PI * p)) / 2; return { x: X, y: G - hipH(w), a1: 10 + 165 * t, f1: 12 + 165 * t, a2: 6 + 160 * t, f2: 8 + 160 * t, hd: -12 * t }; },
+    walk: (X, G, p, w) => gait("walk", X, G, p, w),
+    jog: (X, G, p, w) => runPose(X, G, p, w, { amp: 0.8 * profOf(w).stride, lean: 8 }),
+    sprint: (X, G, p, w) => runPose(X, G, p, w, { amp: 1.25 * profOf(w).stride, lean: 18, face: "effort", rise: 1.5 }),
+    // running on the spot with high knees (the HRR test); older or less fit people lift their knees less
+    spot: (X, G, p, w) => { const s = wave(p), pr = profOf(w), up1 = Math.max(0, s), up2 = Math.max(0, -s), kh = 85 * pr.knee;
+      return { x: X, y: G - hipH(w) - 4 * Math.abs(s) * pr.knee, b: 4, a1: -30 * s + 10, f1: -30 * s + 85, a2: 30 * s + 10, f2: 30 * s + 85, l1: kh * up1, k1: -8 * up1, l2: kh * up2, k2: -8 * up2, hand1: "fist", hand2: "fist", swing: s * 6 }; },
+    // front crawl, swimming to the right: each arm goes forwards → down under the water → back → up over the water
+    swim: (X, G, p, w) => { const a = 90 - 360 * p, br = Math.max(0, wave(p, 1, 0.15));
+      return { x: X - 40, y: G, b: 93, a1: a, f1: a + 12, a2: a + 180, f2: a + 192, l1: -88 + 10 * wave(p, 3), k1: -84 + 16 * wave(p, 3, 0.1), l2: -88 - 10 * wave(p, 3), k2: -84 - 16 * wave(p, 3, 0.1), hd: -8 + 40 * br, hand1: "relaxed", hand2: "relaxed" }; },
+  };
+  const pose = (name, X, G, p, w) => POSES[name](X, G, p, w);
+  // a chair that fits the person
+  function drawChair(g, X, G, w) {
+    const s = bodyOf(w).s, seatY = G - (L.shin + L.foot + 9) * s + 7 * s;
+    el("rect", { x: X - 36 * s, y: seatY, width: 48 * s, height: 7, rx: 3, fill: "#8D6E63", stroke: "#5D4037" }, g);
+    for (const x of [X - 32 * s, X + 8 * s]) el("line", { x1: x, y1: seatY + 6, x2: x, y2: G, stroke: "#6D4C41", "stroke-width": 4 }, g);
+    el("line", { x1: X - 34 * s, y1: seatY, x2: X - 40 * s, y2: seatY - 60 * s, stroke: "#6D4C41", "stroke-width": 4 }, g);
+  }
+  // cycling: the feet follow the pedals, the hands hold the handlebar
+  function cyclePose(X, G, p, w) {
+    const s = bodyOf(w).s, hip = [X - 18, G - 82], pc = [X - 6, G - 32], r = 14, th = 2 * Math.PI * p;
+    const f1 = [pc[0] + r * Math.cos(th), pc[1] + r * Math.sin(th)], f2 = [pc[0] - r * Math.cos(th), pc[1] - r * Math.sin(th)];
+    const [l1, k1] = ik(hip, f1, L.thigh * s, (L.shin + 4) * s, 1), [l2, k2] = ik(hip, f2, L.thigh * s, (L.shin + 4) * s, 1);
+    return { x: hip[0], y: hip[1], b: 28, h1: [X + 42, G - 108, -1], h2: [X + 40, G - 108, -1], hand1: "fist", hand2: "fist", l1, k1, l2, k2 };
+  }
+  function drawBike(g, X, G, p) {
+    const c = "#455A64", wh = (cx) => { el("circle", { cx, cy: G - 22, r: 22, fill: "none", stroke: "#263238", "stroke-width": 4 }, g); for (let i = 0; i < 6; i++) { const a = 2 * Math.PI * (i / 6 + p); el("line", { x1: cx, y1: G - 22, x2: cx + 20 * Math.cos(a), y2: G - 22 + 20 * Math.sin(a), stroke: "#90A4AE", "stroke-width": 1 }, g); } };
+    wh(X - 52); wh(X + 52);
+    el("path", { d: `M${X - 52} ${G - 22} L${X - 6} ${G - 32} L${X + 32} ${G - 78} L${X - 22} ${G - 78} Z M${X - 22} ${G - 78} L${X - 6} ${G - 32} M${X + 32} ${G - 78} L${X + 52} ${G - 22} M${X + 32} ${G - 78} L${X + 38} ${G - 104} L${X + 50} ${G - 106}`, fill: "none", stroke: c, "stroke-width": 4, "stroke-linejoin": "round" }, g);
+    el("rect", { x: X - 34, y: G - 86, width: 26, height: 7, rx: 3, fill: "#263238" }, g);
+  }
+  // push-ups: the body stays straight and pivots on the toes (full) or the knees (half)
+  function pushPose(X, G, t, kind, w) {
+    const s = bodyOf(w).s, half = kind === "half", Lb = (half ? L.thigh : L.thigh + L.shin + 3) * s;
+    const total = Lb + L.torso * s * 0.9, sUp = 58 * s, sDn = 24 * s;
+    const th = Math.asin((sDn + (sUp - sDn) * t) / total) * 180 / Math.PI, thUp = Math.asin(sUp / total);
+    const pv = [X - 90, G - (half ? 6 : 4) * s];
+    const hip = [pv[0] + Lb * Math.cos(rad(th)), pv[1] - Lb * Math.sin(rad(th))];
+    const handX = pv[0] + total * Math.cos(thUp) + 2;
+    const legA = th - 90;
+    return { x: hip[0], y: hip[1], b: 90 - th, l1: legA, k1: half ? -90 : legA, l2: legA - 1, k2: half ? -91 : legA - 1, hd: -8,
+      h1: [handX, G - 2, -1], h2: [handX - 6, G - 2, -1] };
+  }
+  function ground(g, x1, x2, G, col = "#B0BEC5") { el("line", { x1, y1: G + 1, x2, y2: G + 1, stroke: col, "stroke-width": 3 }, g); }
+
+  /* ============================ 6 GAME ENGINE (points, timer, streaks, reactions) ============================ */
+  SND.good = () => { beep(660, 0.1, "sine", 0.06); beep(880, 0.14, "sine", 0.06, 0.09); };
+  SND.bad = () => beep(200, 0.25, "sawtooth", 0.04);
+  SND.tick = () => beep(1000, 0.04, "square", 0.02);
+  SND.lub = () => { beep(70, 0.09, "sine", 0.22); beep(58, 0.08, "sine", 0.16, 0.16); };
+  const GOOD = ["🎉 Yes!", "⭐ Brilliant!", "🔥 Great!", "✅ Correct!", "👏 Well done!"], BAD = ["😬 Not quite", "🙈 Oops", "🤔 Not this one"];
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  let GS = null;        // the game being played
+  class Stop extends Error {}
+  const alive = (g) => { if (GS !== g || g.dead) throw new Stop(); };
+  const sleep = (g, ms) => new Promise((res, rej) => setTimeout(() => (GS !== g || g.dead ? rej(new Stop()) : res()), ms));
+  function hud() {
+    if (!GS) return;
+    $("gScore").textContent = GS.score; $("gRound").textContent = GS.label || "";
+    $("gStreak").textContent = GS.streak >= 3 ? `🔥 ×2 streak ${GS.streak}` : GS.streak ? `🔥 ${GS.streak}` : "";
+    $("gStreak").classList.toggle("hot", GS.streak >= 3);
+  }
+  // a countdown bar; resolves "time" when it runs out (unless stopped). add(sec) changes the time left.
+  function countdown(sec) {
+    const g = GS; stopClock();
+    let end = performance.now() + sec * 1000, raf = 0, done;
+    const p = new Promise((res) => (done = res));
+    const bar = $("gTime");
+    const step = (now) => {
+      if (GS !== g || g.dead) return;
+      const left = Math.max(0, end - now), f = left / (sec * 1000);
+      bar.style.width = (100 * f).toFixed(1) + "%"; bar.style.background = f > 0.5 ? "#43A047" : f > 0.25 ? "#FB8C00" : "#E53935";
+      if (left <= 0) { g.clock = null; return done("time"); }
+      raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    g.clock = { stop: () => { cancelAnimationFrame(raf); g.clock = null; }, left: () => Math.max(0, (end - performance.now()) / (sec * 1000)), add: (s) => { end += s * 1000; }, promise: p };
+    return g.clock;
+  }
+  function stopClock() { if (GS && GS.clock) GS.clock.stop(); }
+  // score one answer: right = 100 + up to 100 for speed, doubled on a streak of 3 or more
+  function score(ok, why, speed = 0.5) {
+    const g = GS; g.total++;
+    if (ok) { g.right++; g.streak++; let pts = 100 + Math.round(100 * speed); if (g.streak >= 3) pts *= 2; g.score += pts; react(true, why, pts); SND.good(); }
+    else { g.streak = 0; react(false, why); SND.bad(); }
+    hud();
+  }
+  function react(ok, why, pts) {
+    const r = $("react"); r.className = "react " + (ok ? "ok" : "no"); r.innerHTML = `<b>${ok ? pick(GOOD) : pick(BAD)}</b>${pts ? ` <span class="plus">+${pts}</span>` : ""}<br>${why || ""}`;
+    r.classList.remove("pop"); void r.offsetWidth; r.classList.add("pop");
+    say("game", ok ? pick(["Yes! Keep going!", "Great answer!", "You're on fire!", "Super!"]) : "Not quite – read why in the box below.", ok ? "happy" : "think", ok ? "good" : "ans");
+  }
+  const clearReact = () => { $("react").className = "react"; $("react").innerHTML = ""; };
+  const stage = () => $("stage");
+  // a multiple-choice round in Wayground colours
+  const TILE_COLS = ["#E53935", "#1E88E5", "#F9A825", "#43A047"];
+  async function mc(g, q, sec = 15) {
+    clearReact();
+    const opts = shuffle(q.opts);
+    stage().innerHTML = `<div class="qcard"><div class="qem">${q.em}</div><p class="qtext">${q.text}</p></div><div class="tiles">${opts.map(([v, t], i) => `<button class="tileq" data-v="${v}" style="--c:${TILE_COLS[i % 4]}">${t}</button>`).join("")}</div>`;
+    const clock = countdown(sec);
+    const choice = await Promise.race([clock.promise, new Promise((res) => stage().querySelectorAll(".tileq").forEach((b) => (b.onclick = () => res(b.dataset.v))))]);
+    alive(g);
+    const left = clock.left(); stopClock();
+    stage().querySelectorAll(".tileq").forEach((b) => { b.disabled = true; if (b.dataset.v === q.ans) b.classList.add("right"); else if (b.dataset.v === choice) b.classList.add("wrong"); else b.classList.add("dim"); });
+    score(choice === q.ans, choice === "time" ? "⏰ Time's up! " + q.why : q.why, left);
+    await sleep(g, choice === q.ans ? 1700 : 2600);
+  }
+  const MEDALS = [[0.9, "🥇", "Gold"], [0.7, "🥈", "Silver"], [0.5, "🥉", "Bronze"]];
+  const medalOf = (acc) => MEDALS.find(([m]) => acc >= m) || [0, "🎯", "Keep practising"];
+
+  function showScreen(id) { for (const s of ["menu", "game", "cert"]) $(s).hidden = s !== id; window.scrollTo(0, 0); }
+  async function startGame(id) {
+    if (GS) GS.dead = true;
+    const def = GAMES.find((x) => x.id === id) || { id: "final", em: "🏆", name: "Final challenge", col: "#1F3A5F", intro: "10 quick questions about everything. Keep your streak going!" };
+    GS = { id, def, score: 0, streak: 0, right: 0, total: 0, label: "" };
+    const g = GS;
+    showScreen("game"); $("game").style.setProperty("--gc", def.col);
+    $("gTitle").innerHTML = `${def.em} ${def.name}`; clearReact(); hud(); $("gTime").style.width = "100%";
+    say("game", def.intro, "happy");
+    stage().innerHTML = `<div class="ready"><div class="bigem">${def.em}</div><h2>${def.name}</h2><p>${def.intro}</p><button class="btn primary big" id="goBtn">▶ Start</button></div>`;
+    await new Promise((res) => ($("goBtn").onclick = res));
+    try { await RUN[id](g); alive(g); endGame(g); } catch (e) { if (!(e instanceof Stop)) throw e; }
+  }
+  function endGame(g) {
+    stopClock();
+    const acc = g.total ? g.right / g.total : 0, [, md, mname] = medalOf(acc), best = P.best[g.id] || { score: 0 };
+    const isBest = g.score > best.score;
+    if (isBest) P.best[g.id] = { score: g.score, acc: Math.round(acc * 100), medal: md };
+    P.played[g.id] = 1; save();
+    const def = g.def, rem = def.remember || ["Stamina, endurance, strength and flexibility are the four parts of fitness.", "Pulse = heart rate: count 15 s × 4.", "Exercise, healthy food, sleep and no smoking make you fit."];
+    stage().innerHTML = `<div class="endcard">
+      <div class="medal">${md}</div><h2>${mname}!</h2>
+      <div class="endstats"><div><b>${g.score}</b><span>points${isBest ? " · new best!" : ""}</span></div><div><b>${g.right}/${g.total}</b><span>right</span></div></div>
+      <div class="remember"><h3>🧠 Remember</h3><ul>${rem.map((r) => `<li>${r}</li>`).join("")}</ul></div>
+      <div class="controls"><button class="btn primary" id="againBtn">↺ Play again</button><button class="btn navy" id="homeBtn">🏠 Back to the arcade</button></div></div>`;
+    clearReact(); $("gTime").style.width = "0";
+    $("againBtn").onclick = () => startGame(g.id); $("homeBtn").onclick = showMenu;
+    say("game", isBest ? `New best score: <b>${g.score}</b>! Read the <b>Remember</b> box.` : "Read the <b>Remember</b> box, then try another game!", "happy", "good");
+    if (isBest && md !== "🎯") toast(`${md} ${mname} medal in <b>${def.name}</b>!`);
+  }
+
+  /* ============================ 7 THE FIVE GAMES ============================ */
+  const RUN = {};
+  // 1 · Word match: 3 rounds of 4 pairs
+  RUN.match = async (g) => {
+    for (let r = 0; r < MATCH_ROUNDS.length; r++) {
+      g.label = `Round ${r + 1} of 3`; hud(); clearReact();
+      const keys = MATCH_ROUNDS[r], cards = shuffle(keys);
+      stage().innerHTML = `<p class="hint center">Tap a word, then its meaning.</p><div class="match"><div class="mcol">${shuffle(keys).map((k) => `<button class="mword" data-k="${k}">${DEFS[k].w}</button>`).join("")}</div>
+        <div class="mcol">${cards.map((k) => `<button class="mdef" data-k="${k}"><span class="em">${DEFS[k].em}</span>${DEFS[k].d}</button>`).join("")}</div></div>`;
+      const clock = countdown(45);
+      let sel = null, left = 4;
+      await new Promise((res) => {
+        clock.promise.then(res);
+        stage().querySelectorAll(".mword").forEach((b) => (b.onclick = () => { if (b.disabled) return; stage().querySelectorAll(".mword").forEach((x) => x.classList.remove("sel")); sel = b; b.classList.add("sel"); }));
+        stage().querySelectorAll(".mdef").forEach((c) => (c.onclick = () => {
+          if (!sel || c.disabled) { if (!sel) { c.classList.add("shake"); setTimeout(() => c.classList.remove("shake"), 400); } return; }
+          if (sel.dataset.k === c.dataset.k) {
+            sel.disabled = c.disabled = true; sel.classList.remove("sel"); sel.classList.add("done"); c.classList.add("done");
+            score(true, `<b>${DEFS[c.dataset.k].w}</b>: ${DEFS[c.dataset.k].d}`, clock.left()); sel = null;
+            if (--left === 0) res("all");
+          } else {
+            g.streak = 0; hud(); SND.bad(); clock.add(-3);
+            for (const x of [sel, c]) { x.classList.add("shake"); setTimeout(() => x.classList.remove("shake"), 400); }
+            react(false, "That is not its meaning. −3 seconds!");
+          }
+        }));
+      });
+      alive(g); stopClock();
+      if (left > 0) {   // time's up: show the rest
+        stage().querySelectorAll(".mword:not(:disabled)").forEach((b) => { g.total++; const c = stage().querySelector(`.mdef[data-k="${b.dataset.k}"]`); b.classList.add("shown"); c.classList.add("shown"); });
+        react(false, "⏰ Time's up! The blue pairs belong together."); hud();
+        stage().querySelectorAll(".mword:not(:disabled)").forEach((b) => (b.textContent = b.textContent + " ↔"));
+      }
+      await sleep(g, left > 0 ? 3200 : 1500);
+    }
+  };
+
+  // 2 · Pulse finder
+  function bodyFront(svg, who, spots, found) {
+    const lk = who.look, sk = lk.skin;
+    svg.innerHTML = "";
+    const cx = 200;
+    // legs, arms, body, head (front view)
+    for (const [hx, kx, ax] of [[180, 176, 172], [220, 226, 230]]) { limb(svg, [hx, 236], [kx, 318], SHAPE.thigh, 1.25, sk); limb(svg, [kx, 318], [ax, 368], SHAPE.shin, 1.25, sk); el("ellipse", { cx: ax + (hx < 200 ? -6 : 6), cy: 374, rx: 14, ry: 6, fill: lk.shoe, stroke: "#90A4AE" }, svg); }
+    el("path", { d: "M164 232 L236 232 L242 282 L206 282 L200 262 L194 282 L158 282 Z", fill: lk.bottom, stroke: shade(lk.bottom, 0.7) }, svg);
+    for (const [s, e, wr] of [[[152, 112], [124, 176], [106, 238]], [[248, 112], [278, 176], [296, 238]]]) { limb(svg, s, e, SHAPE.up, 1.3, sk); limb(svg, e, wr, SHAPE.fore, 1.3, sk); el("ellipse", { cx: wr[0] + (wr[0] < 200 ? -3 : 3), cy: wr[1] + 12, rx: 7, ry: 11, fill: sk, stroke: shade(sk, 0.7) }, svg); }
+    el("path", { d: "M152 108 Q200 94 248 108 L242 236 L158 236 Z", fill: lk.top, stroke: shade(lk.top, 0.7), "stroke-width": 1.5 }, svg);
+    for (const [s, e] of [[[152, 112], [138, 140]], [[248, 112], [262, 140]]]) limb(svg, s, e, SHAPE.up, 1.45, lk.top, { hem: true });
+    el("path", { d: "M188 100 Q200 112 212 100", fill: sk }, svg);
+    seg(svg, [cx, 108], [cx, 78], 11, 10, sk);
+    el("ellipse", { cx, cy: 52, rx: 27, ry: 31, fill: sk, stroke: shade(sk, 0.7) }, svg);
+    for (const s of [-1, 1]) el("ellipse", { cx: cx + s * 27, cy: 56, rx: 5, ry: 8, fill: sk, stroke: shade(sk, 0.7) }, svg);
+    el("path", { d: "M173 52 Q170 18 200 18 Q232 18 228 52 Q222 32 200 30 Q180 32 173 52 Z", fill: lk.hair, stroke: shade(lk.hair, 0.7) }, svg);
+    if (lk.style === "pony") el("path", { d: "M222 30 Q246 36 240 66 Q232 50 224 44 Z", fill: lk.hair }, svg);
+    for (const s of [-1, 1]) { el("ellipse", { cx: cx + s * 10, cy: 52, rx: 4, ry: 2.6, fill: "#fff", stroke: "#5D4037", "stroke-width": 0.6 }, svg); el("circle", { cx: cx + s * 10, cy: 52, r: 1.8, fill: "#4E342E" }, svg); el("path", { d: `M${cx + s * 14} 45 q${-s * 4} -3 ${-s * 8} 0`, stroke: shade(lk.hair, 0.8), "stroke-width": 1.4, fill: "none" }, svg); }
+    el("path", { d: "M200 54 q-3 8 0 10", stroke: shade(sk, 0.7), fill: "none" }, svg); el("path", { d: "M193 70 Q200 75 207 70", stroke: "#8D4A4A", "stroke-width": 1.6, fill: "none" }, svg);
+    for (const s of spots) {
+      const f = found.has(s.id);
+      const gg = el("g", { class: "spot" + (f ? " found" : ""), "data-id": s.id, tabindex: 0, role: "button", "aria-label": s.id }, svg);
+      el("circle", { cx: s.x, cy: s.y, r: 15, fill: f ? (s.ok ? "#43A047" : "#E53935") : "rgba(255,255,255,.35)", stroke: f ? "#fff" : "#1F3A5F", "stroke-width": 2.5, "stroke-dasharray": f ? "none" : "4 3" }, gg);
+      txt(gg, s.x, s.y + 6, f ? (s.ok ? "✓" : "✗") : "?", { "text-anchor": "middle", "font-size": 16, "font-weight": 800, fill: f ? "#fff" : "#1F3A5F" });
+    }
+  }
+  function wristScene(svg, pulse) {
+    const sk = LENA.look.skin, ol = shade(sk, 0.7);
+    svg.innerHTML = "";
+    el("rect", { x: 0, y: 0, width: 520, height: 260, rx: 14, fill: "#FFF8F6" }, svg);
+    el("path", { d: "M-10 100 C120 92 250 104 340 118 L344 186 C250 198 120 208 -10 212 Z", fill: sk, stroke: ol, "stroke-width": 1.5 }, svg);
+    el("path", { d: "M338 118 C380 104 430 104 452 110 L458 186 C430 198 392 202 344 186 Z", fill: sk, stroke: ol, "stroke-width": 1.5 }, svg);
+    [[112, 490, 104], [132, 506, 128], [154, 508, 156], [174, 494, 180]].forEach(([y0, x1, y1]) => seg(svg, [450, y0], [x1, y1], 9, 7.5, sk, { lw: 1.3 }));
+    seg(svg, [392, 186], [446, 222], 10, 8.5, sk, { lw: 1.3 });
+    el("path", { d: "M150 196 C230 192 300 186 344 176", stroke: "#C62828", "stroke-width": 3 + 4 * pulse, fill: "none", opacity: 0.3 + 0.5 * pulse, "stroke-linecap": "round" }, svg);
+    const s2 = shade(sk, 0.96);
+    el("path", { d: "M300 40 C296 18 330 8 370 20 C388 28 390 58 380 80 L292 84 Z", fill: s2, stroke: ol, "stroke-width": 1.5 }, svg);
+    seg(svg, [304, 80], [282, 176], 10.5, 9.5, s2, { lw: 1.3 }); seg(svg, [328, 84], [308, 172], 11, 9.5, s2, { lw: 1.3 });
+    seg(svg, [352, 80], [358, 106], 10, 9, s2, { lw: 1.2 }); seg(svg, [372, 72], [378, 96], 9, 8, s2, { lw: 1.2 });
+    if (pulse > 0) el("circle", { cx: 296, cy: 180, r: 12 + 28 * (1 - pulse), fill: "none", stroke: "#E53935", "stroke-width": 3, opacity: pulse }, svg);
+    txt(svg, 130, 236, "two fingers on the wrist, thumb side", { "font-size": 16, "font-weight": 700, fill: "#C62828" });
+  }
+  RUN.pulse = async (g) => {
+    // round 1: where can you feel a pulse?
+    g.label = "Find the pulse"; hud(); clearReact();
+    stage().innerHTML = `<div class="two"><svg id="bodySvg" viewBox="0 0 400 390" class="pic" aria-label="A body"></svg><div class="side"><div class="qcard"><div class="qem">✋</div><p class="qtext">Tap the <b>two</b> places where you can easily feel a pulse.</p></div><p class="hint">Careful: wrong places cost points!</p></div></div>`;
+    const found = new Set(); let okFound = 0;
+    const clock = countdown(25);
+    bodyFront($("bodySvg"), LENA, SPOTS, found);
+    await new Promise((res) => {
+      clock.promise.then(res);
+      $("bodySvg").addEventListener("click", (e) => {
+        const sp = e.target.closest(".spot"); if (!sp) return; const s = SPOTS.find((x) => x.id === sp.dataset.id); if (found.has(s.id)) return;
+        found.add(s.id); bodyFront($("bodySvg"), LENA, SPOTS, found); score(s.ok, s.why, clock.left());
+        if (s.ok && ++okFound === 2) res("all");
+      });
+    });
+    alive(g); stopClock();
+    if (okFound < 2) { for (const s of SPOTS) if (s.ok && !found.has(s.id)) { found.add(s.id); g.total++; } bodyFront($("bodySvg"), LENA, SPOTS, found); react(false, "⏰ The pulse is at the <b>wrist</b> and the <b>neck</b>."); hud(); }
+    await sleep(g, 2200);
+    // round 2: which fingers?
+    g.label = "Question 2"; hud(); await mc(g, PULSE_Q[0]);
+    // round 3: count a pulse for 15 s
+    g.label = "Count the pulse"; hud(); clearReact();
+    stage().innerHTML = `<div class="two"><svg id="wristSvg" viewBox="0 0 520 260" class="pic" aria-label="Fingers on a wrist"></svg><div class="side"><div class="qcard"><div class="qem">⏱</div><p class="qtext">Tap ❤ every time you see a beat. You have <b>15 seconds</b>.</p></div>
+      <button class="tapbtn" id="tapBtn">❤ Tap <span id="tapN">0</span></button></div></div>`;
+    let taps = 0, last = -9; const T0 = performance.now(), per = 60 / 72;
+    $("tapBtn").onpointerdown = (e) => { e.preventDefault(); taps++; $("tapN").textContent = taps; const b = $("tapBtn"); b.classList.remove("hit"); void b.offsetWidth; b.classList.add("hit"); };
+    const c3 = countdown(15);
+    let beats = 0;
+    await new Promise((res) => {
+      const step = (now) => {
+        if (GS !== g || g.dead) return res();
+        const t = (now - T0) / 1000, k = Math.floor(t / per);
+        if (k !== last) { last = k; beats++; if (P.sound) SND.lub(); }
+        wristScene($("wristSvg"), Math.max(0, 1 - (t % per) / 0.3));
+        if (t >= 15) return res(); requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+    alive(g); stopClock();
+    const n = taps || 18, right = n * 4;
+    const opts = [...new Set([right, n * 2, n, n + 15, n * 3])].slice(0, 4).map((v) => [String(v), v + " bpm"]);
+    await mc(g, { em: "🧮", text: `${taps ? "You counted" : "Let's say you counted"} <b>${n} beats</b> in 15 seconds. What is the heart rate?`, ans: String(right), opts,
+      why: `${n} × 4 = ${right} bpm (15 s × 4 = 1 minute). The real heart rate was 72 bpm.` }, 20);
+    // rounds 4–8
+    for (let i = 1; i < PULSE_Q.length; i++) { g.label = `Question ${i + 3}`; hud(); await mc(g, PULSE_Q[i]); }
+  };
+
+  // 3 · Heart-rate race
+  RUN.race = async (g) => {
+    g.label = "Order the activities"; hud(); clearReact();
+    const sorted = ACTS.slice().sort((a, b) => a.hr - b.hr);
+    stage().innerHTML = `<p class="hint center">Drag each activity to its place on the meter (or tap a card, then a place). Slowest heart rate at the bottom!</p>
+      <div class="race"><div class="bank" id="raceBank"></div><div class="meter" id="meter">${sorted.slice().reverse().map((a, i) => `<div class="slot mslot" id="ms-${a.id}" data-id="${a.id}"><span class="sname">${i === 0 ? "⬆ fastest" : i === 5 ? "⬇ slowest" : ""}</span></div>`).join("")}</div>
+      <div class="bigheart" id="bigHeart">❤<span id="bigBpm"></span></div></div>`;
+    const slots = sorted.map((a) => $("ms-" + a.id));
+    const clock = countdown(50);
+    let left = 6;
+    await new Promise((res) => {
+      clock.promise.then(res);
+      for (const a of shuffle(ACTS)) {
+        const t = h(`<button class="tile" data-id="${a.id}"><span class="em">${a.em}</span>${a.name}</button>`); $("raceBank").appendChild(t); t._slots = slots;
+        pickable(t, slots.map((s) => "#" + s.id).join(","), (tile, s) => {
+          if (s.dataset.id === tile.dataset.id) {
+            s.appendChild(tile); s.classList.add("full"); tile.dataset.locked = 1; tile.classList.add("locked"); tile.insertAdjacentHTML("beforeend", ` <b class="bpm">${a.hr} bpm</b>`);
+            $("bigHeart").style.animationDuration = (60 / a.hr).toFixed(2) + "s"; $("bigBpm").textContent = a.hr;
+            score(true, `${a.em} ${a.name}: about <b>${a.hr} bpm</b>.`, clock.left());
+            if (--left === 0) res("all");
+          } else { tile.classList.add("bounce"); s.classList.add("shake"); setTimeout(() => { tile.classList.remove("bounce"); s.classList.remove("shake"); }, 450); score(false, "Not there. Harder work = higher heart rate."); }
+        });
+      }
+    });
+    alive(g); stopClock();
+    if (left > 0) { g.total += left; react(false, "⏰ Time's up! The order: sleeping, sitting, walking, cycling, jogging, sprinting."); hud(); await sleep(g, 2600); } else await sleep(g, 1600);
+    for (let i = 0; i < RACE_Q.length; i++) { g.label = `Question ${i + 2}`; hud(); await mc(g, RACE_Q[i]); }
+  };
+
+  // 4 · Fitness sorter: one card at a time, 9 s each
+  RUN.sort = async (g) => {
+    const cards = shuffle(SORT);
+    for (let i = 0; i < cards.length; i++) {
+      const c = cards[i]; g.label = `Card ${i + 1} of ${cards.length}`; hud(); clearReact();
+      stage().innerHTML = `<div class="fall"><div class="scard" id="scard"><span class="em">${c.em}</span>${c.t}</div></div>
+        <div class="bins">${Object.entries(PARTS).map(([k, p]) => `<button class="binb" data-k="${k}" style="--c:${p.col}"><span class="em">${p.em}</span>${p.name}</button>`).join("")}</div>`;
+      const clock = countdown(9);
+      const ch = await Promise.race([clock.promise, new Promise((res) => stage().querySelectorAll(".binb").forEach((b) => (b.onclick = () => res(b.dataset.k))))]);
+      alive(g); const leftT = clock.left(); stopClock();
+      stage().querySelectorAll(".binb").forEach((b) => { b.disabled = true; if (b.dataset.k === c.k) b.classList.add("right"); else if (b.dataset.k === ch) b.classList.add("wrong"); else b.classList.add("dim"); });
+      $("scard").classList.add(ch === c.k ? "flyok" : "flyno");
+      score(ch === c.k, (ch === "time" ? "⏰ Time's up! " : "") + `<b>${PARTS[c.k].name}</b>. ${SORT_WHY[c.k]}`, leftT);
+      await sleep(g, ch === c.k ? 1400 : 2300);
+    }
+  };
+
+  // 5 · Fit life choices: Omar's day
+  function drawOmar(svg, fit, item) {
+    svg.innerHTML = "";
+    const hr = parseInt(item ? item.time : "7", 10), night = hr >= 20 || hr < 7;
+    el("rect", { x: 0, y: 0, width: 300, height: 320, rx: 14, fill: night ? "#283593" : hr >= 17 ? "#FFE0B2" : "#E3F2FD" }, svg);
+    el("circle", { cx: 250, cy: 50, r: 22, fill: night ? "#FFF9C4" : "#FFD54F" }, svg);
+    el("rect", { x: 0, y: 270, width: 300, height: 50, fill: "#A5D6A7" }, svg);
+    const p = POSES.stand(150, 272, 0, OMAR);
+    // the fitter he is, the straighter he stands and the happier he looks
+    p.b = 10 * (1 - fit); p.hd = 14 * (1 - fit); p.face = fit > 0.65 ? "happy" : fit > 0.35 ? "calm" : "tired";
+    p.a1 = 4 + 8 * (1 - fit); p.a2 = -6 + 6 * (1 - fit);
+    drawFig(el("g", {}, svg), OMAR, p);
+    if (item) txt(svg, 40, 60, item.em, { "font-size": 40 });
+    txt(svg, 150, 306, "Omar", { "text-anchor": "middle", "font-size": 18, "font-weight": 700, fill: "#1B5E20" });
+  }
+  RUN.day = async (g) => {
+    let fit = 0.4;
+    stage().innerHTML = `<div class="two"><div class="omarbox"><svg id="omarSvg" viewBox="0 0 300 320" class="pic" aria-label="Omar"></svg>
+      <div class="fitmeter"><span class="label">Fitness meter</span><div class="fm"><i id="fmBar"></i></div></div></div><div class="side" id="daySide"></div></div>`;
+    const meter = () => { $("fmBar").style.width = Math.round(fit * 100) + "%"; $("fmBar").style.background = fit > 0.65 ? "#43A047" : fit > 0.35 ? "#F9A825" : "#E53935"; };
+    meter(); drawOmar($("omarSvg"), fit, null);
+    for (let i = 0; i < DAY.length; i++) {
+      const it = DAY[i]; g.label = `${it.time} · choice ${i + 1} of ${DAY.length}`; hud(); clearReact();
+      drawOmar($("omarSvg"), fit, it);
+      const opts = shuffle([["good", it.good], ["bad", it.bad]]);
+      $("daySide").innerHTML = `<div class="qcard"><div class="qem">${it.em}</div><p class="qtext"><b>${it.time}</b> · ${it.q}</p></div>
+        <div class="tiles two">${opts.map(([v, t], k) => `<button class="tileq" data-v="${v}" style="--c:${TILE_COLS[k + 1]}">${t}</button>`).join("")}</div>`;
+      const clock = countdown(12);
+      const ch = await Promise.race([clock.promise, new Promise((res) => $("daySide").querySelectorAll(".tileq").forEach((b) => (b.onclick = () => res(b.dataset.v))))]);
+      alive(g); const leftT = clock.left(); stopClock();
+      $("daySide").querySelectorAll(".tileq").forEach((b) => { b.disabled = true; b.classList.add(b.dataset.v === "good" ? "right" : ch === b.dataset.v ? "wrong" : "dim"); });
+      fit = Math.max(0, Math.min(1, fit + (ch === "good" ? 0.09 : -0.08))); meter(); drawOmar($("omarSvg"), fit, it);
+      score(ch === "good", (ch === "time" ? "⏰ Too slow! " : "") + it.why, leftT);
+      await sleep(g, ch === "good" ? 1500 : 2300);
+    }
+  };
+
+  // 🏆 Final challenge
+  RUN.final = async (g) => {
+    const list = shuffle(FINAL);
+    for (let i = 0; i < list.length; i++) { g.label = `Question ${i + 1} of ${list.length}`; hud(); await mc(g, list[i], 15); }
+  };
+
+  /* ============================ 8 MENU, CERTIFICATE, START ============================ */
+  const allPlayed = () => GAMES.every((x) => P.played[x.id]);
+  function showMenu() {
+    if (GS) { GS.dead = true; stopClock(); GS = null; }
+    showScreen("menu");
+    const card = (x, locked) => { const b = P.best[x.id]; return `<button class="gcard${locked ? " locked" : ""}" data-g="${x.id}" style="--c:${x.col}" ${locked ? "disabled" : ""}>
+      <span class="gem">${locked ? "🔒" : x.em}</span><b>${x.name}</b><span class="goal">${locked ? "Play all 5 games to unlock" : x.goal}</span>
+      <span class="best">${b ? `${b.medal} best ${b.score}` : "not played yet"}</span></button>`; };
+    const fin = { id: "final", em: "🏆", name: "Final challenge", goal: "10 quick questions about everything.", col: "#1F3A5F" };
+    $("cards").innerHTML = GAMES.map((x, i) => card(Object.assign({}, x, { name: `${i + 1} · ${x.name}` }), false)).join("") + card(fin, !allPlayed() && !TEACHER) +
+      `<button class="gcard" data-g="cert" style="--c:#8D6E63"><span class="gem">🏅</span><b>Certificate</b><span class="goal">Print your scores and medals.</span><span class="best">${Object.keys(P.best).length} of 6 played</span></button>`;
+    $("cards").querySelectorAll("[data-g]").forEach((b) => (b.onclick = () => (b.dataset.g === "cert" ? showCert() : startGame(b.dataset.g))));
+    const n = GAMES.filter((x) => P.played[x.id]).length;
+    say("menu", n === 0 ? "Hi, I'm <b>Marie</b>! Five quick games about <b>health and fitness</b>. Start with <b>1 · Word match</b>!" : n < 5 ? `You have played <b>${n} of 5</b> games. Play them all to unlock the 🏆 Final challenge!` : "All five played! Now try the 🏆 <b>Final challenge</b>, then print your certificate.", "happy");
+  }
+  function certHTML() {
+    const rows = [...GAMES, { id: "final", em: "🏆", name: "Final challenge" }].map((x) => { const b = P.best[x.id]; return `<div class="badge${b ? " on" : ""}"><span class="em">${b ? b.medal : x.em}</span><b>${x.name}</b><span class="how">${b ? b.score + " points" : "not played"}</span></div>`; }).join("");
+    const total = Object.values(P.best).reduce((s, b) => s + b.score, 0);
+    return `<div class="seal">${total}</div>
+      <div class="marie">${SPEX.replace('data-mood="talk"', 'data-mood="happy"').replace('class="spex"', 'class="spex" style="width:100%;height:auto"')}</div>
+      <div class="t1">Certificate · Health and fitness</div><div class="t2">Fitness Arcade Champion</div>
+      <div><div class="for">This certificate is awarded to</div><div class="who">${esc(P.name) || "&nbsp;"}</div>
+        <div class="for" style="margin-top:.6%">for playing the health and fitness games with Marie · ${total} points in total</div></div>
+      <div class="badges">${rows}</div>
+      <div class="foot"><span>Grade 7 · Biology · ${new Date().toLocaleDateString()}</span><span class="sig">Biljana Taneska · Science teacher</span></div>`;
+  }
+  function showCert() {
+    if (GS) { GS.dead = true; stopClock(); GS = null; }
+    showScreen("cert"); $("certName").value = P.name || ""; $("certSheet").innerHTML = certHTML();
+    say("cert", P.name ? "Print your certificate, or play again to beat your best scores!" : "Type your <b>name</b>, then print your certificate!", "happy");
+  }
+  $("certName").addEventListener("input", (e) => { P.name = e.target.value.slice(0, 40); save(); $("certSheet").innerHTML = certHTML(); });
+  $("certPrint").addEventListener("click", () => { $("printArea").innerHTML = `<div class="sheet">${certHTML()}</div>`; window.print(); });
+  $("certBack").addEventListener("click", showMenu);
+  $("resetAll").addEventListener("click", () => { if (!confirm("Delete all your scores in this browser?")) return; try { localStorage.removeItem(STORE); } catch (e) {} location.reload(); });
+  $("gBack").addEventListener("click", showMenu);
+  // header buttons, overlays, words on tap
+  function closeOv(id) { $(id).classList.remove("on"); }
+  document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => closeOv(b.dataset.close)));
+  document.querySelectorAll(".overlay").forEach((o) => o.addEventListener("click", (e) => { if (e.target === o) closeOv(o.id); }));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { document.querySelectorAll(".overlay.on").forEach((o) => closeOv(o.id)); $("wpop").hidden = true; } });
+  $("helpBtn").addEventListener("click", () => $("help").classList.add("on"));
+  $("wordsBtn").addEventListener("click", () => { $("wordList").innerHTML = Object.values(DEFS).map((d) => `<div><b>${d.em} ${d.w}</b>${d.d}</div>`).join(""); $("words").classList.add("on"); });
+  const markSound = () => { $("soundBtn").setAttribute("aria-pressed", P.sound); $("soundBtn").textContent = P.sound ? "🔊 Sound" : "🔇 Sound"; };
+  $("soundBtn").addEventListener("click", () => { P.sound = !P.sound; save(); markSound(); if (P.sound) SND.good(); });
+  document.addEventListener("click", (e) => {
+    const t = e.target.closest(".wd");
+    if (t && t.dataset.w) { e.stopPropagation(); const D = DEFS[t.dataset.w]; $("wpHead").innerHTML = `<i>${D.em}</i>${D.w}`; $("wpTxt").innerHTML = D.d; const pop = $("wpop"); pop.hidden = false; const r = t.getBoundingClientRect(); pop.style.left = Math.max(12, Math.min(innerWidth - pop.offsetWidth - 12, r.left)) + "px"; pop.style.top = r.bottom + 8 + "px"; return; }
+    if (!e.target.closest("#wpop")) $("wpop").hidden = true;
+  }, true);
+  $("wpOk").onclick = () => ($("wpop").hidden = true);
+
+  load(); markSound(); ["menu", "game", "cert"].forEach((n) => spexBar(n));
+  if (TEACHER) document.querySelector("main").insertAdjacentHTML("beforebegin", `<div class="tbanner">👩‍🏫 Teacher preview: the Final challenge is open. Students don't see this.</div>`);
+  showMenu();
+  // for the automatic tests only
+  window.__HF = { P, GAMES, DEFS, PULSE_Q, RACE_Q, SORT, DAY, FINAL, ACTS, startGame, showMenu, showCert, get GS() { return GS; } };
+})();
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>

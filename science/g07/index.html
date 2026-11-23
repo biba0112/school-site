@@ -183,6 +183,15 @@ a.kb:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
       <a class="thumb" href="01-salt-naming/" title="Open the simulation"><img src="01-salt-naming/thumb.webp" width="120" height="75" loading="lazy" alt="Salt naming simulation"></a>
     </div>
   </div>
+  <div class="card" style="--sc:#2E7D32">
+    <span class="tag">Simulation · Unit 2</span>
+    <h2><svg class="ic" aria-hidden="true"><use href="#ic-heart"/></svg>Health and fitness arcade</h2>
+    <p>Five quick games with Marie: fitness words, find your pulse, race activities on a heart-rate meter, sort the four parts of fitness and choose a fit day. Then the final challenge and a certificate.</p>
+    <div class="row">
+      <a class="btn primary" href="09-health-fitness/">▶ Open the simulation</a>
+      <a class="thumb" href="09-health-fitness/" title="Open the simulation"><img src="09-health-fitness/thumb.webp" width="120" height="75" loading="lazy" alt="Health and fitness simulation"></a>
+    </div>
+  </div>
   <div class="card" style="--sc:#6A1B9A">
     <span class="tag">Test yourself · Unit 1</span>
     <h2><svg class="ic" aria-hidden="true"><use href="#ic-quiz"/></svg>Revision quiz: Chemistry</h2>
@@ -228,7 +237,7 @@ a.kb:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
 (function(){
   // [key, name, colour, icon, [[unit, title], …]] in teaching order; CURRENT = the subject open on arrival
   const SUBJECTS = [["chemistry", "Chemistry", "#6A1B9A", "ic-chemistry", [["1", "Chemistry's Secrets Unlocked"]]], ["biology", "Biology", "#2E7D32", "ic-biology", [["2", "The Secrets of a Long Life"]]], ["physics", "Physics", "#2055A3", "ic-physics", [["3", "The Secret Forces"]]], ["skills", "Science skills", "#1F3A5F", "ic-skills", [["S", "Graphs, data, variables and lab reports"]]]];
-  const CURRENT = "chemistry";
+  const CURRENT = "biology";
   // kind, label, label for 1, short label (phones), sign, hash suffix, summary words (1, more)
   // order and names (teacher, 26 Oct 2026): Simulations · Study guides · Test yourself (was "Quizzes"; Worksheets removed)
   const KINDS = [["sim", "Simulations", "Simulation", "Sims", "▶", "-sims", "simulation", "simulations"],
