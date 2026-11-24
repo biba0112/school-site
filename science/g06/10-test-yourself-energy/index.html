@@ -1,0 +1,1339 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Test Yourself Energy</title>
+<!--
+  IB MYP 1 Sciences · Grade 6 · Physics · Unit 1 Thinking about Energy (folder "Unit 2 Thinking about Energy")
+  Test yourself · energy: 20 practice questions on the whole unit before the Criterion A test. Made 24 Nov 2026 for
+  the teacher (grill-me) – PRIVATE, not published.
+  Teacher's choices: only drag and drop, true/false and multiple choice (no typing); questions SIMILAR to the
+  Criterion A test (Groups A/B in Unit 2 Thinking about Energy/Assessments/), never the same situations or numbers;
+  topics as in the Revision energy study guide (no Sankey diagrams, no circuits); about 20 questions.
+  Same shell, look and quiz engine as the Grade 6 simulations (copied from 04 Energy resources): Marie, stars 3/2/0
+  (right first ★★★ · after a tip ★★ · answer shown 0), tip → answer + why, sticky ✔ Check, "Next question →" at the
+  top and bottom, question dots, best score kept, certificate (A4 landscape). No read aloud (Grades 6–8 rule);
+  Sound (effects) and words explained on tap. Tabs: 1 · 🧠 Test yourself · 2 · 🏅 Certificate.
+  Question types: 4 true/false · 8 multiple choice · 4 sort (drag into 2–3 boxes) · 2 match (drag into gaps) ·
+  1 energy chain · 1 put in order. ★ 60. The result screen lists the topics to revise (questions without ★★★).
+  Progress in localStorage "g6-testyourself-energy-v1". Self-contained: no internet, no external libraries or fonts.
+  Built from scratchpad ty/build.py (quiz.js + ui.js + the style and engine of 04 Energy resources).
+-->
+<style>
+/* ============================ 1 STYLE ============================ */
+:root{
+  --navy:#1F3A5F; --accent:#E65100; --ink:#263238; --muted:#606A72;
+  --bg:#F2F5F9; --card:#FFFFFF; --line:#DDE6F0; --sunk:#EEF2F7; --soft-blue:#E3F2FD;
+  --star:#F9A825; --ok:#2E7D32; --bad:#C62828; --focus:#1565C0;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;font-size:18px}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:1rem/1.45 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;display:flex;flex-direction:column;min-height:100dvh}
+h2,h3,h4{margin:0}
+p{margin:0}
+button{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+/* header (as in every simulation) */
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);
+  display:flex;align-items:center;gap:12px;padding:8px 16px;flex-wrap:wrap;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header h1{font-size:1.25rem;margin:0;font-weight:600}
+header .sub{font-size:.85rem;opacity:.85}
+.sub a.home{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55);white-space:nowrap}
+header .grow{flex:1}
+.hbtns{display:flex;gap:6px;flex-wrap:wrap}
+.credit{text-align:right;font-size:.74rem;line-height:1.3;opacity:.92;white-space:nowrap}
+.credit a{color:#fff;text-decoration:underline}
+.btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;
+  min-height:44px;padding:6px 14px;cursor:pointer;touch-action:manipulation}
+.btn:hover{border-color:var(--navy)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn.small{min-height:36px;padding:4px 10px;font-size:.9rem}
+header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5);white-space:nowrap}
+header .btn[aria-pressed="true"]{background:rgba(255,255,255,.22);border-color:#fff}
+
+/* key bar: key words */
+.keybar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:6px 16px;background:#fff;border-bottom:1px solid var(--line);font-size:15px}
+.keybar .lead{font-weight:700;color:var(--navy);margin-right:4px}
+.kchip{font:inherit;font-size:15px;display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:#fff;border-radius:99px;
+  padding:3px 10px 3px 4px;cursor:pointer;min-height:34px}
+.kchip i{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:14px;background:var(--c)}
+.kchip:hover{border-color:var(--navy)}
+.keybar .tools{margin-left:auto;display:flex;align-items:center;gap:14px}
+.keybar .sum{font-weight:700;color:var(--navy);white-space:nowrap;font-size:17px}
+
+/* tabs + panels */
+main{flex:1;display:flex;flex-direction:column;gap:10px;padding:10px 16px 16px;min-height:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.tabs{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+.tab{font:inherit;font-size:19px;border:1px solid transparent;border-bottom:none;background:transparent;padding:8px 14px;
+  min-height:44px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--muted);font-weight:600;white-space:nowrap}
+.tab[aria-selected="true"]{background:#fff;border-color:var(--line);color:var(--navy);margin-bottom:-1px}
+.tab .tstar{font-size:.78rem;color:var(--star);margin-left:4px}
+.panel{display:flex;flex-direction:column;gap:10px;min-height:0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0;display:flex;flex-direction:column}
+.card > h2{font-size:19px;padding:6px 12px;background:#F7F9FC;border-bottom:1px solid var(--line);color:var(--navy);font-weight:600}
+.cb{padding:12px 14px;display:grid;gap:12px;align-content:start;min-height:0}
+.label{font-size:15px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.hint{font-size:16px;color:var(--muted)}
+.layout{display:grid;gap:10px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:900px){ .layout{grid-template-columns:minmax(210px,240px) minmax(0,1fr)} }
+
+/* scene list */
+.slist{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 6px;scrollbar-width:thin}
+@media (min-width:900px){ .slist{flex-direction:column;overflow:visible} }
+.sitem{font:inherit;display:flex;align-items:center;gap:8px;text-align:left;border:1px solid var(--line);background:#fff;border-radius:10px;
+  padding:6px 8px;min-height:54px;cursor:pointer;line-height:1.15;flex:none}
+.sitem .em{font-size:1.7rem;width:36px;text-align:center;flex:none}
+.sitem b{font-size:17px;display:block}
+.sitem small{font-size:13px;color:var(--muted)}
+.sitem .st{margin-left:auto;color:var(--star);font-size:13px;white-space:nowrap;padding-left:6px}
+.sitem[aria-current="true"]{border:2px solid var(--accent);background:#FFF3E0}
+.sitem.done{border-color:#A5D6A7}
+.sitem:disabled{opacity:.5;cursor:not-allowed}
+.progress{height:10px;background:var(--sunk);border-radius:99px;overflow:hidden}
+.progress i{display:block;height:100%;background:linear-gradient(90deg,var(--star),var(--accent));width:0;transition:width .5s}
+.teach{font-size:13px;color:#6A1B9A;font-weight:700}
+
+/* Marie, the guide */
+.spexbar{display:flex;align-items:center;gap:10px;min-height:76px}
+.spex{width:72px;height:72px;flex:none}
+.bubble{position:relative;background:#fff;border:2px solid var(--navy);border-radius:14px;padding:8px 12px;font-size:20px;line-height:1.4;flex:1;min-width:0}
+.bubble::before{content:"";position:absolute;left:-11px;top:24px;border:10px solid transparent;border-right-color:var(--navy);border-left:0}
+.bubble::after{content:"";position:absolute;left:-7px;top:26px;border:8px solid transparent;border-right-color:#fff;border-left:0}
+.bubble.tip{background:#FFF8E1} .bubble.tip::after{border-right-color:#FFF8E1}
+.bubble.good{background:#E8F5E9} .bubble.good::after{border-right-color:#E8F5E9}
+.bubble.ans{background:var(--soft-blue)} .bubble.ans::after{border-right-color:var(--soft-blue)}
+.spex .lens{fill:#FFE0C2;fill-opacity:.45}
+.spex .m{display:none} .spex[data-mood="talk"] .m-talk,.spex[data-mood="happy"] .m-happy,.spex[data-mood="think"] .m-think,
+.spex[data-mood="wow"] .m-wow,.spex[data-mood="hmm"] .m-hmm{display:inline}
+.spex[data-mood="hmm"] .brow{transform:translateY(-2px)}
+/* words explained on tap */
+.wd{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:help;border-bottom:2px dotted var(--focus);font-weight:inherit}
+.wd:hover{background:#E3F2FD}
+.wpop{position:fixed;z-index:85;width:min(340px,calc(100vw - 24px));background:#fff;border:2px solid var(--navy);border-radius:14px;
+  box-shadow:0 12px 30px rgba(0,0,0,.25);padding:10px 12px;display:grid;gap:8px;font-size:18px}
+.wpop .wh{display:flex;align-items:center;gap:8px;font-size:20px;font-weight:700;color:var(--navy)}
+.wpop .wh i{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;font-style:normal;background:var(--c,#E3F2FD)}
+.wpop .now{font-weight:700;color:var(--accent)}
+.wpop .controls{justify-content:flex-end}
+
+/* a scene */
+.stephead{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.stephead h3{font-size:24px;color:var(--navy)}
+.stephead .of{font-size:15px;color:var(--muted);font-weight:600}
+.phases{display:flex;flex-wrap:wrap;gap:6px}
+.ph{font-size:15px;font-weight:700;border-radius:99px;padding:4px 12px;background:var(--sunk);color:var(--muted);border:2px solid transparent}
+.ph.now{background:#FFF3E0;color:var(--accent);border-color:var(--accent)}
+.ph.done{background:#E8F5E9;color:var(--ok)}
+.stagewrap{display:grid;gap:12px;grid-template-columns:minmax(0,1fr);align-items:start}
+@media (min-width:1150px){ .stagewrap{grid-template-columns:minmax(0,1.4fr) minmax(300px,1fr)} }
+.stagecol{display:grid;gap:8px;min-width:0}
+.stage,.still{width:100%;display:block;border-radius:12px;border:1px solid var(--line);background:#fff}
+.still{max-width:520px;margin:0 auto}
+.timeline{height:8px;background:var(--sunk);border-radius:99px;overflow:hidden}
+.timeline i{display:block;height:100%;width:0;background:var(--navy)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+main .btn,.overlay .btn,.wpop .btn{font-size:19px}
+.btn.play{min-width:140px;font-weight:700}
+.btn[aria-pressed="true"]{background:#E3F2FD;border-color:var(--focus);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:34px;font-size:16px}
+.chips .lead{font-weight:700;color:var(--muted);font-size:14px;text-transform:uppercase;letter-spacing:.04em}
+.fchip{display:inline-flex;gap:4px;align-items:center;padding:3px 10px;border-radius:99px;background:var(--c);color:var(--fg);font-weight:700;font-size:15px;white-space:nowrap}
+.chips .to{color:var(--muted);font-weight:700}
+
+/* energy bars */
+.bars{position:relative;display:grid;gap:4px;align-content:start;border:1px solid var(--line);border-radius:12px;padding:10px;background:#FBFCFE;min-width:0}
+.bars .bhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.bars .bhead b{font-size:18px;color:var(--navy)}
+.erow{font:inherit;display:grid;grid-template-columns:148px minmax(0,1fr) 66px 14px;align-items:center;gap:6px;border:none;background:none;
+  padding:2px 4px;border-radius:8px;cursor:pointer;text-align:left;min-height:31px;width:100%}
+.erow:hover{background:#EEF2F7}
+.erow .bn{font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.btrack{height:20px;background:#E6EBF0;border-radius:6px;overflow:hidden;display:flex}
+.btrack i{display:block;height:100%;width:0;background:var(--c);flex:none}
+.erow .bv,.trow .bv{font-size:16px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.erow .ar{font-size:12px;color:var(--muted);text-align:center}
+.erow.zero .bn,.erow.zero .bv{color:#9AA5AE;font-weight:500}
+.trow{display:grid;grid-template-columns:148px minmax(0,1fr) 66px 14px;align-items:center;gap:6px;border-top:2px solid var(--navy);padding:6px 4px 0;margin-top:4px}
+.trow .bn{font-size:17px;font-weight:800;color:var(--navy)}
+.trow .btrack{height:30px;border:2px solid var(--navy)}
+.trow .bv{color:var(--navy);font-size:17px}
+.trow .ok{color:var(--ok);font-weight:800}
+.law{font-size:16px;background:#E8F5E9;border-left:5px solid var(--ok);border-radius:10px;padding:6px 10px;line-height:1.35}
+.cover{position:absolute;inset:0;background:rgba(242,245,249,.95);display:grid;place-items:center;text-align:center;font-size:20px;font-weight:700;
+  color:var(--navy);border-radius:12px;padding:12px;z-index:2}
+
+/* questions */
+.what{font-size:19px;background:#F3E5F5;border-left:5px solid #8E24AA;border-radius:10px;padding:8px 12px}
+.part{display:grid;gap:10px;border-top:1px dashed var(--line);padding-top:12px}
+.part:first-child{border-top:none;padding-top:0}
+.q{font-size:20px;font-weight:600;display:flex;gap:8px;align-items:flex-start}
+.q > span{flex:1}
+.qn{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--navy);color:#fff;font-size:16px;margin-right:6px;vertical-align:2px}
+.feedback{font-size:20px;min-height:2.4em;border-radius:10px;padding:8px 12px;background:var(--sunk)}
+.feedback:empty{display:none}
+.feedback.tip{background:#FFF8E1;border-left:4px solid #F9A825}
+.feedback.ans{background:var(--soft-blue);border-left:4px solid var(--focus)}
+.feedback.good{background:#E8F5E9;border-left:4px solid var(--ok)}
+.feedback.info{background:var(--sunk);border-left:4px solid #90A4AE}
+.stars{color:var(--star);font-size:1.2rem;letter-spacing:2px}
+.stars .off{color:var(--line)}
+.cats{display:grid;gap:8px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.cat{font:inherit;font-size:19px;border:1px solid #B0BEC5;background:#fff;border-radius:10px;padding:8px 12px;min-height:52px;cursor:pointer;font-weight:600;line-height:1.25;text-align:left}
+.cat.right{background:#E8F5E9;border:2px solid var(--ok)}
+.cat.wrong{background:#FFEBEE;border-color:var(--bad)}
+.cat:disabled{cursor:default}
+.cats.wide{grid-template-columns:minmax(0,1fr)}
+.cat .fi{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--c);margin-right:6px;font-size:16px;vertical-align:-6px}
+/* drag or tap */
+.tile{font:inherit;font-size:19px;border:2px solid #90A4AE;border-left:10px solid var(--c,#90A4AE);background:#fff;border-radius:10px;padding:6px 12px;min-height:46px;
+  cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;line-height:1.2;font-weight:600;white-space:nowrap}
+.tile.sel{outline:3px solid var(--focus);outline-offset:2px;background:#E3F2FD}
+.tile.lifting{opacity:.35}
+.drag-ghost{position:fixed;z-index:80;pointer-events:none;transform:translate(-50%,-60%) rotate(-3deg);box-shadow:0 10px 24px rgba(0,0,0,.25)}
+.bank{display:flex;flex-wrap:wrap;gap:8px;min-height:62px;padding:8px;border:2px dashed #CFD8DC;border-radius:12px;background:#FAFBFC}
+.bank.hot{border-color:var(--focus)}
+.chain{display:flex;flex-wrap:wrap;align-items:center;gap:8px;background:#FFFDE7;border-radius:12px;padding:10px 12px;border:1px solid #FFE082}
+.chain .grp{display:inline-flex;flex-wrap:wrap;align-items:center;gap:6px;padding:4px;border-radius:12px;background:rgba(255,255,255,.6)}
+.chain .to,.chain .plus{font-size:24px;font-weight:800;color:var(--navy)}
+.slot{font:inherit;display:inline-flex;align-items:center;justify-content:center;min-width:150px;min-height:52px;padding:0 4px;
+  border:2px dashed #90A4AE;border-radius:10px;background:#fff;cursor:pointer;line-height:1.2}
+.slot.hot{border-color:var(--focus);background:#E3F2FD}
+.slot .tile{margin:2px 0;cursor:pointer}
+.slot.wrong{border-color:var(--bad);border-style:solid;background:#FFEBEE}
+.slot.right{border-color:var(--ok);border-style:solid;background:#E8F5E9}
+/* predict */
+.pickgrid{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.pk{font:inherit;font-size:18px;display:grid;justify-items:center;gap:2px;text-align:center;border:2px solid var(--line);background:#fff;
+  border-radius:12px;padding:8px 6px;min-height:96px;cursor:pointer;line-height:1.2;font-weight:600}
+.pk .em{font-size:1.5rem;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--c)}
+.pk[aria-pressed="true"]{border-color:var(--focus);background:#E3F2FD;box-shadow:0 0 0 2px var(--focus)}
+.pickgrid.pred .pk[aria-pressed="true"]::after{content:"✔ I think so";font-size:13px;color:var(--focus)}
+.pk.right{border-color:var(--ok)!important;background:#E8F5E9!important;box-shadow:none}
+.pk.wrong{border-color:var(--bad)!important;background:#FFEBEE!important;box-shadow:none}
+.pk:disabled{cursor:default}
+/* quiz */
+.qhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.qtype{font-size:15px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#6A1B9A;background:#F3E5F5;border-radius:99px;padding:3px 12px}
+.dots{display:flex;gap:5px;flex-wrap:wrap}
+.dot{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;font-size:14px;font-weight:700;color:var(--muted);background:#fff}
+.dot.now{border-color:var(--navy);color:var(--navy)}
+.dot.s3{background:var(--star);border-color:var(--star);color:#3E2A00} .dot.s2{background:#FFE082;border-color:#FFCA28;color:#3E2A00} .dot.s0{background:#ECEFF1;border-color:#B0BEC5}
+.qpic{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:6px 18px;font-size:64px;line-height:1.1;min-height:130px;
+  background:linear-gradient(#FAFCFF,#EAF1F8);border:1px solid var(--line);border-radius:14px;padding:12px;overflow:hidden}
+.qpic span{display:inline-block}
+.qpic .arr{font-size:34px;color:#90A4AE;font-weight:800}
+.qpic .stack{display:inline-flex;flex-direction:column;align-items:center;line-height:1}
+.qpic .sm{font-size:.6em}
+@keyframes a-spin{to{transform:rotate(360deg)}} .a-spin{animation:a-spin 1.4s linear infinite}
+@keyframes a-flick{0%{transform:scale(1) rotate(-3deg);opacity:1}100%{transform:scale(1.12) rotate(3deg);opacity:.8}} .a-flick{animation:a-flick .22s ease-in-out infinite alternate}
+@keyframes a-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-16px)}} .a-bounce{animation:a-bounce 1s ease-in-out infinite}
+@keyframes a-pulse{50%{transform:scale(1.13)}} .a-pulse{animation:a-pulse 1.2s ease-in-out infinite}
+@keyframes a-float{0%{transform:translateY(16px);opacity:0}30%{opacity:1}100%{transform:translateY(-28px);opacity:0}} .a-float{animation:a-float 1.6s ease-out infinite;font-size:.62em}
+@keyframes a-shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px) rotate(-5deg)}75%{transform:translateX(4px) rotate(5deg)}} .a-shake{animation:a-shake .18s linear infinite}
+@keyframes a-glow{50%{filter:drop-shadow(0 0 14px #FFD600) drop-shadow(0 0 4px #FFEA00)}} .a-glow{animation:a-glow 1.4s ease-in-out infinite}
+@keyframes a-slide{0%{transform:translateX(-26px)}100%{transform:translateX(26px)}} .a-slide{animation:a-slide 1.2s ease-in-out infinite alternate}
+@keyframes a-down{0%{transform:translate(-26px,-30px)}100%{transform:translate(26px,26px)}} .a-down{animation:a-down 1.6s ease-in infinite}
+@keyframes a-off{0%,45%{filter:drop-shadow(0 0 14px #FFD600);opacity:1}55%,100%{filter:grayscale(1);opacity:.45}} .a-off{animation:a-off 3s infinite}
+.a-delay{animation-delay:.6s}
+.cats.tf{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cats.tf .cat{text-align:center;font-size:24px}
+.qlist{display:grid;gap:4px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));font-size:16px;text-align:left;width:100%}
+.qlist div{background:#fff;border:1px solid var(--line);border-radius:8px;padding:3px 8px;display:flex;justify-content:space-between;gap:8px}
+.qlist .stars{font-size:15px}
+@media (max-width:599px){ .qpic{font-size:48px;min-height:100px} }
+.cmp{display:grid;gap:6px}
+.cmp .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:17px}
+.cmp .row > b{min-width:190px}
+.num{font:inherit;font-size:21px;width:150px;min-height:46px;padding:4px 8px;border:2px solid #90A4AE;border-radius:8px;text-align:center}
+.num.right{border-color:var(--ok);background:#E8F5E9}
+.num.wrong{border-color:var(--bad);background:#FFEBEE}
+.numrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:20px}
+.result{display:grid;gap:10px;justify-items:center;text-align:center;background:#FFFDE7;border:2px solid #FFE082;border-radius:14px;padding:12px}
+.result .big{font-size:2.2rem}
+.explore{font-size:19px;background:#E3F2FD;border-left:5px solid var(--focus);border-radius:10px;padding:8px 12px}
+
+/* certificate */
+.certwrap{display:grid;gap:12px;justify-items:center}
+.sheet{width:100%;max-width:1000px;aspect-ratio:297/210;border:10px double var(--navy);border-radius:16px;background:#fff;
+  padding:3% 4%;display:grid;grid-template-rows:auto auto auto 1fr auto;gap:1.2%;text-align:center;position:relative;container-type:inline-size;overflow:hidden}
+.sheet .t1{font-size:max(15px,1.9cqw);letter-spacing:.2em;text-transform:uppercase;color:var(--accent);font-weight:700}
+.sheet .t2{font-size:max(26px,4.6cqw);font-weight:800;color:var(--navy);line-height:1.1}
+.sheet .who{font-size:max(24px,4.2cqw);font-weight:700;color:var(--accent);border-bottom:2px solid var(--line);padding:0 4%;justify-self:center;min-width:50%}
+.sheet .for{font-size:max(14px,1.8cqw)}
+.sheet .law2{font-size:max(13px,1.6cqw);color:var(--ok);font-weight:700}
+.sheet .badges{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:1.2cqw;align-content:center}
+.sheet .foot{display:flex;justify-content:space-between;align-items:end;font-size:max(12px,1.5cqw);color:var(--muted);gap:10px}
+.sheet .foot .sig{border-top:1px solid #90A4AE;padding-top:2px;min-width:30%}
+.sheet .marie{position:absolute;right:3%;top:4%;width:12%}
+.sheet .seal{position:absolute;left:3%;top:4%;width:11%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,#FFE082,#F9A825);
+  display:grid;place-items:center;font-size:max(14px,2.4cqw);font-weight:800;color:#5D4037;box-shadow:0 0 0 4px #FFF8E1,0 0 0 6px #F9A825}
+.badge{display:grid;justify-items:center;gap:1px;padding:.6cqw .3cqw;border-radius:12px;border:2px dashed #CFD8DC;text-align:center;font-size:max(11px,1.35cqw);color:#90A4AE;line-height:1.15}
+.badge .em{font-size:max(22px,3.6cqw);filter:grayscale(1);opacity:.4;line-height:1.1}
+.badge.on{border:2px solid var(--star);background:#FFFDE7;color:var(--ink)}
+.badge.on .em{filter:none;opacity:1}
+.badge .how{font-size:max(10px,1.1cqw);color:var(--muted)}
+.word{font:inherit;font-size:20px;min-height:44px;padding:4px 8px;border:1px solid #B0BEC5;border-radius:8px}
+
+/* overlays */
+.overlay{position:fixed;inset:0;background:rgba(31,58,95,.55);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+.overlay.on{display:flex}
+.overlay .box{background:#fff;border-radius:14px;max-width:780px;width:100%;max-height:92vh;overflow:auto;padding:16px 20px;display:grid;gap:10px;font-size:19px}
+.overlay h3{margin:.1em 0 .2em;color:var(--navy)}
+.overlay li{margin:.25em 0}
+.toast{position:fixed;left:50%;top:14px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:12px;
+  z-index:90;box-shadow:0 8px 20px rgba(0,0,0,.25);font-weight:600;display:none;font-size:19px}
+.toast.on{display:block;animation:pop .35s}
+@keyframes pop{from{transform:translate(-50%,-20px);opacity:0}}
+.shake{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
+#printArea{display:none}
+
+@media (max-width:1099px){ header .sub{font-size:.75rem} }
+@media (max-width:759px){
+  header h1{font-size:1.05rem}
+  .credit{order:3;flex-basis:100%;text-align:left;font-size:.7rem}
+  .credit br{display:none} .credit a{margin-left:6px}
+  .keybar{font-size:14px;gap:4px;padding:6px 10px}
+  .keybar .lead{display:none}
+  .kchip .kn{display:none} .kchip{padding:3px}
+  .spex{width:56px;height:56px}
+  .bubble{font-size:18px}
+  .hbtns .btn{min-height:38px;padding:4px 9px;font-size:.88rem}
+  .tile,.cat{font-size:17px}
+  .slot{min-width:120px}
+  .stephead h3{font-size:21px}
+  .erow,.trow{grid-template-columns:118px minmax(0,1fr) 58px 10px;gap:4px}
+  .erow .bn{font-size:14px}
+  .sheet .marie{display:none}
+  .sheet .badges{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .sheet{aspect-ratio:auto}
+  .cmp .row > b{min-width:0;flex-basis:100%}
+}
+@media (max-width:599px){ .tab .full{display:none} .tab{padding:8px 10px;font-size:17px} .q{font-size:18px} .bubble{font-size:17px} }
+
+/* the app (27 Oct 2026): one screen on a laptop – the big animation left; Marie, the picker and the readings right */
+.split{display:grid;gap:10px;grid-template-columns:minmax(0,1.55fr) minmax(330px,1fr);align-items:start;min-height:0}
+.lhome{min-width:0}
+.stagebox{border:1px solid var(--line);border-radius:12px;padding:8px;background:#FBFCFE;min-width:0}
+.stagebox .controls .btn{font-size:17px;min-height:42px;padding:4px 11px}
+.stagebox .btn.play{min-width:112px}
+.task{display:flex;flex-direction:column;gap:8px;min-width:0;min-height:0;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.task > *{flex-shrink:0}
+.spex{width:66px;height:66px}
+.bubble{font-size:22px;line-height:1.35}
+.kchip{font-size:15px;min-height:42px;padding:3px 11px 3px 4px;gap:6px} .kchip i{width:34px;height:34px;font-size:20px}
+.fhead{font-size:18px;font-weight:800;color:var(--navy)} .fhead small{color:var(--muted);font-weight:600;font-size:14px}
+.stagebox .controls{justify-content:space-between;align-items:center;row-gap:6px}
+.pbtns{display:flex;gap:6px;flex-wrap:wrap}
+.fpick{display:flex;flex-wrap:wrap;gap:6px}
+.fbtn{font:inherit;display:flex;align-items:center;gap:3px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:2px 7px;min-height:42px;cursor:pointer;font-size:15px;font-weight:800;color:var(--muted)}
+.fbtn .em{font-size:1.35rem}
+.fbtn[aria-current="true"]{border:2px solid var(--accent);background:#FFF3E0;color:var(--accent)}
+@media (min-width:900px) and (min-height:540px){
+  html,body{height:100%}
+  body{height:100dvh;overflow:hidden}
+  footer{display:none}
+  header{padding-top:4px;padding-bottom:4px} header h1{font-size:1.1rem} .hbtns .btn{min-height:36px;padding:3px 10px;font-size:.9rem}
+  .keybar{padding:3px 16px}
+  .tab{min-height:38px;padding:4px 12px;font-size:17px}
+  main{min-height:0;overflow:hidden;gap:6px;padding-top:6px;padding-bottom:10px}
+  .panel{flex:1;min-height:0;overflow:auto}
+  #free{overflow:hidden}
+  .split{height:100%;align-items:stretch;
+    grid-template-columns:min(62%, max(740px, calc((100dvh - 300px) * 600 / 340 + 20px))) minmax(0,1fr)}
+  .lhome{min-height:0;overflow:hidden}
+  .task{overflow:auto}
+  .stagebox .stage{max-width:calc((100dvh - 300px) * 600 / 340);margin:0 auto}
+}
+@media (min-width:900px) and (max-width:1500px){ .keybar .lead{display:none} }
+@media (min-width:900px) and (max-height:700px){ .bubble{font-size:20px} .spex{width:58px;height:58px} }
+@media (max-width:899px),(max-height:539px){
+  .split{grid-template-columns:minmax(0,1fr)}
+  .lhome,.stagebox{display:contents}
+  .stagecol{position:sticky;top:0;z-index:5;background:#FBFCFE;padding:4px 0;border-bottom:2px solid var(--line);box-shadow:0 6px 10px -8px rgba(0,0,0,.3)}
+  .stagebox .stage{max-height:30dvh;width:auto;max-width:100%;margin:0 auto}
+  .split > .task{order:5}
+  .spex{width:54px;height:54px} .bubble{font-size:19px}
+}
+.task .bars{padding:6px 8px;gap:2px} .task .bars .bhead b{font-size:16px} .task .bars .bhead .hint{font-size:13px}
+.task .erow{grid-template-columns:132px minmax(0,1fr) 62px 12px;padding:1px 4px} .task .erow .bn,.task .erow .bv{font-size:15px}
+.task .trow{grid-template-columns:132px minmax(0,1fr) 62px 12px;padding-top:4px} .task .trow .btrack{height:24px}
+.task .law{font-size:14px;padding:4px 8px} .stagebox .chips{font-size:15px;min-height:30px}
+.task .erow .btrack{height:15px} .task .erow{min-height:0;line-height:1.15}
+@media (min-width:900px) and (max-height:760px){ .task .bars .bhead .hint{display:none} .task .erow{padding:0 4px} .task .law{font-size:13px;line-height:1.25} .bubble{font-size:19px}
+  .stagebox .chips .lead{display:none} .stagebox .chips .fchip{font-size:14px} .stagebox .chips{gap:4px} }
+@media (max-width:899px),(max-height:539px){ .stagebox .chips{display:none} }
+@media print{
+  body{background:#fff;display:block}
+  body > *:not(#printArea){display:none!important}
+  #printArea{display:block}
+  #printArea .sheet{max-width:none;width:100%;aspect-ratio:auto;height:180mm;border-width:8px}
+  #printArea .sheet .marie{display:block} #printArea .sheet .badges{grid-template-columns:repeat(8,minmax(0,1fr))}
+  #printArea .badge{font-size:11pt} #printArea .badge .em{font-size:28pt} #printArea .badge .how{font-size:8pt}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+@media (prefers-reduced-motion:reduce){ .qpic span{animation:none!important} .toast.on,.shake{animation:none} .progress i{transition:none} }
+/* the conclusion box (teacher, 27 Oct 2026): big text, key words bold, heat in red */
+.ht{color:#C62828;font-weight:800}
+.clab{display:block;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#8E24AA;margin-bottom:2px}
+@media (max-height:760px){ .clab{display:inline;margin:0 6px 0 0} }
+.concl{font-size:20px;line-height:1.35;background:#F3E5F5;border-left:5px solid #8E24AA;border-radius:10px;padding:8px 12px}
+@media (min-width:900px) and (max-height:760px){ .task .concl{font-size:17px;line-height:1.28;padding:5px 9px} .task .bars .bhead{display:none} .task .erow .btrack{height:13px} }
+/* the green law box back, in big text (teacher, 27 Oct 2026) */
+.task .law{font-size:20px;line-height:1.3;padding:7px 12px;margin-top:4px}
+@media (min-width:900px) and (max-height:760px){ .task .law{font-size:18px;line-height:1.25;padding:5px 9px} .task .erow .btrack{height:10px} .task .trow .btrack{height:18px} .task .trow{padding-top:2px;margin-top:2px}
+  .task .erow .bn,.task .erow .bv{font-size:14px;line-height:1.05} #erows{gap:0!important} .task .law{margin-top:2px} .task .law .long{display:none} .task .law .short{display:inline} }
+.law .short{display:none}
+
+/* ===== Energy resources (19 Nov 2026): picker, readings, badge, 👍/👎 ===== */
+.fpick{align-items:center;gap:4px}
+.fpick .glab{font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:0 2px 0 4px}
+.fpick .glab.nr{color:#5D4037} .fpick .glab.rn{color:#2E7D32;margin-left:6px}
+.fbtn{min-height:40px;padding:2px 6px}
+.fbtn.nr{border-left:4px solid #6D4C41} .fbtn.rn{border-left:4px solid #43A047}
+.fbtn .em{font-size:1.3rem}
+.stagebox .controls.pick{justify-content:center}
+.rbadge{display:inline-block;font-size:14px;font-weight:800;letter-spacing:.06em;border-radius:99px;padding:3px 12px;vertical-align:3px;margin-left:6px;color:#fff}
+.rbadge.rn{background:#2E7D32} .rbadge.nr{background:#5D4037}
+.reads{display:grid;gap:3px;border:1px solid var(--line);border-radius:12px;padding:7px 9px;background:#FBFCFE;min-width:0}
+.rrow{display:grid;grid-template-columns:180px minmax(0,1fr) 92px;align-items:center;gap:6px;min-height:28px}
+.rrow.t{grid-template-columns:180px minmax(0,1fr)}
+.rrow .rn{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rrow .btrack{height:18px}
+.rrow .rv{font-size:16px;font-weight:800;text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.rrow .rt{font-size:16px;font-weight:600;line-height:1.25}
+.rt .yes{color:var(--ok);font-weight:800} .rt .no{color:var(--bad);font-weight:800}
+.pc{display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:16px;line-height:1.3}
+.pc > div{border-radius:10px;padding:5px 9px}
+.pc .up{background:#E8F5E9;border-left:4px solid var(--ok)} .pc .dn{background:#FFEBEE;border-left:4px solid var(--bad)}
+.pc b{display:block;font-size:13px;letter-spacing:.05em;text-transform:uppercase}
+.pc ul{margin:0;padding-left:18px} .pc li{margin:0}
+.kchip.rn{border-color:#A5D6A7} .kchip.nr{border-color:#BCAAA4}
+/* quiz: tap / sort the resources */
+.pk .em{background:#F1F8E9}
+.bins{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.bin{border:2px dashed #90A4AE;border-radius:12px;padding:6px;min-height:120px;display:flex;flex-wrap:wrap;align-content:flex-start;gap:6px;cursor:pointer}
+.bin h4{flex-basis:100%;font-size:18px;margin:0 0 2px}
+.bin.rn{background:#F1F8E9} .bin.rn h4{color:#2E7D32}
+.bin.nr{background:#EFEBE9} .bin.nr h4{color:#5D4037}
+.bin.hot{border-color:var(--focus);background:#E3F2FD}
+.bin .tile{white-space:normal}
+.tile.wrong{border-color:var(--bad);background:#FFEBEE} .tile.right{border-color:var(--ok);background:#E8F5E9}
+@media (max-width:759px){ .rrow{grid-template-columns:120px minmax(0,1fr) 74px} .rrow.t{grid-template-columns:120px minmax(0,1fr)} .rrow .rn,.rrow .rt,.rrow .rv{font-size:14px} .pc{grid-template-columns:1fr;font-size:15px} .bins{grid-template-columns:1fr} }
+@media (min-width:900px) and (min-height:540px){
+  .split{grid-template-columns:min(58%, max(680px, calc((100dvh - 300px) * 600 / 340 + 20px))) minmax(0,1fr)}
+  .stagebox .stage{max-width:calc((100dvh - 300px) * 600 / 340)}
+}
+@media (min-width:900px) and (max-height:760px){
+  .task{gap:5px;padding:8px 10px} .task .spexbar{min-height:0} .task .bubble{font-size:18px;line-height:1.28;padding:6px 10px}
+  .task .law{font-size:16px;padding:4px 9px} .task .law .long{display:none} .task .law .short{display:inline}
+  .task .concl{font-size:16.5px} .reads{padding:4px 8px;gap:1px}
+  .rrow{min-height:22px} .rrow .rn,.rrow .rt,.rrow .rv{font-size:15px} .rrow .btrack{height:14px}
+  .pc{font-size:14.5px;line-height:1.22} .pc > div{padding:3px 8px} .pc b{font-size:12px}
+  .fhead{font-size:17px} .rbadge{font-size:12.5px;padding:2px 10px}
+  .fpick .glab{font-size:12px} .fbtn{min-height:36px} .fbtn .em{font-size:1.15rem}
+}
+/* picker + play buttons in one row on a laptop */
+.stagebox .controls.pick{justify-content:space-between;flex-wrap:wrap;row-gap:4px}
+.fpick .fbtn{padding:2px 5px;gap:2px;font-size:14px}
+@media (min-width:900px) and (min-height:540px){
+  .split{grid-template-columns:min(58%, max(660px, calc((100dvh - 330px) * 600 / 340 + 20px))) minmax(0,1fr)}
+  .stagebox .stage{max-width:calc((100dvh - 330px) * 600 / 340)}
+  .stagebox .controls.pick{justify-content:flex-start}
+  .stagebox .controls{row-gap:4px}
+}
+@media (min-width:900px) and (max-width:1599px){ .fpick .gt{display:none} .fpick .glab{font-size:1.1rem;padding:0 1px} }
+@media (min-width:900px) and (max-width:1599px){ .fpick{gap:3px} .fpick .fbtn{padding:2px 3px 2px 2px;gap:0;font-size:13px} }
+@media (max-width:759px){ .rrow .rn{white-space:normal;line-height:1.1} }
+
+/* v2 (teacher, grill-me 19 Nov 2026): Grade 8 step player + resource buttons with names in two rows */
+.stagebox .controls.step{justify-content:flex-start;align-items:center;gap:6px 10px}
+.modesw{display:inline-flex;gap:4px;background:var(--sunk);border-radius:99px;padding:3px}
+.chip{font:inherit;font-size:15px;font-weight:700;border:1px solid transparent;background:transparent;border-radius:99px;padding:4px 12px;min-height:36px;cursor:pointer;color:var(--muted)}
+.chip[aria-pressed="true"]{background:#fff;border-color:var(--navy);color:var(--navy)}
+.chip:disabled{opacity:.45;cursor:not-allowed}
+.stepn{font-size:15px;font-weight:700;color:var(--muted);white-space:nowrap}
+.fpick{display:grid;gap:4px}
+.prow{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.prow .glab{min-width:136px;font-size:13px}
+.fpick .fbtn{font-size:15px;font-weight:700;padding:2px 9px 2px 5px;gap:4px;min-height:38px;color:var(--ink)}
+.fpick .fbtn .em{font-size:1.2rem}
+.fpick .fbtn[aria-current="true"]{color:var(--accent)}
+.chainrow{display:flex;flex-wrap:wrap;gap:3px;align-items:center} .chainrow .to{color:var(--muted);font-weight:800}
+.chainrow .fchip{font-size:13px;padding:2px 7px}
+#rowEl{border-radius:8px} #rowEl.lit{background:#FFF8E1;box-shadow:0 0 0 2px #FFCA28}
+@media (min-width:900px) and (min-height:540px){
+  .split{grid-template-columns:min(56%, max(700px, calc((100dvh - 372px) * 600 / 340 + 20px))) minmax(0,1fr)}
+  .stagebox .stage{max-width:calc((100dvh - 372px) * 600 / 340)}
+}
+@media (min-width:900px) and (max-width:1599px){ .fpick .gt{display:inline} .prow .glab{min-width:0;font-size:12px} .fpick .fbtn{font-size:14px;padding:2px 7px 2px 4px} }
+@media (min-width:900px) and (max-height:760px){ .fpick .fbtn{min-height:34px} .chip{min-height:32px;font-size:14px} .stagebox .controls.step .btn{min-height:36px;font-size:16px}
+  .pc{font-size:13px;line-height:1.15;gap:4px} .pc > div{padding:2px 7px} .pc b{display:none} .pc ul{padding-left:15px}
+  .task .bubble{font-size:16.5px;line-height:1.22} .task .concl{font-size:15.5px;line-height:1.22} .task .law{font-size:14.5px} }
+@media (max-width:899px),(max-height:539px){ .prow .glab{flex-basis:100%;min-width:0} }
+/* quiz: put in order */
+.olist{display:grid;gap:6px}
+.orow{display:flex;align-items:center;gap:8px}
+.oslot{flex:1;justify-content:flex-start;min-height:50px}
+/* labels above the two rows so all 7 renewable names fit one row on a Chromebook */
+.prow .glab{flex-basis:100%;min-width:0;font-size:12px;line-height:1.1;padding:2px 0 0}
+.fpick{gap:2px}
+@media (min-width:900px) and (min-height:540px){
+  .split{grid-template-columns:min(57%, max(720px, calc((100dvh - 390px) * 600 / 340 + 20px))) minmax(0,1fr)}
+  .stagebox .stage{max-width:calc((100dvh - 390px) * 600 / 340)}
+}
+@media (min-width:900px) and (max-width:1599px){ .fpick .fbtn{font-size:14px;padding:1px 6px 1px 3px;gap:3px} .fpick .fbtn .em{font-size:1.1rem} .prow{gap:3px} }
+@media (min-width:900px) and (max-height:760px){ .chainrow{gap:2px} .chainrow .fchip{font-size:12px;padding:1px 5px;gap:2px} .chainrow .to{font-size:12px} .reads .rrow{grid-template-columns:150px minmax(0,1fr) 80px} .reads .rrow.t{grid-template-columns:150px minmax(0,1fr)} }
+/* quiz: a "Next question" button in the header row too (teacher, 20 Nov 2026) */
+.qhead .qtop{margin-left:auto;min-height:40px;font-size:17px}
+.qhead .qtop:disabled{opacity:.4;cursor:not-allowed}
+.qhead .qtop.go{animation:qpulse 1.2s ease-in-out 3}
+@keyframes qpulse{50%{box-shadow:0 0 0 6px rgba(230,81,0,.3)}}
+@media (prefers-reduced-motion:reduce){ .qhead .qtop.go{animation:none} }
+/* quiz / certificate: the card keeps its full height so the panel scrolls (teacher, 20 Nov 2026: Safari hid "Next question") */
+#quiz > .card, #cert > .card{flex-shrink:0}
+/* quiz: smaller boxes, Check always on screen, every question open (teacher, 20 Nov 2026) */
+#quiz > .card{overflow:clip}
+#qDots .dot{font:inherit;font-size:14px;font-weight:700;padding:0;cursor:pointer}
+#qDots .dot:hover{border-color:var(--focus)}
+#qDots .dot:focus-visible{outline:3px solid var(--focus);outline-offset:1px}
+#quiz .controls:has(> .btn.navy){position:sticky;bottom:0;z-index:3;background:var(--card,#fff);padding:6px 0;margin:-6px 0;box-shadow:0 -6px 8px -6px rgba(0,0,0,.18)}
+@media (min-width:900px){
+  #quiz .cb{gap:7px;padding:8px 12px}
+  #quiz #quizBox{gap:7px}
+  #quiz .part{gap:7px;padding-top:6px}
+  #quiz .spexbar{min-height:0;gap:8px}
+  #quiz .spex{width:46px;height:46px}
+  #quiz .bubble{font-size:17px;line-height:1.3;padding:4px 10px}
+  #quiz .bubble::before{top:12px} #quiz .bubble::after{top:14px}
+  #quiz .qhead .qtop{min-height:34px;font-size:15px;padding:3px 10px}
+  #quiz .qtype{font-size:13px;padding:2px 10px}
+  #quiz .qpic{min-height:0;font-size:40px;padding:4px 10px;gap:4px 14px}
+  #quiz .qpic .arr{font-size:22px}
+  #quiz .qpic svg{max-height:96px;width:auto}
+  #quiz .q{font-size:18px}
+  #quiz .qn{width:26px;height:26px;font-size:14px}
+  #quiz .cats{gap:6px;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  #quiz .cats.wide{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #quiz .cat{font-size:16.5px;min-height:40px;padding:5px 10px;line-height:1.2}
+  #quiz .cats.tf .cat{font-size:20px;min-height:44px}
+  #quiz .feedback{font-size:17px;min-height:0;padding:5px 10px;line-height:1.3}
+  #quiz .pickgrid{gap:6px;grid-template-columns:repeat(5,minmax(0,1fr))}
+  #quiz .pk{grid-auto-flow:column;justify-content:start;align-items:center;justify-items:start;gap:6px;min-height:42px;padding:3px 8px;font-size:16px;text-align:left}
+  #quiz .pk .em{width:32px;height:32px;font-size:1.1rem}
+  #quiz .tile{font-size:16px;min-height:36px;padding:3px 9px}
+  #quiz .bank{min-height:44px;padding:5px;gap:6px}
+  #quiz .bin{min-height:70px}
+  #quiz .slot{min-height:40px;min-width:120px}
+  #quiz .chain{padding:6px 8px;gap:6px}
+  #quiz .olist{gap:4px} #quiz .oslot{min-height:38px}
+  #quiz .hint{font-size:15px}
+  #quiz .btn{min-height:40px}
+}
+@media (min-width:900px) and (max-height:820px){ #quiz .card > h2{display:none} }
+@media (max-width:899px){ #quiz .qpic{min-height:0;font-size:38px;padding:4px 8px;gap:4px 12px} #quiz .qpic .arr{font-size:20px} #quiz .qpic svg{max-height:120px;width:auto}
+  #quiz .spexbar{min-height:0} #quiz .spex{width:48px;height:48px} #quiz .bubble{font-size:17px;line-height:1.3;padding:4px 10px} #quiz .bubble::before{top:12px} #quiz .bubble::after{top:14px}
+  #quiz .pickgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px} #quiz .pk{grid-auto-flow:column;justify-content:start;align-items:center;justify-items:start;min-height:44px;padding:3px 8px;font-size:16px;text-align:left} #quiz .pk .em{width:32px;height:32px;font-size:1.1rem}
+  #quiz .cat{min-height:42px;font-size:17px;padding:6px 10px} #quiz .q{font-size:18px} #quiz .feedback{font-size:17px} }
+/* ---- Test yourself additions ---- */
+.bins.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.bin.b-u{background:#F1F8E9} .bin.b-u h4{color:#2E7D32}
+.bin.b-w{background:#FFF3E0} .bin.b-w h4{color:#E65100}
+.bin.b-s{background:#E3F2FD} .bin.b-l{background:#E0F7FA} .bin.b-g{background:#F3E5F5}
+.bin.b-cd{background:#FBE9E7} .bin.b-cv{background:#E3F2FD} .bin.b-rd{background:#FFFDE7}
+.bin.b-rn{background:#F1F8E9} .bin.b-rn h4{color:#2E7D32} .bin.b-nr{background:#EFEBE9} .bin.b-nr h4{color:#5D4037}
+.mrow{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:8px;align-items:center}
+.mlab{font-size:18px}
+.bank .tile,.slot .tile{max-width:100%;white-space:normal;text-align:left}
+.mwrap{display:grid;gap:8px} .mwrap .bank{align-content:flex-start}
+@media (min-width:900px){ .mwrap{grid-template-columns:minmax(0,2.2fr) minmax(0,1fr);align-items:start} .mwrap .bank{min-height:100%} }
+.revise{background:#FFF8E1;border:1px solid #FFE082;border-radius:10px;padding:8px 12px;margin:8px 0;font-size:18px}
+.revise.ok{background:#E8F5E9;border-color:#A5D6A7}
+#quiz .mlab{font-size:16.5px}
+@media (min-width:900px) and (max-height:820px){ #quizBox.drag .qpic{display:none} #quiz .mrow .oslot{min-height:36px} }
+@media (max-width:759px){ .bins.c3{grid-template-columns:1fr} .mrow{grid-template-columns:1fr;gap:3px} .mlab{font-size:16px} }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Test yourself · Energy</h1>
+    <div class="sub"><a class="home" href="https://school.taneski.com/science/g06/#physics" title="Back to Grade 6 science">← All Grade 6 science</a> · IB MYP 1 · Physics · Unit 1 Thinking about Energy · with Marie</div>
+  </div>
+  <div class="grow"></div>
+  <div class="hbtns">
+    <button class="btn" id="soundBtn" aria-pressed="false" aria-label="Sound on or off">🔇 Sound</button>
+    <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
+  </div>
+  <div class="credit">Biljana Taneska · Science teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
+</header>
+
+<div class="keybar" aria-label="Key words">
+  <span class="lead">Key words:</span>
+  <span id="keyChips" style="display:contents"></span>
+  <div class="tools"><span class="sum" id="starSum">★ 0</span></div>
+</div>
+
+<main>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-quiz" aria-selected="true" aria-controls="quiz">1 · 🧠 Test yourself<span class="tstar" data-ts="quiz"></span></button>
+    <button class="tab" role="tab" id="tab-cert" aria-selected="false" aria-controls="cert">2 · 🏅<span class="full"> Certificate</span></button>
+  </div>
+
+  <section class="panel" id="quiz" role="tabpanel" aria-labelledby="tab-quiz">
+    <div class="card">
+      <h2>🧠 Test yourself · the whole energy unit</h2>
+      <div class="cb">
+        <div class="qhead"><span class="hint">Tap a number to go to any question:</span><div class="dots" id="qDots"></div></div>
+        <div class="spexbar" data-spex="quiz"></div>
+        <div class="cb" id="quizBox" style="padding:0"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="cert" role="tabpanel" aria-labelledby="tab-cert" hidden>
+    <div class="card">
+      <h2>My certificate</h2>
+      <div class="cb certwrap">
+        <div class="spexbar" data-spex="cert" style="width:100%"></div>
+        <label class="numrow">Your name: <input class="word" id="certName" autocomplete="off" maxlength="40" style="max-width:300px"></label>
+        <div class="sheet" id="certSheet"></div>
+        <div class="controls">
+          <button class="btn primary" id="certPrint">🖨 Print my certificate</button>
+          <button class="btn" id="resetAll">↺ Start again (delete my progress)</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<footer>Test yourself · Energy · Grade 6 Physics · practice before the unit test.</footer>
+
+<div class="overlay" id="help" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+  <div class="box">
+    <h3 id="helpTitle">How to use Test yourself</h3>
+    <p>20 questions about the whole <b>Thinking about Energy</b> unit: types of energy, energy transfers, useful and wasted energy,
+      heat and temperature, states of matter, heat transfer, energy resources and how electricity is made.
+      Use it to get ready for your <b>unit test</b>.</p>
+    <ol>
+      <li><b>True or false</b> and <b>Choose the answer</b>: tap your answer.</li>
+      <li><b>Sort them</b>, <b>Match them</b>, <b>Energy chain</b> and <b>Put in order</b>: <b>drag</b> a card into a box or a gap – or <b>tap it, then tap the place</b>. Then press <b>✔ Check</b>.</li>
+      <li><b>Wrong answer?</b> The first time you get a tip. The second time you see the answer.
+        Stars: right first time ★★★ · after a tip ★★ · answer shown: no stars.</li>
+      <li>Words with a <span class="wd" style="cursor:default">dotted line</span> – and the key words at the top – tap them to see what they mean.</li>
+      <li>At the end you see your stars and the <b>topics to revise</b>. You can test yourself again – your best score counts.</li>
+      <li><b>2 · 🏅 Certificate</b>: type your name and print it. Your progress is saved in this browser.</li>
+    </ol>
+    <p class="hint">New words? Use the <a href="https://school.taneski.com/science/g06/02-glossary-energy/glossary-en.pdf" target="_blank" rel="noopener">Glossary · Energy words</a> and the Revision energy study guide on the Grade 6 page.</p>
+    <p style="text-align:right"><button class="btn primary" data-close="help">Let's start!</button></p>
+  </div>
+</div>
+
+<div class="wpop" id="wpop" role="dialog" aria-label="Meaning" hidden>
+  <div class="wh" id="wpHead"></div>
+  <div id="wpTxt"></div>
+  <div class="controls"><button class="btn small navy" id="wpOk">OK</button></div>
+</div>
+
+<div class="toast" id="toast" role="status"></div>
+<div id="printArea"></div>
+
+<script>
+(() => {
+  "use strict";
+  const $ = (id) => document.getElementById(id);
+  /* ============================ 3 CONFIG ============================ */
+  // the 9 forms – the same names, colours and icons as in Types of energy (unit slides 9–19)
+  const FORMS = {
+    thermal:       { label: "Thermal (heat)", tile: "thermal",       em: "🔥", col: "#E53935", fg: "#fff", mean: "The energy of hot things. The hotter something is, the more thermal energy it has." },
+    light:         { label: "Light",          tile: "light",         em: "💡", col: "#FFD600", fg: "#3E2A00", mean: "Energy given out by luminous things, like the Sun, lamps and candles." },
+    sound:         { label: "Sound",          tile: "sound",         em: "🎵", col: "#EC407A", fg: "#fff", mean: "Energy given out by things that vibrate (shake very fast), like speakers, drums and voices." },
+    elastic:       { label: "Elastic",        tile: "elastic",       em: "🏹", col: "#8E24AA", fg: "#fff", mean: "The energy of things that are stretched, squashed or twisted, like springs and rubber bands." },
+    gravitational: { label: "Gravitational",  tile: "gravitational", em: "⛰️", col: "#43A047", fg: "#fff", mean: "The energy of things that are high up and can fall. The higher it is, the more gravitational energy." },
+    kinetic:       { label: "Kinetic",        tile: "kinetic",       em: "🏃", col: "#1E88E5", fg: "#fff", mean: "The energy of moving things. The faster it moves, the more kinetic energy." },
+    electrical:    { label: "Electrical",     tile: "electrical",    em: "⚡", col: "#FB8C00", fg: "#fff", mean: "Energy carried by an electric current in a wire." },
+    chemical:      { label: "Chemical",       tile: "chemical",      em: "🧪", col: "#00897B", fg: "#fff", mean: "Energy stored in food, fuels and batteries. A chemical reaction lets it out." },
+    nuclear:       { label: "Nuclear",        tile: "nuclear",       em: "⚛️", col: "#6D4C41", fg: "#fff", mean: "Energy stored in the centre of atoms. It is let out in the Sun and in nuclear reactors." },
+  };
+  const ORDER = ["thermal", "light", "sound", "elastic", "gravitational", "kinetic", "electrical", "chemical", "nuclear"];
+  const RES = [], RES_I = {};
+
+  // words explained on tap (own simple wording, as in the Glossary energy)
+  const WORDS = {
+    energy: ["energy", "What makes things happen: it makes things move, heat up, light up or make a sound. Unit: the joule (J)."],
+    joule: ["joule (J)", "The unit of energy. 1 kilojoule (kJ) = 1000 J."],
+    conservation: ["conservation of energy", "Energy cannot be created or destroyed. It can only be transferred from one store to another. The total stays the same."],
+    useful: ["useful energy", "The energy we want a device to give, like light from a lamp."],
+    wasted: ["wasted energy", "Energy that does not do the job we want. It usually spreads into the surroundings as heat (and sound)."],
+    efficient: ["efficient", "An efficient device changes more of the energy it takes in into useful energy, so it wastes less."],
+    temperature: ["temperature", "How hot or cold something is. Measured in degrees Celsius (°C) with a thermometer."],
+    heat: ["heat", "Thermal energy moving from a hotter object to a colder one. Measured in joules (J)."],
+    particles: ["particles", "The tiny bits that all matter is made of (atoms and molecules). They are always moving."],
+    conduction: ["conduction", "Heat moving through a solid: the particles vibrate and pass the energy to the particles next to them."],
+    convection: ["convection", "Heat moving in a liquid or gas: the warm part rises, the cool part sinks. This makes a convection current."],
+    radiation: ["radiation", "Heat moving as invisible infrared waves. It needs no particles, so it can cross empty space."],
+    conductor: ["conductor", "A material that lets heat (or electricity) pass through easily, like metals."],
+    insulator: ["insulator", "A material that does not let heat (or electricity) pass through easily, like plastic, wood, wool and air."],
+    renewable: ["renewable", "Unlimited – it can be used over and over again, because nature replaces it. Sun, wind and water are renewable."],
+    nonrenewable: ["non-renewable", "It will eventually run out. Nature cannot make more in our lifetime. Coal, oil, gas and uranium are non-renewable."],
+    fossil: ["fossil fuel", "A fuel made from plants and animals that died millions of years ago: coal, oil and natural gas."],
+    turbine: ["turbine", "A big wheel with blades. Moving wind, water or steam pushes the blades and makes it spin."],
+    generator: ["generator", "A machine with a spinning magnet inside a coil of wire. When it spins, it makes electricity."],
+    vacuum: ["vacuum", "Empty space with no particles at all – not even air."],
+  };
+  const w = (k, label) => `<button type="button" class="wd" data-w="${k}">${label || WORDS[k][0]}</button>`;
+  const f = (k, label) => `<button type="button" class="wd" data-f="${k}">${label || FORMS[k].label.toLowerCase()}</button>`;
+
+  // key words at the top (tap → meaning)
+  const KEYS = [["conservation", "⚖️", "Conservation", ""], ["efficient", "💡", "Efficient", ""], ["temperature", "🌡️", "Temperature", ""],
+    ["conduction", "🥄", "Conduction", ""], ["convection", "🌀", "Convection", ""], ["radiation", "☀️", "Radiation", ""], ["renewable", "♻️", "Renewable", "rn"]];
+
+  // 20 questions, easy → hard, the whole unit (no Sankey diagrams, no circuits). Only true/false, multiple choice and
+  // drag-and-drop (sort, match, energy chain, put in order). Similar to the Criterion A test, never the same situations.
+  const A = (e, c = "") => `<span class="${c}">${e}</span>`, AR = `<span class="arr">➜</span>`;
+  const QTYPE = { tf: "True or false?", mc: "Choose the answer", chain: "Energy chain", sort: "Sort them", match: "Match them", order: "Put in order" };
+  const QUIZ = [
+    { type: "tf", topic: "Energy", pic: A("🍫") + A("🏷️", "a-bounce"), q: `True or false? Energy is measured in ${w("joule", "joules (J)")}. A chocolate bar label shows its energy in kJ.`, ok: "t",
+      tip: "What does the J in kJ stand for?",
+      why: "The joule (J) is the unit of energy. Food labels use kilojoules: 1 kJ = 1000 J." },
+    { type: "mc", topic: "Heat and temperature", pic: A("🌡️", "a-pulse") + A("🤒"), q: `A nurse measures your ${w("temperature")}. Which unit does the thermometer show?`, ok: "b",
+      opts: [["a", "joules (J)"], ["b", "degrees Celsius (°C)"], ["c", "kilograms (kg)"], ["d", "metres (m)"]],
+      tip: "Temperature tells you how hot something is. Which unit does a weather forecast use?",
+      why: "Temperature is measured in degrees Celsius (°C). Joules are for energy, not temperature." },
+    { type: "match", topic: "Stores of energy", pic: A("🔋") + A("🎸", "a-shake") + A("🤸") + A("🐕", "a-slide") + A("🪨"),
+      q: "Drag the type of energy to each object.",
+      rows: [["🔋 a new battery", "chemical"], ["🎸 a guitar being played", "sound"], ["🤸 a stretched trampoline", "elastic"], ["🐕 a running dog", "kinetic"], ["🪨 a rock on the edge of a cliff", "gravitational"]],
+      traps: ["thermal", "nuclear"],
+      tip: "Ask: is it stored in a fuel or food? Is it moving? Is it high up? Is it stretched? Is it making a noise?",
+      why: "Battery: chemical. Guitar: sound. Stretched trampoline: elastic. Running dog: kinetic. Rock high on a cliff: gravitational." },
+    { type: "chain", topic: "Energy transfers", pic: A("🔦") + AR + A("💡", "a-glow"), q: "A torch runs on batteries. Build its energy chain: in the battery → in the wire → what comes out of the bulb.",
+      stages: [["chemical"], ["electrical"], ["light", "thermal"]], traps: ["kinetic", "sound"],
+      tip: "Batteries store chemical energy. A bulb gives out light – and gets warm.",
+      why: "Chemical energy in the battery → electrical energy in the wire → light energy (useful) + thermal energy (wasted) from the bulb." },
+    { type: "tf", topic: "Energy transfers", pic: A("🚲", "a-slide") + A("🛑"), q: `True or false? When a bike brakes and stops, its kinetic energy is destroyed.`, ok: "f",
+      tip: `Remember the law of ${w("conservation", "conservation of energy")}.`,
+      why: "Energy is never destroyed. The kinetic energy is transferred to thermal energy: the brakes and the wheels get warm (and a little sound)." },
+    { type: "sort", topic: "Useful and wasted energy", pic: A("💻") + A("🔊") + A("🔥", "a-flick"),
+      q: `A laptop takes in electrical energy. Sort what comes out: ${w("useful")} or ${w("wasted")}?`,
+      bins: [["u", "✅ Useful"], ["w", "🗑️ Wasted"]],
+      items: [["Light from the screen", "u"], ["Sound from the speakers playing music", "u"], ["Heat from the bottom of the laptop", "w"], ["Noise of the little fan inside", "w"]],
+      tip: "Useful = what you want the laptop to do. Wasted = what you do not need.",
+      why: "Useful: light from the screen and sound from the speakers. Wasted: heat (the laptop gets warm) and the fan's noise." },
+    { type: "mc", topic: "Useful and wasted energy", pic: A("📺") + A("⚡", "a-flick"), q: "A TV takes in 100 J of electrical energy every second. It gives out 70 J of useful light and sound. How much energy is wasted every second?", ok: "a",
+      opts: [["a", "30 J"], ["b", "70 J"], ["c", "170 J"], ["d", "0 J – energy cannot be wasted"]],
+      tip: "Energy in = useful energy out + wasted energy out. So wasted = energy in − useful.",
+      why: "Wasted energy = 100 J − 70 J = 30 J. It goes into the room as heat." },
+    { type: "mc", topic: "Efficiency", pic: A("🫖") + A("🫖"), q: `Two kettles each take in 2000 J. Kettle P puts 1800 J into the water. Kettle Q puts 1500 J into the water. Which kettle is more ${w("efficient")}?`, ok: "a",
+      opts: [["a", "Kettle P: more of its energy goes into the water, so it wastes less."], ["b", "Kettle Q: it wastes more energy, so it works harder."],
+        ["c", "They are the same: they both take in 2000 J."], ["d", "You cannot tell without a thermometer."]],
+      tip: "An efficient device turns more of the energy it takes in into useful energy.",
+      why: "Kettle P gives 1800 J of useful energy and wastes only 200 J. Kettle Q wastes 500 J. P is more efficient." },
+    { type: "mc", topic: "States of matter", pic: A("🧃") + A("🥛", "a-bounce"), q: `Which sentence describes the ${w("particles")} in a liquid, like juice?`, ok: "c",
+      opts: [["a", "Far apart, moving fast in all directions"], ["b", "Close together in rows, only vibrating in place"],
+        ["c", "Close together, but they can slide past each other"], ["d", "They do not move at all"]],
+      tip: "A liquid can flow and take the shape of its cup, but you cannot squash it.",
+      why: "In a liquid the particles are close together, but not in rows: they slide past each other, so the liquid flows." },
+    { type: "sort", topic: "States of matter", pic: A("🧊") + A("💧", "a-bounce") + A("💨", "a-float"), q: "Sort each sentence into the right state of matter.",
+      bins: [["s", "🧊 Solid"], ["l", "💧 Liquid"], ["g", "💨 Gas"]],
+      items: [["Keeps its own shape", "s"], ["Particles only vibrate in place", "s"], ["Takes the shape of its container, but keeps its volume", "l"],
+        ["Particles slide past each other", "l"], ["Spreads out to fill the whole container", "g"], ["Particles are far apart and move fast", "g"]],
+      tip: "Solid = fixed shape. Liquid = flows but keeps its volume. Gas = fills everything and can be squashed.",
+      why: "Solid: own shape, particles vibrate in place. Liquid: takes the container's shape, particles slide past each other. Gas: fills the whole container, particles far apart and fast." },
+    { type: "match", topic: "Changes of state", pic: A("🍦") + A("🫧", "a-float") + A("🪟") + A("❄️", "a-spin"), q: "Drag the name of each change of state.",
+      rows: [["🍦 An ice cream turns runny in the sun (solid → liquid)", "melting"], ["❄️ Water in a freezer turns to ice (liquid → solid)", "freezing"],
+        ["🫧 Water in a pan bubbles into steam (liquid → gas)", "boiling"], ["🪟 Drops form on a cold window in the bathroom (gas → liquid)", "condensing"]],
+      words: ["melting", "freezing", "boiling", "condensing", "dissolving"],
+      tip: "Melting and freezing are between solid and liquid. Boiling makes a gas. Condensing makes a gas into a liquid.",
+      why: "Ice cream: melting. Freezer: freezing. Bubbling pan: boiling. Drops on the window: condensing (condensation). Dissolving is not a change of state." },
+    { type: "mc", topic: "Heat and temperature", pic: A("🏞️") + A("☕", "a-float"), q: "A lake is at 15 °C. A cup of tea is at 85 °C. Which one has more thermal energy?", ok: "b",
+      opts: [["a", "The tea, because it has the higher temperature"], ["b", "The lake, because it has much more water (many more particles)"],
+        ["c", "They have the same thermal energy"], ["d", "The lake has no thermal energy, because it is cold"]],
+      tip: "Thermal energy depends on the temperature AND on how much stuff there is.",
+      why: "The tea is hotter (higher temperature), but the lake has millions of times more water. All its particles together hold much more thermal energy." },
+    { type: "tf", topic: "Heat and temperature", pic: A("🥶") + A("🍦"), q: "True or false? Your hand feels cold when you hold an ice lolly, because “cold” moves from the lolly into your hand.", ok: "f",
+      tip: "Which way does heat always move: from hot to cold, or from cold to hot?",
+      why: "There is no “cold” that moves. Heat moves from your warm hand into the lolly. Your hand loses heat, so it feels cold." },
+    { type: "sort", topic: "Heat transfer", pic: A("🔥", "a-flick") + A("🌀", "a-spin") + A("☀️", "a-spin"), q: `How is the heat transferred? Sort each card: ${w("conduction")}, ${w("convection")} or ${w("radiation")}.`,
+      bins: [["cd", "🥄 Conduction"], ["cv", "🌀 Convection"], ["rd", "☀️ Radiation"]],
+      items: [["A hot-water bottle warms your feet in bed", "cd"], ["An iron presses a shirt", "cd"], ["Warm air from a heater rises to the ceiling", "cv"],
+        ["Hot water rises in a pan on the cooker", "cv"], ["The Sun warms your face", "rd"], ["You feel warm next to a fireplace", "rd"]],
+      tip: "Touching a solid = conduction. A liquid or gas moving round = convection. Heat felt from a distance, with nothing touching = radiation.",
+      why: "Conduction: hot-water bottle, iron (touching). Convection: rising warm air, rising hot water. Radiation: the Sun, the fireplace (infrared waves)." },
+    { type: "mc", topic: "Conductors and insulators", pic: A("🍳") + A("🪵"), q: "A frying pan is made of metal, but its handle is made of wood. Why?", ok: "d",
+      opts: [["a", "Wood is a conductor, so the handle stays cool"], ["b", "Metal is an insulator, so the food cooks slowly"],
+        ["c", "Wood makes the pan lighter, so it heats faster"], ["d", "Metal is a good conductor for cooking; wood is an insulator, so you do not get burnt"]],
+      tip: "Which material lets heat through quickly? Which one stops it?",
+      why: "Metal conducts heat quickly from the cooker into the food. Wood is an insulator, so the heat does not reach your hand." },
+    { type: "mc", topic: "Radiation", pic: A("🏠") + A("☀️", "a-spin") + A("🚿"), q: "A solar water heater on a roof should take in as much of the Sun's radiation as possible. Which colour should its panel be?", ok: "c",
+      opts: [["a", "Shiny silver"], ["b", "White"], ["c", "Dull black"], ["d", "Shiny gold"]],
+      tip: "Which surfaces are the best absorbers of radiation? Think of the black, white and silver cans in the radiation experiment.",
+      why: "Dull, dark surfaces absorb radiation best. Shiny and light surfaces reflect it." },
+    { type: "tf", topic: "Insulation", pic: A("🧣") + A("❄️", "a-spin"), q: "True or false? A woolly scarf keeps you warm because the air trapped in it is a poor conductor of heat.", ok: "t",
+      tip: "Is air a conductor or an insulator?",
+      why: "Air is a poor conductor (an insulator). The air trapped in the wool slows down the heat leaving your body." },
+    { type: "sort", topic: "Energy resources", pic: A("♻️", "a-spin") + A("⛔"), q: `Sort each energy resource: ${w("renewable")} or ${w("nonrenewable")}?`,
+      bins: [["rn", "♻️ Renewable"], ["nr", "⛔ Non-renewable"]],
+      items: [["Sunlight on solar panels", "rn"], ["Waves at the coast", "rn"], ["Hot rocks deep underground (geothermal)", "rn"],
+        ["Diesel for a lorry (from oil)", "nr"], ["Natural gas for a cooker", "nr"], ["Uranium for a nuclear power station", "nr"]],
+      tip: "Will it run out one day, or does nature keep making more? Diesel is made from oil.",
+      why: "Renewable: sunlight, waves, geothermal. Non-renewable: diesel (oil), natural gas, uranium – they will run out." },
+    { type: "order", topic: "Making electricity", pic: A("☢️", "a-pulse") + AR + A("💨", "a-float") + AR + A("🌀", "a-spin") + AR + A("⚡", "a-flick"),
+      q: "How does a nuclear power station make electricity? Put the steps in order.",
+      items: ["☢️ Uranium in the reactor gives out heat", "💨 The heat boils water into steam", "🌀 The steam spins a turbine", "🧲 The turbine turns a generator", "⚡ The generator makes electricity"],
+      tip: "Start with where the heat comes from. What does the heat do to the water? What does the steam push?",
+      why: `Heat from the uranium → water boils into steam → steam spins the ${w("turbine")} → the turbine turns the ${w("generator")} → electricity.` },
+    { type: "mc", topic: "Choosing a resource", pic: A("🏖️") + A("🌊", "a-bounce") + A("🌕", "a-pulse"), q: "A town on the coast has big tides twice a day, but very little wind and many cloudy days. Which energy resource suits it best?", ok: "b",
+      opts: [["a", "Wind turbines, because they are renewable"], ["b", "Tidal power: it is renewable, and the tides come every day, even when it is cloudy and calm"],
+        ["c", "Solar panels, because the Sun is free"], ["d", "Coal, because it works day and night"]],
+      tip: "Look at what this town has a lot of – and what it does not have.",
+      why: "The town has big tides but little wind and sun. Tidal power is renewable, makes no CO₂, and the tides come at times we can predict. (Disadvantage: it is expensive to build and can harm sea life.)" },
+  ];
+
+  /* ============================ 4 ENGINE ============================ */
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs = {}, parent) => {
+    const e = document.createElementNS(NS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  };
+  const txt = (svg, x, y, s, attrs = {}) => { const t = el("text", { x, y, "font-size": 14, fill: "#37474F", "font-family": "Segoe UI, Calibri, Arial, sans-serif", ...attrs }, svg); t.textContent = s; return t; };
+  const h = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
+  const shuffle = (arr) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  function clamp(v, a = 0, b = 1) { return Math.max(a, Math.min(b, v)); }
+  const reduced = () => window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const shake = (e) => { e.classList.remove("shake"); void e.offsetWidth; e.classList.add("shake"); };
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const lerpCol = (a, b, t) => {
+    const p = (c) => [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16)), A = p(a), B = p(b);
+    return "#" + A.map((v, i) => Math.round(v + (B[i] - v) * clamp(t)).toString(16).padStart(2, "0")).join("");
+  };
+  const TEST = /[?&]test\b/.test(location.search);
+  const TEACHER = /[?&]teacher\b/.test(location.search);
+
+  /* Marie, the guide (same drawing as the Grade 6 Science skills simulation) */
+  const SPEX = `<svg class="spex" viewBox="0 0 100 100" data-mood="talk" aria-hidden="true">
+    <circle cx="50" cy="50" r="49" fill="#DCE3EA"/>
+    <path d="M24 47 Q20 15 50 13 Q80 14 77 47 L78 63 Q73 67 68 60 L32 60 Q27 66 22 61Z" fill="#3B2A22"/>
+    <path d="M10 100 Q12 76 50 71 Q88 76 90 100Z" fill="#7F8C6B"/>
+    <rect x="44.5" y="60" width="11" height="13" rx="3" fill="#E6BFA3"/>
+    <path d="M41 71 L50 86 L35 82Z" fill="#8E9B79" stroke="#6B775A" stroke-width="1"/><path d="M59 71 L50 86 L65 82Z" fill="#8E9B79" stroke="#6B775A" stroke-width="1"/>
+    <circle cx="50" cy="93" r="1.6" fill="#A1887F"/>
+    <circle cx="29.5" cy="47" r="4" fill="#E6BFA3"/><circle cx="70.5" cy="47" r="4" fill="#E6BFA3"/><circle cx="29.3" cy="52.5" r="1.4" fill="#26A69A"/>
+    <ellipse cx="50" cy="45" rx="20.5" ry="23" fill="#F0CDB4"/>
+    <path d="M29.5 41 Q29 20 45 18.5 Q63 16.5 72 30 Q74 38 72.5 47 Q67 34 57 31 Q49 29 45 25.5 Q39 31 29.5 41Z" fill="#3B2A22"/>
+    <path d="M44.5 19.5 Q47 23 45.5 27" stroke="#A8A29E" stroke-width="1.6" fill="none"/><path d="M50 21 Q63 21 70 32" stroke="#5A463C" stroke-width="1.2" fill="none"/>
+    <circle cx="37" cy="54" r="3.3" fill="#F48FB1" opacity=".35"/><circle cx="63" cy="54" r="3.3" fill="#F48FB1" opacity=".35"/>
+    <g class="brow" stroke="#3B2A22" stroke-width="1.6" fill="none" stroke-linecap="round"><path d="M35 35.5 q5 -2.5 10 -0.5"/><path d="M55 35 q5 -2 10 0.5"/></g>
+    <circle cx="41" cy="44" r="2.2" fill="#4E342E"/><circle cx="59" cy="44" r="2.2" fill="#4E342E"/>
+    <path d="M50 46 q-2.2 5 0 6.2" stroke="#D49F82" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+    <rect class="lens" x="32" y="37.5" width="16.5" height="13.5" rx="6" stroke="#B98A70" stroke-width="1.2"/>
+    <rect class="lens" x="51.5" y="37.5" width="16.5" height="13.5" rx="6" stroke="#B98A70" stroke-width="1.2"/>
+    <path d="M48.5 42 q1.5 -1.6 3 0 M32 41 L28 40 M68 41 L72 40" stroke="#B98A70" stroke-width="1.1" fill="none"/>
+    <ellipse class="m m-talk" cx="50" cy="58.5" rx="3.6" ry="2.6" fill="#B5545C"/>
+    <path class="m m-happy" d="M43 56.5 Q50 63.5 57 56.5Z" fill="#B5545C"/>
+    <path class="m m-think" d="M45.5 59 h8" stroke="#B5545C" stroke-width="2" stroke-linecap="round"/>
+    <circle class="m m-wow" cx="50" cy="59" r="3.2" fill="#B5545C"/>
+    <path class="m m-hmm" d="M44 59.5 q3 -2.2 6 0 t6 0" stroke="#B5545C" stroke-width="2" fill="none" stroke-linecap="round"/>
+  </svg>`;
+  function spexBar(name) {
+    const bar = document.querySelector(`[data-spex="${name}"]`);
+    if (bar && !bar.firstChild) bar.innerHTML = SPEX + `<div class="bubble" aria-live="polite"></div>`;
+    return bar;
+  }
+  function say(name, html, mood = "talk", cls = "") {
+    const bar = spexBar(name); if (!bar) return;
+    bar.querySelector(".spex").dataset.mood = mood;
+    const b = bar.querySelector(".bubble"); b.className = "bubble" + (cls ? " " + cls : ""); b.innerHTML = html;
+  }
+
+
+  /* sound: off by default; tiny tones made in the browser */
+  let actx = null;
+  function beep(fq, d, type = "sine", v = 0.06, when = 0) {
+    if (!P.sound) return;
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + when;
+      o.type = type; o.frequency.value = fq; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + d + 0.02);
+    } catch (e) {}
+  }
+  const SND = {
+    click: () => beep(1400, 0.04, "square", 0.04),
+    tick: () => beep(2200, 0.02, "square", 0.02),
+    thud: (i) => beep(110, 0.14, "triangle", 0.1 * (1 - i * 0.22)),
+    star: () => { beep(660, 0.12); beep(990, 0.18, "sine", 0.06, 0.1); },
+    tip: () => beep(250, 0.22, "triangle", 0.07),
+    badge: () => [523, 659, 784, 1047].forEach((fq, i) => beep(fq, 0.18, "sine", 0.06, i * 0.11)),
+  };
+
+  /* progress: saved in this browser */
+  const STORE = "g6-testyourself-energy-v1";
+  const P = { sc: {}, quiz: { i: 0, st: [], best: null }, badges: {}, name: "", sound: false, seenIntro: false };
+  function save() { try { localStorage.setItem(STORE, JSON.stringify(P)); } catch (e) {} }
+  function load() { try { const d = JSON.parse(localStorage.getItem(STORE) || "null"); for (const k in d || {}) if (k in P) P[k] = d[k]; P.sc = P.sc || {}; } catch (e) {} }
+  const SP = (id) => (P.sc[id] = P.sc[id] || { pred: null, watched: false, stars: null });
+  const isDone = (id) => SP(id).stars != null;
+  const unlocked = () => true;                                   // all open (teacher, 26 Oct 2026)
+  const starsOf = (st) => (st.revealed ? 0 : st.mistakes ? 2 : 3);
+  const meanStars = (sts) => Math.round(sts.reduce((s, st) => s + starsOf(st), 0) / Math.max(1, sts.length));
+  const starsHTML = (n, of = 3) => `<span class="stars" aria-label="${n} stars">${"★".repeat(n)}<span class="off">${"★".repeat(Math.max(0, of - n))}</span></span>`;
+  const quizNow = () => P.quiz.st.reduce((a, n) => a + (n || 0), 0);
+  const quizDone = () => QUIZ.every((_, i) => P.quiz.st[i] != null);   // finished = every question has stars (any order)
+  const nextOpen = (n) => { for (let k = 1; k <= QUIZ.length; k++) { const j = (n + k) % QUIZ.length; if (P.quiz.st[j] == null) return j; } return -1; };
+  const quizStars = () => Math.max(P.quiz.best || 0, quizDone() ? quizNow() : 0);
+  const totalStars = () => quizStars();                          // quiz only (teacher, 27 Oct 2026)
+  function toast(msg) { const t = $("toast"); t.innerHTML = msg; t.classList.remove("on"); void t.offsetWidth; t.classList.add("on"); clearTimeout(toast.k); toast.k = setTimeout(() => t.classList.remove("on"), 3400); }
+
+  /* judge: one answer = one judge. 1st wrong → a tip, 2nd wrong → reveal() shows the answer. */
+  function judge({ fb, spex, tip, answer, good, reveal, onDone }) {
+    const st = { mistakes: 0, revealed: false, done: false };
+    return {
+      st,
+      ok(extra = "") {
+        if (st.done) return; st.done = true;
+        fbSet(fb, "good", `✔ ${good}${extra}`);
+        spex && say(spex, st.mistakes ? "Yes! You got it after the tip. ★★" : "Brilliant – right first time! ★★★", "happy", "good");
+        SND.star();
+        onDone && onDone(st);
+      },
+      bad(tipOverride) {
+        if (st.done) return;
+        st.mistakes++; SND.tip();
+        if (st.mistakes === 1) {
+          fbSet(fb, "tip", "💡 Tip: " + (tipOverride || tip));
+          spex && say(spex, "Hmm, not quite. Read my tip and try again!", "hmm", "tip");
+        } else {
+          st.revealed = true; st.done = true;
+          reveal && reveal();
+          fbSet(fb, "ans", "The answer: " + answer);
+          spex && say(spex, "Here is the answer – read why, and you'll get the next one!", "think", "ans");
+          onDone && onDone(st);
+        }
+      },
+    };
+  }
+  function fbSet(e, cls, html) { e.className = "feedback " + cls; e.innerHTML = html; }
+  const qline = (n, html) => h(`<p class="q"><span><span class="qn">${n}</span>${html}</span></p>`);
+  const formBtn = (k) => `<span class="fi" style="--c:${FORMS[k].col}">${FORMS[k].em}</span>${FORMS[k].label}`;
+
+  /* multiple choice. opts = [value, html]; correct = value */
+  function ask({ box, opts, correct, tip, answer, good, spex, cls = "", onDone }) {
+    const wrap = h(`<div class="cats ${cls}"></div>`), fb = h(`<div class="feedback" aria-live="polite"></div>`);
+    box.append(wrap, fb);
+    const btns = opts.map(([v, html]) => { const b = h(`<button class="cat" data-v="${v}">${html}</button>`); wrap.appendChild(b); return b; });
+    if (TEST) btns.forEach((b) => b.dataset.v === correct && (b.dataset.ok = "1"));
+    const J = judge({ fb, spex, tip, answer, good, onDone: (st) => { btns.forEach((b) => (b.disabled = true)); onDone && onDone(st); },
+      reveal: () => btns.forEach((x) => x.dataset.v === correct && x.classList.add("right")) });
+    btns.forEach((b) => (b.onclick = () => {
+      if (J.st.done) return;
+      if (b.dataset.v === correct) { b.classList.add("right"); J.ok(); }
+      else { b.classList.add("wrong"); b.disabled = true; J.bad(); }
+    }));
+    return J.st;
+  }
+
+  /* drag, or tap then tap. Items: .tile. Targets: anything matching targetSel. */
+  let SEL = null;
+  function unselect() { if (SEL) SEL.classList.remove("sel"); SEL = null; }
+  function draggable(item, targetSel, drop) {
+    item.addEventListener("click", (e) => {
+      if (item.dataset.dragged) { delete item.dataset.dragged; e.stopPropagation(); return; }
+      if (item.dataset.locked) return;
+      e.stopPropagation();
+      if (item.closest(".slot") && !SEL) { drop(item, null); return; }      // tap a filled gap: the tile goes back
+      const same = SEL === item; unselect();
+      if (!same) { SEL = item; item.classList.add("sel"); }
+    });
+    item.addEventListener("pointerdown", (e) => {
+      if (e.button > 0 || item.dataset.locked) return;
+      const sx = e.clientX, sy = e.clientY;
+      let ghost = null, hot = null;
+      try { item.setPointerCapture(e.pointerId); } catch (er) {}
+      const at = (x, y) => { const t = document.elementFromPoint(x, y); return t && t.closest(targetSel); };
+      const move = (ev) => {
+        if (!ghost && Math.hypot(ev.clientX - sx, ev.clientY - sy) > 6) {
+          ghost = item.cloneNode(true); ghost.classList.add("drag-ghost"); ghost.classList.remove("sel");
+          document.body.appendChild(ghost); item.classList.add("lifting");
+        }
+        if (!ghost) return;
+        ghost.style.left = ev.clientX + "px"; ghost.style.top = ev.clientY + "px";
+        const s = at(ev.clientX, ev.clientY);
+        if (s !== hot) { hot && hot.classList.remove("hot"); hot = s; hot && hot.classList.add("hot"); }
+      };
+      const up = (ev) => {
+        item.removeEventListener("pointermove", move); item.removeEventListener("pointerup", up); item.removeEventListener("pointercancel", up);
+        if (!ghost) return;
+        item.dataset.dragged = "1"; setTimeout(() => delete item.dataset.dragged, 0);
+        ghost.remove(); item.classList.remove("lifting"); hot && hot.classList.remove("hot");
+        const s = ev.type === "pointerup" && at(ev.clientX, ev.clientY);
+        if (s) { unselect(); drop(item, s); }
+      };
+      item.addEventListener("pointermove", move); item.addEventListener("pointerup", up); item.addEventListener("pointercancel", up);
+    });
+  }
+
+  /* energy chain: stages = [[form], [form, form]…]; the forms inside one stage may go in any order */
+  const tileHTML = (k) => `<button class="tile" data-v="${k}" style="--c:${FORMS[k].col}">${FORMS[k].em} ${FORMS[k].tile}</button>`;
+  function chainQ({ box, stages, traps, tip, why = "", spex, onDone }) {
+    const row = h(`<div class="chain" aria-label="Energy chain"></div>`), bank = h(`<div class="bank" aria-label="Energy tiles"></div>`);
+    const chk = h(`<div class="controls"><button class="btn navy">✔ Check</button></div>`), fb = h(`<div class="feedback" aria-live="polite"></div>`);
+    const slots = [];
+    stages.forEach((g, gi) => {
+      if (gi) row.append(h(`<span class="to" aria-label="changes into">➜</span>`));
+      const grp = h(`<span class="grp"></span>`);
+      g.forEach((_, k) => { if (k) grp.append(h(`<span class="plus">+</span>`)); const s = h(`<span class="slot" role="button" tabindex="0" aria-label="gap"></span>`); s.dataset.g = gi; grp.append(s); slots.push(s); });
+      row.append(grp);
+    });
+    box.append(row, h(`<div class="hint">Drag a tile into each gap – or tap a tile, then tap a gap. <b>+</b> means "and".</div>`), bank, chk, fb);
+    const tiles = shuffle([...stages.flat(), ...traps]).map((k) => { const t = h(tileHTML(k)); bank.appendChild(t); return t; });
+    const place = (t, target) => {
+      if (J.st.done) return;
+      if (!target || target === bank) { bank.appendChild(t); return; }
+      const slot = target.closest(".slot"); if (!slot) return;
+      const old = slot.querySelector(".tile"); if (old && old !== t) bank.appendChild(old);
+      slot.classList.remove("wrong"); slot.appendChild(t);
+    };
+    tiles.forEach((t) => draggable(t, ".slot, .bank", place));
+    slots.forEach((s) => s.addEventListener("click", () => { if (SEL && !s.contains(SEL)) { const t = SEL; unselect(); place(t, s); } }));
+    bank.addEventListener("click", () => { if (SEL) { const t = SEL; unselect(); place(t, bank); } });
+    const val = (s) => s.querySelector(".tile")?.dataset.v;
+    const groupOK = (gi) => { const got = slots.filter((s) => +s.dataset.g === gi).map(val).sort().join(); return got === stages[gi].slice().sort().join(); };
+    const chainText = stages.map((g) => g.map((k) => FORMS[k].tile).join(" + ")).join(" → ");
+    const J = judge({ fb, spex, tip, answer: `<b>${chainText}</b>. ${why}`, good: `<b>${chainText}</b>. ${why}`,
+      onDone: (st) => { chk.hidden = true; tiles.forEach((t) => (t.dataset.locked = "1")); onDone && onDone(st); },
+      reveal: () => {
+        slots.forEach((s) => { const t = s.querySelector(".tile"); if (t) bank.appendChild(t); });
+        const used = new Set();
+        stages.forEach((g, gi) => slots.filter((s) => +s.dataset.g === gi).forEach((s, k) => {
+          const t = tiles.find((x) => !used.has(x) && x.dataset.v === g[k]); used.add(t); s.appendChild(t); s.classList.remove("wrong"); s.classList.add("right");
+        }));
+      } });
+    chk.querySelector("button").onclick = () => {
+      if (slots.some((s) => !val(s))) { fbSet(fb, "info", "Fill every gap first."); shake(row); return; }
+      const bad = stages.map((_, gi) => gi).filter((gi) => !groupOK(gi));
+      if (!bad.length) { slots.forEach((s) => s.classList.add("right")); return J.ok(); }
+      const wrongSlots = slots.filter((s) => bad.includes(+s.dataset.g));
+      wrongSlots.forEach((s) => s.classList.add("wrong"));
+      if (J.st.mistakes === 0) setTimeout(() => wrongSlots.forEach((s) => { const t = s.querySelector(".tile"); if (!J.st.done && t) { bank.appendChild(t); s.classList.remove("wrong"); } }), 900);
+      J.bad();
+    };
+    return J.st;
+  }
+
+  /* tap the forms: need = all of these; also = may be tapped too (not wrong) */
+  function tapQ({ box, need, also = [], tip, why, spex, onDone }) {
+    const grid = h(`<div class="pickgrid"></div>`), chk = h(`<div class="controls"><button class="btn navy">✔ Check</button></div>`), fb = h(`<div class="feedback" aria-live="polite"></div>`);
+    box.append(grid, chk, fb);
+    const pks = ORDER.map((k) => { const b = h(`<button class="pk" aria-pressed="false" data-f="${k}"><span class="em" style="--c:${FORMS[k].col}">${FORMS[k].em}</span><span>${FORMS[k].label}</span></button>`); grid.append(b); return b; });
+    if (TEST) pks.forEach((b) => need.includes(b.dataset.f) && (b.dataset.ok = "1"));
+    pks.forEach((b) => (b.onclick = () => { if (J.st.done) return; b.classList.remove("wrong"); b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") !== "true"); }));
+    const names = need.map((k) => FORMS[k].label.toLowerCase()).join(" + ");
+    const J = judge({ fb, spex, tip, answer: `<b>${names}</b>. ${why}`, good: `<b>${names}</b>. ${why}`,
+      onDone: (st) => { chk.hidden = true; pks.forEach((b) => (b.disabled = true)); onDone && onDone(st); },
+      reveal: () => pks.forEach((b) => { const on = need.includes(b.dataset.f); b.setAttribute("aria-pressed", on); b.classList.remove("wrong"); b.classList.toggle("right", on); }) });
+    chk.querySelector("button").onclick = () => {
+      const sel = pks.filter((b) => b.getAttribute("aria-pressed") === "true").map((b) => b.dataset.f);
+      if (!sel.length) { fbSet(fb, "info", "Tap the forms of energy first."); shake(grid); return; }
+      const missing = need.filter((k) => !sel.includes(k)), extra = sel.filter((k) => !need.includes(k) && !also.includes(k));
+      if (!missing.length && !extra.length) { pks.forEach((b) => need.includes(b.dataset.f) && b.classList.add("right")); return J.ok(); }
+      pks.forEach((b) => extra.includes(b.dataset.f) && b.classList.add("wrong"));
+      J.bad((extra.length ? "The red one is not right. " : "") + (missing.length ? `You missed ${missing.length === 1 ? "one" : missing.length}. ` : "") + tip);
+    };
+    return J.st;
+  }
+
+  /* missing joules: the number AND the unit (J) */
+  function joulesQ({ box, value, tip, why, spex, onDone }) {
+    const row = h(`<div class="numrow"><input class="num" autocomplete="off" placeholder="e.g. 5 J" aria-label="Your answer with the unit"><button class="btn navy">✔ Check</button></div>`);
+    const fb = h(`<div class="feedback" aria-live="polite"></div>`);
+    box.append(row, h(`<div class="hint">Type the number <b>and</b> the unit of energy.</div>`), fb);
+    const inp = row.querySelector("input"), btn = row.querySelector("button");
+    if (TEST) inp.dataset.val = value + " J";
+    const J = judge({ fb, spex, tip, answer: `<b>${value} J</b>. ${why || "The total stays the same."}`, good: `<b>${value} J</b>. ${why || "The total stays the same!"}`,
+      onDone: (st) => { inp.disabled = true; btn.hidden = true; onDone && onDone(st); },
+      reveal: () => { inp.value = value + " J"; inp.classList.remove("wrong"); inp.classList.add("right"); } });
+    const go = () => {
+      const m = inp.value.trim().match(/^(-?\d+(?:[.,]\d+)?)\s*(.*)$/);
+      if (!m) { fbSet(fb, "info", "Type a number first, then the unit."); inp.focus(); return; }
+      const v = parseFloat(m[1].replace(",", ".")), unit = m[2].trim().replace(/\.$/, "");
+      const unitOK = /^(j|joules?)$/i.test(unit);
+      if (Math.abs(v - value) < 1e-9) {
+        if (!unitOK) { fbSet(fb, "info", unit ? `✔ The number is right! But “${esc(unit)}” is not the unit of energy. Energy is measured in <b>joules (J)</b>.` : `✔ The number is right! Now add the unit of energy after it: <b>J</b> (joules).`); inp.focus(); return; }
+        inp.classList.remove("wrong"); inp.classList.add("right"); J.ok();
+      } else { inp.classList.add("wrong"); J.bad(); inp.select(); }
+    };
+    btn.onclick = go; inp.addEventListener("keydown", (e) => { if (e.key === "Enter") go(); });
+    return J.st;
+  }
+
+
+
+  /* ============================ 5 MORE QUESTION TYPES ============================ */
+  SND.drop = () => beep(520, 0.06, "triangle", 0.05);
+
+  /* sort cards into 2 or 3 boxes. bins = [[key, title]], items = [text, key] */
+  function sortQ({ box, bins, items, tip, why, spex, onDone }) {
+    const bank = h(`<div class="bank" aria-label="Cards to sort"></div>`);
+    const binsEl = h(`<div class="bins c${bins.length}">${bins.map(([k, t]) => `<div class="bin b-${k}" data-k="${k}" role="button" tabindex="0"><h4>${t}</h4></div>`).join("")}</div>`);
+    const chk = h(`<div class="controls"><button class="btn navy">✔ Check</button></div>`), fb = h(`<div class="feedback" aria-live="polite"></div>`);
+    box.append(h(`<div class="hint">Drag each card into a box – or tap a card, then tap a box.</div>`), bank, binsEl, chk, fb);
+    const tiles = shuffle(items.map(([t, k]) => ({ t, k }))).map((it) => { const e = h(`<button class="tile" data-k="${it.k}">${esc(it.t)}</button>`); bank.append(e); return e; });
+    if (TEST) tiles.forEach((t) => (t.dataset.ok = t.dataset.k));
+    const place = (t, target) => {
+      if (J.st.done) return;
+      const bin = target && target.closest && target.closest(".bin");
+      t.classList.remove("wrong");
+      if (!bin) { bank.append(t); return; }
+      bin.append(t); SND.drop();
+    };
+    tiles.forEach((t) => draggable(t, ".bin, .bank", place));
+    binsEl.querySelectorAll(".bin").forEach((b) => b.addEventListener("click", (e) => { if (SEL && !e.target.closest(".tile")) { const t = SEL; unselect(); place(t, b); } }));
+    bank.addEventListener("click", (e) => { if (SEL && !e.target.closest(".tile")) { const t = SEL; unselect(); place(t, bank); } });
+    const J = judge({ fb, spex, tip, answer: why, good: why,
+      onDone: (st) => { chk.hidden = true; tiles.forEach((t) => (t.dataset.locked = "1")); onDone && onDone(st); },
+      reveal: () => tiles.forEach((t) => { binsEl.querySelector(`.bin[data-k="${t.dataset.k}"]`).append(t); t.classList.remove("wrong"); t.classList.add("right"); }) });
+    chk.querySelector("button").onclick = () => {
+      if (tiles.some((t) => !t.closest(".bin"))) { fbSet(fb, "info", "Put every card into a box first."); shake(bank); return; }
+      const bad = tiles.filter((t) => t.closest(".bin").dataset.k !== t.dataset.k);
+      if (!bad.length) { tiles.forEach((t) => t.classList.add("right")); return J.ok(); }
+      bad.forEach((t) => t.classList.add("wrong"));
+      if (J.st.mistakes === 0) setTimeout(() => bad.forEach((t) => { if (!J.st.done) { bank.append(t); t.classList.remove("wrong"); } }), 1100);
+      J.bad(`${bad.length === 1 ? "One card is" : bad.length + " cards are"} in the wrong box. ` + tip);
+    };
+    return J.st;
+  }
+
+  /* match: one gap per row. rows = [label, answer]; answers are energy forms (traps = extra forms) or words (words = all tiles) */
+  function matchQ({ box, rows, traps, words, tip, why, spex, onDone }) {
+    const list = h(`<div class="olist mlist"></div>`), bank = h(`<div class="bank" aria-label="Tiles"></div>`);
+    const chk = h(`<div class="controls"><button class="btn navy">✔ Check</button></div>`), fb = h(`<div class="feedback" aria-live="polite"></div>`);
+    const slots = rows.map(([lab, ans], i) => { const r = h(`<div class="orow mrow"><span class="mlab">${esc(lab)}</span><span class="slot oslot" role="button" tabindex="0" aria-label="gap ${i + 1}"></span></div>`); list.append(r); const s = r.querySelector(".slot"); s.dataset.a = ans; return s; });
+    const extra = (traps || []).length + (words ? words.length - rows.length : 0);
+    const wrap = h(`<div class="mwrap"></div>`); wrap.append(list, bank);
+    box.append(h(`<div class="hint">Drag a tile into each gap – or tap a tile, then tap a gap. ${extra > 1 ? extra + " tiles are" : "One tile is"} not needed.</div>`), wrap, chk, fb);
+    const pool = words ? words.slice() : [...rows.map((r) => r[1]), ...(traps || [])];
+    const tiles = shuffle(pool).map((k) => { const t = h(FORMS[k] && !words ? tileHTML(k) : `<button class="tile" data-v="${esc(k)}">${esc(k)}</button>`); bank.append(t); return t; });
+    if (TEST) slots.forEach((s, i) => (s.dataset.i = i));
+    const place = (t, target) => {
+      if (J.st.done) return;
+      if (!target || target === bank) { bank.appendChild(t); return; }
+      const slot = target.closest(".slot"); if (!slot) return;
+      const old = slot.querySelector(".tile"); if (old && old !== t) bank.appendChild(old);
+      slot.classList.remove("wrong"); slot.appendChild(t); SND.drop();
+    };
+    tiles.forEach((t) => draggable(t, ".slot, .bank", place));
+    slots.forEach((s) => s.addEventListener("click", () => { if (SEL && !s.contains(SEL)) { const t = SEL; unselect(); place(t, s); } }));
+    bank.addEventListener("click", () => { if (SEL) { const t = SEL; unselect(); place(t, bank); } });
+    const J = judge({ fb, spex, tip, answer: why, good: why,
+      onDone: (st) => { chk.hidden = true; tiles.forEach((t) => (t.dataset.locked = "1")); onDone && onDone(st); },
+      reveal: () => {
+        slots.forEach((s) => { const t = s.querySelector(".tile"); if (t) bank.appendChild(t); });
+        const used = new Set();
+        slots.forEach((s) => { const t = tiles.find((x) => !used.has(x) && x.dataset.v === s.dataset.a); used.add(t); s.appendChild(t); s.classList.remove("wrong"); s.classList.add("right"); });
+      } });
+    chk.querySelector("button").onclick = () => {
+      if (slots.some((s) => !s.querySelector(".tile"))) { fbSet(fb, "info", "Fill every gap first."); shake(list); return; }
+      const bad = slots.filter((s) => s.querySelector(".tile").dataset.v !== s.dataset.a);
+      if (!bad.length) { slots.forEach((s) => s.classList.add("right")); return J.ok(); }
+      bad.forEach((s) => s.classList.add("wrong"));
+      if (J.st.mistakes === 0) setTimeout(() => bad.forEach((s) => { const t = s.querySelector(".tile"); if (!J.st.done && t) { bank.appendChild(t); s.classList.remove("wrong"); } }), 1100);
+      J.bad(`${bad.length === 1 ? "One gap is" : bad.length + " gaps are"} not right. ` + tip);
+    };
+    return J.st;
+  }
+
+  /* put in order: drag or tap each card into the numbered gaps 1…n */
+  function orderQ({ box, items, tip, why, spex, onDone }) {
+    const row = h(`<div class="olist"></div>`), bank = h(`<div class="bank" aria-label="Cards"></div>`);
+    const chk = h(`<div class="controls"><button class="btn navy">✔ Check</button></div>`), fb = h(`<div class="feedback" aria-live="polite"></div>`);
+    const slots = items.map((_, i) => { const r = h(`<div class="orow"><span class="qn">${i + 1}</span><span class="slot oslot" role="button" tabindex="0" aria-label="gap ${i + 1}"></span></div>`); row.append(r); const s = r.querySelector(".slot"); s.dataset.i = i; return s; });
+    box.append(h(`<div class="hint">Drag each card into a gap – or tap a card, then tap a gap.</div>`), bank, row, chk, fb);
+    const tiles = shuffle(items.map((t, i) => ({ t, i }))).map((it) => { const e = h(`<button class="tile" data-i="${it.i}">${esc(it.t)}</button>`); bank.append(e); return e; });
+    if (TEST) tiles.forEach((t) => (t.dataset.ok = t.dataset.i));
+    const place = (t, target) => {
+      if (J.st.done) return;
+      if (!target || target === bank) { bank.appendChild(t); return; }
+      const slot = target.closest(".slot"); if (!slot) return;
+      const old = slot.querySelector(".tile"); if (old && old !== t) bank.appendChild(old);
+      slot.classList.remove("wrong"); slot.appendChild(t); SND.drop();
+    };
+    tiles.forEach((t) => draggable(t, ".slot, .bank", place));
+    slots.forEach((s) => s.addEventListener("click", () => { if (SEL && !s.contains(SEL)) { const t = SEL; unselect(); place(t, s); } }));
+    bank.addEventListener("click", () => { if (SEL) { const t = SEL; unselect(); place(t, bank); } });
+    const J = judge({ fb, spex, tip, answer: why, good: why,
+      onDone: (st) => { chk.hidden = true; tiles.forEach((t) => (t.dataset.locked = "1")); onDone && onDone(st); },
+      reveal: () => { tiles.forEach((t) => { const s = slots[+t.dataset.i]; s.appendChild(t); s.classList.remove("wrong"); s.classList.add("right"); }); } });
+    chk.querySelector("button").onclick = () => {
+      if (slots.some((s) => !s.querySelector(".tile"))) { fbSet(fb, "info", "Fill every gap first."); shake(row); return; }
+      const bad = slots.filter((s) => s.querySelector(".tile").dataset.i !== s.dataset.i);
+      if (!bad.length) { slots.forEach((s) => s.classList.add("right")); return J.ok(); }
+      bad.forEach((s) => s.classList.add("wrong"));
+      if (J.st.mistakes === 0) setTimeout(() => bad.forEach((s) => { const t = s.querySelector(".tile"); if (!J.st.done && t) { bank.appendChild(t); s.classList.remove("wrong"); } }), 1100);
+      J.bad(`${bad.length} ${bad.length === 1 ? "step is" : "steps are"} in the wrong place. ` + tip);
+    };
+    return J.st;
+  }
+
+  /* ============================ 6 UI ============================ */
+  function quizDots(cur = P.quiz.i) {
+    const Z = P.quiz;
+    $("qDots").innerHTML = QUIZ.map((_, i) => { const s = Z.st[i]; return `<button type="button" class="dot${i === cur ? " now" : ""}${s != null ? " s" + s : ""}" data-q="${i}" title="Go to question ${i + 1}" aria-label="Question ${i + 1}${s != null ? ", answered" : ""}">${i + 1}</button>`; }).join("");
+    $("qDots").onclick = (e) => { const d = e.target.closest(".dot"); if (!d) return; P.quiz.i = +d.dataset.q; save(); openQuiz(); $("quiz").scrollTop = 0; };
+  }
+  function showNext(nx) {
+    const pn = $("quiz"), r = nx.getBoundingClientRect(), pr = pn.getBoundingClientRect();
+    if (pn.scrollHeight > pn.clientHeight + 1 && r.bottom > pr.bottom) pn.scrollTop += r.bottom - pr.bottom + 12;
+    const r2 = nx.getBoundingClientRect(); if (r2.bottom > innerHeight - 40 || r2.top < 0) nx.scrollIntoView({ block: "center" });
+  }
+  const TALK = ["Next one! Read the question carefully.", "Take your time – the key words at the top can help.", "Think of what we did in class and in the simulations.", "Tap a word with a dotted line if you are not sure what it means."];
+  function openQuiz() {
+    const Z = P.quiz, box = $("quizBox"); box.replaceChildren(); box.dataset.n = Z.i;
+    box.classList.toggle("drag", Z.i < QUIZ.length && !["tf", "mc"].includes(QUIZ[Z.i].type));
+    quizDots();
+    if (Z.i >= QUIZ.length) return quizResult();
+    const n = Z.i, q = QUIZ[n];
+    box.append(h(`<div class="qhead"><span class="qtype">${QTYPE[q.type]} · ${q.topic}</span><span class="of">Question ${n + 1} of ${QUIZ.length}</span><button class="btn small primary qtop" disabled title="Answer the question first">${[-1, n].includes(nextOpen(n)) ? "See my result →" : "Next question →"}</button></div>`),
+      h(`<div class="qpic" aria-hidden="true">${q.pic}</div>`), qline(n + 1, q.q));
+    const c = h(`<div class="part"></div>`); box.append(c);
+    say("quiz", n === 0 ? "Hi! 20 questions about the whole energy unit. Are you ready for your test? Let's find out!" : TALK[n % TALK.length], "talk");
+    const done = (st) => {
+      Z.st[n] = starsOf(st); const nn = nextOpen(n); Z.i = nn < 0 ? QUIZ.length : nn; save(); quizDots(n); refreshStars();
+      const last = nn < 0, nx = h(`<div class="controls"><button class="btn primary">${last ? "See my result →" : "Next question →"}</button></div>`);
+      const go = () => { openQuiz(); const pn = $("quiz"); pn.scrollTop = 0; pn.scrollIntoView({ behavior: "auto", block: "start" }); };
+      nx.querySelector("button").onclick = go;
+      const top = box.querySelector(".qtop"); if (top) { top.disabled = false; top.title = ""; top.classList.add("go"); top.onclick = go; }
+      box.append(nx); showNext(nx);
+    };
+    if (q.type === "tf") ask({ box: c, opts: [["t", "✔ True"], ["f", "✗ False"]], correct: q.ok, cls: "tf", tip: q.tip,
+      answer: `<b>${q.ok === "t" ? "True" : "False"}</b>. ${q.why}`, good: `<b>${q.ok === "t" ? "True" : "False"}</b>. ${q.why}`, spex: "quiz", onDone: done });
+    else if (q.type === "mc") { const ok = q.opts.find(([v]) => v === q.ok)[1].replace(/\.$/, "") + ".";
+      ask({ box: c, opts: shuffle(q.opts), correct: q.ok, cls: "wide", tip: q.tip, answer: `<b>${ok}</b> ${q.why}`, good: `<b>${ok}</b> ${q.why}`, spex: "quiz", onDone: done }); }
+    else if (q.type === "sort") sortQ({ box: c, bins: q.bins, items: q.items, tip: q.tip, why: q.why, spex: "quiz", onDone: done });
+    else if (q.type === "match") matchQ({ box: c, rows: q.rows, traps: q.traps, words: q.words, tip: q.tip, why: q.why, spex: "quiz", onDone: done });
+    else if (q.type === "order") orderQ({ box: c, items: q.items, tip: q.tip, why: q.why, spex: "quiz", onDone: done });
+    else chainQ({ box: c, stages: q.stages, traps: q.traps, tip: q.tip, why: q.why, spex: "quiz", onDone: done });
+  }
+  function quizResult() {
+    const Z = P.quiz, now = quizNow(), max = QUIZ.length * 3, first = Z.best == null;
+    if (first || now > Z.best) { Z.best = now; save(); }
+    refreshStars();
+    const right = Z.st.filter((s) => s === 3).length;
+    // topics to revise = questions without full stars
+    const weak = [...new Set(QUIZ.filter((_, i) => (Z.st[i] || 0) < 3).map((q) => q.topic))];
+    const res = h(`<div class="result"><div class="big">🧠 ★ ${now} of ${max}</div>
+      <div style="font-size:20px">Finished! ${right} of ${QUIZ.length} right first time.${first ? " You won the <b>Energy expert</b> badge." : ` Your best: ★ ${Z.best}.`}</div>
+      ${weak.length ? `<div class="revise"><b>📚 Revise before your test:</b> ${weak.join(" · ")}</div>` : `<div class="revise ok"><b>🎉 Every question right first time.</b> You are ready for your test!</div>`}
+      <div class="qlist">${QUIZ.map((q, i) => `<div><span>${i + 1}. ${q.topic}</span>${starsHTML(Z.st[i] || 0)}</div>`).join("")}</div>
+      <div class="controls"><button class="btn primary" data-a="cert">🏅 My certificate</button><button class="btn" data-a="again">↺ Test myself again</button></div></div>`);
+    res.querySelector('[data-a="cert"]').onclick = () => showTab("cert");
+    res.querySelector('[data-a="again"]').onclick = () => { Z.i = 0; Z.st = []; save(); openQuiz(); };
+    $("quizBox").append(res);
+    say("quiz", now >= 54 ? "Fantastic – you really know your energy! 🎉" : now >= 40 ? "Well done! Revise the topics in the list, then try to beat your best score." : "Good try! Revise the topics in the list with your study guide, then test yourself again.", "happy", "good");
+  }
+
+  const BADGES = [{ id: "quiz", em: "🧠", name: "Energy expert", how: "all 20 questions", got: () => P.quiz.best != null }];
+  function refreshStars() {
+    const n = quizStars();
+    $("starSum").textContent = "★ " + n;
+    document.querySelector('[data-ts="quiz"]').textContent = n ? " ★" + n : "";
+    for (const b of BADGES) if (!P.badges[b.id] && b.got()) {
+      P.badges[b.id] = new Date().toISOString().slice(0, 10);
+      toast(`${b.em} New badge: <b>${b.name}</b>!`); SND.badge();
+    }
+    save();
+  }
+  function certHTML() {
+    return `<div class="seal">★ ${quizStars()}</div>
+      <div class="marie">${SPEX.replace('data-mood="talk"', 'data-mood="happy"').replace('class="spex"', 'class="spex" style="width:100%;height:auto"')}</div>
+      <div class="t1">Certificate · Test yourself · Thinking about Energy</div>
+      <div class="t2">Energy Expert</div>
+      <div><div class="for">This certificate is awarded to</div><div class="who">${esc(P.name) || "&nbsp;"}</div>
+        <div class="for" style="margin-top:.6%">for testing myself on the whole energy unit with Marie · ★ ${quizStars()} of ${QUIZ.length * 3}</div>
+        <div class="law2" style="margin-top:.6%">⚖️ Energy cannot be created or destroyed. It can only be transferred from one store to another.</div></div>
+      <div class="badges" style="grid-template-columns:minmax(0,1fr);width:24%;margin:0 auto">${BADGES.map((b) => `<div class="badge${P.badges[b.id] ? " on" : ""}"><span class="em">${b.em}</span><b>${b.name}</b><span class="how">${P.badges[b.id] ? "✓ " + new Date(P.badges[b.id]).toLocaleDateString() : b.how}</span></div>`).join("")}</div>
+      <div class="foot"><span>Grade 6 · Physics · Thinking about Energy · ${new Date().toLocaleDateString()}</span><span class="sig">Biljana Taneska · Science teacher</span></div>`;
+  }
+  function renderCert() {
+    $("certName").value = P.name || "";
+    $("certSheet").innerHTML = certHTML();
+    say("cert", !P.name ? "Type your <b>name</b>, then print your certificate!" : P.badges.quiz ? "You won the <b>Energy expert</b> badge! 🎉 Print your certificate." : "Answer all <b>20 questions</b> to win the Energy expert badge – or print your certificate now.", "happy");
+  }
+  $("certName").addEventListener("input", (e) => { P.name = e.target.value.slice(0, 40); save(); $("certSheet").innerHTML = certHTML(); });
+  $("certPrint").addEventListener("click", () => {
+    let ps = $("pageStyle"); if (!ps) { ps = document.createElement("style"); ps.id = "pageStyle"; document.head.appendChild(ps); }
+    ps.textContent = "@page{size:A4 landscape;margin:10mm}";
+    $("printArea").innerHTML = `<div class="sheet">${certHTML()}</div>`;
+    window.print();
+  });
+  $("resetAll").addEventListener("click", () => {
+    if (!confirm("Delete all your stars and your badge in this browser?")) return;
+    try { localStorage.removeItem(STORE); } catch (e) {}
+    location.reload();
+  });
+
+  const TABS = ["quiz", "cert"];
+  function showTab(which) {
+    unselect();
+    for (const t of TABS) { $("tab-" + t).setAttribute("aria-selected", t === which); $(t).hidden = t !== which; }
+    if (which === "quiz" && $("quizBox").dataset.n !== String(P.quiz.i)) openQuiz();
+    if (which === "cert") renderCert();
+  }
+  for (const t of TABS) $("tab-" + t).addEventListener("click", () => showTab(t));
+
+  // key words at the top + word / form pop-up
+  $("keyChips").innerHTML = KEYS.map(([k, em, nm, c]) => `<button class="kchip ${c}" data-w="${k}" title="${nm}"><i style="--c:${c === "rn" ? "#C8E6C9" : "#E3F2FD"}">${em}</i><span class="kn">${nm}</span></button>`).join("");
+  function popWord(anchor, head, col, body) {
+    const pop = $("wpop");
+    $("wpHead").innerHTML = head; pop.style.setProperty("--c", col || "#E3F2FD"); $("wpTxt").innerHTML = body;
+    pop.hidden = false;
+    const r = anchor.getBoundingClientRect(), W = pop.offsetWidth, H = pop.offsetHeight;
+    let x = Math.min(window.innerWidth - W - 12, Math.max(12, r.left + r.width / 2 - W / 2)), y = r.bottom + 8;
+    if (y + H > window.innerHeight - 8) y = Math.max(8, r.top - H - 8);
+    pop.style.left = x + "px"; pop.style.top = y + "px";
+  }
+  document.addEventListener("click", (e) => {
+    const t = e.target.closest(".wd, .kchip, .fchip");
+    if (t && (t.dataset.w || t.dataset.f)) {
+      e.stopPropagation();
+      if (t.dataset.w) { const [nm, mean] = WORDS[t.dataset.w]; popWord(t, `<i>📖</i>${nm}`, "#E3F2FD", mean); }
+      else { const F = FORMS[t.dataset.f]; popWord(t, `<i>${F.em}</i>${F.label} energy`, F.col, F.mean); }
+      return;
+    }
+    if (!e.target.closest("#wpop")) $("wpop").hidden = true;
+    if (SEL && !e.target.closest(".tile, .slot, .bank, .bin")) unselect();
+  });
+  $("wpOk").onclick = () => ($("wpop").hidden = true);
+
+  function closeOv(id) { $(id).classList.remove("on"); if (id === "help" && !P.seenIntro) { P.seenIntro = true; save(); } }
+  document.querySelectorAll("[data-close]").forEach((b) => b.addEventListener("click", () => closeOv(b.dataset.close)));
+  document.querySelectorAll(".overlay").forEach((o) => o.addEventListener("click", (e) => { if (e.target === o) closeOv(o.id); }));
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") { document.querySelectorAll(".overlay.on").forEach((o) => closeOv(o.id)); $("wpop").hidden = true; } });
+  $("helpBtn").addEventListener("click", () => $("help").classList.add("on"));
+  $("soundBtn").addEventListener("click", () => { P.sound = !P.sound; save(); markSound(); if (P.sound) SND.star(); });
+  const markSound = () => { $("soundBtn").setAttribute("aria-pressed", P.sound); $("soundBtn").textContent = P.sound ? "🔊 Sound" : "🔇 Sound"; };
+
+  // start
+  load(); markSound();
+  ["quiz", "cert"].forEach((t) => spexBar(t));
+  P.quiz = P.quiz || { i: 0, st: [], best: null }; P.badges = P.badges || {};
+  refreshStars();
+  showTab("quiz");
+  if (!P.seenIntro) $("help").classList.add("on");
+
+  window.__TY = { QUIZ, P, openQuiz, showTab };
+})();
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
