@@ -46,8 +46,10 @@
       order" (new type order); still 15 questions, ★ 45 (1 true/false · 2 tap · 1 sort · 1 chain · 9 multiple choice · 1 order).
   v3 (teacher, 19 Nov 2026): BIOMASS REMOVED – now 10 resources (4 non-renewable, 6 renewable). Quiz: the sort card
     "wood from a forest…" → "Water held behind a dam"; "when is wood renewable?" → "Why is hydro-electric renewable?"
-    (the water cycle); island option "burn the trees" → "burn more oil". Still 15 questions, ★ 45. (Older notes above
-    that mention biomass / wood describe v1–v2.)
+    (the water cycle); island option "burn the trees" → "burn more oil". Still 15 questions, ★ 45.
+  v4 (teacher, 24 Nov 2026): BIOMASS BACK – 11 resources again (4 non-renewable, 7 renewable), the v2 biomass story,
+    readings and wood-fired power station; quiz back to the v2 biomass items (7 renewables to tap, the "wood from a
+    forest where new trees are planted" card, "when is wood renewable?", island option "burn the trees"). 15 questions, ★ 45.
   Self-contained: no internet, no external libraries or fonts. Open in any modern browser.
 
   File sections:
@@ -567,7 +569,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   #quiz .cat{font-size:16.5px;min-height:40px;padding:5px 10px;line-height:1.2}
   #quiz .cats.tf .cat{font-size:20px;min-height:44px}
   #quiz .feedback{font-size:17px;min-height:0;padding:5px 10px;line-height:1.3}
-  #quiz .pickgrid{gap:6px;grid-template-columns:repeat(5,minmax(0,1fr))}
+  #quiz .pickgrid{gap:6px;grid-template-columns:repeat(6,minmax(0,1fr))}
   #quiz .pk{grid-auto-flow:column;justify-content:start;align-items:center;justify-items:start;gap:6px;min-height:42px;padding:3px 8px;font-size:16px;text-align:left}
   #quiz .pk .em{width:32px;height:32px;font-size:1.1rem}
   #quiz .tile{font-size:16px;min-height:36px;padding:3px 9px}
@@ -687,8 +689,8 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
       Some will <b>run out</b> one day. Others are <b>replaced by nature</b> again and again.</p>
     <p class="law">♻️ <b>Renewable</b> energy resources are unlimited and can be used over and over again. <b>Non-renewable</b> energy resources will eventually run out.</p>
     <ol>
-      <li><b>1 · 🔬 Free lab – 10 resources</b>: 4 <b>non-renewable</b> (coal, oil, natural gas, nuclear) and 6 <b>renewable</b>
-        (solar, wind, hydro-electric, tidal, wave, geothermal). Tap one under the picture.
+      <li><b>1 · 🔬 Free lab – 11 resources</b>: 4 <b>non-renewable</b> (coal, oil, natural gas, nuclear) and 7 <b>renewable</b>
+        (solar, wind, hydro-electric, tidal, wave, geothermal, biomass). Tap one under the picture.
         <b>👣 Step by step</b> plays one step at a time: read Marie, then press <b>Next step ▶</b>. <b>↺ Replay step</b> shows the same step again.
         <b>▶ Play all</b> plays everything, with a stop after each step (<b>⏸ Pause</b> to stop). One step shows <b>⚡ how a power station makes electricity</b>.
         Watch the readings on the right: how much is <b>left in nature</b>, the <b>CO₂</b> it makes, and whether it is <b>working now</b>.</li>
@@ -751,6 +753,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     reservoir: ["reservoir", "A big lake of water held back by a dam."],
     tide: ["tide", "The sea goes up and down twice every day, because the Moon pulls on the water."],
     geothermal: ["geothermal", "Heat from the hot rocks deep under the ground (geo = Earth, thermal = heat)."],
+    biomass: ["biomass", "Plants, wood and animal waste that we burn for energy."],
     predict: ["predictable", "We can say before it happens when it will happen."],
     habitat: ["habitat", "The place where an animal or plant lives."],
     mined: ["mined", "Dug out of the ground."],
@@ -899,6 +902,18 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
       up: ["Works day and night, in any weather", "No CO₂ or smoke while it works"],
       dn: ["Only easy in a few places (e.g. Iceland)", "Drilling so deep is expensive"],
       concl: `The Earth's inside stays <b>hot</b> for billions of years, so geothermal energy will <b>not run out</b> and works <b>day and night</b>. Geothermal is <b>renewable</b>.` },
+    { id: "bio", em: "🌳", name: "Biomass", kind: "rn", dur: 15000, forms: ["chemical"], co2k: 0,
+      rep: "🌱 <b>a few years</b> – but only if we plant new trees",
+      narr: [
+        [0, `${w("biomass", "Biomass")} is wood, plants and animal waste. Trees store ${f("chemical")} energy from sunlight. Press ▶ Play!`],
+        [0.06, `Some trees are cut down for firewood.`],
+        [0.24, `We burn the wood to keep warm. Burning makes ${w("co2")} – look at the CO₂ reading.`, "hmm"],
+        [0.4, `New trees are planted where the old ones stood. As they grow, they take CO₂ back in from the air.`, "happy"],
+        [0.86, `The forest has grown back! Biomass is <b>renewable</b> – but only if we plant new trees as fast as we cut them.`, "happy"],
+      ],
+      up: ["Renewable if we plant new trees", "Uses waste: wood chips, plant and food waste"],
+      dn: ["Burning makes CO₂ and smoke", "Needs a lot of land to grow"],
+      concl: `New <b>trees</b> grow in a few years, so biomass is <b>renewable</b> – if we <b>replant</b>. Burning it makes <b>CO₂</b>, and the new trees take some back in.` },
   ];
   const RES_I = Object.fromEntries(RES.map((r, i) => [r.id, i]));
   const NR = RES.filter((r) => r.kind === "nr"), RN = RES.filter((r) => r.kind === "rn");
@@ -913,15 +928,15 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     { type: "tap", pic: A("🦕") + A("⛏️", "a-shake") + A("🛢️", "a-bounce"), q: "Which of these are fossil fuels? Tap all.", need: ["coal", "oil", "gas"],
       tip: "Fossil fuels formed from plants and animals that died millions of years ago. There are three.",
       why: "Coal, oil and natural gas are the fossil fuels. Uranium (nuclear) is not a fossil fuel – it is a metal in rocks – but it is non-renewable too." },
-    { type: "tap", pic: A("♻️", "a-spin") + A("🌬️", "a-slide") + A("🌊", "a-bounce"), q: "Which energy resources are renewable? Tap all.", need: ["solar", "wind", "hydro", "tidal", "wave", "geo"],
+    { type: "tap", pic: A("♻️", "a-spin") + A("🌬️", "a-slide") + A("🌊", "a-bounce"), q: "Which energy resources are renewable? Tap all.", need: ["solar", "wind", "hydro", "tidal", "wave", "geo", "bio"],
       tip: "Renewable means nature replaces it. Leave out the four that will run out: coal, oil, natural gas and nuclear.",
-      why: "Solar, wind, hydro-electric, tidal, wave and geothermal are all replaced by nature. Coal, oil, natural gas and nuclear will run out." },
+      why: "Solar, wind, hydro-electric, tidal, wave, geothermal and biomass are all replaced by nature. Coal, oil, natural gas and nuclear will run out." },
     { type: "sort", pic: A("🏠") + A("🚗", "a-slide") + A("🔥", "a-flick"),
       q: "Energy in everyday life. Sort each one into the right box.",
       items: [["Petrol in the family car", "nr"], ["A wind turbine on a hill", "rn"], ["A gas cooker in the kitchen", "nr"], ["Solar panels on a roof", "rn"],
-        ["Hot water from deep rocks in Iceland", "rn"], ["Uranium in a nuclear reactor", "nr"], ["Water held behind a dam", "rn"], ["A coal fire", "nr"]],
-      tip: "Ask for each one: will it run out, or can it be used over and over again? Petrol is made from oil.",
-      why: "Renewable: wind, solar, geothermal (Iceland) and water behind a dam (hydro-electric). Non-renewable: petrol (from oil), gas, uranium and coal." },
+        ["Hot water from deep rocks in Iceland", "rn"], ["Uranium in a nuclear reactor", "nr"], ["Wood from a forest where new trees are planted", "rn"], ["A coal fire", "nr"]],
+      tip: "Ask for each one: will it run out, or can it be used over and over again? Petrol is made from oil; wood is biomass.",
+      why: "Renewable: wind, solar, geothermal (Iceland) and wood when new trees are planted. Non-renewable: petrol (from oil), gas, uranium and coal." },
     { type: "chain", pic: A("☀️", "a-spin") + AR + A("🌿") + AR + A("⚫") + AR + A("🔥", "a-flick"),
       q: "The energy in coal first came from the Sun. Build the chain: sunlight → stored in the plants (and later the coal) → when the coal burns.", stages: [["light"], ["chemical"], ["thermal", "light"]], traps: ["kinetic", "sound"],
       tip: "Plants store energy from sunlight as food energy. A fire is hot and bright.",
@@ -948,17 +963,17 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
         ["c", "Renewable, because the reactor can be used again and again."], ["d", "Non-renewable, because it is a fossil fuel."]],
       tip: "Renewable or not is about whether the resource runs out – not about CO₂. Where does uranium come from?",
       why: "Uranium is a metal mined from rocks. There is only a fixed amount, so it will run out: nuclear is non-renewable. It makes almost no CO₂, but leaves radioactive waste. It is not a fossil fuel." },
-    { type: "mc", pic: A("☀️", "a-spin") + A("☁️", "a-float") + A("🌧️", "a-bounce") + AR + A("💧") + A("🏞️"), q: "Why is hydro-electric energy renewable?", ok: "a",
-      opts: [["a", "Rain fills the lake again and again – the water cycle."], ["b", "The dam makes new water."], ["c", "The water is never used."], ["d", "The turbine stores the water for later."]],
-      tip: "Think of the hydro-electric story: what happened to the lake when the clouds came?",
-      why: "The Sun makes water evaporate from the sea, clouds form and it rains into the lake again and again (the water cycle). So the water can be used over and over again: hydro-electric is renewable." },
+    { type: "mc", pic: A("🪓", "a-shake") + A("🪵") + AR + A("🌱", "a-pulse"), q: "A family heats their home with a wood stove. When is wood a renewable resource?", ok: "d",
+      opts: [["a", "Always – trees are plants."], ["b", "Never – burning wood makes CO₂."], ["c", "Only if the wood is dry."], ["d", "Only if new trees are planted as fast as trees are cut down."]],
+      tip: "Think of the biomass story: what made the forest come back?",
+      why: "Wood is renewable only if new trees are planted and grow back as fast as we cut them. Then the new trees also take CO₂ back in from the air." },
     { type: "mc", pic: A("🌋", "a-pulse") + A("♨️", "a-float") + A("🛁"), q: "In Iceland, many homes are heated with hot water that comes up from very hot rocks underground. What is this resource?", ok: "a",
       opts: [["a", "Geothermal"], ["b", "Hydro-electric"], ["c", "Natural gas"], ["d", "Solar"]],
       tip: "Geo = Earth, thermal = heat.",
       why: "Heat from the hot rocks under the ground is geothermal energy. It works day and night and is renewable." },
     { type: "mc", pic: A("🏝️") + A("☀️", "a-spin") + A("🌬️", "a-slide"), q: "A small island is very sunny and windy. Its town brings in coal by ship. What is the best plan for the future?", ok: "b",
       opts: [["a", "Bring in more coal, because coal works day and night."], ["b", "Use solar panels and wind turbines: they will not run out, make no CO₂, and the island has lots of sun and wind."],
-        ["c", "Burn more oil brought in by ship."], ["d", "Use only solar panels, because the Sun shines at night too."]],
+        ["c", "Burn the island's trees without planting new ones."], ["d", "Use only solar panels, because the Sun shines at night too."]],
       tip: "Which choice uses resources that do not run out and suit this island?",
       why: "Solar and wind are renewable, make no CO₂ and suit a sunny, windy island. Using both helps: when one is weak (night, or a calm day), the other may still work." },
     { type: "mc", pic: A("🏭") + A("🌀", "a-spin") + AR + A("🧲", "a-spin") + AR + A("⚡", "a-flick"), q: "In a power station, steam turns the blades of a turbine. What does the turbine spin?", ok: "a",
@@ -1387,6 +1402,11 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
       S.amp = waveA(p); S.on = S.amp > 0.3; S.why = "calm sea – tiny waves";
     } else if (r.id === "geo") {
       S.on = true;
+    } else if (r.id === "bio") {
+      S.left = 100 - 40 * ease(seg(p, 0.08, 0.18)) + 40 * ease(seg(p, 0.42, 0.88));
+      S.co2 = Math.max(0, 0.55 * seg(p, 0.22, 0.6) - 0.45 * seg(p, 0.45, 0.93));
+      S.on = p >= 0.22 && p < 0.6 ? true : null;
+      S.why = p < 0.22 ? "the wood is not burning yet" : "the fire is out – new trees are growing";
     }
     return S;
   }
@@ -1799,22 +1819,52 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     caption(svg, day > 0.5 ? "☀️ Day – it keeps working" : "🌙 Night – it keeps working");
   }
 
+  function drawBio(svg, p, S, tm) {
+    const GS = 270;
+    bg(svg, "#E1F5FE"); sun(svg, 60, 50, 18, 1, tm);
+    R(svg, 0, GS, 600, 70, "#8BC34A"); R(svg, 0, GS + 30, 600, 40, "#7CB342");
+    const fall = 85 * ease(seg(p, 0.08, 0.16)), fo = 1 - seg(p, 0.16, 0.21);
+    [[70, 1.05, false], [140, 1.15, true], [210, 1.0, false], [280, 1.1, true], [350, 0.95, false]].forEach(([x, s, cut]) => {
+      if (!cut) tree(svg, x, GS, s);
+      else {
+        if (fo > 0) tree(svg, x, GS, s, fall, fo);
+        R(svg, x - 7, GS - 8, 14, 8, "#5D4037", { rx: 2 });
+        const g = 0.12 + 0.88 * ease(seg(p, 0.4, 0.88));
+        if (p > 0.38) tree(svg, x, GS - 2, s * g, 0, 1, "#43A047");
+      }
+    });
+    if (p > 0.36 && p < 0.5) label(svg, 210, GS + 26, "🌱 new trees planted", { "font-size": 15, fill: "#1B5E20" });
+    // logs → fire
+    if (p > 0.16) {
+      const n = p < 0.22 ? 6 : Math.max(0, Math.round(6 * (1 - seg(p, 0.22, 0.6))));
+      for (let k = 0; k < n; k++) R(svg, 452 + (k % 3) * 22, GS - 10 - Math.floor(k / 3) * 10, 20, 9, "#795548", { rx: 4, stroke: "#4E342E" });
+      if (S.on === true) { flame(svg, 485, GS - 26, 1.1, tm); co2Puffs(svg, 485, GS - 70, tm, 1, 5); heatWaves(svg, 520, GS - 60, 2, 0.7, tm); }
+      label(svg, 485, GS + 26, p < 0.6 ? "wood fire" : "fire out", { "font-size": 14, fill: "#33691E" });
+    }
+    // CO₂ goes back into the growing trees
+    if (p > 0.45 && p < 0.95) for (let k = 0; k < 4; k++) {
+      const ph = ((tm / 2400) + k / 4) % 1, x0 = 430 - ph * (290 - (k % 2) * 140) , y0 = 70 + ph * 110;
+      txt(svg, x0, y0, "CO₂", { "font-size": 14, "font-weight": 800, fill: "#2E7D32", opacity: (1 - Math.abs(ph - 0.5) * 2) * 0.95 });
+    }
+    caption(svg, p < 0.08 ? "🌳 A forest" : p < 0.22 ? "🪓 Trees cut for firewood" : p < 0.6 ? "🔥 Burning the wood" : p < 0.88 ? "🌱 New trees grow" : "🌳 The forest is back");
+  }
+
   const DRAW = {
     coal: (svg, p, S, tm) => drawFossil(svg, p, S, tm, "coal"), oil: (svg, p, S, tm) => drawFossil(svg, p, S, tm, "oil"), gas: (svg, p, S, tm) => drawFossil(svg, p, S, tm, "gas"),
-    nuclear: drawNuclear, solar: drawSolar, wind: drawWind, hydro: drawHydro, tidal: drawTidal, wave: drawWave, geo: drawGeo,
+    nuclear: drawNuclear, solar: drawSolar, wind: drawWind, hydro: drawHydro, tidal: drawTidal, wave: drawWave, geo: drawGeo, bio: drawBio,
   };
   /* ---- the power station (unit slide 87 / the teacher's PDF p. 6): something turns the turbine → it spins a generator
           (a spinning magnet) → electricity. Solar panels: light → electricity straight away (no spinning parts). ---- */
-  const BURN = { coal: "coal", oil: "oil", gas: "natural gas" };
+  const BURN = { coal: "coal", oil: "oil", gas: "natural gas", bio: "wood" };
   const ELEC = {
     coal: ["chemical", "thermal", "kinetic", "electrical"], oil: ["chemical", "thermal", "kinetic", "electrical"],
-    gas: ["chemical", "thermal", "kinetic", "electrical"],
+    gas: ["chemical", "thermal", "kinetic", "electrical"], bio: ["chemical", "thermal", "kinetic", "electrical"],
     nuclear: ["nuclear", "thermal", "kinetic", "electrical"], geo: ["thermal", "kinetic", "electrical"],
     hydro: ["gravitational", "kinetic", "electrical"], tidal: ["kinetic", "electrical"], wave: ["kinetic", "electrical"],
     wind: ["kinetic", "electrical"], solar: ["light", "electrical"],
   };
   // where the readings stay during the power-station step (renewables: a moment when it works)
-  const POW_P = { solar: 0.15, wind: 0.2, hydro: 0.8, tidal: 0.12, wave: 0.2, geo: 0.5 };
+  const POW_P = { solar: 0.15, wind: 0.2, hydro: 0.8, tidal: 0.12, wave: 0.2, geo: 0.5, bio: 0.3 };
   // non-renewables: the power station comes right after "today we use it" (so "Run out!" stays the ending)
   const POW_AFTER = { coal: 0.42, oil: 0.42, gas: 0.42, nuclear: 0.2 };
   const POW_MS = 7500;
@@ -1882,6 +1932,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
           if (r.id === "coal") for (let k = 0; k < 6; k++) R(svg, 40 + (k % 3) * 16, 270 - Math.floor(k / 3) * 12, 14, 12, "#212121", { rx: 3 });
           if (r.id === "oil") { R(svg, 50, 238, 34, 50, "#37474F", { rx: 5 }); label(svg, 67, 268, "oil", { fill: "#fff", "font-size": 13 }); }
           if (r.id === "gas") { R(svg, 20, 274, 146, 8, "#FBC02D"); label(svg, 80, 268, "gas pipe", { "font-size": 13 }); }
+          if (r.id === "bio") for (let k = 0; k < 6; k++) R(svg, 36 + (k % 3) * 22, 278 - Math.floor(k / 3) * 10, 20, 9, "#795548", { rx: 4 });
           if (r.id !== "gas") label(svg, 70, 304, BURN[r.id], { "font-size": 14, fill: "#33691E" });
           // chimney with CO₂
           R(svg, 176, 70, 20, 50, "#78909C");
