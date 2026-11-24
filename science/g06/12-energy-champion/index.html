@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Energy Champion</title>
+<!--
+  IB MYP 1 Sciences · Grade 6 · Physics · Unit 1 Thinking about Energy (folder "Unit 2 Thinking about Energy")
+  Energy Champion – a quiz-show revision game for the whole class on the board. Made 24 Nov 2026 for the teacher –
+  PRIVATE, not published.
+  Teacher's choices: like a TV quiz show (ladder of 15 questions, 2 safe steps, 3 lifelines) but with its own name and
+  look; played by the whole class on the board (optional 1–4 teams taking turns); same look as the other Grade 6
+  simulations (Marie, navy header); a big bank of 64 questions in 3 levels (24 easy · 22 medium · 18 hard), each game
+  draws 5 + 5 + 5 spread over the topics, so it can be replayed; no circuits, no Sankey diagrams, no efficiency.
+  Ladder 100 → 1 000 000 ★, safe steps 5 (1 000 ★) and 10 (32 000 ★). Lifelines: 50:50 · Ask the class (hands-up
+  counts → bars) · Hint from Marie. Optional 30-second timer on questions 1–5. No read aloud (Grades 6–8 rule);
+  Sound (effects) and words explained on tap. Settings in localStorage "g6-energy-champion-v1".
+  Self-contained: no internet, no external libraries or fonts. Built from scratchpad mc/build.py (questions.py =
+  the bank, also used for the TEACHER answer list PDF).
+-->
+<style>
+:root{
+  --navy:#1F3A5F; --accent:#E65100; --ink:#263238; --muted:#606A72;
+  --bg:#F2F5F9; --card:#FFFFFF; --line:#DDE6F0; --sunk:#EEF2F7; --soft-blue:#E3F2FD;
+  --star:#F9A825; --ok:#2E7D32; --bad:#C62828; --focus:#1565C0;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%;font-size:18px}
+body{margin:0;background:var(--bg);color:var(--ink);height:100dvh;overflow:hidden;
+  font:1rem/1.4 "Segoe UI",Calibri,"Helvetica Neue",Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;display:flex;flex-direction:column}
+h2,h3{margin:0} p{margin:0}
+button{font:inherit;color:inherit}
+button:focus-visible,input:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+
+header{background:var(--navy);color:#fff;border-bottom:4px solid var(--accent);
+  display:flex;align-items:center;gap:12px;padding:8px 16px;flex-wrap:wrap;flex:none}
+header h1{font-size:1.25rem;margin:0;font-weight:600}
+header .sub{font-size:.85rem;opacity:.85}
+.sub a.home{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55);white-space:nowrap}
+header .grow{flex:1}
+.hbtns{display:flex;gap:6px;flex-wrap:wrap}
+.credit{text-align:right;font-size:.74rem;line-height:1.3;opacity:.92;white-space:nowrap}
+.credit a{color:#fff;text-decoration:underline}
+.btn{font:inherit;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:8px;
+  min-height:44px;padding:6px 14px;cursor:pointer;touch-action:manipulation}
+.btn:hover{border-color:var(--navy)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.btn.navy{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
+.btn.ok{background:var(--ok);border-color:var(--ok);color:#fff;font-weight:700}
+.btn.big{font-size:22px;min-height:54px;padding:8px 22px}
+header .btn{background:transparent;color:#fff;border-color:rgba(255,255,255,.5);white-space:nowrap}
+header .btn[aria-pressed="true"]{background:rgba(255,255,255,.22);border-color:#fff}
+
+main{flex:1;min-height:0;display:grid;gap:12px;padding:12px 16px;grid-template-columns:minmax(0,1fr) clamp(230px,21vw,300px)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;min-width:0}
+
+/* left: the game */
+.play{display:flex;flex-direction:column;gap:10px;min-height:0}
+.topbar{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;flex:none}
+.team{font-size:20px;font-weight:700;color:var(--navy);background:#fff;border:2px solid var(--navy);border-radius:99px;padding:4px 14px}
+.stepinfo{font-size:20px;font-weight:600;color:var(--muted)}
+.stepinfo b{color:var(--accent)}
+.lifes{margin-left:auto;display:flex;gap:8px}
+.life{font:inherit;font-size:18px;font-weight:700;min-height:48px;padding:4px 14px;border-radius:99px;border:2px solid var(--navy);
+  background:#fff;color:var(--navy);cursor:pointer;display:flex;align-items:center;gap:6px}
+.life:hover:not(:disabled){background:var(--soft-blue)}
+.life:disabled{opacity:.35;cursor:not-allowed;text-decoration:line-through}
+.timer{font-size:22px;font-weight:800;color:var(--navy);min-width:68px;text-align:center;border-radius:10px;background:var(--sunk);padding:4px 8px}
+.timer.low{color:#fff;background:var(--bad)}
+
+.qcard{flex:1;min-height:0;display:flex;align-items:center;gap:18px;padding:14px 22px;border:2px solid var(--navy)}
+.qem{font-size:clamp(52px,9vh,96px);flex:none;line-height:1}
+.qtext{font-size:clamp(26px,4.6vh,44px);font-weight:600;color:var(--navy);line-height:1.25}
+.qtag{display:inline-block;font-size:15px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:var(--tc,#607D8B);
+  border-radius:99px;padding:2px 10px;margin-bottom:6px}
+
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:none}
+.ans{font:inherit;display:flex;align-items:center;gap:12px;text-align:left;min-height:clamp(64px,10vh,96px);padding:8px 14px;
+  border:2px solid var(--line);border-radius:14px;background:#fff;cursor:pointer;font-size:clamp(19px,2.9vh,27px);line-height:1.2;
+  transition:background .2s,border-color .2s,transform .1s}
+.ans:hover:not(:disabled){border-color:var(--navy);background:#F7FAFD}
+.ans .L{flex:none;width:1.9em;height:1.9em;border-radius:50%;display:grid;place-items:center;font-weight:800;background:var(--navy);color:#fff;font-size:.9em}
+.ans.sel{border-color:var(--accent);background:#FFF3E0;animation:pulse 1s infinite}
+.ans.sel .L{background:var(--accent)}
+.ans.right{border-color:var(--ok);background:#E8F5E9;animation:none}
+.ans.right .L{background:var(--ok)}
+.ans.wrong{border-color:var(--bad);background:#FFEBEE;animation:none}
+.ans.wrong .L{background:var(--bad)}
+.ans.gone{visibility:hidden}
+.ans:disabled{cursor:default}
+@keyframes pulse{50%{box-shadow:0 0 0 5px rgba(230,81,0,.18)}}
+
+/* Marie */
+.mbar{display:flex;align-items:center;gap:12px;flex:none;padding:8px 12px}
+.spex{width:76px;height:76px;flex:none}
+.bubble{position:relative;background:#fff;border:2px solid var(--navy);border-radius:14px;padding:8px 12px;font-size:clamp(17px,2.6vh,22px);line-height:1.35;flex:1;min-width:0}
+.bubble::before{content:"";position:absolute;left:-11px;top:22px;border:10px solid transparent;border-right-color:var(--navy);border-left:0}
+.bubble::after{content:"";position:absolute;left:-7px;top:24px;border:8px solid transparent;border-right-color:var(--bf,#fff);border-left:0}
+.bubble.tip{background:#FFF8E1;--bf:#FFF8E1} .bubble.good{background:#E8F5E9;--bf:#E8F5E9} .bubble.bad{background:#FFEBEE;--bf:#FFEBEE}
+.actions{display:flex;flex-direction:column;gap:8px;flex:none}
+.spex .lens{fill:#FFE0C2;fill-opacity:.45}
+.spex .m{display:none} .spex[data-mood="talk"] .m-talk,.spex[data-mood="happy"] .m-happy,.spex[data-mood="think"] .m-think,
+.spex[data-mood="wow"] .m-wow,.spex[data-mood="hmm"] .m-hmm{display:inline}
+
+/* right: the ladder */
+.ladder{display:flex;flex-direction:column;padding:8px;gap:3px;min-height:0}
+.ladder h2{font-size:17px;color:var(--navy);text-align:center;padding:2px 0 4px}
+.rung{flex:1;min-height:0;display:flex;align-items:center;gap:8px;padding:0 10px;border-radius:8px;font-size:clamp(14px,2.2vh,19px);font-weight:600;color:var(--muted)}
+.rung .n{width:2.6em;text-align:right;opacity:.75;white-space:nowrap}
+.rung .v{margin-left:auto;font-variant-numeric:tabular-nums}
+.rung.safe{color:var(--navy);font-weight:800}
+.rung.safe .v::after{content:" 🛟";font-size:.85em}
+.rung.done{color:var(--ok)}
+.rung.done .n::before{content:"✔ "}
+.rung.now{background:var(--accent);color:#fff;transform:scale(1.03);box-shadow:0 2px 8px rgba(230,81,0,.35)}
+.rung.top{color:#B26A00}
+.rung.top .v::after{content:" 🏆"}
+.ladder .walk{margin-top:6px}
+
+/* overlays */
+.ov{position:fixed;inset:0;background:rgba(20,35,55,.55);display:grid;place-items:center;z-index:50;padding:16px}
+.dlg{background:#fff;border-radius:16px;border:3px solid var(--navy);max-width:760px;width:100%;max-height:calc(100dvh - 32px);overflow:auto;
+  padding:20px 24px;display:grid;gap:14px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.dlg h2{font-size:30px;color:var(--navy)}
+.dlg h3{font-size:20px;color:var(--navy)}
+.dlg .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.dlg .intro{display:flex;gap:14px;align-items:center}
+.dlg .intro .spex{width:96px;height:96px}
+.dlg .intro p{font-size:20px}
+.teams{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.teams input{font:inherit;font-size:19px;padding:8px 10px;border:2px solid var(--line);border-radius:10px;min-height:46px;width:100%}
+.teams input:disabled{background:var(--sunk);opacity:.6}
+.seg{display:flex;border:2px solid var(--navy);border-radius:10px;overflow:hidden}
+.seg button{font:inherit;font-size:19px;font-weight:700;border:none;background:#fff;color:var(--navy);min-width:54px;min-height:44px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--navy);color:#fff}
+label.chk{display:flex;align-items:center;gap:8px;font-size:18px;cursor:pointer}
+label.chk input{width:22px;height:22px}
+.small{font-size:15px;color:var(--muted)}
+.big-res{font-size:42px;font-weight:800;color:var(--accent);text-align:center}
+.score{width:100%;border-collapse:collapse;font-size:19px}
+.score td,.score th{padding:6px 10px;border-bottom:1px solid var(--line);text-align:left}
+.score td.v{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.score tr.best td{background:#FFF8E1}
+.revise{display:flex;flex-wrap:wrap;gap:6px}
+.revise span{font-size:16px;font-weight:700;color:#fff;background:var(--tc);border-radius:99px;padding:3px 12px}
+.ask{display:grid;gap:8px}
+.askrow{display:grid;grid-template-columns:40px 44px 70px 44px minmax(0,1fr);align-items:center;gap:8px;font-size:20px}
+.askrow b{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--navy);color:#fff}
+.askrow input{font:inherit;font-size:20px;width:70px;text-align:center;padding:4px;border:2px solid var(--line);border-radius:8px}
+.askrow .bar{height:30px;background:var(--sunk);border-radius:8px;overflow:hidden;position:relative}
+.askrow .bar i{display:block;height:100%;background:linear-gradient(90deg,#42A5F5,var(--navy));width:0;transition:width .35s}
+.askrow .bar span{position:absolute;right:8px;top:2px;font-size:17px;font-weight:700}
+.askrow.gone{opacity:.25;pointer-events:none}
+
+/* words on tap */
+.wd{font:inherit;color:inherit;background:none;border:none;padding:0;cursor:help;border-bottom:2px dotted var(--focus)}
+.wpop{position:fixed;z-index:85;width:min(360px,calc(100vw - 24px));background:#fff;border:2px solid var(--navy);border-radius:14px;
+  box-shadow:0 12px 30px rgba(0,0,0,.25);padding:10px 12px;font-size:18px}
+.wpop b{display:block;font-size:20px;color:var(--navy);margin-bottom:4px}
+
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:60;overflow:hidden}
+.confetti i{position:absolute;top:-30px;font-style:normal;font-size:28px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+
+@media (max-width:900px){
+  body{height:auto;overflow:auto}
+  main{grid-template-columns:minmax(0,1fr)}
+  .answers{grid-template-columns:1fr}
+  .ladder{flex-direction:column}
+  .rung{min-height:30px}
+  .lifes{margin-left:0}
+  .credit{display:none}
+}
+@media (max-height:700px) and (min-width:901px){
+  .spex{width:60px;height:60px}
+  .topbar .life{min-height:42px}
+}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Energy Champion</h1>
+    <div class="sub"><a class="home" href="https://school.taneski.com/science/g06/#physics" title="Back to Grade 6 science">← All Grade 6 science</a> · IB MYP 1 · Physics · Unit 1 Thinking about Energy · with Marie</div>
+  </div>
+  <div class="grow"></div>
+  <div class="hbtns">
+    <button class="btn" id="soundBtn" aria-pressed="false">🔇 Sound</button>
+    <button class="btn" id="helpBtn">? How to play</button>
+    <button class="btn" id="newBtn">↺ New game</button>
+  </div>
+  <div class="credit">Biljana Taneska · Science teacher<br><a href="mailto:btaneska@vis.ac.at">btaneska@vis.ac.at</a></div>
+</header>
+
+<main>
+  <section class="play">
+    <div class="topbar">
+      <span class="team" id="teamName">Our class</span>
+      <span class="stepinfo" id="stepInfo"></span>
+      <span class="timer" id="timer" hidden>30</span>
+      <div class="lifes">
+        <button class="life" id="l50" title="Take away two wrong answers">✂️ 50:50</button>
+        <button class="life" id="lAsk" title="Hands up! Count the votes">🙋 Ask the class</button>
+        <button class="life" id="lHint" title="Marie gives a clue">💡 Hint</button>
+      </div>
+    </div>
+    <div class="card qcard">
+      <div class="qem" id="qEm">⚡</div>
+      <div><span class="qtag" id="qTag"></span><div class="qtext" id="qText"></div></div>
+    </div>
+    <div class="answers" id="answers"></div>
+    <div class="card mbar">
+      <div id="marie"></div>
+      <div class="bubble" id="bubble" aria-live="polite"></div>
+      <div class="actions" id="actions"></div>
+    </div>
+  </section>
+  <aside class="card ladder" id="ladder"></aside>
+</main>
+
+<div class="ov" id="ovStart" hidden><div class="dlg" role="dialog" aria-labelledby="stT">
+  <h2 id="stT">⚡ Energy Champion</h2>
+  <div class="intro"><div class="mS"></div><p>Hello, I'm Marie! Answer <b>15 energy questions</b> in a row and climb the ladder to <b>1 000 000 ★</b>. Can you become the <b>Energy Champion</b>?</p></div>
+  <div class="row"><h3>How many teams?</h3><div class="seg" id="nTeams"></div></div>
+  <div class="teams" id="teamIns"></div>
+  <p class="small">1 team = the whole class plays together. With 2–4 teams, each team plays its own game with new questions, one after the other.</p>
+  <label class="chk"><input type="checkbox" id="optTimer"> ⏱ 30-second timer on questions 1–5</label>
+  <div class="row"><button class="btn primary big" id="goBtn">▶ Start the game</button></div>
+</div></div>
+
+<div class="ov" id="ovAsk" hidden><div class="dlg" role="dialog" aria-labelledby="askT">
+  <h2 id="askT">🙋 Ask the class</h2>
+  <p>Hands up for each answer! Type the number of hands, or use − and +.</p>
+  <div class="ask" id="askRows"></div>
+  <div class="row"><button class="btn navy big" id="askClose">✔ Done</button></div>
+</div></div>
+
+<div class="ov" id="ovEnd" hidden><div class="dlg" role="dialog" aria-labelledby="endT">
+  <h2 id="endT"></h2>
+  <div class="intro"><div class="mE"></div><p id="endMsg"></p></div>
+  <div class="big-res" id="endStars"></div>
+  <div id="endRevise"></div>
+  <div id="endScore"></div>
+  <div class="row" id="endBtns"></div>
+</div></div>
+
+<div class="ov" id="ovHelp" hidden><div class="dlg" role="dialog" aria-labelledby="hT">
+  <h2 id="hT">? How to play</h2>
+  <ol style="font-size:19px;margin:0;padding-left:1.3em;display:grid;gap:6px">
+    <li>Read the question aloud. The class (or team) talks and chooses one answer.</li>
+    <li>Click that answer (or press <b>A</b>, <b>B</b>, <b>C</b>, <b>D</b>). Marie asks: <i>Final answer?</i> Click <b>✔ Final answer</b> (or press <b>Enter</b>).</li>
+    <li>Right: climb one step. Wrong: the game ends and you keep the ★ of the last 🛟 safe step (question 5 = 1 000 ★, question 10 = 32 000 ★).</li>
+    <li>Not sure? <b>🚶 Walk away</b> and keep the ★ you already have.</li>
+    <li>Three helpers, once each per game: <b>✂️ 50:50</b> takes away two wrong answers · <b>🙋 Ask the class</b> counts hands up · <b>💡 Hint</b> gives a clue from Marie.</li>
+    <li>Tap a <span style="border-bottom:2px dotted var(--focus)">dotted word</span> to see what it means.</li>
+    <li>Every new game takes new questions from a bank of 64 (no circuits, no Sankey diagrams).</li>
+  </ol>
+  <div class="row"><button class="btn navy big" id="helpClose">OK</button></div>
+</div></div>
+
+<div class="confetti" id="confetti"></div>
+
+<script>
+(() => {
+"use strict";
+const $ = (id) => document.getElementById(id);
+const BANK = [{"lv": 1, "t": "Forms of energy", "e": "⚡", "q": "What is the unit of energy?", "o": ["The joule (J)", "The metre (m)", "The degree Celsius (°C)", "The kilogram (kg)"], "why": "Energy is measured in joules (J). °C is for temperature, m for length, kg for mass.", "hint": "It is named after the scientist James Joule."}, {"lv": 1, "t": "Forms of energy", "e": "🏃", "q": "A girl is running across the playground. Which energy does her moving body have?", "o": ["Kinetic energy", "Nuclear energy", "Elastic energy", "Sound energy"], "why": "Everything that moves has kinetic energy. The faster it moves, the more kinetic energy it has.", "hint": "Think of the word for MOVING energy."}, {"lv": 1, "t": "Forms of energy", "e": "🍎", "q": "Where is chemical energy stored?", "o": ["In food, fuels and batteries", "In a moving car", "In a stretched spring", "In a hot cup of tea"], "why": "Food, fuels (wood, coal, petrol) and batteries store chemical energy. A chemical reaction lets it out.", "hint": "What do you eat to get energy for the day?"}, {"lv": 1, "t": "Forms of energy", "e": "🏹", "q": "A bow is pulled back, ready to shoot an arrow. Which energy is stored in the bent bow?", "o": ["Elastic energy", "Light energy", "Thermal energy", "Chemical energy"], "why": "Things that are stretched, squashed or bent store elastic energy.", "hint": "Rubber bands and springs store the same kind of energy."}, {"lv": 1, "t": "Forms of energy", "e": "⛰️", "q": "A rock sits at the top of a hill. Which energy does it have because it is high up?", "o": ["Gravitational energy", "Kinetic energy", "Sound energy", "Electrical energy"], "why": "Things that are high up and can fall have gravitational energy. Higher = more energy.", "hint": "Which force pulls the rock down if it falls?"}, {"lv": 1, "t": "Forms of energy", "e": "🥁", "q": "When you hit a drum, it vibrates. Which energy does it give out?", "o": ["Sound energy", "Nuclear energy", "Chemical energy", "Gravitational energy"], "why": "Things that vibrate (shake very fast) give out sound energy.", "hint": "Use your ears!"}, {"lv": 1, "t": "Forms of energy", "e": "☀️", "q": "Which energy is stored in the centre of atoms and let out inside the Sun?", "o": ["Nuclear energy", "Elastic energy", "Kinetic energy", "Sound energy"], "why": "Nuclear energy is stored in the centre (nucleus) of atoms. The Sun lets it out.", "hint": "The centre of an atom is called the nucleus."}, {"lv": 1, "t": "Energy transfers", "e": "🔦", "q": "A torch is switched on. Which energy does it give out that we want?", "o": ["Light energy", "Sound energy", "Elastic energy", "Gravitational energy"], "why": "A torch is made to give light. The battery's chemical energy ends as light (and a little heat).", "hint": "What is a torch for?"}, {"lv": 1, "t": "Conservation of energy", "e": "⚖️", "q": "Which sentence about energy is true?", "o": ["Energy cannot be created or destroyed", "Energy is used up and disappears", "Energy can be made from nothing", "Energy is destroyed when a lamp is off"], "why": "This is the law of conservation of energy: energy is only transferred from one store to another.", "hint": "Think of the law of CONSERVATION of energy."}, {"lv": 1, "t": "Heat and temperature", "e": "🌡️", "q": "Which instrument do we use to measure temperature?", "o": ["A thermometer", "A ruler", "A stopwatch", "A balance"], "why": "A thermometer measures temperature in degrees Celsius (°C).", "hint": "Its name starts with \"thermo\", which means heat."}, {"lv": 1, "t": "Heat and temperature", "e": "☕", "q": "Heat always moves from …", "o": ["a hotter object to a colder one", "a colder object to a hotter one", "a big object to a small one", "a dark object to a light one"], "why": "Thermal energy always flows from hot to cold, until both are at the same temperature.", "hint": "Why does your hot chocolate get cold in a cold room?"}, {"lv": 1, "t": "States of matter", "e": "🧊", "q": "What are the three states of matter we study?", "o": ["Solid, liquid and gas", "Hot, warm and cold", "Water, ice and fire", "Heavy, light and empty"], "why": "Matter can be a solid, a liquid or a gas (plasma is a fourth state, in the Sun and lightning).", "hint": "Ice, water and steam are the same substance in these three states."}, {"lv": 1, "t": "States of matter", "e": "🍦", "q": "An ice cream changes from solid to liquid on a hot day. What is this change called?", "o": ["Melting", "Freezing", "Condensation", "Boiling"], "why": "Solid → liquid is melting. Liquid → solid is freezing.", "hint": "Chocolate in your pocket does the same thing in summer."}, {"lv": 1, "t": "States of matter", "e": "🧱", "q": "How are the particles in a solid arranged?", "o": ["Close together, vibrating in fixed places", "Far apart, moving fast in all directions", "Close together, sliding past each other", "Not moving at all"], "why": "In a solid the particles are packed close in a regular pattern and only vibrate on the spot.", "hint": "A solid keeps its own shape."}, {"lv": 1, "t": "Heat transfer", "e": "🥄", "q": "A metal spoon in hot soup gets hot at the handle. How does heat travel along the spoon?", "o": ["Conduction", "Convection", "Radiation", "Evaporation"], "why": "Heat moves through a solid by conduction: vibrating particles pass energy to their neighbours.", "hint": "Heat travels through SOLIDS this way."}, {"lv": 1, "t": "Heat transfer", "e": "🧣", "q": "Which of these is the best insulator of heat?", "o": ["Wool", "Copper", "Iron", "Aluminium"], "why": "Wool traps air, and air is a poor conductor, so wool is a good insulator. Metals are conductors.", "hint": "What do you wear on a cold winter day?"}, {"lv": 1, "t": "Energy resources", "e": "🌬️", "q": "Which of these energy resources is renewable?", "o": ["Wind", "Coal", "Oil", "Natural gas"], "why": "Wind will not run out – nature keeps making it. Coal, oil and gas are fossil fuels and will run out.", "hint": "Which one will never run out?"}, {"lv": 1, "t": "Energy resources", "e": "🛢️", "q": "Coal, oil and natural gas are called …", "o": ["fossil fuels", "renewable resources", "insulators", "conductors"], "why": "They formed from plants and animals that died millions of years ago, so they are fossil fuels.", "hint": "Dinosaur bones in rocks are called fossils…"}, {"lv": 1, "t": "Energy resources", "e": "🔆", "q": "What does a solar panel use to make electricity?", "o": ["Light from the Sun", "Moving air", "Falling water", "Heat from inside the Earth"], "why": "A solar panel changes light energy from the Sun into electrical energy.", "hint": "\"Solar\" means \"of the Sun\"."}, {"lv": 1, "t": "Energy transfers", "e": "📱", "q": "A mobile phone battery stores energy. Which store is it?", "o": ["Chemical", "Kinetic", "Gravitational", "Elastic"], "why": "A battery stores chemical energy. When the phone is on, it is transferred as electrical energy.", "hint": "Batteries have chemicals inside them."}, {"lv": 1, "t": "Scientific method", "e": "🔬", "q": "In an experiment, what is a hypothesis?", "o": ["A prediction we can test", "The final answer", "A list of materials", "A table of results"], "why": "A hypothesis is a testable prediction, often written \"If … then … because …\".", "hint": "You write it BEFORE you do the experiment."}, {"lv": 1, "t": "Heat transfer", "e": "🍳", "q": "Why do cooking pans often have plastic or wooden handles?", "o": ["Plastic and wood are insulators", "Plastic and wood are conductors", "They make the pan heat up faster", "They make the pan heavier"], "why": "Insulators do not let heat pass through easily, so the handle stays cool to hold.", "hint": "You want the handle to stay cool…"}, {"lv": 1, "t": "States of matter", "e": "💨", "q": "In which state are the particles far apart and moving fast in every direction?", "o": ["Gas", "Solid", "Liquid", "Ice"], "why": "In a gas the particles are far apart and move quickly, so a gas fills its whole container.", "hint": "Think of the air in a balloon."}, {"lv": 1, "t": "Energy transfers", "e": "🔥", "q": "A candle burns. Which two kinds of energy does it give out?", "o": ["Light and thermal (heat)", "Sound and elastic", "Kinetic and nuclear", "Gravitational and elastic"], "why": "The candle's chemical energy is transferred as light and thermal energy.", "hint": "You can see it, and you can feel it near your hand."}, {"lv": 2, "t": "Energy transfers", "e": "🍞", "q": "A toaster is switched on. What is the main energy change?", "o": ["Electrical → thermal", "Chemical → kinetic", "Thermal → electrical", "Sound → light"], "why": "The toaster takes electrical energy from the socket and gives thermal energy to heat the bread.", "hint": "It plugs into the wall and makes the bread hot."}, {"lv": 2, "t": "Energy transfers", "e": "🍎", "q": "An apple falls from a tree. Which energy change happens as it falls?", "o": ["Gravitational → kinetic", "Kinetic → gravitational", "Chemical → elastic", "Elastic → nuclear"], "why": "As the apple falls it loses height (gravitational energy) and speeds up (gains kinetic energy).", "hint": "It goes DOWN and gets FASTER."}, {"lv": 2, "t": "Energy transfers", "e": "🚴", "q": "A boy eats breakfast and then cycles to school. Which energy chain is right?", "o": ["Chemical → kinetic (+ thermal)", "Kinetic → chemical", "Thermal → nuclear", "Light → elastic"], "why": "The food's chemical energy is transferred to kinetic energy of the bike and boy, and some heats his body.", "hint": "Where did he get his energy from in the first place?"}, {"lv": 2, "t": "Energy transfers", "e": "🔊", "q": "A loudspeaker is playing music. What is its useful energy change?", "o": ["Electrical → sound", "Sound → electrical", "Chemical → light", "Kinetic → nuclear"], "why": "A speaker takes electrical energy and makes its cone vibrate to give sound energy.", "hint": "It is plugged in and you can hear it."}, {"lv": 2, "t": "Energy transfers", "e": "🤸", "q": "A child jumps on a trampoline. At the lowest point the trampoline is stretched. Which energy is stored there?", "o": ["Elastic", "Nuclear", "Light", "Chemical"], "why": "The stretched trampoline stores elastic energy, which then pushes the child back up.", "hint": "The trampoline is stretched like a spring."}, {"lv": 2, "t": "Conservation of energy", "e": "⚽", "q": "A rolling ball slows down and stops on grass. Where did its kinetic energy go?", "o": ["It was transferred to the surroundings as heat (and a little sound)", "It was destroyed", "It was used up and disappeared", "It turned into chemical energy in the ball"], "why": "Friction transfers the kinetic energy to the grass and air as thermal energy. Energy is never destroyed.", "hint": "Remember: energy cannot be destroyed. Rub your hands – what do you feel?"}, {"lv": 2, "t": "Conservation of energy", "e": "🧸", "q": "A wind-up toy gets 50 J of energy. How much energy comes out in total (movement + sound + heat)?", "o": ["50 J", "More than 50 J", "Less than 50 J", "0 J"], "why": "Energy in = energy out. The 50 J is shared between kinetic, sound and thermal energy but none is lost.", "hint": "Energy cannot be created or destroyed…"}, {"lv": 2, "t": "Scientific method", "e": "🧸", "q": "You test how many turns of the key make a wind-up toy go furthest. What is the independent variable?", "o": ["The number of turns of the key", "The distance the toy travels", "The type of floor", "The same toy every time"], "why": "The independent variable is what YOU change on purpose: the number of turns.", "hint": "It is the thing you choose and change."}, {"lv": 2, "t": "Scientific method", "e": "📏", "q": "In the same wind-up toy test, what is the dependent variable?", "o": ["The distance the toy travels", "The number of turns", "The type of floor", "The person who measures"], "why": "The dependent variable is what you MEASURE: here, the distance travelled.", "hint": "It is the thing you measure with the ruler."}, {"lv": 2, "t": "Scientific method", "e": "🔁", "q": "Why do scientists repeat an experiment several times?", "o": ["To make the results more reliable", "To use more materials", "To change the hypothesis", "To make the test longer"], "why": "Repeating and taking an average makes the results more reliable and shows up mistakes.", "hint": "One result could be a mistake…"}, {"lv": 2, "t": "Heat and temperature", "e": "🛁", "q": "What is the difference between heat and temperature?", "o": ["Heat is energy (J); temperature is how hot something is (°C)", "They are the same thing", "Temperature is energy (J); heat is measured in °C", "Heat is only in liquids, temperature only in solids"], "why": "Heat is thermal energy that moves, measured in joules. Temperature tells how hot it is, in °C.", "hint": "Look at the units: joules or degrees Celsius?"}, {"lv": 2, "t": "Heat and temperature", "e": "🛁", "q": "A warm bath (40 °C) and a burning match (about 600 °C). Which has more thermal energy?", "o": ["The bath", "The match", "Both the same", "Neither has thermal energy"], "why": "The match is hotter, but the bath has far more water particles, so it stores much more thermal energy.", "hint": "Thermal energy depends on how hot AND how much stuff there is."}, {"lv": 2, "t": "States of matter", "e": "🫖", "q": "Water is boiling in a pan. Its temperature stays at 100 °C. Where does the heat go?", "o": ["It changes the liquid water into gas (steam)", "It is destroyed", "It makes the pan colder", "It turns into light"], "why": "During a change of state the energy breaks particles apart instead of raising the temperature.", "hint": "Look at the bubbles of steam."}, {"lv": 2, "t": "States of matter", "e": "🪟", "q": "Water drops appear on a cold window in the morning. What is this change called?", "o": ["Condensation", "Evaporation", "Melting", "Sublimation"], "why": "Water vapour (gas) in the air cools on the cold glass and turns into liquid: condensation.", "hint": "Gas → liquid. The same happens on a cold can of juice."}, {"lv": 2, "t": "States of matter", "e": "👕", "q": "Wet clothes dry on a washing line. Which change of state happens?", "o": ["Evaporation (liquid → gas)", "Condensation (gas → liquid)", "Freezing (liquid → solid)", "Melting (solid → liquid)"], "why": "The water in the clothes evaporates into the air as water vapour.", "hint": "Where does the water go? Into the air…"}, {"lv": 2, "t": "States of matter", "e": "❄️", "q": "When water freezes into ice, its particles …", "o": ["lose energy and slow down", "gain energy and speed up", "disappear", "get bigger"], "why": "Freezing happens when the liquid loses thermal energy; the particles slow down and lock in place.", "hint": "You put water in the FREEZER, a cold place."}, {"lv": 2, "t": "Heat transfer", "e": "🌀", "q": "A radiator warms a whole room. Warm air rises and cool air sinks. What is this called?", "o": ["A convection current", "Conduction", "Radiation", "Insulation"], "why": "Convection moves heat in liquids and gases: warm fluid rises, cool fluid sinks, making a loop.", "hint": "It happens in liquids and gases, not solids."}, {"lv": 2, "t": "Heat transfer", "e": "🌞", "q": "How does heat from the Sun reach the Earth?", "o": ["Radiation", "Conduction", "Convection", "Condensation"], "why": "Space is a vacuum (no particles), so only radiation – infrared waves – can cross it.", "hint": "Space is empty: there are no particles to pass the heat on."}, {"lv": 2, "t": "Heat transfer", "e": "🚗", "q": "On a sunny day, which car gets hottest inside?", "o": ["A black car", "A white car", "A silver car", "They all get equally hot"], "why": "Dark, dull surfaces absorb the most radiation. White and shiny surfaces reflect it.", "hint": "Which T-shirt colour feels hottest in summer?"}, {"lv": 2, "t": "Energy resources", "e": "💧", "q": "How does a hydroelectric power station make electricity?", "o": ["Falling water turns turbines", "It burns water", "Sunlight heats a panel", "Wind turns blades"], "why": "Water stored behind a dam falls and spins turbines, which turn generators.", "hint": "\"Hydro\" means water."}, {"lv": 2, "t": "Energy resources", "e": "🌱", "q": "Which renewable resource uses wood, plants and animal waste?", "o": ["Biomass", "Geothermal", "Tidal", "Nuclear"], "why": "Biomass is material from living things. It can be burned or used to make biogas.", "hint": "\"Bio\" means life."}, {"lv": 2, "t": "Energy resources", "e": "🌋", "q": "Geothermal energy comes from …", "o": ["heat inside the Earth", "the Moon's pull on the sea", "burning coal", "the wind"], "why": "Geothermal power uses hot rocks deep underground to heat water into steam.", "hint": "\"Geo\" means Earth."}, {"lv": 3, "t": "Energy resources", "e": "🏭", "q": "In a coal power station, which energy chain is right?", "o": ["Chemical → thermal → kinetic → electrical", "Thermal → chemical → electrical → kinetic", "Kinetic → chemical → thermal → electrical", "Electrical → kinetic → thermal → chemical"], "why": "Burning coal (chemical) heats water to steam (thermal), steam spins the turbine (kinetic), the generator gives electrical.", "hint": "Start with the coal itself. What is stored in a fuel?"}, {"lv": 3, "t": "Energy resources", "e": "🌬️", "q": "What is one disadvantage of wind turbines?", "o": ["They make no electricity when there is no wind", "The wind will run out", "They give off lots of carbon dioxide", "They need coal to work"], "why": "Wind is renewable and clean, but it is not always blowing, so the supply is not steady.", "hint": "Think about a very calm day."}, {"lv": 3, "t": "Energy resources", "e": "🌍", "q": "Why is burning fossil fuels bad for the environment?", "o": ["It releases carbon dioxide, which adds to global warming", "It makes the Earth colder", "It uses up all the wind", "It makes the Sun weaker"], "why": "Burning coal, oil and gas releases carbon dioxide, a greenhouse gas, and other polluting gases.", "hint": "Which gas do cars and chimneys give out?"}, {"lv": 3, "t": "Energy resources", "e": "⛏️", "q": "Why are fossil fuels called non-renewable?", "o": ["They took millions of years to form and cannot be replaced quickly", "They are very cheap", "They are found only in the sea", "They need sunlight to work"], "why": "Once we burn them they are gone; nature needs millions of years to make more.", "hint": "How long did it take for them to form?"}, {"lv": 3, "t": "Energy resources", "e": "⚛️", "q": "Uranium is used in nuclear power stations. Is it renewable?", "o": ["No – there is only a limited amount in the ground", "Yes – it grows back every year", "Yes – the Sun makes more every day", "No – because it is a fossil fuel"], "why": "Uranium is mined and will run out, so it is non-renewable. It is NOT a fossil fuel.", "hint": "It is dug out of rocks. Can we make more?"}, {"lv": 3, "t": "Heat transfer", "e": "🪟", "q": "Why do double-glazed windows keep a house warm?", "o": ["The gap of trapped air between the panes is a good insulator", "The glass is twice as hot", "The glass makes heat by itself", "Two panes reflect all the light"], "why": "Trapped air cannot move much (little convection) and conducts heat badly, so less heat escapes.", "hint": "What is between the two sheets of glass?"}, {"lv": 3, "t": "Heat transfer", "e": "🍵", "q": "How does a vacuum flask keep a drink hot?", "o": ["Its vacuum stops conduction and convection; its shiny walls reduce radiation", "It heats the drink with a battery", "It adds cold energy to the outside", "Its glass walls are good conductors"], "why": "No particles in the vacuum = no conduction or convection; shiny surfaces reflect infrared radiation.", "hint": "A vacuum has no particles at all. Which transfers need particles?"}, {"lv": 3, "t": "Heat transfer", "e": "🔩", "q": "A metal bench and a wooden bench are both at 10 °C. Why does the metal one feel colder?", "o": ["Metal conducts heat away from your hand faster", "The metal is at a lower temperature", "Metal makes cold energy", "Wood is warmer because it is brown"], "why": "Both have the same temperature, but metal is a good conductor and takes heat from your skin quickly.", "hint": "Read carefully: both benches are at 10 °C."}, {"lv": 3, "t": "Heat transfer", "e": "🧊", "q": "Why is the freezer box often at the top of an old fridge?", "o": ["Cold air sinks and sets up a convection current that cools the whole fridge", "Heat rises into the freezer", "Cold air rises to the top", "Radiation goes downwards only"], "why": "Air cooled at the top becomes denser and sinks; warmer air rises to be cooled: a convection current.", "hint": "Does cold air rise or sink?"}, {"lv": 3, "t": "Heat transfer", "e": "🔥", "q": "Which heat transfer can happen through a vacuum?", "o": ["Radiation", "Conduction", "Convection", "None of them"], "why": "Radiation travels as infrared waves and needs no particles. Conduction and convection need particles.", "hint": "It is how the Sun's heat crosses empty space."}, {"lv": 3, "t": "States of matter", "e": "🧊", "q": "While ice is melting at 0 °C, what happens to its temperature?", "o": ["It stays at 0 °C until all the ice has melted", "It rises quickly", "It falls below 0 °C", "It jumps to 100 °C"], "why": "The energy taken in is used to break the solid apart, so the temperature stays the same until it has all melted.", "hint": "Think of a glass of water with ice cubes still in it."}, {"lv": 3, "t": "States of matter", "e": "🌫️", "q": "Dry ice (solid carbon dioxide) turns straight into a gas without melting. What is this called?", "o": ["Sublimation", "Condensation", "Evaporation", "Freezing"], "why": "Solid → gas directly is sublimation. Gas → solid directly is deposition.", "hint": "It skips the liquid state."}, {"lv": 3, "t": "States of matter", "e": "🎈", "q": "A balloon is put in a warm place and gets bigger. What happens to the air particles inside?", "o": ["They move faster and spread out more", "They get bigger", "They stop moving", "More particles appear"], "why": "Heating gives the particles more kinetic energy, so they move faster and push the balloon outwards.", "hint": "The particles do not change size – what changes is how they move."}, {"lv": 3, "t": "States of matter", "e": "⚡", "q": "Lightning and the Sun are made of a fourth state of matter. What is it called?", "o": ["Plasma", "Vapour", "Crystal", "Steam"], "why": "Plasma is a very hot gas whose particles are broken up. It is found in stars and lightning.", "hint": "Its name sounds like part of your blood."}, {"lv": 3, "t": "Heat and temperature", "e": "🍲", "q": "A hot pan (90 °C) is put into a bowl of cold water (15 °C). What happens in the end?", "o": ["Both reach the same temperature, somewhere in between", "The water gets hotter than the pan", "The pan stays at 90 °C", "The pan becomes colder than the water"], "why": "Heat flows from the pan to the water until they reach the same temperature (thermal equilibrium).", "hint": "Heat stops moving when there is no temperature difference."}, {"lv": 3, "t": "Conservation of energy", "e": "🛹", "q": "A skateboarder rolls down a ramp and slows down at the bottom of the next slope. Which is right?", "o": ["The total energy stays the same; some is transferred to the surroundings as heat and sound", "Energy is destroyed by friction", "New energy is made at the bottom", "The total energy gets bigger"], "why": "Energy is conserved. Friction and air resistance transfer some of it to thermal and sound energy.", "hint": "Energy is never destroyed – where could it have gone?"}, {"lv": 3, "t": "Scientific method", "e": "🧪", "q": "In the wind-up toy test, why should you use the same floor every time?", "o": ["It is a control variable, so the test is fair", "It is the dependent variable", "It is the hypothesis", "It makes the toy faster"], "why": "Control variables are kept the same so that only the independent variable affects the result.", "hint": "A fair test changes only ONE thing."}, {"lv": 3, "t": "Scientific method", "e": "📊", "q": "One result in your table is very different from the others. What is it called?", "o": ["An anomaly (anomalous result)", "A hypothesis", "A control variable", "An average"], "why": "An anomaly does not fit the pattern. Check it, repeat it, and leave it out of the average.", "hint": "It does not follow the pattern."}];
+const TCOL = {"Forms of energy": "#E65100", "Energy transfers": "#1E88E5", "Conservation of energy": "#6A1B9A", "Scientific method": "#00897B", "Heat and temperature": "#C62828", "States of matter": "#3949AB", "Heat transfer": "#D81B60", "Energy resources": "#2E7D32"};
+const LADDER = [100, 200, 300, 500, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 125000, 250000, 500000, 1000000];
+const SAFE = [4, 9];          // index of the safe steps (questions 5 and 10)
+const fmt = (n) => n.toLocaleString("en-GB").replace(/,/g, " ");
+const LET = "ABCD";
+
+const WORDS = {
+  "kinetic": "The energy of moving things. The faster it moves, the more kinetic energy.",
+  "gravitational": "The energy of things that are high up and can fall. The higher it is, the more gravitational energy.",
+  "elastic": "The energy of things that are stretched, squashed or bent, like springs and rubber bands.",
+  "chemical": "Energy stored in food, fuels and batteries. A chemical reaction lets it out.",
+  "nuclear": "Energy stored in the centre (nucleus) of atoms. It is let out in the Sun and in nuclear power stations.",
+  "thermal": "The energy of hot things. The hotter something is, the more thermal energy it has.",
+  "conservation": "Energy cannot be created or destroyed. It can only be transferred from one store to another.",
+  "temperature": "How hot or cold something is. Measured in degrees Celsius (°C) with a thermometer.",
+  "particles": "The tiny bits that all matter is made of (atoms and molecules). They are always moving.",
+  "conduction": "Heat moving through a solid: the particles vibrate and pass the energy to the particles next to them.",
+  "convection": "Heat moving in a liquid or gas: the warm part rises, the cool part sinks, making a loop.",
+  "radiation": "Heat moving as invisible infrared waves. It needs no particles, so it can cross empty space.",
+  "conductor": "A material that lets heat pass through easily, like metals.",
+  "insulator": "A material that does not let heat pass through easily, like plastic, wood, wool and air.",
+  "renewable": "It will not run out: nature replaces it. Sun, wind and water are renewable.",
+  "non-renewable": "It will run out one day. Coal, oil, gas and uranium are non-renewable.",
+  "fossil": "Fossil fuels formed from plants and animals that died millions of years ago: coal, oil and natural gas.",
+  "turbine": "A big wheel with blades. Moving wind, water or steam makes it spin.",
+  "generator": "A machine with a spinning magnet inside a coil of wire. When it spins, it makes electricity.",
+  "vacuum": "Empty space with no particles at all – not even air.",
+  "friction": "A force that slows things down when surfaces rub. It transfers energy as heat.",
+  "variable": "Anything that can change in an experiment. Independent = what you change; dependent = what you measure; control = what you keep the same.",
+  "hypothesis": "A prediction you can test, often written \"If … then … because …\".",
+  "condensation": "Gas changing into a liquid when it cools.",
+  "evaporation": "Liquid changing into a gas.",
+  "sublimation": "A solid changing straight into a gas, without melting.",
+  "anomaly": "A result that does not fit the pattern of the other results.",
+  "biomass": "Material from living things (wood, plants, animal waste) used as a fuel.",
+  "geothermal": "Heat from hot rocks deep inside the Earth.",
+};
+const WRE = new RegExp("\\b(" + Object.keys(WORDS).sort((a, b) => b.length - a.length).map(k => k.replace("-", "\\-")).join("|") + ")\\b", "i");
+// wrap the key words of Marie's explanations and hints in tappable buttons (meaning on tap)
+function words(text) {
+  const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  const m = text.match(WRE);
+  if (!m) return esc(text);
+  const k = m[1].toLowerCase();
+  return esc(text.slice(0, m.index)) + `<button type="button" class="wd" data-w="${k}">${esc(m[1])}</button>` + words(text.slice(m.index + m[1].length));
+}
+
+/* Marie */
+const SPEX = `<svg class="spex" viewBox="0 0 100 100" data-mood="talk" aria-hidden="true">
+  <circle cx="50" cy="50" r="49" fill="#DCE3EA"/>
+  <path d="M24 47 Q20 15 50 13 Q80 14 77 47 L78 63 Q73 67 68 60 L32 60 Q27 66 22 61Z" fill="#3B2A22"/>
+  <path d="M10 100 Q12 76 50 71 Q88 76 90 100Z" fill="#7F8C6B"/>
+  <rect x="44.5" y="60" width="11" height="13" rx="3" fill="#E6BFA3"/>
+  <path d="M41 71 L50 86 L35 82Z" fill="#8E9B79" stroke="#6B775A" stroke-width="1"/><path d="M59 71 L50 86 L65 82Z" fill="#8E9B79" stroke="#6B775A" stroke-width="1"/>
+  <circle cx="50" cy="93" r="1.6" fill="#A1887F"/>
+  <circle cx="29.5" cy="47" r="4" fill="#E6BFA3"/><circle cx="70.5" cy="47" r="4" fill="#E6BFA3"/><circle cx="29.3" cy="52.5" r="1.4" fill="#26A69A"/>
+  <ellipse cx="50" cy="45" rx="20.5" ry="23" fill="#F0CDB4"/>
+  <path d="M29.5 41 Q29 20 45 18.5 Q63 16.5 72 30 Q74 38 72.5 47 Q67 34 57 31 Q49 29 45 25.5 Q39 31 29.5 41Z" fill="#3B2A22"/>
+  <path d="M44.5 19.5 Q47 23 45.5 27" stroke="#A8A29E" stroke-width="1.6" fill="none"/><path d="M50 21 Q63 21 70 32" stroke="#5A463C" stroke-width="1.2" fill="none"/>
+  <circle cx="37" cy="54" r="3.3" fill="#F48FB1" opacity=".35"/><circle cx="63" cy="54" r="3.3" fill="#F48FB1" opacity=".35"/>
+  <g stroke="#3B2A22" stroke-width="1.6" fill="none" stroke-linecap="round"><path d="M35 35.5 q5 -2.5 10 -0.5"/><path d="M55 35 q5 -2 10 0.5"/></g>
+  <circle cx="41" cy="44" r="2.2" fill="#4E342E"/><circle cx="59" cy="44" r="2.2" fill="#4E342E"/>
+  <path d="M50 46 q-2.2 5 0 6.2" stroke="#D49F82" stroke-width="1.3" fill="none" stroke-linecap="round"/>
+  <rect class="lens" x="32" y="37.5" width="16.5" height="13.5" rx="6" stroke="#B98A70" stroke-width="1.2"/>
+  <rect class="lens" x="51.5" y="37.5" width="16.5" height="13.5" rx="6" stroke="#B98A70" stroke-width="1.2"/>
+  <path d="M48.5 42 q1.5 -1.6 3 0 M32 41 L28 40 M68 41 L72 40" stroke="#B98A70" stroke-width="1.1" fill="none"/>
+  <ellipse class="m m-talk" cx="50" cy="58.5" rx="3.6" ry="2.6" fill="#B5545C"/>
+  <path class="m m-happy" d="M43 56.5 Q50 63.5 57 56.5Z" fill="#B5545C"/>
+  <path class="m m-think" d="M45.5 59 h8" stroke="#B5545C" stroke-width="2" stroke-linecap="round"/>
+  <circle class="m m-wow" cx="50" cy="59" r="3.2" fill="#B5545C"/>
+  <path class="m m-hmm" d="M44 59.5 q3 -2.2 6 0 t6 0" stroke="#B5545C" stroke-width="2" fill="none" stroke-linecap="round"/>
+</svg>`;
+$("marie").innerHTML = SPEX;
+document.querySelector(".mS").innerHTML = SPEX.replace('data-mood="talk"', 'data-mood="happy"');
+document.querySelector(".mE").innerHTML = SPEX;
+function say(html, mood = "talk", cls = "") {
+  $("marie").firstElementChild.dataset.mood = mood;
+  const b = $("bubble"); b.className = "bubble" + (cls ? " " + cls : ""); b.innerHTML = html;
+}
+function actions(list) {       // list of [label, class, fn]
+  const a = $("actions"); a.innerHTML = "";
+  list.forEach(([label, cls, fn, id]) => { const b = document.createElement("button"); b.className = "btn big " + cls; b.innerHTML = label; if (id) b.id = id; b.onclick = fn; a.appendChild(b); });
+}
+
+/* settings (this browser only) */
+const STORE = "g6-energy-champion-v1";
+const S = { n: 1, names: ["Our class", "Team 2", "Team 3", "Team 4"], timer: false, sound: false };
+try { const d = JSON.parse(localStorage.getItem(STORE) || "null"); if (d) Object.assign(S, d); } catch (e) {}
+const saveS = () => { try { localStorage.setItem(STORE, JSON.stringify(S)); } catch (e) {} };
+
+/* sound: off by default; tones made in the browser (own short jingles) */
+let actx = null;
+function beep(fq, d, type = "sine", v = 0.06, when = 0) {
+  if (!S.sound) return;
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + when;
+    o.type = type; o.frequency.value = fq; g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + d + 0.02);
+  } catch (e) {}
+}
+const SND = {
+  click: () => beep(1200, 0.05, "square", 0.03),
+  lock: () => { beep(330, 0.25, "triangle", 0.07); beep(392, 0.3, "triangle", 0.07, 0.25); },
+  right: () => [523, 659, 784].forEach((f, i) => beep(f, 0.2, "sine", 0.07, i * 0.1)),
+  wrong: () => { beep(220, 0.3, "sawtooth", 0.05); beep(165, 0.45, "sawtooth", 0.05, 0.28); },
+  tick: () => beep(1800, 0.03, "square", 0.02),
+  life: () => beep(880, 0.15, "triangle", 0.06),
+  champ: () => [523, 659, 784, 1047, 784, 1047].forEach((f, i) => beep(f, 0.22, "sine", 0.07, i * 0.13)),
+};
+function setSoundBtn() { $("soundBtn").setAttribute("aria-pressed", S.sound); $("soundBtn").textContent = (S.sound ? "🔊" : "🔇") + " Sound"; }
+$("soundBtn").onclick = () => { S.sound = !S.sound; saveS(); setSoundBtn(); SND.click(); };
+setSoundBtn();
+
+/* picking questions: 5 easy + 5 medium + 5 hard, spread over topics, new ones first */
+const used = new Set();
+const shuffle = (a) => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+function draw() {
+  const out = [], topics = new Set();
+  for (const lv of [1, 2, 3]) {
+    let pool = BANK.map((q, i) => i).filter(i => BANK[i].lv === lv);
+    if (pool.filter(i => !used.has(i)).length < 5) pool.forEach(i => used.delete(i));
+    pool = shuffle(pool).sort((a, b) => used.has(a) - used.has(b));
+    const pick = [];
+    for (const pass of [0, 1]) for (const i of pool) {
+      if (pick.length === 5) break;
+      if (pick.includes(i)) continue;
+      if (pass === 0 && (used.has(i) || topics.has(BANK[i].t + lv))) continue;
+      pick.push(i); topics.add(BANK[i].t + lv);
+    }
+    pick.forEach(i => used.add(i));
+    out.push(...pick);
+  }
+  return out.map(i => { const q = BANK[i]; const order = shuffle([0, 1, 2, 3]); return { ...q, opts: order.map(k => q.o[k]), right: order.indexOf(0) }; });
+}
+
+/* game state */
+let teams = [], cur = 0, G = null, timerId = null;
+function newGame() {
+  G = { qs: draw(), step: 0, sel: null, locked: false, used: { f: false, a: false, h: false }, gone: [], missed: null, done: false };
+  renderLadder(); showQ();
+}
+function renderLadder() {
+  const L = $("ladder"); L.innerHTML = "<h2>⭐ Climb to the top</h2>";
+  for (let i = LADDER.length - 1; i >= 0; i--) {
+    const r = document.createElement("div");
+    r.className = "rung" + (SAFE.includes(i) ? " safe" : "") + (i === LADDER.length - 1 ? " top" : "") +
+      (G && i < G.step ? " done" : "") + (G && i === G.step && !G.done ? " now" : "");
+    r.innerHTML = `<span class="n">${i + 1}</span><span class="v">${fmt(LADDER[i])} ★</span>`;
+    L.appendChild(r);
+  }
+  const w = document.createElement("button"); w.className = "btn walk"; w.id = "walkBtn"; w.innerHTML = "🚶 Walk away";
+  w.title = "Stop now and keep the stars you have";
+  w.disabled = !G || G.locked || G.done || G.step === 0;
+  w.onclick = walkAway; L.appendChild(w);
+}
+const won = () => (G.step > 0 ? LADDER[G.step - 1] : 0);
+const safeWon = () => { let s = 0; SAFE.forEach(i => { if (G.step > i) s = LADDER[i]; }); return s; };
+
+function showQ() {
+  const q = G.qs[G.step];
+  G.sel = null; G.locked = false; G.gone = [];
+  $("teamName").textContent = teams[cur].name;
+  $("stepInfo").innerHTML = `Question <b>${G.step + 1}</b> of 15 · for <b>${fmt(LADDER[G.step])} ★</b>`;
+  $("qEm").textContent = q.e;
+  $("qTag").textContent = q.t; $("qTag").style.setProperty("--tc", TCOL[q.t]);
+  $("qText").textContent = q.q;          // no tap-words in the question: a meaning could give the answer away
+  const A = $("answers"); A.innerHTML = "";
+  q.opts.forEach((o, k) => {
+    const b = document.createElement("button"); b.className = "ans"; b.dataset.k = k;
+    b.innerHTML = `<span class="L">${LET[k]}</span><span>${o.replace(/</g, "&lt;")}</span>`;
+    b.onclick = () => pick(k); A.appendChild(b);
+  });
+  $("l50").disabled = G.used.f; $("lAsk").disabled = G.used.a; $("lHint").disabled = G.used.h;
+  const lines = G.step === 0 ? `Here is question 1 for <b>${fmt(LADDER[0])} ★</b>. Talk in your team, then choose an answer!`
+    : SAFE.includes(G.step - 1) ? `🛟 Safe step reached! You keep <b>${fmt(LADDER[G.step - 1])} ★</b> whatever happens. Question ${G.step + 1}…`
+    : G.step === 14 ? "The LAST question – for <b>1 000 000 ★</b>! Think carefully…"
+    : `Question ${G.step + 1} for <b>${fmt(LADDER[G.step])} ★</b>. ${G.step >= 10 ? "These are hard ones!" : G.step >= 5 ? "Getting harder…" : "Choose an answer."}`;
+  say(lines, G.step === 14 ? "wow" : "talk");
+  actions([]);
+  renderLadder();
+  startTimer();
+}
+function pick(k) {
+  if (G.locked || G.done || G.gone.includes(k)) return;
+  G.sel = k; SND.click();
+  document.querySelectorAll(".ans").forEach(b => b.classList.toggle("sel", +b.dataset.k === k));
+  say(`<b>${LET[k]}</b> – is that your <b>final answer</b>?`, "hmm");
+  actions([["✔ Final answer", "primary", lockIn, "finalBtn"]]);
+}
+function lockIn() {
+  if (G.sel == null || G.locked) return;
+  G.locked = true; stopTimer(); SND.lock(); renderLadder();
+  document.querySelectorAll(".ans,.life").forEach(b => b.disabled = true);
+  actions([]);
+  say("Let's see…", "think");
+  setTimeout(reveal, 1300);
+}
+function reveal(timeUp) {
+  const q = G.qs[G.step];
+  const bs = document.querySelectorAll(".ans");
+  bs.forEach(b => { b.classList.remove("sel"); b.disabled = true; });
+  bs[q.right].classList.add("right");
+  const ok = !timeUp && G.sel === q.right;
+  if (!ok && G.sel != null) bs[G.sel].classList.add("wrong");
+  if (ok) {
+    SND.right(); G.step++;
+    if (G.step === 15) { G.done = true; renderLadder(); say(`🎉 RIGHT! ${words(q.why)}`, "wow", "good"); setTimeout(() => endGame("champion"), 1400); return; }
+    renderLadder();
+    say(`✔ Right! ${words(q.why)}`, "happy", "good");
+    actions([[`Next question ▶`, "primary", showQ, "nextBtn"]]);
+  } else {
+    SND.wrong(); G.missed = q; G.done = true; renderLadder();
+    say(`${timeUp ? "⏱ Time is up!" : "✘ Oh no, that's not it."} The answer is <b>${LET[q.right]}</b>. ${words(q.why)}`, "hmm", "bad");
+    actions([["See the result ▶", "navy", () => endGame("wrong"), "resBtn"]]);
+  }
+}
+function walkAway() {
+  if (!G || G.locked || G.done || G.step === 0) return;
+  if (!confirm(`Walk away and keep ${fmt(won())} ★?`)) return;
+  stopTimer(); G.done = true; G.locked = true;
+  const q = G.qs[G.step];
+  document.querySelectorAll(".ans").forEach(b => { b.disabled = true; b.classList.remove("sel"); });
+  document.querySelectorAll(".ans")[q.right].classList.add("right");
+  document.querySelectorAll(".life").forEach(b => b.disabled = true);
+  renderLadder();
+  say(`A wise choice! The answer would have been <b>${LET[q.right]}</b>. ${words(q.why)}`, "talk", "tip");
+  actions([["See the result ▶", "navy", () => endGame("walk"), "resBtn"]]);
+}
+
+/* lifelines */
+$("l50").onclick = () => {
+  if (G.locked || G.used.f) return;
+  G.used.f = true; SND.life(); $("l50").disabled = true;
+  const q = G.qs[G.step];
+  const wrong = shuffle([0, 1, 2, 3].filter(k => k !== q.right && k !== G.sel)).slice(0, 2);
+  if (G.sel != null && G.sel !== q.right && wrong.length < 2) wrong.push(G.sel);
+  G.gone = wrong;
+  wrong.forEach(k => { const b = document.querySelectorAll(".ans")[k]; b.classList.add("gone"); b.classList.remove("sel"); });
+  if (wrong.includes(G.sel)) { G.sel = null; actions([]); }
+  say("✂️ Two wrong answers are gone. Now it's one of two!", "talk", "tip");
+};
+$("lHint").onclick = () => {
+  if (G.locked || G.used.h) return;
+  G.used.h = true; SND.life(); $("lHint").disabled = true;
+  say(`💡 My clue: ${words(G.qs[G.step].hint)}`, "think", "tip");
+};
+$("lAsk").onclick = () => {
+  if (G.locked || G.used.a) return;
+  G.used.a = true; SND.life(); $("lAsk").disabled = true; pauseTimer = true;
+  const q = G.qs[G.step], R = $("askRows"); R.innerHTML = "";
+  q.opts.forEach((o, k) => {
+    const row = document.createElement("div"); row.className = "askrow" + (G.gone.includes(k) ? " gone" : "");
+    row.innerHTML = `<b>${LET[k]}</b><button class="btn" aria-label="minus">−</button><input type="number" min="0" max="99" value="0" aria-label="hands for ${LET[k]}"><button class="btn" aria-label="plus">+</button><div class="bar"><i></i><span>0 %</span></div>`;
+    const inp = row.querySelector("input");
+    row.querySelectorAll("button")[0].onclick = () => { inp.value = Math.max(0, +inp.value - 1); upd(); };
+    row.querySelectorAll("button")[1].onclick = () => { inp.value = +inp.value + 1; SND.tick(); upd(); };
+    inp.oninput = upd;
+    R.appendChild(row);
+  });
+  function upd() {
+    const ins = [...R.querySelectorAll("input")], tot = ins.reduce((s, i) => s + Math.max(0, +i.value || 0), 0);
+    ins.forEach(i => { const p = tot ? Math.round(100 * Math.max(0, +i.value || 0) / tot) : 0; const bar = i.parentElement.querySelector(".bar"); bar.querySelector("i").style.width = p + "%"; bar.querySelector("span").textContent = p + " %"; });
+  }
+  $("ovAsk").hidden = false; R.querySelector("input").focus();
+};
+$("askClose").onclick = () => { $("ovAsk").hidden = true; pauseTimer = false; say("🙋 Thank you, class! Now choose your answer.", "talk", "tip"); };
+
+/* optional timer (questions 1–5) */
+let left = 30, pauseTimer = false;
+function startTimer() {
+  stopTimer();
+  const on = S.timer && G.step < 5;
+  $("timer").hidden = !on; if (!on) return;
+  left = 30; $("timer").textContent = left; $("timer").classList.remove("low");
+  timerId = setInterval(() => {
+    if (pauseTimer || !$("ovHelp").hidden) return;
+    left--; $("timer").textContent = left; $("timer").classList.toggle("low", left <= 10);
+    if (left <= 10 && left > 0) SND.tick();
+    if (left <= 0) { stopTimer(); G.locked = true; document.querySelectorAll(".life").forEach(b => b.disabled = true); actions([]); reveal(true); }
+  }, 1000);
+}
+function stopTimer() { clearInterval(timerId); timerId = null; }
+
+/* end of a game */
+function endGame(how) {
+  stopTimer();
+  const t = teams[cur];
+  t.stars = how === "champion" ? LADDER[14] : how === "walk" ? won() : safeWon();
+  t.reached = G.step; t.played = true;
+  t.revise = G.missed ? [G.missed.t] : [];
+  const champ = how === "champion";
+  $("endT").textContent = champ ? "🏆 Energy Champion!" : how === "walk" ? "🚶 Well done!" : "Good try!";
+  document.querySelector(".mE .spex").dataset.mood = champ ? "wow" : "happy";
+  $("endMsg").innerHTML = champ ? `<b>${t.name}</b> answered all 15 questions. You are real <b>Energy Champions</b>!`
+    : how === "walk" ? `<b>${t.name}</b> walked away after ${G.step} right answers.`
+    : `<b>${t.name}</b> got ${G.step} questions right. ${t.stars ? "The 🛟 safe step keeps your stars." : "No safe step yet – next time!"}`;
+  $("endStars").textContent = `${fmt(t.stars)} ★`;
+  $("endRevise").innerHTML = t.revise.length ? `<h3>📚 Topic to revise</h3><div class="revise">${t.revise.map(x => `<span style="--tc:${TCOL[x]}">${x}</span>`).join("")}</div>` : "";
+  if (teams.length > 1) {
+    const best = Math.max(...teams.filter(x => x.played).map(x => x.stars));
+    $("endScore").innerHTML = `<h3>Scoreboard</h3><table class="score">${teams.map(x => `<tr class="${x.played && x.stars === best ? "best" : ""}"><td>${x.played && x.stars === best ? "🥇 " : ""}${esc(x.name)}</td><td class="v">${x.played ? fmt(x.stars) + " ★" : "– waiting –"}</td></tr>`).join("")}</table>`;
+  } else $("endScore").innerHTML = "";
+  const nxt = teams.findIndex(x => !x.played);
+  const B = $("endBtns"); B.innerHTML = "";
+  const mk = (label, cls, fn) => { const b = document.createElement("button"); b.className = "btn big " + cls; b.innerHTML = label; b.onclick = fn; B.appendChild(b); };
+  if (nxt >= 0) mk(`▶ ${esc(teams[nxt].name)}'s turn`, "primary", () => { $("ovEnd").hidden = true; cur = nxt; newGame(); });
+  else mk("↺ Play again (new questions)", "primary", () => { $("ovEnd").hidden = true; teams.forEach(x => x.played = false); cur = 0; newGame(); });
+  mk("⚙ New teams", "", () => { $("ovEnd").hidden = true; openStart(); });
+  mk("Close", "", () => { $("ovEnd").hidden = true; });
+  $("ovEnd").hidden = false;
+  if (champ) { SND.champ(); confetti(); }
+}
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;");
+function confetti() {
+  const C = $("confetti"); C.innerHTML = "";
+  const em = ["⭐", "⚡", "🌟", "✨", "🏆"];
+  for (let i = 0; i < 70; i++) {
+    const s = document.createElement("i"); s.textContent = em[i % em.length];
+    s.style.left = Math.random() * 100 + "vw"; s.style.animationDuration = 2.5 + Math.random() * 2.5 + "s"; s.style.animationDelay = Math.random() * 1.5 + "s";
+    C.appendChild(s);
+  }
+  setTimeout(() => C.innerHTML = "", 7000);
+}
+
+/* start screen */
+function openStart() {
+  stopTimer();
+  const seg = $("nTeams"); seg.innerHTML = "";
+  [1, 2, 3, 4].forEach(n => { const b = document.createElement("button"); b.textContent = n; b.setAttribute("aria-pressed", S.n === n); b.onclick = () => { S.n = n; openStart(); }; seg.appendChild(b); });
+  const T = $("teamIns"); T.innerHTML = "";
+  for (let i = 0; i < 4; i++) {
+    const inp = document.createElement("input"); inp.value = S.names[i]; inp.maxLength = 24; inp.disabled = i >= S.n;
+    inp.setAttribute("aria-label", `Name of team ${i + 1}`);
+    inp.oninput = () => { S.names[i] = inp.value; }; T.appendChild(inp);
+  }
+  $("optTimer").checked = S.timer;
+  $("ovStart").hidden = false;
+}
+$("optTimer").onchange = () => { S.timer = $("optTimer").checked; };
+$("goBtn").onclick = () => {
+  S.names = S.names.map((n, i) => n.trim() || (i === 0 ? "Our class" : `Team ${i + 1}`)); saveS();
+  teams = S.names.slice(0, S.n).map(name => ({ name, stars: 0, played: false }));
+  cur = 0; $("ovStart").hidden = true; SND.click(); newGame();
+};
+$("newBtn").onclick = () => { if (!G || G.done || G.step === 0 || confirm("Stop this game and start a new one?")) openStart(); };
+$("helpBtn").onclick = () => { $("ovHelp").hidden = false; };
+$("helpClose").onclick = () => { $("ovHelp").hidden = true; };
+
+/* keyboard: A–D choose, Enter = final answer / next */
+document.addEventListener("keydown", (e) => {
+  if (e.target.tagName === "INPUT" || ![...document.querySelectorAll(".ov")].every(o => o.hidden) || !G) return;
+  const k = LET.indexOf(e.key.toUpperCase());
+  if (k >= 0 && e.key.length === 1) { pick(k); e.preventDefault(); }
+  else if (e.key === "Enter") { const b = $("finalBtn") || $("nextBtn") || $("resBtn"); if (b && document.activeElement !== b) { b.click(); e.preventDefault(); } }
+});
+
+/* words on tap */
+let pop = null;
+document.addEventListener("click", (e) => {
+  const b = e.target.closest(".wd");
+  if (pop && !e.target.closest(".wpop")) { pop.remove(); pop = null; }
+  if (!b) return;
+  e.stopPropagation();
+  pop = document.createElement("div"); pop.className = "wpop";
+  pop.innerHTML = `<b>${b.dataset.w}</b>${WORDS[b.dataset.w]}`;
+  document.body.appendChild(pop);
+  const r = b.getBoundingClientRect(), pr = pop.getBoundingClientRect();
+  pop.style.left = Math.max(12, Math.min(innerWidth - pr.width - 12, r.left)) + "px";
+  pop.style.top = (r.bottom + pr.height + 8 < innerHeight ? r.bottom + 6 : Math.max(8, r.top - pr.height - 6)) + "px";
+});
+
+// first screen
+G = { qs: draw(), step: 0, sel: null, locked: true, used: { f: true, a: true, h: true }, gone: [], done: true };
+teams = [{ name: S.names[0], stars: 0, played: false }];
+showQ(); stopTimer(); say("Hello! Press <b>▶ Start the game</b> to begin.", "happy");
+document.querySelectorAll(".ans,.life").forEach(b => b.disabled = true);
+renderLadder();
+openStart();
+})();
+</script>
+<script data-goatcounter="https://physics-taneska.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+</body>
+</html>
