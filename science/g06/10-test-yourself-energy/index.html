@@ -11,6 +11,9 @@
   Teacher's choices: only drag and drop, true/false and multiple choice (no typing); questions SIMILAR to the
   Criterion A test (Groups A/B in Unit 2 Thinking about Energy/Assessments/), never the same situations or numbers;
   topics as in the Revision energy study guide (no Sankey diagrams, no circuits); about 20 questions.
+  24 Nov 2026 (teacher): the class did not finish Sankey diagrams and efficiency, so Q7 (TV: wasted joules) and Q8
+  (more efficient kettle) were replaced by Q7 skateboarder (gravitational → kinetic) and Q8 hot pan in cold water
+  (same temperature); key word "Efficient" → "Insulator". No joule calculations or efficiency left.
   Same shell, look and quiz engine as the Grade 6 simulations (copied from 04 Energy resources): Marie, stars 3/2/0
   (right first ★★★ · after a tip ★★ · answer shown 0), tip → answer + why, sticky ✔ Check, "Next question →" at the
   top and bottom, question dots, best score kept, certificate (A4 landscape). No read aloud (Grades 6–8 rule);
@@ -674,7 +677,6 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
     conservation: ["conservation of energy", "Energy cannot be created or destroyed. It can only be transferred from one store to another. The total stays the same."],
     useful: ["useful energy", "The energy we want a device to give, like light from a lamp."],
     wasted: ["wasted energy", "Energy that does not do the job we want. It usually spreads into the surroundings as heat (and sound)."],
-    efficient: ["efficient", "An efficient device changes more of the energy it takes in into useful energy, so it wastes less."],
     temperature: ["temperature", "How hot or cold something is. Measured in degrees Celsius (°C) with a thermometer."],
     heat: ["heat", "Thermal energy moving from a hotter object to a colder one. Measured in joules (J)."],
     particles: ["particles", "The tiny bits that all matter is made of (atoms and molecules). They are always moving."],
@@ -694,7 +696,7 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
   const f = (k, label) => `<button type="button" class="wd" data-f="${k}">${label || FORMS[k].label.toLowerCase()}</button>`;
 
   // key words at the top (tap → meaning)
-  const KEYS = [["conservation", "⚖️", "Conservation", ""], ["efficient", "💡", "Efficient", ""], ["temperature", "🌡️", "Temperature", ""],
+  const KEYS = [["conservation", "⚖️", "Conservation", ""], ["insulator", "🧣", "Insulator", ""], ["temperature", "🌡️", "Temperature", ""],
     ["conduction", "🥄", "Conduction", ""], ["convection", "🌀", "Convection", ""], ["radiation", "☀️", "Radiation", ""], ["renewable", "♻️", "Renewable", "rn"]];
 
   // 20 questions, easy → hard, the whole unit (no Sankey diagrams, no circuits). Only true/false, multiple choice and
@@ -728,15 +730,15 @@ footer{color:var(--muted);font-size:15px;padding:0 16px 12px}
       items: [["Light from the screen", "u"], ["Sound from the speakers playing music", "u"], ["Heat from the bottom of the laptop", "w"], ["Noise of the little fan inside", "w"]],
       tip: "Useful = what you want the laptop to do. Wasted = what you do not need.",
       why: "Useful: light from the screen and sound from the speakers. Wasted: heat (the laptop gets warm) and the fan's noise." },
-    { type: "mc", topic: "Useful and wasted energy", pic: A("📺") + A("⚡", "a-flick"), q: "A TV takes in 100 J of electrical energy every second. It gives out 70 J of useful light and sound. How much energy is wasted every second?", ok: "a",
-      opts: [["a", "30 J"], ["b", "70 J"], ["c", "170 J"], ["d", "0 J – energy cannot be wasted"]],
-      tip: "Energy in = useful energy out + wasted energy out. So wasted = energy in − useful.",
-      why: "Wasted energy = 100 J − 70 J = 30 J. It goes into the room as heat." },
-    { type: "mc", topic: "Efficiency", pic: A("🫖") + A("🫖"), q: `Two kettles each take in 2000 J. Kettle P puts 1800 J into the water. Kettle Q puts 1500 J into the water. Which kettle is more ${w("efficient")}?`, ok: "a",
-      opts: [["a", "Kettle P: more of its energy goes into the water, so it wastes less."], ["b", "Kettle Q: it wastes more energy, so it works harder."],
-        ["c", "They are the same: they both take in 2000 J."], ["d", "You cannot tell without a thermometer."]],
-      tip: "An efficient device turns more of the energy it takes in into useful energy.",
-      why: "Kettle P gives 1800 J of useful energy and wastes only 200 J. Kettle Q wastes 500 J. P is more efficient." },
+    { type: "mc", topic: "Energy transfers", pic: A("🛹", "a-slide") + A("⛰️"), q: "A skateboarder stands at the top of a ramp, then rolls down and speeds up. Which energy transfer happens as she rolls down?", ok: "a",
+      opts: [["a", "Gravitational energy → kinetic energy"], ["b", "Kinetic energy → gravitational energy"], ["c", "Chemical energy → light energy"], ["d", "Elastic energy → sound energy"]],
+      tip: "At the top she is high up. At the bottom she is moving fast. Which energy do high things have? And moving things?",
+      why: "High up she has gravitational energy. As she rolls down it is transferred to kinetic energy, so she goes faster. (A little is wasted as heat and sound.)" },
+    { type: "mc", topic: "Heat and temperature", pic: A("🍳") + A("🥣") + A("🌡️", "a-pulse"), q: "A hot metal pan is put into a bowl of cold water and left for a while. What happens?", ok: "c",
+      opts: [["a", "Cold moves from the water into the pan"], ["b", "The water heats up until it is hotter than the pan"],
+        ["c", "Heat moves from the pan into the water until both are at the same temperature"], ["d", "Nothing changes, because metal does not let heat out"]],
+      tip: "Heat always moves from hot to cold. When does it stop?",
+      why: "Heat moves from the hotter pan into the colder water. The pan cools down and the water warms up until both are at the same temperature (equilibrium). Then the heat stops flowing." },
     { type: "mc", topic: "States of matter", pic: A("🧃") + A("🥛", "a-bounce"), q: `Which sentence describes the ${w("particles")} in a liquid, like juice?`, ok: "c",
       opts: [["a", "Far apart, moving fast in all directions"], ["b", "Close together in rows, only vibrating in place"],
         ["c", "Close together, but they can slide past each other"], ["d", "They do not move at all"]],
