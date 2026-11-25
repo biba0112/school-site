@@ -20,7 +20,7 @@
     5 RUN       run state; at(t) interpolates the worked-out run
     6 SCENE     side view
     7 FBD       free-body diagram + energy bars or Sankey diagram
-    8 GRAPHS    E–t, E–h, v–t (h–t for the spring)
+    8 GRAPHS    E–t, E–h, v–t (h–t for the spring), F–s (25 Nov 2026: area under the force = work done = energy transferred)
     9 DATA      recorded trials and analysis graphs with best-fit lines
    10 TASKS     data-driven task list (predict / numeric / do)
    11 UI        controls, events, storage, main loop
@@ -453,6 +453,7 @@ body.steps-on > nav{display:none!important}   /* a simulation's own scenario bar
           <label class="switch"><input type="checkbox" id="tanChk"> Tangent</label></span>
       </div>
       <div id="graphWrap"><canvas id="graph" aria-label="Graph"></canvas></div>
+      <div class="hint" id="fsCheck" hidden></div>
       <div class="hint" id="graphHint"></div>
     </div>
 
@@ -494,6 +495,9 @@ body.steps-on > nav{display:none!important}   /* a simulation's own scenario bar
         diagram of where the starting energy has gone so far.</li>
       <li><b>Graphs</b>: <i>E</i>–<i>t</i> and <i>E</i>–<i>h</i> show the energy moving between the stores; the dashed total line stays flat.
         The <i>Tangent</i> tool on <i>E</i>–<i>t</i> gives the rate of energy transfer (power).</li>
+      <li><b><i>F</i>–<i>s</i>: work</b> plots each force along the motion against the distance moved. The shaded <b>area under the line is the work done</b>
+        (<i>W</i> = <i>Fs</i> cos <i>θ</i>), and the line under the graph shows that it equals the energy transferred: work by gravity = E<sub>p</sub> lost,
+        net work = E<sub>k</sub> gained.</li>
       <li><b>● Record</b> saves a trial; the <b>Data</b> tab plots <i>v</i>² against <i>h</i> (gradient 2<i>g</i>), or <i>h</i> against <i>x</i>² for the
         spring (gradient <i>k</i>/2<i>mg</i>).</li>
       <li>Work through the <b>Tasks</b> tab. Write explanations on your worksheet.</li>
@@ -1045,13 +1049,13 @@ function trackRun(){
   const G = trackGeom(set.shape, set.h, set.th, set.L), m = set.m, mu = set.mu;
   let stopWhy = "";
   const p0 = trackAt(G, 0), y0 = p0.y - G.ymin, E0 = m * set.u * set.u / 2 + m * g * y0;
-  const S = integrate({s:0, v:set.u, x:p0.x, y:y0, al:p0.al, N:m * g * Math.cos(p0.al), Ff:0, Q:0, Ek:m * set.u * set.u / 2, Ep:m * g * y0, vb:-1, ph:"moving"}, (st, h) => {
+  const S = integrate({s:0, d:0, Wg:0, Wr:0, v:set.u, x:p0.x, y:y0, al:p0.al, N:m * g * Math.cos(p0.al), Ff:0, Q:0, Ek:m * set.u * set.u / 2, Ep:m * g * y0, vb:-1, ph:"moving"}, (st, h) => {
     const p = trackAt(G, st.s), Nm = Math.max(0, g * Math.cos(p.al) + st.v * st.v * p.ka), fr = mu * Nm, ag = -g * Math.sin(p.al);
     let a;
     if (Math.abs(st.v) < 1e-9){ if (Math.abs(ag) <= fr + 1e-12){ st.ph = "stopped"; return; } a = ag - Math.sign(ag) * fr; }
     else a = ag - Math.sign(st.v) * fr;
     let v1 = st.v + a * h; if (st.v !== 0 && Math.sign(v1) !== Math.sign(st.v) && Math.abs(ag) <= fr) v1 = 0;
-    const ds = (st.v + v1) / 2 * h; st.s += ds; st.v = v1; st.Q += fr * m * Math.abs(ds);
+    const ds = (st.v + v1) / 2 * h; st.s += ds; st.d += Math.abs(ds); st.v = v1; st.Q += fr * m * Math.abs(ds);
     const q = trackAt(G, st.s); st.x = q.x; st.y = q.y - G.ymin; st.al = q.al; st.N = m * Nm; st.Ff = st.v === 0 ? 0 : m * fr * Math.sign(st.v);
     st.Ek = m * st.v * st.v / 2; st.Ep = m * g * st.y; st.Q = mu > 0 ? Math.max(0, E0 - st.Ek - st.Ep) : 0;   // thermal = what the mechanical energy lost
     if (st.vb < 0 && st.y <= 1e-3 * y0 + 1e-5) st.vb = Math.abs(st.v);
@@ -1060,24 +1064,32 @@ function trackRun(){
     if (st.s <= 0 && st.v < 0){ stopWhy = "back at the start"; return true; }
     if (st.ph === "stopped"){ stopWhy = "stopped: friction holds it"; return true; } return false; }});
   const last = S[S.length - 1]; if (last.vb < 0 && set.shape === "ramp") last.vb = Math.abs(last.v);
+  // F–s graph: force components along the motion (+ speeds it up, − slows it down); the normal force does no work
+  S.forEach((st, i) => { const p = trackAt(G, st.s), ag = -g * Math.sin(p.al);
+    const dir = Math.abs(st.v) > 1e-9 ? Math.sign(st.v) : i === 0 ? Math.sign(ag) : 0;
+    st.Fg = m * ag * dir; st.Fr = dir ? -mu * st.N : 0; st.Fn = st.Fg + st.Fr;
+    st.Wg = m * g * (y0 - st.y); st.Wr = -st.Q; });   // work by gravity = E_p lost; work by friction = −thermal (as in the energy bars)
   const vb = S.find(s => s.vb >= 0)?.vb ?? Math.max(...S.map(s => Math.abs(s.v)));
   return {S, dt:0.01, G, vb, h0:y0, stopWhy, E0:S[0].Ek + S[0].Ep};
 }
 function pendRun(){
   const m = set.mp, L = set.Lp, k = set.air ? dragK(set.obj) : 0, th0 = rad(set.th0);
   const T0 = 2 * Math.PI * Math.sqrt(L / g) * (1 + th0 * th0 / 16), tMax = 2.1 * T0;
-  const st0 = {th:th0, om:0, y:L * (1 - Math.cos(th0)), v:0, Ek:0, Ep:m * g * L * (1 - Math.cos(th0)), Q:0, T:m * g * Math.cos(th0), Fd:0};
+  const st0 = {th:th0, om:0, d:0, Wg:0, Wr:0, y:L * (1 - Math.cos(th0)), v:0, Ek:0, Ep:m * g * L * (1 - Math.cos(th0)), Q:0, T:m * g * Math.cos(th0), Fd:0};
   const E0 = st0.Ep;
   const S = integrate(st0, (s, h) => {
     const f = (th, om) => -(g / L) * Math.sin(th) - (k / m) * L * om * Math.abs(om);
     const k1 = f(s.th, s.om), k2 = f(s.th + s.om * h / 2, s.om + k1 * h / 2), k3 = f(s.th + (s.om + k1 * h / 2) * h / 2, s.om + k2 * h / 2), k4 = f(s.th + (s.om + k2 * h / 2) * h, s.om + k3 * h);
-    s.th += h * (s.om + h / 6 * (k1 + k2 + k3)); s.om += h / 6 * (k1 + 2 * k2 + 2 * k3 + k4);
+    const th1 = s.th + h * (s.om + h / 6 * (k1 + k2 + k3)); const dl = L * Math.abs(th1 - s.th); s.d += dl; s.Wr -= Math.abs(s.Fd) * dl; s.th = th1; s.om += h / 6 * (k1 + 2 * k2 + 2 * k3 + k4);
     s.v = L * s.om; s.y = L * (1 - Math.cos(s.th)); s.Ek = m * s.v * s.v / 2; s.Ep = m * g * s.y; s.Q = k > 0 ? Math.max(0, E0 - s.Ek - s.Ep) : 0;
-    s.T = m * g * Math.cos(s.th) + m * s.v * s.v / L; s.Fd = k * s.v * Math.abs(s.v);
+    s.T = m * g * Math.cos(s.th) + m * s.v * s.v / L; s.Fd = k * s.v * Math.abs(s.v); s.Wg = m * g * L * (Math.cos(s.th) - Math.cos(th0));
   }, {dt:0.01, h:0.001, tMax});
   // back at the nose side after one period: highest angle in the second half of the first period
   const sec = S.filter(s => s.t > 0.6 * T0 && s.t < 1.4 * T0), thR = Math.max(...sec.map(s => s.th));
   const first = S.find(s => s.t > 0.1 && s.th <= 0) || S[0];
+  // F–s graph: weight component along the motion; the tension is at 90° to the motion and does no work
+  S.forEach(s => { const dir = Math.abs(s.om) > 1e-9 ? Math.sign(s.om) : -Math.sign(s.th);
+    s.Fg = -m * g * Math.sin(s.th) * dir; s.Fr = -Math.abs(s.Fd); s.Fn = s.Fg + s.Fr; });
   return {S, dt:0.01, T0, thR, gap:L * (th0 - thR), vb:Math.abs(first.v), h0:L * (1 - Math.cos(th0)), E0};
 }
 function springRun(){
@@ -1085,18 +1097,21 @@ function springRun(){
   const E0 = k * x * x / 2, v0 = Math.sqrt((1 - loss) * k * x * x / m), hmax = v0 * v0 / (2 * g), Tf = 2 * v0 / g, dt = 0.002, S = [];
   for (let t = 0; t <= tau + Tf + 1e-9; t += dt){
     if (t < tau){ const y = -x * Math.cos(w * t), EH = k * y * y / 2, used = E0 - EH, Ek = (1 - loss) * used;
-      S.push({t, y, v:Math.sqrt(2 * Ek / m), EH, Ek, Ep:0, Q:loss * used, ph:"launch", Fs:k * Math.abs(y)}); }
+      S.push({t, y, d:x + y, v:Math.sqrt(2 * Ek / m), EH, Ek, Ep:0, Q:loss * used, ph:"launch", Fs:k * Math.abs(y),
+        Fg:k * Math.abs(y), Fr:-loss * k * Math.abs(y), Fw:0, Fn:(1 - loss) * k * Math.abs(y), Wg:used, Wr:-loss * used, Ww:0}); }
     else { const tt = t - tau, y = Math.max(0, v0 * tt - g * tt * tt / 2), v = v0 - g * tt, Ep = m * g * y;
-      S.push({t, y, v, EH:0, Ek:m * v * v / 2, Ep, Q:loss * E0, ph:"flight", Fs:0}); }
+      S.push({t, y, d:x + (v >= 0 ? y : 2 * hmax - y), v, EH:0, Ek:m * v * v / 2, Ep, Q:loss * E0, ph:"flight", Fs:0,
+        Fg:0, Fr:0, Fw:v >= 0 ? -m * g : m * g, Fn:v >= 0 ? -m * g : m * g, Wg:E0, Wr:-loss * E0, Ww:-Ep}); }
   }
   return {S, dt, speed:pace(S[S.length - 1].t), stepDt:0.05, tau, v0, hmax, E0};
 }
 function dropRun(){
   const m = set.md, H = set.hd, k = set.air ? dragK(set.obj) : 0;
-  const S = integrate({y:H, v:0, Ek:0, Ep:m * g * H, Q:0, Fd:0}, (s, h) => {
-    const a = -g + (k / m) * s.v * s.v; const v1 = s.v - a * h; s.y -= (s.v + v1) / 2 * h; s.v = v1;
-    s.y = Math.max(0, s.y); s.Ek = m * s.v * s.v / 2; s.Ep = m * g * s.y; s.Q = k > 0 ? Math.max(0, m * g * H - s.Ek - s.Ep) : 0; s.Fd = k * s.v * s.v;
+  const S = integrate({y:H, d:0, Wg:0, Wr:0, v:0, Ek:0, Ep:m * g * H, Q:0, Fd:0}, (s, h) => {
+    const a = -g + (k / m) * s.v * s.v; const v1 = s.v - a * h; const dy = (s.v + v1) / 2 * h; s.y -= dy; s.Wr -= (k / m) * s.v * s.v * m * Math.abs(dy); s.v = v1;
+    s.y = Math.max(0, s.y); s.d = H - s.y; s.Wg = m * g * s.d; s.Ek = m * s.v * s.v / 2; s.Ep = m * g * s.y; s.Q = k > 0 ? Math.max(0, m * g * H - s.Ek - s.Ep) : 0; s.Fd = k * s.v * s.v;
   }, {dt:0.005, h:0.0005, tMax:60, stop:s => s.y <= 0});
+  S.forEach(s => { s.Fg = m * g; s.Fr = -Math.abs(s.Fd); s.Fn = s.Fg + s.Fr; });   // F–s graph: forces along the motion (down)
   const last = S[S.length - 1];
   return {S, dt:0.005, speed:pace(last.t), stepDt:niceUp(last.t / 12), vb:last.v, h0:H, E0:m * g * H};
 }
@@ -1497,6 +1512,8 @@ function areaName(ctx, box, L){
   }
   cx = Math.min(Math.max(cx, box.x + w / 2 + 2), box.x + box.w - w / 2 - 2);
   cy = Math.min(Math.max(cy, box.y + h / 2 + 2), box.y + box.h - h / 2 - 4);
+  if (L.legend && !beside && cy - h / 2 < L.legend.y1 && cx - w / 2 < L.legend.x1)   // F–s: keep the box off the legend
+    cx = Math.min(L.legend.x1 + w / 2 + 8, box.x + box.w - w / 2 - 2);
   if (beside){ ctx.strokeStyle = col; ctx.lineWidth = 1.2; ctx.setLineDash([3, 3]);
     ctx.beginPath(); ctx.moveTo(X(tm), yc); ctx.lineTo(cx, cy); ctx.stroke(); ctx.setLineDash([]); }
   const x0 = cx - w / 2, y0 = cy - h / 2, r = 6;
@@ -1546,7 +1563,8 @@ function drawGraph(){
         ctx.restore();
         const fI = xx => { let j = 1; while (j < px.length - 1 && px[j] < xx) j++; const u = (xx - px[j - 1]) / ((px[j] - px[j - 1]) || 1); return py[j - 1] + (py[j] - py[j - 1]) * clamp(u, 0, 1); };
         const sh = px[0];
-        areaName(ctx, box, {X:xx => X(xx + sh), Y, f:xx => fI(xx + sh), t1:xNow - sh, nm:q.area.nm, val:A * (q.area.k || 1)});
+        areaName(ctx, box, {X:xx => X(xx + sh), Y, f:xx => fI(xx + sh), t1:xNow - sh, nm:q.area.nm, val:q.area.val ? q.area.val() : A * (q.area.k || 1),
+          legend:q === GQ.Fs ? (ctx.font = `600 13px "Segoe UI",Calibri,Arial,sans-serif`, {x1:box.x + 8 + Math.max(...ser.map(S => ctx.measureText(`${S.nm}: ${mn(sci(S.f(sNow)))} ${q.un}`).width)), y1:box.y + 12 + 17 * ser.length}) : null});
       }
     }
   }
@@ -1575,6 +1593,8 @@ function drawGraph(){
 function renderGsel(){
   const keys = graphsFor(); gSpec();
   document.getElementById("gsel").innerHTML = keys.map(k => `<button data-g="${k}" aria-pressed="${k === gq}">${GQ[k].btn}</button>`).join("");
+  const fc = document.getElementById("fsCheck"); if (fc) fc.hidden = gq !== "Fs";
+  const hn = document.getElementById("graphHint"); if (hn) hn.innerHTML = gq === "Fs" ? FS_HINT : txt(SCN[set.sc].hint);
 }
 const Esc = () => M.E0 >= 1e4 ? 1000 : 1, Eun = () => M.E0 >= 1e4 ? "kJ" : "J";
 const eSer = () => { const k = Esc(), L = [["E_k", s => s.Ek / k, EC.K], ["E_p", s => s.Ep / k, EC.P]];
@@ -1586,8 +1606,42 @@ const GQ = {
       tan:{nm:"dE/dh", get un(){ return Esc() > 1 ? "kN" : "N"; }, i:1}},
   vt:{btn:"<i>v</i>–<i>t</i>", sym:[["speed ","n"],["v","i"]], un:"m s⁻¹", s:[["speed", s => Math.abs(s.v), COL.v]], area:{nm:["Distance travelled", "d", "m"]}, tan:{nm:"a", un:"m s⁻²"}},
   ht:{btn:"<i>h</i>–<i>t</i>", sym:[["h","i"]], un:"cm", s:[["height", s => s.y * 100, COL.P]], tan:{nm:"v", un:"cm s⁻¹"}},
+  // F–s (25 Nov 2026): each force along the motion against the distance moved; the shaded area is the work done = energy transferred
+  Fs:{btn:"<i>F</i>–<i>s</i>: work", x:{f:s => s.d, sym:[["distance moved ","n"],["s","i"]], un:"m"}, sym:[["F","i"]],
+      get un(){ return Esc() > 1 ? "kN" : "N"; },
+      get s(){ const k = Esc(), sp = set.sc === "spring", L = [[sp ? "spring force" : "weight along the motion", s => s.Fg / k, sp ? EC.H : EC.P]];
+        if (sp && set.loss > 0) L.push(["vibration + sound", s => s.Fr / k, EC.T]);
+        if (sp) L.push(["weight", s => s.Fw / k, EC.P]);
+        else if (FsResist()) L.push([set.sc === "track" ? "friction" : "air resistance", s => s.Fr / k, EC.T]);
+        if (L.length > 1) L.push(["resultant ΣF", s => s.Fn / k, EC.K, true]);
+        return L; },
+      get area(){ return {nm:[set.sc === "spring" ? "Work done by the spring" : "Work done by gravity", "W", Eun()], val:() => fsWork("Fg") / Esc()}; },
+      extra(){ fsCheck(); }},
 };
-const graphsFor = () => set.sc === "spring" ? ["Et", "ht", "Eh"] : ["Et", "Eh", "vt"];
+const FsResist = () => set.sc === "track" ? set.mu > 0 : set.sc === "spring" ? set.loss > 0 : !!set.air;
+// work done by each force up to now (added up at the fine integration step in PHYSICS: Wg, Wr, Ww; net = their sum)
+function fsWork(key){ const s = at(clamp(R.t, 0, tEnd())), W = {Fg:s.Wg, Fr:s.Wr, Fw:s.Ww || 0};
+  return key === "Fn" ? W.Fg + W.Fr + W.Fw : W[key] || 0; }
+// the work–energy check under the graph (live HTML): each work done = the energy change it causes
+let lastFs = "";
+function fsCheck(){
+  const el = document.getElementById("fsCheck"); if (!el) return;
+  const k = Esc(), u = Eun(), s0 = M.S[0], s = at(clamp(R.t, 0, tEnd())), L = [];
+  const v = x => `<b>${sig(x / k, 3)} ${u}</b>`, c = (col, t) => `<span style="color:${col}">${t}</span>`;
+  if (set.sc === "spring"){
+    L.push(c(EC.H, `W by the spring = ${v(fsWork("Fg"))} = elastic energy released ½<i>kx</i>² − ½<i>ky</i>² = ${v(s0.EH - (s.EH || 0))}`));
+    if (s.ph === "flight") L.push(c(EC.P, `W by the weight = ${v(fsWork("Fw"))} = −ΔE<sub>p</sub> = ${v(-(s.Ep - s0.Ep))}`));
+  } else L.push(c(EC.P, `W by gravity = ${v(fsWork("Fg"))} = E<sub>p</sub> lost = ${v(s0.Ep - s.Ep)}`));
+  if (FsResist()) L.push(c(EC.T, `W by ${set.sc === "track" ? "friction" : set.sc === "spring" ? "losses" : "air resistance"} = ${v(fsWork("Fr"))} = −(thermal energy) = ${v(-s.Q)}`));
+  L.push(c(EC.K, `Net work (area under ΣF) = ${v(fsWork("Fn"))} = ΔE<sub>k</sub> = ${v(s.Ek - s0.Ek)}`));
+  const html = "⚖ Work done = energy transferred: " + L.join(" · ");
+  if (html !== lastFs){ el.innerHTML = html; lastFs = html; }
+}
+const graphsFor = () => set.sc === "spring" ? ["Et", "ht", "Eh", "Fs"] : ["Et", "Eh", "vt", "Fs"];
+const FS_HINT = "<i>F</i>–<i>s</i>: each force <b>along the motion</b> against the distance moved (+ speeds it up, − slows it down). " +
+  "The <b>area under the line is the work done</b>, <i>W</i> = <i>Fs</i> cos <i>θ</i>, and work done = energy transferred: area under the weight = E<sub>p</sub> lost, " +
+  "area under friction or air resistance = energy dissipated as thermal energy, area under the resultant force = E<sub>k</sub> gained. " +
+  "Forces at 90° to the motion (normal force, tension) do no work.";
 
 /* ============================ 9 DATA ============================ */
 // Recorded trials are kept per example (scenario). DCOLS[sc] = table columns; ANA = analysis graphs
@@ -1698,6 +1752,13 @@ const TASKS = [
   {type:"predict", setup:P("spreal"), text:"With a real spring, 30 % of the elastic energy goes into vibration and sound. The value of k from the gradient will be…",
    opts:["correct", "too small", "too big"], correct:1,
    why:"The spring only rises to 70 % of the height, so the gradient (and k = 2mg × gradient) comes out 30 % too small. Compare with k from Hooke's law (Spring force simulation)."},
+  {type:"num", setup:{...P("exit"), gq:"Fs"}, text:"Work = area (F–s graph): a 0.50 kg ball falls 5.0 m. Graphs → <b>F–s: work</b>. The weight line is flat. Calculate the area under it (the work done by gravity) when the ball reaches the ground.",
+   answer:() => 0.5 * g * 5, unit:"J", hint:"Area of a rectangle = F × s = mg × 5.0 m. Press ▶ Start: it equals the E_p lost and the E_k gained."},
+  {type:"num", setup:{...P("sp4"), gq:"Fs"}, text:"Flying spring on the <b>F–s: work</b> graph: the spring force falls from kx to 0 over x = 4.0 cm (k = 25 N m⁻¹). Calculate the area of the triangle.",
+   answer:() => 0.5 * 25 * 0.04 * 0.04, unit:"J", hint:"Area = ½ × base × height = ½ × x × kx = ½kx². This is the elastic energy the spring gives to the ball."},
+  {type:"predict", setup:{...P("cart"), gq:"Fs"}, text:"Smart Cart on the <b>F–s: work</b> graph (with friction). The area under the dashed <b>resultant force</b> line is equal to…",
+   opts:["the GPE at the start", "the kinetic energy gained", "the thermal energy", "zero: the forces cancel"], correct:1,
+   why:"Net work = ΣF × s = ma × s = ½mv² − ½mu² = ΔE_k (work–energy theorem). Gravity does +0.513 J, friction −0.030 J, so the net work 0.483 J is the E_k at the bottom."},
   {type:"num", text:"A 0.50 kg cart is released from 0.30 m and reaches the bottom at 2.2 m s⁻¹. What percentage of its GPE was dissipated?",
    answer:() => (1 - 0.5 * 0.5 * 2.2 * 2.2 / (0.5 * g * 0.3)) * 100, unit:"%", hint:"GPE = mgh; KE = ½mv²; lost = (GPE − KE)/GPE."},
  ]},
@@ -1741,6 +1802,7 @@ function renderTasks(){
 }
 function applySetup(su){
   const c = JSON.parse(JSON.stringify(su)); if (c.pre && presetById(c.pre)) Object.assign(set, P(c.pre));
+  if (c.gq){ gq = c.gq; delete c.gq; if (gq === "Fs") $("areaChk").checked = true; }   // a task can open a graph (F–s ticks Area)
   Object.assign(set, c); setScenarioUI(); syncControls(); reset(); renderTrials(); renderGsel();
 }
 function taskClick(e){
@@ -1889,7 +1951,7 @@ function syncControls(){
 }
 function setScenarioUI(){
   document.querySelectorAll("#scen button").forEach(b => b.setAttribute("aria-pressed", b.dataset.sc === set.sc));
-  $("graphHint").innerHTML = txt(SCN[set.sc].hint);
+  $("graphHint").innerHTML = gq === "Fs" ? FS_HINT : txt(SCN[set.sc].hint);
   $("fbdTitle").innerHTML = txt(SCN[set.sc].mid);
 }
 function updateButtons(){
@@ -1922,7 +1984,8 @@ $("startBtn").addEventListener("click", start);
 $("pauseBtn").addEventListener("click", () => { R.paused = !R.paused; updateButtons(); });
 $("resetBtn").addEventListener("click", () => { reset(); });
 $("recBtn").addEventListener("click", recordTrial);
-$("gsel").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; gq = b.dataset.g; renderGsel(); });
+$("gsel").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; gq = b.dataset.g;
+  if (gq === "Fs") $("areaChk").checked = true; renderGsel(); });
 $("anaSel").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; anaId[set.sc] = b.dataset.a; save(); renderTrials(); });
 $("clearBtn").addEventListener("click", () => { if (confirm("Delete the recorded trials of this example?")){ trials = trials.filter(t => t.sc !== set.sc); save(); renderTrials(); } });
 $("trials").addEventListener("click", e => { const b = e.target.closest("[data-del]"); if (b){ trials.splice(+b.dataset.del, 1); save(); renderTrials(); } });
