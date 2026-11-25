@@ -249,6 +249,7 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
 .fbdcol h2 .hint{font-weight:400}
 .readouts .e{font-weight:700}
 #gsel{flex-wrap:wrap}
+@media (max-width:1499px){#scen [data-sc="spring"] .lg{display:none} #scen [data-sc="spring"] .sh{display:inline}}   /* short name "Elastic PE" on laptops */
 .actions .slowsw{min-height:36px;font-size:.88rem;white-space:nowrap;margin-left:4px}
 @media (max-width:600px){.actions .slowsw .lg{display:none}}
 .readouts td.k{color:var(--muted)}
@@ -387,7 +388,7 @@ body.steps-on > nav{display:none!important}   /* a simulation's own scenario bar
   <div class="scen" id="scen" role="group" aria-label="Example">
     <button data-sc="track" aria-pressed="true">🎢 <span class="lg">Ramp &amp; track</span><span class="sh">Track</span></button>
     <button data-sc="pend" aria-pressed="false">🎳 Pendulum</button>
-    <button data-sc="spring" aria-pressed="false">🌀 <span class="lg">Flying spring</span><span class="sh">Spring</span></button>
+    <button data-sc="spring" aria-pressed="false">🌀 <span class="lg">Elastic potential energy</span><span class="sh">Elastic PE</span></button>
     <button data-sc="drop" aria-pressed="false">⬇️ Drop</button>
   </div>
   <button class="btn" id="helpBtn" aria-label="How to use">? How to use</button>
@@ -489,7 +490,7 @@ body.steps-on > nav{display:none!important}   /* a simulation's own scenario bar
     <ol>
       <li data-steptabs>Start with <b>① Step by step</b> (the first big tab): an animation explains the physics one step at a time. Then explore in <b>② Simulation</b>.</li>
 <li>Choose an <b>example</b> at the top: 🎢 a cart on a ramp or a track (Smart Cart demo, roller coaster, half-pipe) · 🎳 the pendulum to the nose ·
-        🌀 the flying spring practical · ⬇️ a falling ball.</li>
+        🌀 elastic potential energy (the flying spring practical) · ⬇️ a falling ball.</li>
       <li>Pick a <b>preset</b> or set the values yourself (with <b>▼ ▲</b> or by typing in the box). Switch friction or air
         resistance on and off.</li>
       <li>Set each value with <b>▼</b> and <b>▲</b> (hold to go faster; the <b>↑ ↓</b> keys or the mouse wheel in the box also work, Shift = ×10), or <b>type a value</b> in the box. <b>↺</b> puts it back to its start value. Outside the classroom range the box turns <b>amber ⚠</b>: fine to explore, but the lab can't do this.</li>
@@ -1391,7 +1392,7 @@ function sceneMain(ctx, w, h, s){
     if (ymax > 0.001){ ctx.save(); ctx.strokeStyle = COL.accent; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(xr - 30, Yr - ymax * k); ctx.lineTo(xs, Yr - ymax * k); ctx.stroke(); ctx.restore();
       label(ctx, `h = ${sig(ymax * 100)} cm`, xr - 34, Yr - ymax * k, COL.accent, "right", 12.5); }
     if (Math.abs(s.v) > 0.02) arrow(ctx, xr + 24, top + 10, xr + 24, top + 10 - Math.sign(s.v) * Math.min(60, 10 + Math.abs(s.v) * 50 / M.v0), COL.v, 3);
-    label(ctx, `Flying spring: ${sig(set.ms)} g, k = ${sig(set.k)} N m⁻¹, stretched ${sig(set.x)} cm`, 10, 14, COL.navy, "left", 13);
+    label(ctx, `Elastic potential energy (flying spring): ${sig(set.ms)} g, k = ${sig(set.k)} N m⁻¹, stretched ${sig(set.x)} cm`, 10, 14, COL.navy, "left", 13);
     label(ctx, "⚠ safety glasses on", 10, 32, COL.F, "left", 12);
     return;
   }
@@ -1778,7 +1779,7 @@ const TASKS = [
   {type:"predict", setup:P("cart"), text:"Where did the 'lost' energy go?", opts:["it was destroyed", "into thermal energy (wheels, axles, air)", "into extra GPE", "into the cart's momentum"], correct:1,
    why:"Energy is conserved. Friction does negative work on the cart and the energy is dissipated as thermal energy. Switch the Energy chart to Sankey."},
   {type:"do", setup:P("nose"), text:"🎳 Pendulum to the nose: run it with air resistance on, then with 'The same pendulum in a vacuum'. Compare the gap."},
-  {type:"do", setup:P("sp2"), text:"🌀 Flying spring (Oxford practical): run the 2.0, 4.0 and 6.0 cm presets and ● Record each. Add 1.0, 3.0 and 5.0 cm yourself."},
+  {type:"do", setup:P("sp2"), text:"🌀 Elastic potential energy — flying spring (Oxford practical): run the 2.0, 4.0 and 6.0 cm presets and ● Record each. Add 1.0, 3.0 and 5.0 cm yourself."},
  ]},
  {id:"hw", title:"3 · Homework: analyse", time:"≈ 30 min", steps:[
   {type:"num", setup:P("coast"), text:"Retrieval: a frictionless roller coaster drops 20 m from rest. Calculate its speed at the bottom.", answer:() => vFall(20), unit:"m s⁻¹", hint:"v = √(2gh)."},
