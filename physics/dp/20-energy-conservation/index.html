@@ -21,7 +21,7 @@
     6 SCENE     side view
     7 FBD       free-body diagram + energy bars or Sankey diagram
     8 GRAPHS    E–t, E–h, v–t (h–t for the spring), F–s (25 Nov 2026: area under the force = work done = energy transferred),
-                F–x Hooke's law for the spring (25 Nov 2026: F = kx, area = elastic potential energy); 🐢 Slow motion ×20 (25 Nov 2026)
+                F–x Hooke's law for the spring (25 Nov 2026: F = kx, area = elastic potential energy); 🐢 Slow motion ×5 (25 Nov 2026; first ×20, too slow)
     9 DATA      recorded trials and analysis graphs with best-fit lines
    10 TASKS     data-driven task list (predict / numeric / do)
    11 UI        controls, events, storage, main loop
@@ -429,7 +429,7 @@ body.steps-on > nav{display:none!important}   /* a simulation's own scenario bar
           <button class="btn step" id="fwdBtn" title="Step forward (→ key)" aria-label="Step forward">▸</button>
           <button class="btn icon" id="resetBtn" title="Reset" aria-label="Reset">↺</button>
           <button class="btn navy" id="recBtn" title="Record this trial in the Data tab">● Record</button>
-          <label class="switch slowsw" title="Play the motion 20 times slower"><input type="checkbox" id="slowChk"> 🐢 <span class="lg">Slow motion</span> ×20</label>
+          <label class="switch slowsw" title="Play the motion 5 times slower"><input type="checkbox" id="slowChk"> 🐢 <span class="lg">Slow motion</span> ×5</label>
         </div>
       </div>
 <!-- NEWTON BAR --><div class="nbar"><span class="nlaw" id="nlaw"></span><label class="switch" title="Show every force together with its Newton's 3rd-law partner"><input type="checkbox" id="n3"> 3rd-law pairs</label></div><!-- /NEWTON BAR -->
@@ -495,7 +495,7 @@ body.steps-on > nav{display:none!important}   /* a simulation's own scenario bar
         resistance on and off.</li>
       <li>Set each value with <b>▼</b> and <b>▲</b> (hold to go faster; the <b>↑ ↓</b> keys or the mouse wheel in the box also work, Shift = ×10), or <b>type a value</b> in the box. <b>↺</b> puts it back to its start value. Outside the classroom range the box turns <b>amber ⚠</b>: fine to explore, but the lab can't do this.</li>
       <li>Move the pointer over any <b>graph</b> (or tap it): a dashed line shows the values where it cuts each curve, or the values of the nearest data point.</li>
-      <li>Press <b>▶ Start</b>. <b>◂ / ▸</b> (or the <b>← →</b> keys) step through the motion and pause. Tick <b>🐢 Slow motion</b> to play it 20 times slower
+      <li>Press <b>▶ Start</b>. <b>◂ / ▸</b> (or the <b>← →</b> keys) step through the motion and pause. Tick <b>🐢 Slow motion</b> to play it 5 times slower
         (the spring's launch lasts only about 0.03 s).</li>
       <li>The middle column shows the <b>free-body diagram</b> and the <b>energy stores</b> as bars — or, with <i>Energy chart: Sankey</i>, a Sankey
         diagram of where the starting energy has gone so far.</li>
@@ -1136,7 +1136,7 @@ const P = id => { const p = presetById(id), o = {pre:id}; for (const k in p) if 
 // The whole run is worked out when a setting changes (build() in PHYSICS gives states every M.dt seconds);
 // at(t) interpolates between them, so ▶, ⏸, the ◂ ▸ steps and the graph probe all show the same numbers.
 const R = {playing:false, paused:false, t:0};
-const slowK = () => document.getElementById("slowChk")?.checked ? 0.05 : 1;   // 🐢 Slow motion: ×20 slower
+const slowK = () => document.getElementById("slowChk")?.checked ? 0.2 : 1;   // 🐢 Slow motion: ×5 slower
 let M = null;
 const tEnd = () => M.S[M.S.length - 1].t;
 function at(t){
