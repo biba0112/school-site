@@ -20,7 +20,8 @@
     5 RUN       run state; at(t) interpolates the worked-out run
     6 SCENE     side view
     7 FBD       free-body diagram + energy bars or Sankey diagram
-    8 GRAPHS    E–t, E–h, v–t (h–t for the spring), F–s (25 Nov 2026: area under the force = work done = energy transferred)
+    8 GRAPHS    E–t, E–h, v–t (h–t for the spring), F–s (25 Nov 2026: area under the force = work done = energy transferred),
+                F–x Hooke's law for the spring (25 Nov 2026: F = kx, area = elastic potential energy); 🐢 Slow motion ×20 (25 Nov 2026)
     9 DATA      recorded trials and analysis graphs with best-fit lines
    10 TASKS     data-driven task list (predict / numeric / do)
    11 UI        controls, events, storage, main loop
@@ -248,6 +249,8 @@ input[type=range]{width:150px;height:44px;accent-color:var(--accent)}
 .fbdcol h2 .hint{font-weight:400}
 .readouts .e{font-weight:700}
 #gsel{flex-wrap:wrap}
+.actions .slowsw{min-height:36px;font-size:.88rem;white-space:nowrap;margin-left:4px}
+@media (max-width:600px){.actions .slowsw .lg{display:none}}
 .readouts td.k{color:var(--muted)}
 .big{font-size:1.05rem}
 .sub a.home{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.55);white-space:nowrap}.sub a.home:hover{border-bottom-color:#fff}
@@ -425,6 +428,7 @@ body.steps-on > nav{display:none!important}   /* a simulation's own scenario bar
           <button class="btn step" id="fwdBtn" title="Step forward (→ key)" aria-label="Step forward">▸</button>
           <button class="btn icon" id="resetBtn" title="Reset" aria-label="Reset">↺</button>
           <button class="btn navy" id="recBtn" title="Record this trial in the Data tab">● Record</button>
+          <label class="switch slowsw" title="Play the motion 20 times slower"><input type="checkbox" id="slowChk"> 🐢 <span class="lg">Slow motion</span> ×20</label>
         </div>
       </div>
 <!-- NEWTON BAR --><div class="nbar"><span class="nlaw" id="nlaw"></span><label class="switch" title="Show every force together with its Newton's 3rd-law partner"><input type="checkbox" id="n3"> 3rd-law pairs</label></div><!-- /NEWTON BAR -->
@@ -490,7 +494,8 @@ body.steps-on > nav{display:none!important}   /* a simulation's own scenario bar
         resistance on and off.</li>
       <li>Set each value with <b>▼</b> and <b>▲</b> (hold to go faster; the <b>↑ ↓</b> keys or the mouse wheel in the box also work, Shift = ×10), or <b>type a value</b> in the box. <b>↺</b> puts it back to its start value. Outside the classroom range the box turns <b>amber ⚠</b>: fine to explore, but the lab can't do this.</li>
       <li>Move the pointer over any <b>graph</b> (or tap it): a dashed line shows the values where it cuts each curve, or the values of the nearest data point.</li>
-      <li>Press <b>▶ Start</b>. <b>◂ / ▸</b> (or the <b>← →</b> keys) step through the motion and pause.</li>
+      <li>Press <b>▶ Start</b>. <b>◂ / ▸</b> (or the <b>← →</b> keys) step through the motion and pause. Tick <b>🐢 Slow motion</b> to play it 20 times slower
+        (the spring's launch lasts only about 0.03 s).</li>
       <li>The middle column shows the <b>free-body diagram</b> and the <b>energy stores</b> as bars — or, with <i>Energy chart: Sankey</i>, a Sankey
         diagram of where the starting energy has gone so far.</li>
       <li><b>Graphs</b>: <i>E</i>–<i>t</i> and <i>E</i>–<i>h</i> show the energy moving between the stores; the dashed total line stays flat.
@@ -498,6 +503,8 @@ body.steps-on > nav{display:none!important}   /* a simulation's own scenario bar
       <li><b><i>F</i>–<i>s</i>: work</b> plots each force along the motion against the distance moved. The shaded <b>area under the line is the work done</b>
         (<i>W</i> = <i>Fs</i> cos <i>θ</i>), and the line under the graph shows that it equals the energy transferred: work by gravity = E<sub>p</sub> lost,
         net work = E<sub>k</sub> gained.</li>
+      <li><b><i>F</i>–<i>x</i>: Hooke's law</b> (flying spring): the spring force <i>F</i> = <i>kx</i> falls along a straight line as the extension <i>x</i> goes to zero;
+        the area under the line is the elastic potential energy ½<i>kx</i>².</li>
       <li><b>● Record</b> saves a trial; the <b>Data</b> tab plots <i>v</i>² against <i>h</i> (gradient 2<i>g</i>), or <i>h</i> against <i>x</i>² for the
         spring (gradient <i>k</i>/2<i>mg</i>).</li>
       <li>Work through the <b>Tasks</b> tab. Write explanations on your worksheet.</li>
@@ -978,7 +985,7 @@ const SCN = {
   pend:{pre:"nose", mid:"Free-body diagram · energy stores",
     hint:"<i>E</i>–<i>t</i>: E<sub>k</sub> and E<sub>p</sub> swap twice per swing. With air on, the thermal line grows and the bob comes back just short of the nose."},
   spring:{pre:"sp4", mid:"Free-body diagram · energy stores",
-    hint:"<i>E</i>–<i>t</i>: the elastic energy becomes kinetic energy in about 0.03 s, then gravitational energy on the way up. Record 5 stretches for the Data tab."},
+    hint:"<i>E</i>–<i>t</i>: the elastic potential energy E<sub>H</sub> becomes kinetic energy in about 0.03 s (tick 🐢 Slow motion to watch it), then gravitational energy on the way up. Record 5 stretches for the Data tab."},
   drop:{pre:"exit", mid:"Free-body diagram · energy stores",
     hint:"<i>E</i>–<i>h</i>: falling, E<sub>p</sub> goes down by <i>mg</i> per metre and E<sub>k</sub> goes up by the same amount (no air)."},
 };
@@ -1128,6 +1135,7 @@ const P = id => { const p = presetById(id), o = {pre:id}; for (const k in p) if 
 // The whole run is worked out when a setting changes (build() in PHYSICS gives states every M.dt seconds);
 // at(t) interpolates between them, so ▶, ⏸, the ◂ ▸ steps and the graph probe all show the same numbers.
 const R = {playing:false, paused:false, t:0};
+const slowK = () => document.getElementById("slowChk")?.checked ? 0.05 : 1;   // 🐢 Slow motion: ×20 slower
 let M = null;
 const tEnd = () => M.S[M.S.length - 1].t;
 function at(t){
@@ -1150,7 +1158,7 @@ function stepBy(d){
 }
 function step(dt){
   if (!R.playing || R.paused) return;
-  R.t += dt * (M.speed || 1);
+  R.t += dt * (M.speed || 1) * slowK();
   if (R.t >= tEnd()){ R.t = tEnd(); R.playing = false; updateButtons(); }
 }
 // fixed-step integrator helper: calls f(state, h) every h seconds and records a copy every dt seconds
@@ -1246,7 +1254,8 @@ function energyBars(ctx, box, bars, {title = "Energy / J", total = null, max = n
     const bx = x0 + i * (bw + gap), H = b.v * kk;
     ctx.save(); ctx.fillStyle = b.col; ctx.globalAlpha = .85; ctx.fillRect(bx, H >= 0 ? yz - H : yz, bw, Math.abs(H)); ctx.restore();
     label(ctx, Math.abs(b.v) < 1e-3 * span ? "0" : fmt(b.v), bx + bw / 2, H >= 0 ? yz - H - 9 : yz - H + 10, b.col, "center", 11.5);
-    subLabel(ctx, b.nm[0], b.nm[1], b.nm[2] || "", bx + bw / 2, y + h - 12, b.col, "center", 12.5);
+    subLabel(ctx, b.nm[0], b.nm[1], b.nm[2] || "", bx + bw / 2, y + h - (b.nm2 ? 22 : 12), b.col, "center", 12.5);
+    if (b.nm2) label(ctx, b.nm2, bx + bw / 2, y + h - 7, b.col, "center", 10.5);   // e.g. "elastic PE" under E_H
   });
   ctx.save(); ctx.strokeStyle = "#263238"; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(x + 2, yz); ctx.lineTo(x + w - 2, yz); ctx.stroke(); ctx.restore();
   if (total !== null){ const yt = yz - total * kk;
@@ -1371,7 +1380,12 @@ function sceneMain(ctx, w, h, s){
     // spring: coil from the bottom (y) to the top
     const yb = Yr - s.y * k, len = s.ph === "launch" ? 30 + Math.abs(s.y) * k : 30, top = yb - len;
     ctx.strokeStyle = "#78909C"; ctx.lineWidth = 2; ctx.beginPath(); for (let i = 0; i <= 14; i++){ const yy = yb - len * i / 14; i ? ctx.lineTo(xr + (i % 2 ? 9 : -9), yy) : ctx.moveTo(xr, yy); } ctx.stroke();
-    if (s.ph === "launch" && s.t === 0) label(ctx, `stretched x = ${sig(set.x)} cm`, xr - 14, yb - len / 2, COL.P, "right", 12.5);
+    if (s.ph === "launch"){   // Hooke's law live: the force falls with the extension (F = kx)
+      const xn = Math.abs(s.y), Fn = set.k * xn, F0 = set.k * set.x / 100, aL = 70 * Fn / Math.max(F0, 1e-9);
+      if (aL > 2) arrow(ctx, xr - 26, top + 4, xr - 26, top + 4 - aL, EC.H, 3);   // spring force on the left, velocity arrow on the right
+      label(ctx, `F = kx = ${mn(sig(Fn, 3))} N`, xr - 34, top - Math.max(aL, 8) + 4, EC.H, "right", 12.5);
+      label(ctx, `${s.t === 0 ? "stretched" : "extension"} x = ${sig(xn * 100, 3)} cm`, xr - 14, yb - len / 2, COL.P, "right", 12.5);
+    }
     // highest point reached so far
     const ymax = Math.max(...M.S.filter(q => q.t <= R.t).map(q => q.y));
     if (ymax > 0.001){ ctx.save(); ctx.strokeStyle = COL.accent; ctx.setLineDash([5, 4]); ctx.beginPath(); ctx.moveTo(xr - 30, Yr - ymax * k); ctx.lineTo(xs, Yr - ymax * k); ctx.stroke(); ctx.restore();
@@ -1422,7 +1436,7 @@ function midMain(ctx, w, h, s){
     ctx.save(); ctx.globalAlpha = .5; ctx.fillStyle = "#78909C"; ctx.fillRect(cx - 12, cy - 18, 24, 36); ctx.restore();
     fArrow(ctx, cx, cy, 0, -Wt, Math.max(k, s.Fs > Wt ? k : k), COL.W, "W", "", ` = ${fmtF(Wt)}`);
     if (s.Fs > 0) fArrow(ctx, cx, cy, 0, s.Fs, k, COL.P, "F", "H", ` = ${fmtF(s.Fs)}`);
-    txt = s.ph === "launch" ? "Launch: the spring's own tension (far bigger than W) pulls it back to its natural length: E_H → E_k." : "In flight only the weight acts: E_k → E_p on the way up, back to E_k on the way down.";
+    txt = s.ph === "launch" ? "Launch: the spring's own tension (far bigger than W) pulls it back to its natural length: elastic potential energy → E_k." : "In flight only the weight acts: E_k → E_p on the way up, back to E_k on the way down.";
   } else {
     const Wt = set.md * g, k = room / Wt;
     ctx.save(); ctx.globalAlpha = .5; ctx.fillStyle = "#90A4AE"; ctx.beginPath(); ctx.arc(cx, cy, 14, 0, TWO_PI); ctx.fill(); ctx.restore();
@@ -1434,12 +1448,12 @@ function midMain(ctx, w, h, s){
   const EH = s.EH || 0, tot = s.Ek + s.Ep + EH + s.Q, E0 = M.E0;
   if (set.chart === "sankey"){
     const outs = [{nm:"Kinetic", v:s.Ek, col:EC.K, useful:true}, {nm:"Gravitational PE", v:s.Ep, col:EC.P, useful:true}];
-    if (sc === "spring") outs.push({nm:"Elastic PE", v:EH, col:EC.H, useful:true});
+    if (sc === "spring") outs.push({nm:"Elastic potential energy", v:EH, col:EC.H, useful:true});
     outs.push({nm:sc === "spring" ? "Vibration, sound, thermal" : "Thermal", v:s.Q, col:EC.T});
     sankey(ctx, B.lo, {nm:"Energy at the start", v:E0}, outs, v => fmtE(v), {title:"Where the starting energy is now (Sankey)"});
   } else {
     const bars = [{nm:["E", "k", ""], v:s.Ek, col:EC.K}, {nm:["E", "p", ""], v:s.Ep, col:EC.P}];
-    if (sc === "spring") bars.push({nm:["E", "H", ""], v:EH, col:EC.H});
+    if (sc === "spring") bars.push({nm:["E", "H", ""], v:EH, col:EC.H, nm2:"elastic PE"});
     bars.push({nm:["thermal", "", ""], v:s.Q, col:EC.T});
     const big = E0 >= 1e4;
     energyBars(ctx, B.lo, bars, {title:`Energy stores / ${big ? "kJ" : "J"}`, total:tot, max:E0, fmt:v => mn(sig(big ? v / 1000 : v, 3))});
@@ -1594,11 +1608,11 @@ function renderGsel(){
   const keys = graphsFor(); gSpec();
   document.getElementById("gsel").innerHTML = keys.map(k => `<button data-g="${k}" aria-pressed="${k === gq}">${GQ[k].btn}</button>`).join("");
   const fc = document.getElementById("fsCheck"); if (fc) fc.hidden = gq !== "Fs";
-  const hn = document.getElementById("graphHint"); if (hn) hn.innerHTML = gq === "Fs" ? FS_HINT : txt(SCN[set.sc].hint);
+  const hn = document.getElementById("graphHint"); if (hn) hn.innerHTML = gHint();
 }
 const Esc = () => M.E0 >= 1e4 ? 1000 : 1, Eun = () => M.E0 >= 1e4 ? "kJ" : "J";
 const eSer = () => { const k = Esc(), L = [["E_k", s => s.Ek / k, EC.K], ["E_p", s => s.Ep / k, EC.P]];
-  if (set.sc === "spring") L.push(["E_H", s => s.EH / k, EC.H]);
+  if (set.sc === "spring") L.push(["elastic PE E_H", s => s.EH / k, EC.H]);
   L.push(["thermal", s => s.Q / k, EC.T], ["total", s => (s.Ek + s.Ep + (s.EH || 0) + s.Q) / k, EC.tot, true]); return L; };
 const GQ = {
   Et:{btn:"<i>E</i>–<i>t</i>", sym:[["E","i"]], get un(){ return Eun(); }, get s(){ return eSer(); }, tan:{nm:"rate of change of E_k (power)", get un(){ return Esc() > 1 ? "kW" : "W"; }}},
@@ -1629,7 +1643,7 @@ function fsCheck(){
   const k = Esc(), u = Eun(), s0 = M.S[0], s = at(clamp(R.t, 0, tEnd())), L = [];
   const v = x => `<b>${sig(x / k, 3)} ${u}</b>`, c = (col, t) => `<span style="color:${col}">${t}</span>`;
   if (set.sc === "spring"){
-    L.push(c(EC.H, `W by the spring = ${v(fsWork("Fg"))} = elastic energy released ½<i>kx</i>² − ½<i>ky</i>² = ${v(s0.EH - (s.EH || 0))}`));
+    L.push(c(EC.H, `W by the spring = ${v(fsWork("Fg"))} = elastic potential energy released ½<i>kx</i>² − ½<i>ky</i>² = ${v(s0.EH - (s.EH || 0))}`));
     if (s.ph === "flight") L.push(c(EC.P, `W by the weight = ${v(fsWork("Fw"))} = −ΔE<sub>p</sub> = ${v(-(s.Ep - s0.Ep))}`));
   } else L.push(c(EC.P, `W by gravity = ${v(fsWork("Fg"))} = E<sub>p</sub> lost = ${v(s0.Ep - s.Ep)}`));
   if (FsResist()) L.push(c(EC.T, `W by ${set.sc === "track" ? "friction" : set.sc === "spring" ? "losses" : "air resistance"} = ${v(fsWork("Fr"))} = −(thermal energy) = ${v(-s.Q)}`));
@@ -1637,7 +1651,34 @@ function fsCheck(){
   const html = "⚖ Work done = energy transferred: " + L.join(" · ");
   if (html !== lastFs){ el.innerHTML = html; lastFs = html; }
 }
-const graphsFor = () => set.sc === "spring" ? ["Et", "ht", "Eh", "Fs"] : ["Et", "Eh", "vt", "Fs"];
+// F–x (25 Nov 2026): Hooke's law for the flying spring. Drawn by hand because the extension DEcreases during the launch.
+GQ.Fx = {btn:"<i>F</i>–<i>x</i>: Hooke's law", custom(ctx, w, h){
+  const k = set.k, X0 = set.x / 100, s = at(clamp(R.t, 0, tEnd())), xn = s.ph === "launch" ? Math.abs(s.y) : 0, Fn = k * xn, F0 = k * X0;
+  const box = {x:66, y:16, w:w - 82, h:h - 66}, hi = niceCeil(F0 * 1.75), xr = niceCeil(X0 * 100 * 1.05);
+  const {X, Y} = axesR(ctx, box, 0, xr, 0, hi, [["extension ","n"],["x","i"],[" / cm","n"]], [["spring force ","n"],["F","i"],[" / N","n"]]);
+  const P = (xm, F) => [X(xm * 100), Y(F)];
+  ctx.save();
+  // energy still stored: triangle 0 … x_now (purple); released so far: x_now … x (orange)
+  ctx.globalAlpha = .28; ctx.fillStyle = EC.K; ctx.beginPath(); ctx.moveTo(...P(xn, 0)); ctx.lineTo(...P(xn, Fn)); ctx.lineTo(...P(X0, F0)); ctx.lineTo(...P(X0, 0)); ctx.closePath(); ctx.fill();
+  ctx.globalAlpha = .3; ctx.fillStyle = EC.H; ctx.beginPath(); ctx.moveTo(...P(0, 0)); ctx.lineTo(...P(xn, Fn)); ctx.lineTo(...P(xn, 0)); ctx.closePath(); ctx.fill();
+  ctx.globalAlpha = 1; ctx.strokeStyle = COL.grey || "#90A4AE"; ctx.lineWidth = 2; ctx.setLineDash([7, 5]);
+  ctx.beginPath(); ctx.moveTo(...P(0, 0)); ctx.lineTo(...P(X0, F0)); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = EC.H; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(...P(X0, F0)); ctx.lineTo(...P(xn, Fn)); ctx.stroke();
+  ctx.fillStyle = EC.H; ctx.beginPath(); ctx.arc(...P(xn, Fn), 6, 0, 7); ctx.fill();
+  ctx.restore();
+  const EHn = k * xn * xn / 2, E0 = k * X0 * X0 / 2, J = v => `${mn(sci(v, 3))} J`;
+  const fz = clamp(box.w / 30, 10.5, 13), dy = fz + 5;   // smaller text on narrow graphs (phones)
+  label(ctx, `x = ${sig(xn * 100, 3)} cm · F = kx = ${mn(sig(Fn, 3))} N`, box.x + 8, box.y + 12, EC.H, "left", fz);
+  label(ctx, `still stored: ½kx² = ${J(EHn)}`, box.x + 8, box.y + 12 + dy, EC.H, "left", fz);
+  label(ctx, `released → E_k: ${J(E0 - EHn)}`, box.x + 8, box.y + 12 + 2 * dy, EC.K, "left", fz);
+  label(ctx, `gradient k = ${sig(k, 3)} N m⁻¹ · total ½kx² = ${J(E0)}`, box.x + 8, box.y + 12 + 3 * dy, COL.muted, "left", fz - 0.5);
+  if (s.ph !== "launch") label(ctx, "In flight: x = 0, F = 0 — all the elastic PE released", box.x + box.w / 2, box.y + box.h / 2 + 10, COL.accent, "center", clamp(box.w / 30, 10.5, 13));
+}};
+const graphsFor = () => set.sc === "spring" ? ["Et", "ht", "Eh", "Fs", "Fx"] : ["Et", "Eh", "vt", "Fs"];
+const FX_HINT = "<i>F</i>–<i>x</i> (Hooke's law): the spring force is proportional to the extension, <i>F</i> = <i>kx</i>, so it falls along a straight line " +
+  "to zero as the spring goes back to its natural length. The <b>area under the line</b> is the work done = the <b>elastic potential energy</b> " +
+  "E<sub>H</sub> = ½<i>kx</i>² (purple: still stored, orange: already given to the toy as kinetic energy). Tick 🐢 Slow motion to watch it.";
+const gHint = () => gq === "Fs" ? FS_HINT : gq === "Fx" ? FX_HINT : txt(SCN[set.sc].hint);
 const FS_HINT = "<i>F</i>–<i>s</i>: each force <b>along the motion</b> against the distance moved (+ speeds it up, − slows it down). " +
   "The <b>area under the line is the work done</b>, <i>W</i> = <i>Fs</i> cos <i>θ</i>, and work done = energy transferred: area under the weight = E<sub>p</sub> lost, " +
   "area under friction or air resistance = energy dissipated as thermal energy, area under the resultant force = E<sub>k</sub> gained. " +
@@ -1716,7 +1757,7 @@ const TASKS = [
    opts:["hit the nose harder", "hit the nose just as hard", "stop just short of the nose", "swing much further than the nose"], correct:2,
    why:"It cannot come back higher than it started: that would need more energy than the GPE it had. Air resistance turns a little of the energy into thermal energy, so it stops just short. Press ▶ Start and watch the gap."},
   {type:"num", text:"Retrieval: calculate the kinetic energy of a 0.50 kg ball moving at 4.0 m s⁻¹.", answer:() => 0.5 * 0.5 * 16, unit:"J", hint:"E_k = ½mv²."},
-  {type:"num", text:"Retrieval: calculate the work needed to stretch a spring (k = 100 N m⁻¹) by 0.20 m.", answer:() => 0.5 * 100 * 0.04, unit:"J", hint:"E_H = ½kx²."},
+  {type:"num", text:"Retrieval: calculate the work needed to stretch a spring (k = 100 N m⁻¹) by 0.20 m.", answer:() => 0.5 * 100 * 0.04, unit:"J", hint:"Elastic potential energy E_H = ½kx²."},
   {type:"num", setup:P("bag"), text:"Retrieval: calculate the GPE gained by a 3.0 kg bag lifted 2.0 m.", answer:() => 3 * g * 2, unit:"J", hint:"ΔE_p = mgΔh. The ⬇️ Drop example is set up with this bag: check E_p at the start."},
   {type:"predict", setup:P("curve"), text:"Two smooth tracks drop 2.0 m: a steep curved one and a straight ramp. Which gives the higher speed at the bottom?",
    opts:["the curved one: it is steeper", "the straight ramp: it is shorter", "the same speed", "it depends on the mass"], correct:2,
@@ -1749,13 +1790,13 @@ const TASKS = [
   {type:"do", setup:P("sp2"), text:"Record at least 5 stretches (1.0–6.0 cm) of the same spring. Data tab → <b>h–x²</b>."},
   {type:"num", text:"Use the gradient of your h–x² line to find the spring constant k (m = 10 g).", answer:() => 25, unit:"N m⁻¹",
    hint:"gradient = k/(2mg) in cm⁻¹ (×100 for m⁻¹). The data tab also shows the result."},
-  {type:"predict", setup:P("spreal"), text:"With a real spring, 30 % of the elastic energy goes into vibration and sound. The value of k from the gradient will be…",
+  {type:"predict", setup:P("spreal"), text:"With a real spring, 30 % of the elastic potential energy goes into vibration and sound. The value of k from the gradient will be…",
    opts:["correct", "too small", "too big"], correct:1,
    why:"The spring only rises to 70 % of the height, so the gradient (and k = 2mg × gradient) comes out 30 % too small. Compare with k from Hooke's law (Spring force simulation)."},
   {type:"num", setup:{...P("exit"), gq:"Fs"}, text:"Work = area (F–s graph): a 0.50 kg ball falls 5.0 m. Graphs → <b>F–s: work</b>. The weight line is flat. Calculate the area under it (the work done by gravity) when the ball reaches the ground.",
    answer:() => 0.5 * g * 5, unit:"J", hint:"Area of a rectangle = F × s = mg × 5.0 m. Press ▶ Start: it equals the E_p lost and the E_k gained."},
   {type:"num", setup:{...P("sp4"), gq:"Fs"}, text:"Flying spring on the <b>F–s: work</b> graph: the spring force falls from kx to 0 over x = 4.0 cm (k = 25 N m⁻¹). Calculate the area of the triangle.",
-   answer:() => 0.5 * 25 * 0.04 * 0.04, unit:"J", hint:"Area = ½ × base × height = ½ × x × kx = ½kx². This is the elastic energy the spring gives to the ball."},
+   answer:() => 0.5 * 25 * 0.04 * 0.04, unit:"J", hint:"Area = ½ × base × height = ½ × x × kx = ½kx². This is the elastic potential energy the spring gives to the toy."},
   {type:"predict", setup:{...P("cart"), gq:"Fs"}, text:"Smart Cart on the <b>F–s: work</b> graph (with friction). The area under the dashed <b>resultant force</b> line is equal to…",
    opts:["the GPE at the start", "the kinetic energy gained", "the thermal energy", "zero: the forces cancel"], correct:1,
    why:"Net work = ΣF × s = ma × s = ½mv² − ½mu² = ΔE_k (work–energy theorem). Gravity does +0.513 J, friction −0.030 J, so the net work 0.483 J is the E_k at the bottom."},
@@ -1857,7 +1898,7 @@ function onChanged(c, v){
 function readouts(s){
   const sc = set.sc, EH = s.EH || 0, tot = s.Ek + s.Ep + EH + s.Q, mech = s.Ek + s.Ep + EH, fE = v => fmtE(v);
   let html = `<table>${row("<i>E</i><sub>k</sub>", fE(s.Ek), "<i>E</i><sub>p</sub>", fE(s.Ep), EC.K, EC.P)}
-    ${sc === "spring" ? row("<i>E</i><sub>H</sub>", fE(EH), "lost (vibration…)", fE(s.Q), EC.H, EC.T) : row("thermal", fE(s.Q), "mechanical", fE(mech), EC.T)}
+    ${sc === "spring" ? row("elastic PE <i>E</i><sub>H</sub>", fE(EH), "lost (vibration…)", fE(s.Q), EC.H, EC.T) : row("thermal", fE(s.Q), "mechanical", fE(mech), EC.T)}
     ${row("total", fE(tot), "speed", `${f2(Math.abs(s.v))} m s⁻¹`, EC.tot, COL.v)}`;
   if (sc === "track") html += `${row("height", `${f3(s.y)} m`, "<i>v</i> bottom", `${f2(M.vb)} m s⁻¹`, "", COL.v)}
     <tr><td colspan="5" class="ev">no friction: <i>v</i> = √(2<i>gh</i>) = ${f2(vFall(M.h0))} m s⁻¹ · ${pill(set.mu === 0, "mechanical energy conserved", `${f1(M.S[M.S.length - 1].Q / M.E0 * 100)} % → thermal by the end`)}</td></tr>`;
@@ -1951,7 +1992,7 @@ function syncControls(){
 }
 function setScenarioUI(){
   document.querySelectorAll("#scen button").forEach(b => b.setAttribute("aria-pressed", b.dataset.sc === set.sc));
-  $("graphHint").innerHTML = gq === "Fs" ? FS_HINT : txt(SCN[set.sc].hint);
+  $("graphHint").innerHTML = gHint();
   $("fbdTitle").innerHTML = txt(SCN[set.sc].mid);
 }
 function updateButtons(){
@@ -1970,7 +2011,7 @@ function drawScene(){
   const {ctx, w, h} = fitCanvas($("scene")); ctx.clearRect(0, 0, w, h);
   const s = at(R.t); sceneMain(ctx, w, h, s);
   if (tEnd() > 0) label(ctx, `t = ${M.tu ? sig(R.t / M.tu, 3) + " " + M.tn : f2(R.t) + " s"}`, w - 10, h - 12, COL.P, "right", 14);
-  const sp = M.speed || 1; if (tEnd() > 0 && Math.abs(sp - 1) > 0.05) label(ctx, sp < 1 ? `slow motion ×${sig(1 / sp, 2)}` : `speeded up ×${sig(sp, 2)}`, w - 10, h - 30, COL.muted, "right", 12);
+  const sp = (M.speed || 1) * slowK(); if (tEnd() > 0 && Math.abs(sp - 1) > 0.05) label(ctx, sp < 1 ? `slow motion ×${sig(1 / sp, 2)}` : `speeded up ×${sig(sp, 2)}`, w - 10, h - 30, COL.muted, "right", 12);
 }
 function drawFBD(){
   const {ctx, w, h} = fitCanvas($("fbd")); ctx.clearRect(0, 0, w, h); ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
@@ -1984,6 +2025,8 @@ $("startBtn").addEventListener("click", start);
 $("pauseBtn").addEventListener("click", () => { R.paused = !R.paused; updateButtons(); });
 $("resetBtn").addEventListener("click", () => { reset(); });
 $("recBtn").addEventListener("click", recordTrial);
+try { $("slowChk").checked = localStorage.getItem("sim20-slow") === "1"; } catch (e) {}
+$("slowChk").addEventListener("change", () => { try { localStorage.setItem("sim20-slow", $("slowChk").checked ? "1" : "0"); } catch (e) {} });
 $("gsel").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; gq = b.dataset.g;
   if (gq === "Fs") $("areaChk").checked = true; renderGsel(); });
 $("anaSel").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; anaId[set.sc] = b.dataset.a; save(); renderTrials(); });
